@@ -49,8 +49,6 @@ export async function sendCapiEvent({
     return { skipped: true };
   }
 
-  const accessToken = decrypt(secret.meta_capi_access_token_encrypted);
-
   const eventPayload = {
     data: [
       {
@@ -67,8 +65,14 @@ export async function sendCapiEvent({
     ],
   };
 
+  // decrypt() and the Meta fetch both used to be able to throw in ways that
+  // skipped the capi_events insert entirely — confirmed by testing: a
+  // delivery attempt vanished with no row and no visible error, because
+  // there's no Vercel log access here, only the database. Everything from
+  // this point on is wrapped so a failure is always recorded, not silent.
   let responseStatus: number | null = null;
   try {
+    const accessToken = decrypt(secret.meta_capi_access_token_encrypted);
     const metaRes = await fetch(
       `https://graph.facebook.com/${GRAPH_API_VERSION}/${client.meta_pixel_id}/events?access_token=${accessToken}`,
       {
@@ -80,18 +84,23 @@ export async function sendCapiEvent({
     responseStatus = metaRes.status;
   } catch (err) {
     console.error("CAPI request failed", err);
+    responseStatus = -1; // distinguishes "we never got an HTTP response" from any real status code
   }
 
-  await admin.from("capi_events").insert({
-    growth_client_id: growthClientId,
-    event_name: eventName,
-    event_id: eventId,
-    fbclid: fbclid ?? null,
-    hashed_email: email ? sha256(email) : null,
-    hashed_phone: phone ? sha256(phone) : null,
-    payload: eventPayload,
-    response_status: responseStatus,
-  });
+  try {
+    await admin.from("capi_events").insert({
+      growth_client_id: growthClientId,
+      event_name: eventName,
+      event_id: eventId,
+      fbclid: fbclid ?? null,
+      hashed_email: email ? sha256(email) : null,
+      hashed_phone: phone ? sha256(phone) : null,
+      payload: eventPayload,
+      response_status: responseStatus,
+    });
+  } catch (err) {
+    console.error("Failed to log capi_events row", err);
+  }
 
   return { status: responseStatus };
 }
