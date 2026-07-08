@@ -78,6 +78,7 @@ export async function POST(request: Request) {
   const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email,
+    options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard` },
   });
 
   if (linkError) {
