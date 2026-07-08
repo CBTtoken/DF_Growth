@@ -1,10 +1,11 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// Shared by every onboard Server Action: resolves the authenticated user's
-// growth_client_id via their growth_members row. The client arrived here via
-// the magic link Supabase Auth sent after Paystack confirmed payment
-// (webhook), not via a token this code has to validate itself.
+// Shared by every authenticated Server Action (onboard wizard, dashboard):
+// resolves the current user's growth_client_id via their growth_members
+// row. The client arrived here via the magic link Supabase Auth sent after
+// Paystack confirmed payment (webhook), not via a token this code validates
+// itself.
 export async function requireGrowthClientId(): Promise<
   { id: string; error?: undefined } | { id?: undefined; error: string }
 > {

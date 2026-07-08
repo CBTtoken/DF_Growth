@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireGrowthClientId } from "@/lib/onboard/require-growth-client";
+import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { step1Schema, step2Schema, step3Schema, step4Schema } from "@/lib/schemas/intake";
 
 type FieldErrors = Record<string, string[]> & { _form?: string[] };
