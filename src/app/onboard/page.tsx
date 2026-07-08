@@ -22,11 +22,17 @@ export default async function OnboardPage() {
   }
 
   const admin = createAdminClient();
-  const { data: membership } = await admin
+  // A user can belong to more than one growth_client (growth_members is a
+  // proper join table for exactly that reason) — take the most recent one
+  // rather than assuming there's only ever a single row.
+  const { data: memberships } = await admin
     .from("growth_members")
     .select("growth_client_id")
     .eq("user_id", user.id)
-    .single();
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const membership = memberships?.[0];
 
   if (!membership) {
     return (
