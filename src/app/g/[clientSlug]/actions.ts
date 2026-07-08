@@ -2,6 +2,7 @@
 
 import crypto from "crypto";
 import { cookies } from "next/headers";
+import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { leadSchema } from "@/lib/schemas/lead";
 import { sendCapiEvent } from "@/lib/meta/capi";
@@ -44,17 +45,24 @@ export async function captureLead(
     return { error: { _form: ["Could not save your details, please try again."] } };
   }
 
-  // Fire-and-forget: a slow or failed CAPI call should never block the lead
-  // confirmation the visitor sees. Silently skips if the client hasn't
-  // connected Meta (no pixel/token) — that's expected, not an error.
-  sendCapiEvent({
-    growthClientId,
-    eventName: "Lead",
-    email: parsed.data.email,
-    phone: parsed.data.phone,
-    fbclid,
-    eventId,
-  }).catch((err) => console.error("CAPI send failed", err));
+  // A bare unawaited promise here doesn't actually work reliably on Vercel —
+  // confirmed by testing: the leads row saved, but zero capi_events rows
+  // were ever created, because the serverless function can terminate before
+  // a detached promise finishes. next/server's after() runs this once the
+  // response has already gone to the visitor, but keeps the function alive
+  // until it completes — a slow or failed CAPI call still never blocks the
+  // lead confirmation, but now it actually completes instead of getting cut
+  // off mid-flight.
+  after(() => {
+    sendCapiEvent({
+      growthClientId,
+      eventName: "Lead",
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+      fbclid,
+      eventId,
+    }).catch((err) => console.error("CAPI send failed", err));
+  });
 
   return { success: true };
 }
