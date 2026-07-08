@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { testimonialSchema } from "@/lib/schemas/testimonial";
+import { metaTokenSchema } from "@/lib/schemas/meta-token";
+import { encrypt } from "@/lib/crypto";
 
 type DashboardState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -68,6 +70,40 @@ export async function addTestimonial(
   } catch (err) {
     console.error("Failed to generate testimonial asset", err);
   }
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// CLAUDE.md Section 3/9: no OAuth "Connect with Meta" flow exists (would
+// need a Meta App through App Review), so the client — or DigitalFlyer's
+// team on their behalf, per Growth Engine's "managed campaign monitoring" —
+// pastes in a token generated from Meta Business Settings directly. Never
+// stored in plaintext.
+export async function saveMetaToken(
+  _prevState: DashboardState,
+  formData: FormData
+): Promise<DashboardState> {
+  const parsed = metaTokenSchema.safeParse({
+    accessToken: formData.get("accessToken"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("growth_client_secrets").upsert(
+    {
+      growth_client_id: client.id,
+      meta_capi_access_token_encrypted: encrypt(parsed.data.accessToken),
+    },
+    { onConflict: "growth_client_id" }
+  );
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/dashboard");
   return { success: true };

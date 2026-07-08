@@ -1,15 +1,14 @@
 "use server";
 
 import crypto from "crypto";
+import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { leadSchema } from "@/lib/schemas/lead";
+import { sendCapiEvent } from "@/lib/meta/capi";
 
 type LeadState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
-// CLAUDE.md Section 7.2, minus the CAPI dispatch — Section 9's Meta
-// Conversions API pipeline is Sprint 5 scope, not built yet. eventId is
-// still generated and stored now so it's ready to reuse for Pixel/CAPI
-// dedup once that pipeline exists, instead of retrofitting it later.
+// CLAUDE.md Section 7.2.
 export async function captureLead(
   growthClientId: string,
   landingPageId: string,
@@ -28,6 +27,8 @@ export async function captureLead(
 
   const eventId = crypto.randomUUID();
   const admin = createAdminClient();
+  const cookieStore = await cookies();
+  const fbclid = cookieStore.get("fbclid")?.value ?? null;
 
   const { error } = await admin.from("leads").insert({
     growth_client_id: growthClientId,
@@ -35,12 +36,25 @@ export async function captureLead(
     name: parsed.data.name,
     email: parsed.data.email,
     phone: parsed.data.phone ?? null,
+    fbclid,
     event_id: eventId,
   });
 
   if (error) {
     return { error: { _form: ["Could not save your details, please try again."] } };
   }
+
+  // Fire-and-forget: a slow or failed CAPI call should never block the lead
+  // confirmation the visitor sees. Silently skips if the client hasn't
+  // connected Meta (no pixel/token) — that's expected, not an error.
+  sendCapiEvent({
+    growthClientId,
+    eventName: "Lead",
+    email: parsed.data.email,
+    phone: parsed.data.phone,
+    fbclid,
+    eventId,
+  }).catch((err) => console.error("CAPI send failed", err));
 
   return { success: true };
 }

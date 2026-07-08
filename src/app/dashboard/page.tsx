@@ -2,6 +2,7 @@ import Image from "next/image";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { AddTestimonialForm } from "@/components/dashboard/AddTestimonialForm";
+import { MetaTokenForm } from "@/components/dashboard/MetaTokenForm";
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
@@ -18,20 +19,34 @@ export default async function DashboardPage() {
   }
 
   const admin = createAdminClient();
-  const [{ data: testimonials }, { data: assets }] = await Promise.all([
-    admin
-      .from("testimonials")
-      .select("id, author_name, quote, rating, created_at")
-      .eq("growth_client_id", client.id)
-      .order("created_at", { ascending: false }),
-    admin
-      .from("generated_assets")
-      .select("id, image_path, template, created_at")
-      .eq("growth_client_id", client.id)
-      .order("created_at", { ascending: false }),
-  ]);
+  const [{ data: growthClient }, { data: testimonials }, { data: assets }, { data: secret }, { data: capiEvents }] =
+    await Promise.all([
+      admin.from("growth_clients").select("plan, meta_pixel_id").eq("id", client.id).single(),
+      admin
+        .from("testimonials")
+        .select("id, author_name, quote, rating, created_at")
+        .eq("growth_client_id", client.id)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("generated_assets")
+        .select("id, image_path, template, created_at")
+        .eq("growth_client_id", client.id)
+        .order("created_at", { ascending: false }),
+      admin
+        .from("growth_client_secrets")
+        .select("growth_client_id")
+        .eq("growth_client_id", client.id)
+        .maybeSingle(),
+      admin
+        .from("capi_events")
+        .select("id, event_name, response_status, sent_at")
+        .eq("growth_client_id", client.id)
+        .order("sent_at", { ascending: false })
+        .limit(10),
+    ]);
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
+  const showMetaSection = growthClient?.plan !== "foundation" && !!growthClient?.meta_pixel_id;
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-16">
@@ -85,6 +100,33 @@ export default async function DashboardPage() {
           )}
         </div>
       </section>
+
+      {showMetaSection && (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-lg font-semibold">Meta ad tracking</h2>
+          <MetaTokenForm hasToken={!!secret} />
+
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold">Recent delivery status</h3>
+            <ul className="flex flex-col gap-1">
+              {(capiEvents ?? []).map((e) => (
+                <li key={e.id} className="flex justify-between rounded border border-gray-200 px-3 py-2 text-xs">
+                  <span>{e.event_name}</span>
+                  <span className={e.response_status === 200 ? "text-green-600" : "text-red-600"}>
+                    {e.response_status ?? "pending"}
+                  </span>
+                  <span className="text-gray-400">{new Date(e.sent_at).toLocaleString()}</span>
+                </li>
+              ))}
+              {(!capiEvents || capiEvents.length === 0) && (
+                <p className="text-xs text-gray-400">
+                  No events sent yet — this fills in once your landing page starts getting leads.
+                </p>
+              )}
+            </ul>
+          </div>
+        </section>
+      )}
     </main>
   );
 }

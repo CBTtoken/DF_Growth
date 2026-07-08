@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ConversionHero } from "@/components/landing/ConversionHero";
 import { TrustBadges } from "@/components/landing/TrustBadges";
 import { LeadForm } from "@/components/landing/LeadForm";
+import { FbclidCapture } from "@/components/landing/FbclidCapture";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
 // through this one route by slug, never a hardcoded page. params is a
@@ -55,6 +56,7 @@ export default async function ClientLandingPage({
 
   return (
     <main>
+      <FbclidCapture />
       <ConversionHero
         businessName={client.business_name}
         headline={landingPage.headline}
