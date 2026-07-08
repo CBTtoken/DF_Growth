@@ -87,6 +87,7 @@ export default async function OnboardPage() {
       <OnboardWizard
         startStep={startStep}
         tier={tier}
+        slug={growthClient.slug}
         initialData={{
           businessName: growthClient.business_name ?? "",
           contactEmail: growthClient.contact_email ?? "",

@@ -11,10 +11,12 @@ import type { Tier } from "@/lib/paystack/plans";
 export function OnboardWizard({
   startStep,
   tier,
+  slug,
   initialData,
 }: {
   startStep: number;
   tier: Tier;
+  slug: string;
   initialData: {
     businessName: string;
     contactEmail: string;
@@ -31,13 +33,16 @@ export function OnboardWizard({
   const [step, setStep] = useState(Math.min(startStep, totalSteps + 1));
 
   if (step > totalSteps) {
+    const pageUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/g/${slug}`;
     return (
       <div className="flex flex-col items-center gap-2 text-center">
         <h2 className="text-lg font-semibold">You&apos;re all set</h2>
         <p className="text-sm text-gray-500 max-w-sm">
-          Your account is active. Your landing page and dashboard are next — we&apos;ll be in
-          touch as soon as they&apos;re ready to show you.
+          Your account is active and your landing page is live right now.
         </p>
+        <a href={pageUrl} target="_blank" rel="noreferrer" className="text-sm font-medium underline">
+          {pageUrl}
+        </a>
       </div>
     );
   }

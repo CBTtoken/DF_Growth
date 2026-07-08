@@ -99,6 +99,11 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
       // form trigger, not a real navigation target — this anchor just
       // satisfies the NOT NULL constraint, it's not shown to visitors.
       cta_href: "#lead-form",
+      // No separate "publish" UI exists yet, so the page goes live the
+      // moment the client's account does. Foundation finishes right here;
+      // growth_engine/enterprise still have step 4, so their page publishes
+      // there instead, in step with their status flipping to active too.
+      published: growthClient.plan === "foundation",
     },
     { onConflict: "growth_client_id,slug" }
   );
@@ -151,6 +156,10 @@ export async function saveStep4(_prevState: OnboardState, formData: FormData): P
           .eq("id", client.id);
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  // Step 4 is the finish line for growth_engine/enterprise, so this is
+  // where their page goes live (foundation publishes back in step 3).
+  await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
 
   revalidatePath("/onboard");
   return { success: true };
