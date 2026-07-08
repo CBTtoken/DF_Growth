@@ -117,25 +117,38 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
 
 export async function saveStep4(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
   const parsed = step4Schema.safeParse({
+    hasMetaSetup: formData.get("hasMetaSetup"),
     metaPixelId: formData.get("metaPixelId") || undefined,
     metaAdAccountId: formData.get("metaAdAccountId") || undefined,
   });
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    return { error: parsed.error.flatten().fieldErrors as FieldErrors };
   }
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
 
   const admin = createAdminClient();
-  const { error } = await admin
-    .from("growth_clients")
-    .update({
-      meta_pixel_id: parsed.data.metaPixelId ?? null,
-      meta_ad_account_id: parsed.data.metaAdAccountId ?? null,
-      status: "active",
-    })
-    .eq("id", client.id);
+  const { error } =
+    parsed.data.hasMetaSetup === "yes"
+      ? await admin
+          .from("growth_clients")
+          .update({
+            meta_pixel_id: parsed.data.metaPixelId,
+            meta_ad_account_id: parsed.data.metaAdAccountId,
+            meta_setup_requested_help: false,
+            status: "active",
+          })
+          .eq("id", client.id)
+      : await admin
+          .from("growth_clients")
+          .update({
+            meta_pixel_id: null,
+            meta_ad_account_id: null,
+            meta_setup_requested_help: true,
+            status: "active",
+          })
+          .eq("id", client.id);
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 

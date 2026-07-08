@@ -49,7 +49,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, brand_primary_color, brand_secondary_color, meta_pixel_id, meta_ad_account_id, plan, slug"
+      "business_name, contact_email, brand_primary_color, brand_secondary_color, meta_pixel_id, meta_ad_account_id, plan, slug, status"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -73,14 +73,14 @@ export default async function OnboardPage() {
 
   // Resume where they left off: business_name always exists already (set at
   // checkout), so contact_email — the field step 1 actually adds — is what
-  // marks step 1 as done.
+  // marks step 1 as done. status === "active" is the authoritative "wizard
+  // finished" signal (not meta_pixel_id being set — a client who chose
+  // "I need help" on step 4 legitimately finishes with it still null).
   let startStep = 1;
   if (growthClient.contact_email) startStep = 2;
   if (growthClient.brand_primary_color) startStep = 3;
   if (landingPage) startStep = 4;
-  // Foundation has no step 4 at all, so a saved landing page means it's done.
-  if (landingPage && tier === "foundation") startStep = 5;
-  if (landingPage && growthClient.meta_pixel_id) startStep = 5;
+  if (growthClient.status === "active") startStep = 5;
 
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-16">

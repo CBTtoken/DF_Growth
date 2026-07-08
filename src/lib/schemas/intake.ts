@@ -18,7 +18,16 @@ export const step3Schema = z.object({
   ctaLabel: z.string().min(2).max(30),
 });
 
-export const step4Schema = z.object({
-  metaPixelId: z.string().optional(),
-  metaAdAccountId: z.string().optional(),
-});
+// The client picks a lane before typing anything, rather than being handed
+// an "optional" text box with no explanation — that invited people who
+// don't know what a Pixel ID is to either freeze or type a guess.
+export const step4Schema = z.discriminatedUnion("hasMetaSetup", [
+  z.object({
+    hasMetaSetup: z.literal("yes"),
+    metaPixelId: z.string().regex(/^\d{10,20}$/, "Should be a 10-20 digit number"),
+    metaAdAccountId: z.string().regex(/^(act_)?\d{5,20}$/, "Should look like act_1234567890"),
+  }),
+  z.object({
+    hasMetaSetup: z.literal("no"),
+  }),
+]);
