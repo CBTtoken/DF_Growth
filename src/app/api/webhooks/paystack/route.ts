@@ -3,10 +3,16 @@ import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/slugify";
 
-// CLAUDE.md Section 2.1. Paystack can send both charge.success and
+// CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
-// transaction/initialize — this handler is idempotent on growth_clients.slug
-// so processing either (or both, or a redelivery) doesn't create duplicates.
+// transaction/initialize, but that event's data.metadata is not populated
+// with the custom metadata set at transaction/initialize time (confirmed by
+// testing — it came back empty), so acting on it produced a second, wrong
+// growth_clients row with the business name falling back to the email and
+// the tier falling back to "foundation". charge.success reliably carries the
+// metadata, so it's the only trigger. This means paystack_subscription_code
+// stays null for now; backfilling it needs a separate reconciliation once
+// something actually reads that column.
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-paystack-signature");
@@ -22,16 +28,17 @@ export async function POST(request: Request) {
 
   const event = JSON.parse(rawBody);
 
-  if (event.event !== "charge.success" && event.event !== "subscription.create") {
+  if (event.event !== "charge.success") {
     return NextResponse.json({ received: true });
   }
 
-  const { customer, subscription_code, metadata } = event.data;
+  const { customer, metadata } = event.data;
   const email: string | undefined = customer?.email;
-  const businessName: string = metadata?.business_name ?? email ?? "Unknown business";
-  const tier: string = metadata?.tier ?? "foundation";
+  const businessName: string | undefined = metadata?.business_name;
+  const tier: string | undefined = metadata?.tier;
 
-  if (!email) {
+  if (!email || !businessName || !tier) {
+    console.error("charge.success missing expected metadata", { email, businessName, tier });
     return NextResponse.json({ received: true });
   }
 
@@ -45,12 +52,6 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (existing) {
-    if (subscription_code) {
-      await admin
-        .from("growth_clients")
-        .update({ paystack_subscription_code: subscription_code })
-        .eq("id", existing.id);
-    }
     return NextResponse.json({ received: true });
   }
 
@@ -60,7 +61,6 @@ export async function POST(request: Request) {
       business_name: businessName,
       slug,
       plan: tier,
-      paystack_subscription_code: subscription_code ?? null,
       status: "pending_intake",
     })
     .select("id")
@@ -83,12 +83,16 @@ export async function POST(request: Request) {
   if (linkError) {
     console.error("Failed to generate magic link", linkError);
   } else if (linkData?.user) {
-    await admin.from("growth_members").insert({
+    const { error: memberError } = await admin.from("growth_members").insert({
       user_id: linkData.user.id,
       growth_client_id: inserted.id,
       role: "growth_owner",
     });
-    console.log(`Magic link for ${email}: ${linkData.properties?.action_link}`);
+    if (memberError) {
+      console.error("Failed to create growth_member", memberError);
+    } else {
+      console.log(`Magic link for ${email}: ${linkData.properties?.action_link}`);
+    }
   }
 
   return NextResponse.json({ received: true });
