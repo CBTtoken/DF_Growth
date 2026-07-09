@@ -3,6 +3,10 @@
 import { useActionState, useEffect, useState } from "react";
 import { saveStep6, type OnboardState } from "@/app/onboard/actions";
 
+const inputClass =
+  "rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
+const labelClass = "flex flex-col gap-1.5 text-sm font-medium text-gray-700";
+
 export function Step6MetaConnect({
   initialPixelId,
   initialAdAccountId,
@@ -22,36 +26,34 @@ export function Step6MetaConnect({
   }, [state, onSuccess]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Connect your Meta ad account</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-xl font-bold tracking-tight text-ink">Connect your Meta ad account</h2>
+        <p className="mt-1 text-sm text-gray-500">
           This lets us track which ads actually turn into customers, so your ad spend isn&apos;t
           wasted. It&apos;s fine if you don&apos;t know what this means yet.
         </p>
       </div>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         <button
           type="button"
           onClick={() => setHasMetaSetup("yes")}
-          className={`rounded border px-4 py-3 text-left text-sm ${
-            hasMetaSetup === "yes" ? "border-gray-900 bg-gray-50" : "border-gray-300"
+          className={`rounded-xl border px-4 py-3.5 text-left text-sm transition-colors ${
+            hasMetaSetup === "yes" ? "border-brand bg-brand/5" : "border-gray-200 hover:border-gray-300"
           }`}
         >
-          <span className="font-medium">I already have this set up</span>
-          <span className="block text-gray-500">
-            I know my Meta Pixel ID and Ad Account ID
-          </span>
+          <span className="font-semibold text-gray-900">I already have this set up</span>
+          <span className="block text-gray-500">I know my Meta Pixel ID and Ad Account ID</span>
         </button>
         <button
           type="button"
           onClick={() => setHasMetaSetup("no")}
-          className={`rounded border px-4 py-3 text-left text-sm ${
-            hasMetaSetup === "no" ? "border-gray-900 bg-gray-50" : "border-gray-300"
+          className={`rounded-xl border px-4 py-3.5 text-left text-sm transition-colors ${
+            hasMetaSetup === "no" ? "border-brand bg-brand/5" : "border-gray-200 hover:border-gray-300"
           }`}
         >
-          <span className="font-medium">I don&apos;t know / need help with this</span>
+          <span className="font-semibold text-gray-900">I don&apos;t know / need help with this</span>
           <span className="block text-gray-500">
             No problem — our team will reach out and set it up with you
           </span>
@@ -62,16 +64,16 @@ export function Step6MetaConnect({
 
       {hasMetaSetup === "yes" && (
         <>
-          <label className="flex flex-col gap-1 text-sm">
+          <label className={labelClass}>
             Meta Pixel ID
             <input
               type="text"
               name="metaPixelId"
               defaultValue={initialPixelId}
               placeholder="e.g. 1234567890123456"
-              className="rounded border border-gray-300 px-3 py-2"
+              className={inputClass}
             />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs font-normal text-gray-400">
               Meta Business Manager → Events Manager → your Pixel → Settings
             </span>
           </label>
@@ -79,16 +81,16 @@ export function Step6MetaConnect({
             <p className="text-xs text-red-600">{state?.error?.metaPixelId?.[0]}</p>
           )}
 
-          <label className="flex flex-col gap-1 text-sm">
+          <label className={labelClass}>
             Meta Ad Account ID
             <input
               type="text"
               name="metaAdAccountId"
               defaultValue={initialAdAccountId}
               placeholder="e.g. act_1234567890"
-              className="rounded border border-gray-300 px-3 py-2"
+              className={inputClass}
             />
-            <span className="text-xs text-gray-400">
+            <span className="text-xs font-normal text-gray-400">
               Meta Ads Manager → Account overview, under your account name
             </span>
           </label>
@@ -103,7 +105,7 @@ export function Step6MetaConnect({
       <button
         type="submit"
         disabled={pending || !hasMetaSetup}
-        className="mt-2 rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {pending ? "Saving..." : "Finish"}
       </button>

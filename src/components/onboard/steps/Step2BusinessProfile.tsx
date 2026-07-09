@@ -15,6 +15,10 @@ const PROVINCES = [
   "Western Cape",
 ];
 
+const inputClass =
+  "rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20 disabled:bg-gray-100 disabled:text-gray-400";
+const labelClass = "flex flex-col gap-1.5 text-sm font-medium text-gray-700";
+
 export function Step2BusinessProfile({
   initialProvince,
   initialIndustry,
@@ -42,23 +46,18 @@ export function Step2BusinessProfile({
   }, [state, onSuccess]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Tell us about your business</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-xl font-bold tracking-tight text-ink">Tell us about your business</h2>
+        <p className="mt-1 text-sm text-gray-500">
           The more you give us here, the better we can build your page and your ad campaigns —
           we&apos;ll even draft your landing page copy from this.
         </p>
       </div>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Province
-        <select
-          name="province"
-          defaultValue={initialProvince}
-          required
-          className="rounded border border-gray-300 px-3 py-2"
-        >
+        <select name="province" defaultValue={initialProvince} required className={inputClass}>
           <option value="" disabled>
             Select a province
           </option>
@@ -71,7 +70,7 @@ export function Step2BusinessProfile({
       </label>
       {state?.error?.province && <p className="text-xs text-red-600">{state.error.province[0]}</p>}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Industry
         <input
           type="text"
@@ -79,13 +78,13 @@ export function Step2BusinessProfile({
           defaultValue={initialIndustry}
           required
           placeholder="e.g. Hair salon, plumbing, boutique gym"
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
       {state?.error?.industry && <p className="text-xs text-red-600">{state.error.industry[0]}</p>}
 
-      <div className="flex flex-col gap-1 text-sm">
-        <label className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5 text-sm">
+        <label className={labelClass}>
           Business address
           <input
             type="text"
@@ -94,7 +93,7 @@ export function Step2BusinessProfile({
             disabled={isOnline}
             required={!isOnline}
             placeholder="Street, suburb, city"
-            className="rounded border border-gray-300 px-3 py-2 disabled:bg-gray-100 disabled:text-gray-400"
+            className={inputClass}
           />
         </label>
         <label className="flex items-center gap-2 text-xs text-gray-500">
@@ -102,6 +101,7 @@ export function Step2BusinessProfile({
             type="checkbox"
             checked={isOnline}
             onChange={(e) => setIsOnline(e.target.checked)}
+            className="accent-brand"
           />
           This is an online-only business, no physical address
         </label>
@@ -111,7 +111,7 @@ export function Step2BusinessProfile({
         <p className="text-xs text-red-600">{state.error.businessAddress[0]}</p>
       )}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         What does your business do?
         <textarea
           name="businessDescription"
@@ -119,7 +119,7 @@ export function Step2BusinessProfile({
           required
           maxLength={600}
           placeholder="In your own words — what do you do and who is it for?"
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
           rows={3}
         />
       </label>
@@ -127,27 +127,27 @@ export function Step2BusinessProfile({
         <p className="text-xs text-red-600">{state.error.businessDescription[0]}</p>
       )}
 
-      <label className="flex flex-col gap-1 text-sm">
-        Tagline <span className="text-gray-400">(optional)</span>
+      <label className={labelClass}>
+        Tagline <span className="font-normal text-gray-400">(optional)</span>
         <input
           type="text"
           name="tagline"
           defaultValue={initialTagline}
           maxLength={80}
           placeholder="A short slogan, if you have one"
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
       {state?.error?.tagline && <p className="text-xs text-red-600">{state.error.tagline[0]}</p>}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Main products or services
         <textarea
           name="productsServices"
           defaultValue={initialProductsServices}
           required
           maxLength={600}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
           rows={3}
         />
       </label>
@@ -155,14 +155,14 @@ export function Step2BusinessProfile({
         <p className="text-xs text-red-600">{state.error.productsServices[0]}</p>
       )}
 
-      <label className="flex flex-col gap-1 text-sm">
-        Anything else worth knowing? <span className="text-gray-400">(optional)</span>
+      <label className={labelClass}>
+        Anything else worth knowing? <span className="font-normal text-gray-400">(optional)</span>
         <textarea
           name="additionalNotes"
           defaultValue={initialAdditionalNotes}
           maxLength={600}
           placeholder="Your story, what makes you stand out, anything you'd tell a new customer"
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
           rows={2}
         />
       </label>
@@ -174,7 +174,7 @@ export function Step2BusinessProfile({
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {pending ? "Saving..." : "Continue"}
       </button>

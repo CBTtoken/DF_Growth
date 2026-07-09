@@ -19,34 +19,34 @@ export function Step1BusinessInfo({
   }, [state, onSuccess]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Your business</h2>
-        <p className="text-sm text-gray-500">Confirm the basics so we can set up your account.</p>
+        <h2 className="text-xl font-bold tracking-tight text-ink">Your business</h2>
+        <p className="mt-1 text-sm text-gray-500">Confirm the basics so we can set up your account.</p>
       </div>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
         Business name
         <input
           type="text"
           name="businessName"
           defaultValue={initialBusinessName}
           required
-          className="rounded border border-gray-300 px-3 py-2"
+          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
       </label>
       {state?.error?.businessName && (
         <p className="text-xs text-red-600">{state.error.businessName[0]}</p>
       )}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
         Day-to-day contact email
         <input
           type="email"
           name="contactEmail"
           defaultValue={initialContactEmail}
           required
-          className="rounded border border-gray-300 px-3 py-2"
+          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
         />
       </label>
       {state?.error?.contactEmail && (
@@ -57,7 +57,7 @@ export function Step1BusinessInfo({
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {pending ? "Saving..." : "Continue"}
       </button>

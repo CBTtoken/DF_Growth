@@ -3,6 +3,10 @@
 import { useActionState, useEffect } from "react";
 import { saveStep4, type OnboardState } from "@/app/onboard/actions";
 
+const inputClass =
+  "rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
+const labelClass = "flex flex-col gap-1.5 text-sm font-medium text-gray-700";
+
 export function Step4LandingCopy({
   initialHeadline,
   initialSubheadline,
@@ -27,17 +31,21 @@ export function Step4LandingCopy({
   }, [state, onSuccess]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Your landing page</h2>
-        <p className="text-sm text-gray-500">
-          {hasAiDraft
-            ? "We've drafted this from your business profile — edit anything before continuing."
-            : "One clear line on what you do, one line on why it matters, one call to action."}
-        </p>
+        <h2 className="text-xl font-bold tracking-tight text-ink">Your landing page</h2>
+        {hasAiDraft ? (
+          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
+            ✨ Drafted for you — edit anything before continuing
+          </span>
+        ) : (
+          <p className="mt-1 text-sm text-gray-500">
+            One clear line on what you do, one line on why it matters, one call to action.
+          </p>
+        )}
       </div>
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Headline
         <input
           type="text"
@@ -46,12 +54,12 @@ export function Step4LandingCopy({
           required
           maxLength={80}
           placeholder="What do you do?"
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
       {state?.error?.headline && <p className="text-xs text-red-600">{state.error.headline[0]}</p>}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Subheadline
         <textarea
           name="subheadline"
@@ -59,7 +67,7 @@ export function Step4LandingCopy({
           required
           maxLength={160}
           placeholder="How does it make your customer's life better?"
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
           rows={2}
         />
       </label>
@@ -67,7 +75,7 @@ export function Step4LandingCopy({
         <p className="text-xs text-red-600">{state.error.subheadline[0]}</p>
       )}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         About your business
         <textarea
           name="aboutText"
@@ -75,13 +83,13 @@ export function Step4LandingCopy({
           required
           maxLength={600}
           placeholder="A couple of sentences visitors can trust — who you are and what makes you worth choosing."
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
           rows={3}
         />
       </label>
       {state?.error?.aboutText && <p className="text-xs text-red-600">{state.error.aboutText[0]}</p>}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Products / services
         <textarea
           name="servicesText"
@@ -89,7 +97,7 @@ export function Step4LandingCopy({
           required
           maxLength={600}
           placeholder={"One per line, e.g.\nBridal hair styling\nColor correction\nKeratin treatments"}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
           rows={4}
         />
       </label>
@@ -97,7 +105,7 @@ export function Step4LandingCopy({
         <p className="text-xs text-red-600">{state.error.servicesText[0]}</p>
       )}
 
-      <label className="flex flex-col gap-1 text-sm">
+      <label className={labelClass}>
         Call-to-action button text
         <input
           type="text"
@@ -105,7 +113,7 @@ export function Step4LandingCopy({
           defaultValue={initialCtaLabel || "Get Started"}
           required
           maxLength={30}
-          className="rounded border border-gray-300 px-3 py-2"
+          className={inputClass}
         />
       </label>
       {state?.error?.ctaLabel && <p className="text-xs text-red-600">{state.error.ctaLabel[0]}</p>}
@@ -114,7 +122,7 @@ export function Step4LandingCopy({
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {pending ? "Saving..." : "Continue"}
       </button>

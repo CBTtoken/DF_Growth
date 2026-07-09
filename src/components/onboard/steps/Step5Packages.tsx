@@ -6,6 +6,9 @@ import { saveStep5, type OnboardState } from "@/app/onboard/actions";
 type PackageInitial = { name: string; price: string; description: string };
 type FieldErrors = (Record<string, string[]> & { _form?: string[] }) | undefined;
 
+const inputClass =
+  "rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
+
 function PackageFields({
   index,
   initial,
@@ -16,8 +19,8 @@ function PackageFields({
   errors: FieldErrors;
 }) {
   return (
-    <fieldset className="flex flex-col gap-2 rounded border border-gray-200 p-3">
-      <legend className="px-1 text-xs font-medium uppercase tracking-wide text-gray-400">
+    <fieldset className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-brand">
         Package {index}
       </legend>
 
@@ -26,7 +29,7 @@ function PackageFields({
         name={`package${index}Name`}
         defaultValue={initial.name}
         placeholder="Name, e.g. Standard Wash"
-        className="rounded border border-gray-300 px-3 py-2 text-sm"
+        className={inputClass}
       />
       {errors?.[`package${index}Name`] && (
         <p className="text-xs text-red-600">{errors[`package${index}Name`][0]}</p>
@@ -37,7 +40,7 @@ function PackageFields({
         name={`package${index}Price`}
         defaultValue={initial.price}
         placeholder="Price, e.g. R350/month or From R200"
-        className="rounded border border-gray-300 px-3 py-2 text-sm"
+        className={inputClass}
       />
       {errors?.[`package${index}Price`] && (
         <p className="text-xs text-red-600">{errors[`package${index}Price`][0]}</p>
@@ -48,7 +51,7 @@ function PackageFields({
         defaultValue={initial.description}
         placeholder="What's included, in a sentence or two"
         rows={2}
-        className="rounded border border-gray-300 px-3 py-2 text-sm"
+        className={inputClass}
       />
       {errors?.[`package${index}Description`] && (
         <p className="text-xs text-red-600">{errors[`package${index}Description`][0]}</p>
@@ -75,13 +78,12 @@ export function Step5Packages({
   );
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Your packages or pricing</h2>
-        <p className="text-sm text-gray-500">
-          Optional — skip this if you don&apos;t have set packages or pricing tiers, just leave
-          everything blank and continue.
-        </p>
+        <h2 className="text-xl font-bold tracking-tight text-ink">Your packages or pricing</h2>
+        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
+          Optional — skip if you don&apos;t have set packages
+        </span>
       </div>
 
       <PackageFields index={1} initial={slots[0]} errors={state?.error} />
@@ -93,7 +95,7 @@ export function Step5Packages({
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {pending ? "Saving..." : "Continue"}
       </button>

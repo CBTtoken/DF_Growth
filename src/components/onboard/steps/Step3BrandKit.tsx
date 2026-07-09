@@ -19,36 +19,36 @@ export function Step3BrandKit({
   }, [state, onSuccess]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3">
+    <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Brand kit</h2>
-        <p className="text-sm text-gray-500">
+        <h2 className="text-xl font-bold tracking-tight text-ink">Brand kit</h2>
+        <p className="mt-1 text-sm text-gray-500">
           Two colors are enough to make your landing page and social assets feel like you.
         </p>
       </div>
 
-      <label className="flex items-center gap-3 text-sm">
+      <label className="flex items-center gap-4 text-sm font-medium text-gray-700">
         Primary color
         <input
           type="color"
           name="brandPrimaryColor"
           defaultValue={initialPrimaryColor}
           required
-          className="h-9 w-16 rounded border border-gray-300"
+          className="h-10 w-20 cursor-pointer rounded-lg border border-gray-200"
         />
       </label>
       {state?.error?.brandPrimaryColor && (
         <p className="text-xs text-red-600">{state.error.brandPrimaryColor[0]}</p>
       )}
 
-      <label className="flex items-center gap-3 text-sm">
+      <label className="flex items-center gap-4 text-sm font-medium text-gray-700">
         Secondary color
         <input
           type="color"
           name="brandSecondaryColor"
           defaultValue={initialSecondaryColor}
           required
-          className="h-9 w-16 rounded border border-gray-300"
+          className="h-10 w-20 cursor-pointer rounded-lg border border-gray-200"
         />
       </label>
       {state?.error?.brandSecondaryColor && (
@@ -59,7 +59,7 @@ export function Step3BrandKit({
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {pending ? "Saving..." : "Continue"}
       </button>

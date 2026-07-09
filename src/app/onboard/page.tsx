@@ -12,13 +12,15 @@ export default async function OnboardPage() {
 
   if (!user) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
         <BrandHeader />
-        <h1 className="text-xl font-semibold text-foreground">Check your email</h1>
-        <p className="text-gray-500 max-w-sm">
-          Use the magic link we sent after your payment to get here — this page needs you to be
-          signed in.
-        </p>
+        <div className="flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+          <h1 className="text-xl font-bold tracking-tight text-ink">Check your email</h1>
+          <p className="text-sm text-gray-500">
+            Use the magic link we sent after your payment to get here — this page needs you to be
+            signed in.
+          </p>
+        </div>
       </main>
     );
   }
@@ -38,13 +40,15 @@ export default async function OnboardPage() {
 
   if (!membership) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
         <BrandHeader />
-        <h1 className="text-xl font-semibold text-foreground">No account found</h1>
-        <p className="text-gray-500 max-w-sm">
-          We couldn&apos;t find a business linked to this login. If you just paid, wait a minute
-          and refresh — otherwise, get in touch.
-        </p>
+        <div className="flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+          <h1 className="text-xl font-bold tracking-tight text-ink">No account found</h1>
+          <p className="text-sm text-gray-500">
+            We couldn&apos;t find a business linked to this login. If you just paid, wait a minute
+            and refresh — otherwise, get in touch.
+          </p>
+        </div>
       </main>
     );
   }
@@ -59,9 +63,11 @@ export default async function OnboardPage() {
 
   if (!growthClient) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+      <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
         <BrandHeader />
-        <h1 className="text-xl font-semibold text-foreground">No account found</h1>
+        <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
+          <h1 className="text-xl font-bold tracking-tight text-ink">No account found</h1>
+        </div>
       </main>
     );
   }
@@ -105,8 +111,15 @@ export default async function OnboardPage() {
   const packages = (growthClient.packages as { name: string; price: string; description: string }[] | null) ?? [];
 
   return (
-    <main className="flex flex-1 flex-col items-center gap-10 px-4 py-16">
-      <BrandHeader />
+    <main className="relative flex flex-1 flex-col items-center gap-10 overflow-hidden bg-gray-50 px-4 py-16">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -top-32 left-1/2 size-[42rem] -translate-x-1/2 rounded-full opacity-40 blur-3xl"
+        style={{ background: "radial-gradient(circle at center, var(--brand), transparent 70%)" }}
+      />
+      <div className="relative">
+        <BrandHeader />
+      </div>
       <OnboardWizard
         startStep={startStep}
         tier={tier}
