@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
-import { step1Schema, step2Schema, step3Schema, step4Schema } from "@/lib/schemas/intake";
+import { step1Schema, step2Schema, step3Schema, step4Schema, step5Schema } from "@/lib/schemas/intake";
+import { generateLandingCopy } from "@/lib/ai/draft-copy";
 
 type FieldErrors = Record<string, string[]> & { _form?: string[] };
 export type OnboardState = { error?: FieldErrors; success?: boolean } | null;
@@ -39,8 +40,69 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
   return { success: true };
 }
 
+// Mirrors the WhatsApp onboarding flow's business-profile fields. Best-effort
+// AI drafting happens here too: once we have real facts about the business,
+// we hand them to Claude and, if it succeeds, pre-fill the Landing Copy step
+// (step 4) with a draft the client reviews and edits — nothing here ever
+// publishes on its own (landing_pages.published stays false until step 4/5).
+// If the AI call fails for any reason, we simply skip the upsert; the client
+// sees a blank Landing Copy step and writes their own, exactly like before
+// this feature existed.
 export async function saveStep2(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
   const parsed = step2Schema.safeParse({
+    province: formData.get("province"),
+    industry: formData.get("industry"),
+    businessAddress: formData.get("businessAddress"),
+    businessDescription: formData.get("businessDescription"),
+    tagline: formData.get("tagline") || "",
+    productsServices: formData.get("productsServices"),
+    additionalNotes: formData.get("additionalNotes") || "",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { data: growthClient, error } = await admin
+    .from("growth_clients")
+    .update({
+      province: parsed.data.province,
+      industry: parsed.data.industry,
+      business_address: parsed.data.businessAddress,
+      business_description: parsed.data.businessDescription,
+      tagline: parsed.data.tagline || null,
+      products_services: parsed.data.productsServices,
+      additional_notes: parsed.data.additionalNotes || null,
+    })
+    .eq("id", client.id)
+    .select("business_name")
+    .single();
+
+  if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
+
+  const draft = await generateLandingCopy({
+    businessName: growthClient.business_name,
+    industry: parsed.data.industry,
+    province: parsed.data.province,
+    businessDescription: parsed.data.businessDescription,
+    tagline: parsed.data.tagline ?? "",
+    productsServices: parsed.data.productsServices,
+    additionalNotes: parsed.data.additionalNotes ?? "",
+  });
+
+  if (draft) {
+    await admin.from("growth_clients").update({ ai_landing_draft: draft }).eq("id", client.id);
+  }
+
+  revalidatePath("/onboard");
+  return { success: true };
+}
+
+export async function saveStep3(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step3Schema.safeParse({
     brandPrimaryColor: formData.get("brandPrimaryColor"),
     brandSecondaryColor: formData.get("brandSecondaryColor"),
   });
@@ -66,10 +128,12 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
   return { success: true };
 }
 
-export async function saveStep3(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
-  const parsed = step3Schema.safeParse({
+export async function saveStep4(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step4Schema.safeParse({
     headline: formData.get("headline"),
     subheadline: formData.get("subheadline"),
+    aboutText: formData.get("aboutText"),
+    servicesText: formData.get("servicesText"),
     ctaLabel: formData.get("ctaLabel"),
   });
   if (!parsed.success) {
@@ -94,6 +158,8 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
       slug: growthClient.slug,
       headline: parsed.data.headline,
       subheadline: parsed.data.subheadline,
+      about_text: parsed.data.aboutText,
+      services_text: parsed.data.servicesText,
       cta_label: parsed.data.ctaLabel,
       // The rendered landing page (Section 7.1) treats the CTA as the lead
       // form trigger, not a real navigation target — this anchor just
@@ -101,7 +167,7 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
       cta_href: "#lead-form",
       // No separate "publish" UI exists yet, so the page goes live the
       // moment the client's account does. Foundation finishes right here;
-      // growth_engine/enterprise still have step 4, so their page publishes
+      // growth_engine/enterprise still have step 5, so their page publishes
       // there instead, in step with their status flipping to active too.
       published: growthClient.plan === "foundation",
     },
@@ -110,7 +176,7 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
 
   if (landingPageError) return { error: { _form: ["Could not save, please try again."] } };
 
-  // Foundation tier has no step 4 (no Meta connection to make), so the
+  // Foundation tier has no step 5 (no Meta connection to make), so the
   // wizard ends here for them.
   if (growthClient.plan === "foundation") {
     await admin.from("growth_clients").update({ status: "active" }).eq("id", client.id);
@@ -120,8 +186,8 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
   return { success: true };
 }
 
-export async function saveStep4(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
-  const parsed = step4Schema.safeParse({
+export async function saveStep5(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step5Schema.safeParse({
     hasMetaSetup: formData.get("hasMetaSetup"),
     metaPixelId: formData.get("metaPixelId") || undefined,
     metaAdAccountId: formData.get("metaAdAccountId") || undefined,
@@ -157,8 +223,8 @@ export async function saveStep4(_prevState: OnboardState, formData: FormData): P
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
-  // Step 4 is the finish line for growth_engine/enterprise, so this is
-  // where their page goes live (foundation publishes back in step 3).
+  // Step 5 is the finish line for growth_engine/enterprise, so this is
+  // where their page goes live (foundation publishes back in step 4).
   await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
 
   revalidatePath("/onboard");

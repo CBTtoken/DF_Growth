@@ -52,7 +52,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, brand_primary_color, brand_secondary_color, meta_pixel_id, meta_ad_account_id, plan, slug, status"
+      "business_name, contact_email, province, industry, business_address, business_description, tagline, products_services, additional_notes, ai_landing_draft, brand_primary_color, brand_secondary_color, meta_pixel_id, meta_ad_account_id, plan, slug, status"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -68,7 +68,7 @@ export default async function OnboardPage() {
 
   const { data: landingPage } = await admin
     .from("landing_pages")
-    .select("headline, subheadline, cta_label")
+    .select("headline, subheadline, about_text, services_text, cta_label")
     .eq("growth_client_id", membership.growth_client_id)
     .eq("slug", growthClient.slug)
     .maybeSingle();
@@ -77,14 +77,27 @@ export default async function OnboardPage() {
 
   // Resume where they left off: business_name always exists already (set at
   // checkout), so contact_email — the field step 1 actually adds — is what
-  // marks step 1 as done. status === "active" is the authoritative "wizard
-  // finished" signal (not meta_pixel_id being set — a client who chose
-  // "I need help" on step 4 legitimately finishes with it still null).
+  // marks step 1 as done. business_description is step 2's own field, so it
+  // marks step 2 done regardless of whether the AI draft succeeded.
+  // `landingPage` existing is what marks step 4 done — the AI draft is
+  // stored separately on growth_clients.ai_landing_draft precisely so it
+  // doesn't look like a finished step 4 on refresh (see the migration
+  // comment). status === "active" is the authoritative "wizard finished"
+  // signal (not meta_pixel_id being set — a client who chose "I need help"
+  // on step 5 legitimately finishes with it still null).
   let startStep = 1;
   if (growthClient.contact_email) startStep = 2;
-  if (growthClient.brand_primary_color) startStep = 3;
-  if (landingPage) startStep = 4;
-  if (growthClient.status === "active") startStep = 5;
+  if (growthClient.business_description) startStep = 3;
+  if (growthClient.brand_primary_color) startStep = 4;
+  if (landingPage) startStep = 5;
+  if (growthClient.status === "active") startStep = 6;
+
+  const aiDraft = growthClient.ai_landing_draft as {
+    headline?: string;
+    subheadline?: string;
+    aboutText?: string;
+    servicesText?: string;
+  } | null;
 
   return (
     <main className="flex flex-1 flex-col items-center gap-10 px-4 py-16">
@@ -96,14 +109,23 @@ export default async function OnboardPage() {
         initialData={{
           businessName: growthClient.business_name ?? "",
           contactEmail: growthClient.contact_email ?? "",
+          province: growthClient.province ?? "",
+          industry: growthClient.industry ?? "",
+          businessAddress: growthClient.business_address ?? "",
+          businessDescription: growthClient.business_description ?? "",
+          tagline: growthClient.tagline ?? "",
+          productsServices: growthClient.products_services ?? "",
+          additionalNotes: growthClient.additional_notes ?? "",
           // Generic starting point for a new client's own color picker — not
           // tied to any particular client's brand. Was FortisLex's navy/steel
           // (a copy-paste leftover from an unrelated project), fixed to use
           // DigitalFlyer's own blue instead.
           brandPrimaryColor: growthClient.brand_primary_color ?? "#1081b8",
           brandSecondaryColor: growthClient.brand_secondary_color ?? "#ffffff",
-          headline: landingPage?.headline ?? "",
-          subheadline: landingPage?.subheadline ?? "",
+          headline: landingPage?.headline ?? aiDraft?.headline ?? "",
+          subheadline: landingPage?.subheadline ?? aiDraft?.subheadline ?? "",
+          aboutText: landingPage?.about_text ?? aiDraft?.aboutText ?? "",
+          servicesText: landingPage?.services_text ?? aiDraft?.servicesText ?? "",
           ctaLabel: landingPage?.cta_label ?? "",
           metaPixelId: growthClient.meta_pixel_id ?? "",
           metaAdAccountId: growthClient.meta_ad_account_id ?? "",

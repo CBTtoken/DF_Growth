@@ -5,6 +5,9 @@ import { TrustBadges } from "@/components/landing/TrustBadges";
 import { LeadForm } from "@/components/landing/LeadForm";
 import { FbclidCapture } from "@/components/landing/FbclidCapture";
 import { ScrollReveal } from "@/components/landing/ScrollReveal";
+import { AboutSection } from "@/components/landing/AboutSection";
+import { ServicesList } from "@/components/landing/ServicesList";
+import { LocationMap } from "@/components/landing/LocationMap";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
 // through this one route by slug, never a hardcoded page. params is a
@@ -28,7 +31,7 @@ export default async function ClientLandingPage({
 
   const { data: client } = await admin
     .from("growth_clients")
-    .select("id, business_name, brand_primary_color, brand_secondary_color")
+    .select("id, business_name, brand_primary_color, brand_secondary_color, tagline, business_address")
     .eq("slug", clientSlug)
     .eq("status", "active")
     .single();
@@ -43,7 +46,7 @@ export default async function ClientLandingPage({
   const [{ data: landingPage }, { data: testimonials }] = await Promise.all([
     admin
       .from("landing_pages")
-      .select("id, headline, subheadline, cta_label")
+      .select("id, headline, subheadline, about_text, services_text, cta_label")
       .eq("growth_client_id", client.id)
       .eq("published", true)
       .single(),
@@ -71,7 +74,21 @@ export default async function ClientLandingPage({
         secondaryColor={secondaryColor}
       />
       <ScrollReveal>
+        <AboutSection
+          businessName={client.business_name}
+          tagline={client.tagline}
+          aboutText={landingPage.about_text}
+          accentColor={primaryColor}
+        />
+      </ScrollReveal>
+      <ScrollReveal>
+        <ServicesList servicesText={landingPage.services_text} accentColor={primaryColor} />
+      </ScrollReveal>
+      <ScrollReveal>
         <TrustBadges testimonials={testimonials ?? []} accentColor={primaryColor} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <LocationMap businessAddress={client.business_address} accentColor={primaryColor} />
       </ScrollReveal>
       <ScrollReveal>
         <LeadForm

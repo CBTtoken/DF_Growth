@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { saveStep2, type OnboardState } from "@/app/onboard/actions";
+import { saveStep3, type OnboardState } from "@/app/onboard/actions";
 
-export function Step2BrandKit({
+export function Step3BrandKit({
   initialPrimaryColor,
   initialSecondaryColor,
   onSuccess,
@@ -12,7 +12,7 @@ export function Step2BrandKit({
   initialSecondaryColor: string;
   onSuccess: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep2, null);
+  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep3, null);
 
   useEffect(() => {
     if (state?.success) onSuccess();

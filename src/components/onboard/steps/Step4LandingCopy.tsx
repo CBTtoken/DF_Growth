@@ -1,20 +1,26 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { saveStep3, type OnboardState } from "@/app/onboard/actions";
+import { saveStep4, type OnboardState } from "@/app/onboard/actions";
 
-export function Step3LandingCopy({
+export function Step4LandingCopy({
   initialHeadline,
   initialSubheadline,
   initialCtaLabel,
+  initialAboutText,
+  initialServicesText,
+  hasAiDraft,
   onSuccess,
 }: {
   initialHeadline: string;
   initialSubheadline: string;
   initialCtaLabel: string;
+  initialAboutText: string;
+  initialServicesText: string;
+  hasAiDraft: boolean;
   onSuccess: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep3, null);
+  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep4, null);
 
   useEffect(() => {
     if (state?.success) onSuccess();
@@ -25,7 +31,9 @@ export function Step3LandingCopy({
       <div>
         <h2 className="text-lg font-semibold">Your landing page</h2>
         <p className="text-sm text-gray-500">
-          One clear line on what you do, one line on why it matters, one call to action.
+          {hasAiDraft
+            ? "We've drafted this from your business profile — edit anything before continuing."
+            : "One clear line on what you do, one line on why it matters, one call to action."}
         </p>
       </div>
 
@@ -57,6 +65,36 @@ export function Step3LandingCopy({
       </label>
       {state?.error?.subheadline && (
         <p className="text-xs text-red-600">{state.error.subheadline[0]}</p>
+      )}
+
+      <label className="flex flex-col gap-1 text-sm">
+        About your business
+        <textarea
+          name="aboutText"
+          defaultValue={initialAboutText}
+          required
+          maxLength={600}
+          placeholder="A couple of sentences visitors can trust — who you are and what makes you worth choosing."
+          className="rounded border border-gray-300 px-3 py-2"
+          rows={3}
+        />
+      </label>
+      {state?.error?.aboutText && <p className="text-xs text-red-600">{state.error.aboutText[0]}</p>}
+
+      <label className="flex flex-col gap-1 text-sm">
+        Products / services
+        <textarea
+          name="servicesText"
+          defaultValue={initialServicesText}
+          required
+          maxLength={600}
+          placeholder={"One per line, e.g.\nBridal hair styling\nColor correction\nKeratin treatments"}
+          className="rounded border border-gray-300 px-3 py-2"
+          rows={4}
+        />
+      </label>
+      {state?.error?.servicesText && (
+        <p className="text-xs text-red-600">{state.error.servicesText[0]}</p>
       )}
 
       <label className="flex flex-col gap-1 text-sm">

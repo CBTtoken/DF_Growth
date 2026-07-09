@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { ProgressBar } from "./ProgressBar";
 import { Step1BusinessInfo } from "./steps/Step1BusinessInfo";
-import { Step2BrandKit } from "./steps/Step2BrandKit";
-import { Step3LandingCopy } from "./steps/Step3LandingCopy";
-import { Step4MetaConnect } from "./steps/Step4MetaConnect";
+import { Step2BusinessProfile } from "./steps/Step2BusinessProfile";
+import { Step3BrandKit } from "./steps/Step3BrandKit";
+import { Step4LandingCopy } from "./steps/Step4LandingCopy";
+import { Step5MetaConnect } from "./steps/Step5MetaConnect";
 import type { Tier } from "@/lib/paystack/plans";
 
 export function OnboardWizard({
@@ -20,16 +21,25 @@ export function OnboardWizard({
   initialData: {
     businessName: string;
     contactEmail: string;
+    province: string;
+    industry: string;
+    businessAddress: string;
+    businessDescription: string;
+    tagline: string;
+    productsServices: string;
+    additionalNotes: string;
     brandPrimaryColor: string;
     brandSecondaryColor: string;
     headline: string;
     subheadline: string;
+    aboutText: string;
+    servicesText: string;
     ctaLabel: string;
     metaPixelId: string;
     metaAdAccountId: string;
   };
 }) {
-  const totalSteps = tier === "foundation" ? 3 : 4;
+  const totalSteps = tier === "foundation" ? 4 : 5;
   const [step, setStep] = useState(Math.min(startStep, totalSteps + 1));
 
   if (step > totalSteps) {
@@ -59,25 +69,40 @@ export function OnboardWizard({
         />
       )}
       {step === 2 && (
-        <Step2BrandKit
-          initialPrimaryColor={initialData.brandPrimaryColor}
-          initialSecondaryColor={initialData.brandSecondaryColor}
+        <Step2BusinessProfile
+          initialProvince={initialData.province}
+          initialIndustry={initialData.industry}
+          initialBusinessAddress={initialData.businessAddress}
+          initialBusinessDescription={initialData.businessDescription}
+          initialTagline={initialData.tagline}
+          initialProductsServices={initialData.productsServices}
+          initialAdditionalNotes={initialData.additionalNotes}
           onSuccess={() => setStep(3)}
         />
       )}
       {step === 3 && (
-        <Step3LandingCopy
-          initialHeadline={initialData.headline}
-          initialSubheadline={initialData.subheadline}
-          initialCtaLabel={initialData.ctaLabel}
+        <Step3BrandKit
+          initialPrimaryColor={initialData.brandPrimaryColor}
+          initialSecondaryColor={initialData.brandSecondaryColor}
           onSuccess={() => setStep(4)}
         />
       )}
-      {step === 4 && tier !== "foundation" && (
-        <Step4MetaConnect
+      {step === 4 && (
+        <Step4LandingCopy
+          initialHeadline={initialData.headline}
+          initialSubheadline={initialData.subheadline}
+          initialCtaLabel={initialData.ctaLabel}
+          initialAboutText={initialData.aboutText}
+          initialServicesText={initialData.servicesText}
+          hasAiDraft={Boolean(initialData.headline)}
+          onSuccess={() => setStep(5)}
+        />
+      )}
+      {step === 5 && tier !== "foundation" && (
+        <Step5MetaConnect
           initialPixelId={initialData.metaPixelId}
           initialAdAccountId={initialData.metaAdAccountId}
-          onSuccess={() => setStep(5)}
+          onSuccess={() => setStep(6)}
         />
       )}
     </div>
