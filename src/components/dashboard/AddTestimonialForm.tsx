@@ -7,15 +7,15 @@ export function AddTestimonialForm() {
   const [state, formAction, pending] = useActionState(addTestimonial, null);
 
   return (
-    <form action={formAction} className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4">
-      <h3 className="text-sm font-semibold">Add a testimonial</h3>
+    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-gray-50 p-4">
+      <h3 className="text-sm font-semibold text-gray-700">Add a testimonial</h3>
 
       <input
         type="text"
         name="authorName"
         placeholder="Customer name"
         required
-        className="rounded border border-gray-300 px-3 py-2 text-sm"
+        className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
       />
       {state?.error?.authorName && <p className="text-xs text-red-600">{state.error.authorName[0]}</p>}
 
@@ -24,11 +24,15 @@ export function AddTestimonialForm() {
         placeholder="What did they say?"
         required
         rows={3}
-        className="rounded border border-gray-300 px-3 py-2 text-sm"
+        className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
       />
       {state?.error?.quote && <p className="text-xs text-red-600">{state.error.quote[0]}</p>}
 
-      <select name="rating" className="rounded border border-gray-300 px-3 py-2 text-sm" defaultValue="">
+      <select
+        name="rating"
+        className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+        defaultValue=""
+      >
         <option value="">No rating</option>
         <option value="5">★★★★★</option>
         <option value="4">★★★★</option>
@@ -43,7 +47,7 @@ export function AddTestimonialForm() {
       <button
         type="submit"
         disabled={pending}
-        className="rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        className="self-start rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
         {pending ? "Saving..." : "Add testimonial"}
       </button>
