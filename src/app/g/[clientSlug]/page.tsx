@@ -51,7 +51,11 @@ export default async function ClientLandingPage({
 
   if (!landingPage) return notFound();
 
-  const primaryColor = client.brand_primary_color ?? "#0f2d52";
+  // Defensive fallback only — the wizard requires a color before a client
+  // can publish, so this shouldn't normally be hit. Was FortisLex's navy
+  // (unrelated project, copy-paste leftover); DigitalFlyer's own blue is at
+  // least the right company if this path is ever actually reached.
+  const primaryColor = client.brand_primary_color ?? "#1081b8";
   const secondaryColor = client.brand_secondary_color ?? "#ffffff";
 
   return (

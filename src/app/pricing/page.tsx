@@ -1,14 +1,16 @@
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
+import { BrandHeader } from "@/components/brand/BrandHeader";
 
 export default function PricingPage() {
   return (
     <main className="flex flex-1 flex-col items-center px-4 py-16">
-      <div className="max-w-3xl text-center">
-        <h1 className="text-3xl font-semibold">DigitalFlyer Growth</h1>
-        <p className="mt-2 text-gray-500">
+      <BrandHeader />
+
+      <div className="mt-10 max-w-3xl text-center">
+        <h1 className="text-3xl font-semibold text-foreground">
           Built and hosted in Cape Town, live in days, priced for a small business.
-        </p>
+        </h1>
       </div>
 
       <div className="mt-12 grid w-full max-w-5xl gap-6 sm:grid-cols-3">

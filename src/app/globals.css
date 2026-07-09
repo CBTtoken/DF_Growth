@@ -3,12 +3,18 @@
 :root {
   --background: #ffffff;
   --foreground: #1f2937;
+  /* DigitalFlyer brand blue, per the real logo/hex — not a placeholder. */
+  --brand: #1081b8;
+  --brand-dark: #0b5f87;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
   --font-sans: var(--font-geist-sans);
+  --font-badge: var(--font-barlow-condensed);
 }
 
 body {

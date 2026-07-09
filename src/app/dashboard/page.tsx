@@ -3,14 +3,16 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { AddTestimonialForm } from "@/components/dashboard/AddTestimonialForm";
 import { MetaTokenForm } from "@/components/dashboard/MetaTokenForm";
+import { BrandHeader } from "@/components/brand/BrandHeader";
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
 
   if (client.error) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-        <h1 className="text-xl font-semibold">Check your email</h1>
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        <BrandHeader />
+        <h1 className="text-xl font-semibold text-foreground">Check your email</h1>
         <p className="text-gray-500 max-w-sm">
           Use the magic link we sent you to get here — this page needs you to be signed in.
         </p>
@@ -50,7 +52,10 @@ export default async function DashboardPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-16">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div className="flex flex-col gap-6">
+        <BrandHeader />
+        <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
+      </div>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold">Testimonials</h2>

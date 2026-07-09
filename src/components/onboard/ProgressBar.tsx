@@ -6,7 +6,7 @@ export function ProgressBar({ step, totalSteps }: { step: number; totalSteps: nu
       </p>
       <div className="h-1.5 w-full rounded-full bg-gray-200">
         <div
-          className="h-1.5 rounded-full bg-gray-900 transition-all"
+          className="h-1.5 rounded-full bg-brand transition-all"
           style={{ width: `${(step / totalSteps) * 100}%` }}
         />
       </div>

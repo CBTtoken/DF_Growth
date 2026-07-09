@@ -27,7 +27,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     brand_secondary_color: string | null;
   };
 
-  const primaryColor = client?.brand_primary_color ?? "#0f2d52";
+  const primaryColor = client?.brand_primary_color ?? "#1081b8";
   const secondaryColor = client?.brand_secondary_color ?? "#ffffff";
 
   return new ImageResponse(

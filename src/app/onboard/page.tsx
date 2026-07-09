@@ -1,6 +1,7 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OnboardWizard } from "@/components/onboard/OnboardWizard";
+import { BrandHeader } from "@/components/brand/BrandHeader";
 import type { Tier } from "@/lib/paystack/plans";
 
 export default async function OnboardPage() {
@@ -11,8 +12,9 @@ export default async function OnboardPage() {
 
   if (!user) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-        <h1 className="text-xl font-semibold">Check your email</h1>
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        <BrandHeader />
+        <h1 className="text-xl font-semibold text-foreground">Check your email</h1>
         <p className="text-gray-500 max-w-sm">
           Use the magic link we sent after your payment to get here — this page needs you to be
           signed in.
@@ -36,8 +38,9 @@ export default async function OnboardPage() {
 
   if (!membership) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-        <h1 className="text-xl font-semibold">No account found</h1>
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        <BrandHeader />
+        <h1 className="text-xl font-semibold text-foreground">No account found</h1>
         <p className="text-gray-500 max-w-sm">
           We couldn&apos;t find a business linked to this login. If you just paid, wait a minute
           and refresh — otherwise, get in touch.
@@ -56,8 +59,9 @@ export default async function OnboardPage() {
 
   if (!growthClient) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-2 p-8 text-center">
-        <h1 className="text-xl font-semibold">No account found</h1>
+      <main className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        <BrandHeader />
+        <h1 className="text-xl font-semibold text-foreground">No account found</h1>
       </main>
     );
   }
@@ -83,7 +87,8 @@ export default async function OnboardPage() {
   if (growthClient.status === "active") startStep = 5;
 
   return (
-    <main className="flex flex-1 flex-col items-center px-4 py-16">
+    <main className="flex flex-1 flex-col items-center gap-10 px-4 py-16">
+      <BrandHeader />
       <OnboardWizard
         startStep={startStep}
         tier={tier}
@@ -91,8 +96,12 @@ export default async function OnboardPage() {
         initialData={{
           businessName: growthClient.business_name ?? "",
           contactEmail: growthClient.contact_email ?? "",
-          brandPrimaryColor: growthClient.brand_primary_color ?? "#0f2d52",
-          brandSecondaryColor: growthClient.brand_secondary_color ?? "#bfc7cf",
+          // Generic starting point for a new client's own color picker — not
+          // tied to any particular client's brand. Was FortisLex's navy/steel
+          // (a copy-paste leftover from an unrelated project), fixed to use
+          // DigitalFlyer's own blue instead.
+          brandPrimaryColor: growthClient.brand_primary_color ?? "#1081b8",
+          brandSecondaryColor: growthClient.brand_secondary_color ?? "#ffffff",
           headline: landingPage?.headline ?? "",
           subheadline: landingPage?.subheadline ?? "",
           ctaLabel: landingPage?.cta_label ?? "",
