@@ -16,24 +16,33 @@ export function ServicesList({
   if (services.length === 0) return null;
 
   return (
-    <section className="flex flex-col items-center gap-8 bg-gray-50 px-4 py-16">
-      <h2 className="text-2xl font-bold text-gray-900">What we offer</h2>
-      <ul className="grid w-full max-w-3xl grid-cols-1 gap-3 sm:grid-cols-2">
-        {services.map((service, i) => (
-          <li
-            key={i}
-            className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 text-sm text-gray-700 shadow-sm"
-          >
-            <span
-              className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ backgroundColor: accentColor }}
+    <section id="services" className="border-b border-gray-100 bg-gray-50">
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
+        <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+          02 — What we offer
+        </p>
+        <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
+          Everything you need, in one place.
+        </h2>
+
+        <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {services.map((service, i) => (
+            <li
+              key={i}
+              className="flex items-start gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-colors hover:border-current"
+              style={{ color: accentColor }}
             >
-              ✓
-            </span>
-            {service}
-          </li>
-        ))}
-      </ul>
+              <span
+                className="grid size-11 flex-shrink-0 place-items-center rounded-xl text-sm font-bold"
+                style={{ backgroundColor: `${accentColor}1a`, color: accentColor }}
+              >
+                ✓
+              </span>
+              <span className="mt-2.5 text-base font-medium text-gray-700">{service}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }

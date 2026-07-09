@@ -67,6 +67,7 @@ export default async function ClientLandingPage({
       <FbclidCapture />
       <ConversionHero
         businessName={client.business_name}
+        tagline={client.tagline}
         headline={landingPage.headline}
         subheadline={landingPage.subheadline ?? ""}
         ctaLabel={landingPage.cta_label}

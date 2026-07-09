@@ -8,6 +8,7 @@ import { shade, readableTextOn } from "@/lib/color";
 // the client's own color, not a JS-animated effect that could gate paint.
 export function ConversionHero({
   businessName,
+  tagline,
   headline,
   subheadline,
   ctaLabel,
@@ -15,6 +16,7 @@ export function ConversionHero({
   secondaryColor,
 }: {
   businessName: string;
+  tagline: string | null;
   headline: string;
   subheadline: string;
   ctaLabel: string;
@@ -22,38 +24,101 @@ export function ConversionHero({
   secondaryColor: string;
 }) {
   const textColor = readableTextOn(primaryColor);
-  const glow = shade(primaryColor, 0.25);
+  const glow = shade(primaryColor, 0.3);
+
+  // Every client's headline is arbitrary free text, not a fixed string we
+  // can hand-pick a word from — underlining the last word is a rule that
+  // generalizes to any headline instead of hardcoding one client's copy.
+  const words = headline.trim().split(/\s+/);
+  const lastWord = words.pop();
+  const leadWords = words.join(" ");
+
+  const initials = businessName
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
-    <header
-      className="relative flex flex-col items-center gap-6 overflow-hidden px-4 py-24 text-center sm:py-32"
-      style={{
-        backgroundColor: primaryColor,
-        backgroundImage: `radial-gradient(circle at 15% 15%, ${glow} 0%, transparent 45%), radial-gradient(circle at 85% 85%, ${glow} 0%, transparent 45%)`,
-      }}
-    >
-      <span
-        className="rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
-        style={{ backgroundColor: secondaryColor, color: primaryColor }}
-      >
-        {businessName}
-      </span>
-      <h1
-        className="max-w-3xl text-4xl font-bold leading-[1.1] sm:text-6xl"
-        style={{ color: textColor }}
-      >
-        {headline}
-      </h1>
-      <p className="max-w-xl text-lg opacity-90" style={{ color: textColor }}>
-        {subheadline}
-      </p>
-      <a
-        href="#lead-form"
-        className="mt-2 rounded-full px-8 py-3.5 text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-        style={{ backgroundColor: secondaryColor, color: primaryColor }}
-      >
-        {ctaLabel}
-      </a>
+    <header id="top" className="relative overflow-hidden text-center" style={{ backgroundColor: primaryColor }}>
+      {/* Depth without stock photography: two soft radials in a darker
+          shade of the same brand color — fully derived, never a fixed
+          palette. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 -top-24 size-[36rem] rounded-full opacity-60 blur-3xl"
+        style={{ background: `radial-gradient(circle at center, ${glow}, transparent 70%)` }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-40 -left-24 size-[32rem] rounded-full opacity-50 blur-3xl"
+        style={{ background: `radial-gradient(circle at center, ${glow}, transparent 70%)` }}
+      />
+
+      <div className="relative mx-auto flex max-w-5xl items-center justify-between px-5 py-5 sm:px-8">
+        <span className="flex items-center gap-2 text-sm font-semibold tracking-tight" style={{ color: textColor }}>
+          <span
+            className="grid size-8 place-items-center rounded-md font-mono text-xs font-bold"
+            style={{ backgroundColor: `${textColor}26` }}
+          >
+            {initials}
+          </span>
+          {businessName}
+        </span>
+        <a
+          href="#lead-form"
+          className="rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5"
+          style={{ backgroundColor: secondaryColor, color: primaryColor }}
+        >
+          {ctaLabel}
+        </a>
+      </div>
+
+      <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 pb-24 pt-8 sm:pb-32">
+        <p
+          className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] opacity-80"
+          style={{ color: textColor }}
+        >
+          <span className="inline-block h-px w-8" style={{ backgroundColor: `${textColor}80` }} />
+          {tagline || businessName}
+        </p>
+
+        <h1 className="max-w-3xl text-4xl font-bold leading-[1.05] sm:text-6xl" style={{ color: textColor }}>
+          {leadWords}
+          {leadWords ? " " : ""}
+          <span className="relative whitespace-nowrap">
+            <span className="relative z-10">{lastWord}</span>
+            <span
+              aria-hidden
+              className="absolute inset-x-0 bottom-1 z-0 h-3 opacity-25 sm:bottom-2 sm:h-4"
+              style={{ backgroundColor: textColor }}
+            />
+          </span>
+        </h1>
+
+        <p className="max-w-xl text-lg opacity-90" style={{ color: textColor }}>
+          {subheadline}
+        </p>
+
+        <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
+          <a
+            href="#lead-form"
+            className="rounded-full px-8 py-3.5 text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+            style={{ backgroundColor: secondaryColor, color: primaryColor }}
+          >
+            {ctaLabel}
+          </a>
+          <a
+            href="#about"
+            className="text-sm font-medium underline-offset-4 opacity-85 hover:underline"
+            style={{ color: textColor }}
+          >
+            How it works
+          </a>
+        </div>
+      </div>
     </header>
   );
 }

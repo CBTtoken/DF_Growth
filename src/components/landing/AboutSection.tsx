@@ -15,14 +15,23 @@ export function AboutSection({
   if (!aboutText) return null;
 
   return (
-    <section className="flex flex-col items-center gap-3 px-4 py-16 text-center">
-      {tagline && (
-        <span className="text-sm font-semibold uppercase tracking-widest" style={{ color: accentColor }}>
-          {tagline}
-        </span>
-      )}
-      <h2 className="text-2xl font-bold text-gray-900">About {businessName}</h2>
-      <p className="max-w-2xl text-gray-600">{aboutText}</p>
+    <section id="about" className="border-b border-gray-100 bg-white">
+      <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+              01 — About
+            </p>
+            <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
+              About {businessName}
+            </h2>
+          </div>
+          <div>
+            {tagline && <p className="mb-3 text-base font-medium text-gray-500">{tagline}</p>}
+            <p className="text-lg leading-relaxed text-gray-600">{aboutText}</p>
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
