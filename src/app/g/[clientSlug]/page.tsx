@@ -4,6 +4,7 @@ import { ConversionHero } from "@/components/landing/ConversionHero";
 import { TrustBadges } from "@/components/landing/TrustBadges";
 import { LeadForm } from "@/components/landing/LeadForm";
 import { FbclidCapture } from "@/components/landing/FbclidCapture";
+import { ScrollReveal } from "@/components/landing/ScrollReveal";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
 // through this one route by slug, never a hardcoded page. params is a
@@ -69,13 +70,17 @@ export default async function ClientLandingPage({
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
       />
-      <TrustBadges testimonials={testimonials ?? []} />
-      <LeadForm
-        growthClientId={client.id}
-        landingPageId={landingPage.id}
-        pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
-        primaryColor={primaryColor}
-      />
+      <ScrollReveal>
+        <TrustBadges testimonials={testimonials ?? []} accentColor={primaryColor} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <LeadForm
+          growthClientId={client.id}
+          landingPageId={landingPage.id}
+          pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
+          primaryColor={primaryColor}
+        />
+      </ScrollReveal>
     </main>
   );
 }

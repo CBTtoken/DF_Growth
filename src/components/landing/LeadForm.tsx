@@ -19,22 +19,23 @@ export function LeadForm({
 
   if (state?.success) {
     return (
-      <section id="lead-form" className="flex flex-col items-center gap-2 px-4 py-16 text-center">
-        <h2 className="text-xl font-semibold">Thanks — we&apos;ll be in touch shortly</h2>
+      <section id="lead-form" className="flex flex-col items-center gap-2 px-4 py-20 text-center">
+        <h2 className="text-2xl font-bold text-gray-900">Thanks — we&apos;ll be in touch shortly</h2>
       </section>
     );
   }
 
   return (
-    <section id="lead-form" className="flex flex-col items-center gap-4 px-4 py-16">
-      <h2 className="text-xl font-semibold">Get in touch</h2>
+    <section id="lead-form" className="flex flex-col items-center gap-2 bg-gray-50 px-4 py-20">
+      <h2 className="text-2xl font-bold text-gray-900">Get in touch</h2>
+      <p className="mb-4 text-sm text-gray-500">We&apos;ll respond within one business day.</p>
       <form action={formAction} className="flex w-full max-w-sm flex-col gap-3">
         <input
           type="text"
           name="name"
           placeholder="Your name"
           required
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-5 py-3 text-sm shadow-sm outline-none focus:border-gray-400"
         />
         {state?.error?.name && <p className="text-xs text-red-600">{state.error.name[0]}</p>}
 
@@ -43,7 +44,7 @@ export function LeadForm({
           name="email"
           placeholder="you@example.com"
           required
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-5 py-3 text-sm shadow-sm outline-none focus:border-gray-400"
         />
         {state?.error?.email && <p className="text-xs text-red-600">{state.error.email[0]}</p>}
 
@@ -51,7 +52,7 @@ export function LeadForm({
           type="tel"
           name="phone"
           placeholder="Phone (optional)"
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-full border border-gray-300 bg-white px-5 py-3 text-sm shadow-sm outline-none focus:border-gray-400"
         />
 
         {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
@@ -59,7 +60,7 @@ export function LeadForm({
         <button
           type="submit"
           disabled={pending}
-          className="rounded px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+          className="mt-2 rounded-full px-4 py-3.5 text-sm font-semibold text-white shadow-lg transition hover:-translate-y-0.5 disabled:opacity-50"
           style={{ backgroundColor: primaryColor }}
         >
           {pending ? "Sending..." : "Send"}
