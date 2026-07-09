@@ -52,7 +52,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, province, industry, business_address, business_description, tagline, products_services, additional_notes, ai_landing_draft, brand_primary_color, brand_secondary_color, meta_pixel_id, meta_ad_account_id, plan, slug, status"
+      "business_name, contact_email, province, industry, business_address, business_description, tagline, products_services, additional_notes, ai_landing_draft, brand_primary_color, brand_secondary_color, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -82,15 +82,18 @@ export default async function OnboardPage() {
   // `landingPage` existing is what marks step 4 done — the AI draft is
   // stored separately on growth_clients.ai_landing_draft precisely so it
   // doesn't look like a finished step 4 on refresh (see the migration
-  // comment). status === "active" is the authoritative "wizard finished"
-  // signal (not meta_pixel_id being set — a client who chose "I need help"
-  // on step 5 legitimately finishes with it still null).
+  // comment). packages !== null marks step 5 done — it's explicitly optional
+  // and an all-blank submit still writes an empty array, distinct from the
+  // pre-step5 null default. status === "active" is the authoritative
+  // "wizard finished" signal (not meta_pixel_id being set — a client who
+  // chose "I need help" on step 6 legitimately finishes with it still null).
   let startStep = 1;
   if (growthClient.contact_email) startStep = 2;
   if (growthClient.business_description) startStep = 3;
   if (growthClient.brand_primary_color) startStep = 4;
   if (landingPage) startStep = 5;
-  if (growthClient.status === "active") startStep = 6;
+  if (growthClient.packages !== null) startStep = 6;
+  if (growthClient.status === "active") startStep = 7;
 
   const aiDraft = growthClient.ai_landing_draft as {
     headline?: string;
@@ -98,6 +101,8 @@ export default async function OnboardPage() {
     aboutText?: string;
     servicesText?: string;
   } | null;
+
+  const packages = (growthClient.packages as { name: string; price: string; description: string }[] | null) ?? [];
 
   return (
     <main className="flex flex-1 flex-col items-center gap-10 px-4 py-16">
@@ -127,6 +132,7 @@ export default async function OnboardPage() {
           aboutText: landingPage?.about_text ?? aiDraft?.aboutText ?? "",
           servicesText: landingPage?.services_text ?? aiDraft?.servicesText ?? "",
           ctaLabel: landingPage?.cta_label ?? "",
+          packages,
           metaPixelId: growthClient.meta_pixel_id ?? "",
           metaAdAccountId: growthClient.meta_ad_account_id ?? "",
         }}

@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { saveStep5, type OnboardState } from "@/app/onboard/actions";
+import { saveStep6, type OnboardState } from "@/app/onboard/actions";
 
-export function Step5MetaConnect({
+export function Step6MetaConnect({
   initialPixelId,
   initialAdAccountId,
   onSuccess,
@@ -12,7 +12,7 @@ export function Step5MetaConnect({
   initialAdAccountId: string;
   onSuccess: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep5, null);
+  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep6, null);
   const [hasMetaSetup, setHasMetaSetup] = useState<"yes" | "no" | null>(
     initialPixelId ? "yes" : null
   );

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
-import { step1Schema, step2Schema, step3Schema, step4Schema, step5Schema } from "@/lib/schemas/intake";
+import { step1Schema, step2Schema, step3Schema, step4Schema, step5Schema, step6Schema } from "@/lib/schemas/intake";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
 
 type FieldErrors = Record<string, string[]> & { _form?: string[] };
@@ -165,29 +165,73 @@ export async function saveStep4(_prevState: OnboardState, formData: FormData): P
       // form trigger, not a real navigation target — this anchor just
       // satisfies the NOT NULL constraint, it's not shown to visitors.
       cta_href: "#lead-form",
-      // No separate "publish" UI exists yet, so the page goes live the
-      // moment the client's account does. Foundation finishes right here;
-      // growth_engine/enterprise still have step 5, so their page publishes
-      // there instead, in step with their status flipping to active too.
-      published: growthClient.plan === "foundation",
+      // Never published here anymore — step 5 (packages) is now the finish
+      // line for Foundation, step 6 (Meta) for growth_engine/enterprise.
+      published: false,
     },
     { onConflict: "growth_client_id,slug" }
   );
 
   if (landingPageError) return { error: { _form: ["Could not save, please try again."] } };
 
-  // Foundation tier has no step 5 (no Meta connection to make), so the
-  // wizard ends here for them.
+  revalidatePath("/onboard");
+  return { success: true };
+}
+
+// Applies to every tier, unlike the Meta step — most small businesses have
+// some kind of pricing structure even if they don't run ads. Entirely
+// optional: an all-blank submit is valid, just stores an empty array.
+export async function saveStep5(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step5Schema.safeParse({
+    package1Name: formData.get("package1Name") || "",
+    package1Price: formData.get("package1Price") || "",
+    package1Description: formData.get("package1Description") || "",
+    package2Name: formData.get("package2Name") || "",
+    package2Price: formData.get("package2Price") || "",
+    package2Description: formData.get("package2Description") || "",
+    package3Name: formData.get("package3Name") || "",
+    package3Price: formData.get("package3Price") || "",
+    package3Description: formData.get("package3Description") || "",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  // A slot only counts as a real package if it has a name — a price or
+  // description typed into an otherwise-blank slot without a name isn't
+  // something we can render sensibly.
+  const packages = [
+    { name: parsed.data.package1Name, price: parsed.data.package1Price, description: parsed.data.package1Description },
+    { name: parsed.data.package2Name, price: parsed.data.package2Price, description: parsed.data.package2Description },
+    { name: parsed.data.package3Name, price: parsed.data.package3Price, description: parsed.data.package3Description },
+  ].filter((p) => p.name);
+
+  const admin = createAdminClient();
+  const { data: growthClient, error } = await admin
+    .from("growth_clients")
+    .update({ packages })
+    .eq("id", client.id)
+    .select("plan")
+    .single();
+
+  if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
+
+  // Foundation has no step 6 (no Meta connection to make), so the wizard
+  // ends here for them — this step is now their finish line.
   if (growthClient.plan === "foundation") {
     await admin.from("growth_clients").update({ status: "active" }).eq("id", client.id);
+    await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
   }
 
   revalidatePath("/onboard");
   return { success: true };
 }
 
-export async function saveStep5(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
-  const parsed = step5Schema.safeParse({
+export async function saveStep6(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step6Schema.safeParse({
     hasMetaSetup: formData.get("hasMetaSetup"),
     metaPixelId: formData.get("metaPixelId") || undefined,
     metaAdAccountId: formData.get("metaAdAccountId") || undefined,
@@ -223,8 +267,8 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
-  // Step 5 is the finish line for growth_engine/enterprise, so this is
-  // where their page goes live (foundation publishes back in step 4).
+  // Step 6 is the finish line for growth_engine/enterprise, so this is
+  // where their page goes live (foundation publishes back in step 5).
   await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
 
   revalidatePath("/onboard");

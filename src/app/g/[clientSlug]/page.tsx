@@ -8,6 +8,7 @@ import { ScrollReveal } from "@/components/landing/ScrollReveal";
 import { AboutSection } from "@/components/landing/AboutSection";
 import { ServicesList } from "@/components/landing/ServicesList";
 import { LocationMap } from "@/components/landing/LocationMap";
+import { PackagesSection } from "@/components/landing/PackagesSection";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
 // through this one route by slug, never a hardcoded page. params is a
@@ -31,7 +32,7 @@ export default async function ClientLandingPage({
 
   const { data: client } = await admin
     .from("growth_clients")
-    .select("id, business_name, brand_primary_color, brand_secondary_color, tagline, business_address")
+    .select("id, business_name, brand_primary_color, brand_secondary_color, tagline, business_address, packages")
     .eq("slug", clientSlug)
     .eq("status", "active")
     .single();
@@ -62,6 +63,27 @@ export default async function ClientLandingPage({
   const primaryColor = client.brand_primary_color ?? "#1081b8";
   const secondaryColor = client.brand_secondary_color ?? "#ffffff";
 
+  const packages = (client.packages as { name: string; price: string; description: string }[] | null) ?? [];
+
+  // Numbered eyebrows ("01 — About", "02 — What we offer", ...) only count
+  // sections that actually have content, so a client missing e.g. packages
+  // or testimonials still sees a clean sequence instead of a gap (01, 02,
+  // 04 — skipping 03 would read as a bug, not as "this section doesn't
+  // apply to this client").
+  const hasAbout = Boolean(landingPage.about_text);
+  const hasServices = Boolean(landingPage.services_text?.trim());
+  const hasPackages = packages.length > 0;
+  const hasTestimonials = (testimonials?.length ?? 0) > 0;
+  const hasLocation = Boolean(client.business_address) && client.business_address !== "Online";
+
+  let sectionCount = 0;
+  const nextNumber = (present: boolean) => (present ? String(++sectionCount).padStart(2, "0") : "");
+  const aboutNumber = nextNumber(hasAbout);
+  const servicesNumber = nextNumber(hasServices);
+  const packagesNumber = nextNumber(hasPackages);
+  const trustNumber = nextNumber(hasTestimonials);
+  const locationNumber = nextNumber(hasLocation);
+
   return (
     <main>
       <FbclidCapture />
@@ -80,16 +102,33 @@ export default async function ClientLandingPage({
           tagline={client.tagline}
           aboutText={landingPage.about_text}
           accentColor={primaryColor}
+          eyebrowNumber={aboutNumber}
         />
       </ScrollReveal>
       <ScrollReveal>
-        <ServicesList servicesText={landingPage.services_text} accentColor={primaryColor} />
+        <ServicesList
+          servicesText={landingPage.services_text}
+          accentColor={primaryColor}
+          eyebrowNumber={servicesNumber}
+        />
       </ScrollReveal>
       <ScrollReveal>
-        <TrustBadges testimonials={testimonials ?? []} accentColor={primaryColor} />
+        <PackagesSection
+          packages={packages}
+          ctaLabel={landingPage.cta_label}
+          accentColor={primaryColor}
+          eyebrowNumber={packagesNumber}
+        />
       </ScrollReveal>
       <ScrollReveal>
-        <LocationMap businessAddress={client.business_address} accentColor={primaryColor} />
+        <TrustBadges testimonials={testimonials ?? []} accentColor={primaryColor} eyebrowNumber={trustNumber} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <LocationMap
+          businessAddress={client.business_address}
+          accentColor={primaryColor}
+          eyebrowNumber={locationNumber}
+        />
       </ScrollReveal>
       <ScrollReveal>
         <LeadForm

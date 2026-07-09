@@ -12,7 +12,7 @@ const PROVINCES = [
   "Western Cape",
 ] as const;
 
-// CLAUDE.md Section 6 — five-step client intake wizard. Step 5 only applies
+// CLAUDE.md Section 6 — six-step client intake wizard. Step 6 only applies
 // to growth_engine / enterprise tier clients (Meta ad account connection).
 export const step1Schema = z.object({
   businessName: z.string().min(2),
@@ -45,10 +45,24 @@ export const step4Schema = z.object({
   ctaLabel: z.string().min(2).max(30),
 });
 
+// All optional, all tiers — most small businesses won't have named
+// packages, and typing nothing at all is a valid, expected submission.
+export const step5Schema = z.object({
+  package1Name: z.string().max(60).optional().or(z.literal("")),
+  package1Price: z.string().max(40).optional().or(z.literal("")),
+  package1Description: z.string().max(300).optional().or(z.literal("")),
+  package2Name: z.string().max(60).optional().or(z.literal("")),
+  package2Price: z.string().max(40).optional().or(z.literal("")),
+  package2Description: z.string().max(300).optional().or(z.literal("")),
+  package3Name: z.string().max(60).optional().or(z.literal("")),
+  package3Price: z.string().max(40).optional().or(z.literal("")),
+  package3Description: z.string().max(300).optional().or(z.literal("")),
+});
+
 // The client picks a lane before typing anything, rather than being handed
 // an "optional" text box with no explanation — that invited people who
 // don't know what a Pixel ID is to either freeze or type a guess.
-export const step5Schema = z.discriminatedUnion("hasMetaSetup", [
+export const step6Schema = z.discriminatedUnion("hasMetaSetup", [
   z.object({
     hasMetaSetup: z.literal("yes"),
     metaPixelId: z.string().regex(/^\d{10,20}$/, "Should be a 10-20 digit number"),

@@ -4,9 +4,11 @@
 export function ServicesList({
   servicesText,
   accentColor,
+  eyebrowNumber,
 }: {
   servicesText: string | null;
   accentColor: string;
+  eyebrowNumber: string;
 }) {
   const services = (servicesText ?? "")
     .split("\n")
@@ -19,7 +21,7 @@ export function ServicesList({
     <section id="services" className="border-b border-gray-100 bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
         <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
-          02 — What we offer
+          {eyebrowNumber} — What we offer
         </p>
         <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
           Everything you need, in one place.

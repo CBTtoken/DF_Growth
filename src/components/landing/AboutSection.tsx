@@ -6,11 +6,13 @@ export function AboutSection({
   tagline,
   aboutText,
   accentColor,
+  eyebrowNumber,
 }: {
   businessName: string;
   tagline: string | null;
   aboutText: string | null;
   accentColor: string;
+  eyebrowNumber: string;
 }) {
   if (!aboutText) return null;
 
@@ -20,7 +22,7 @@ export function AboutSection({
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
           <div>
             <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
-              01 — About
+              {eyebrowNumber} — About
             </p>
             <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
               About {businessName}

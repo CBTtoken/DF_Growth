@@ -11,9 +11,11 @@ type Testimonial = {
 export function TrustBadges({
   testimonials,
   accentColor,
+  eyebrowNumber,
 }: {
   testimonials: Testimonial[];
   accentColor: string;
+  eyebrowNumber: string;
 }) {
   return (
     <section className="border-b border-gray-100 bg-white">
@@ -27,7 +29,7 @@ export function TrustBadges({
       {testimonials.length > 0 && (
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
           <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
-            03 — What people say
+            {eyebrowNumber} — What people say
           </p>
           <div className="mt-10 flex w-full gap-4 overflow-x-auto pb-2">
             {testimonials.map((t) => (

@@ -6,8 +6,11 @@ import { Step1BusinessInfo } from "./steps/Step1BusinessInfo";
 import { Step2BusinessProfile } from "./steps/Step2BusinessProfile";
 import { Step3BrandKit } from "./steps/Step3BrandKit";
 import { Step4LandingCopy } from "./steps/Step4LandingCopy";
-import { Step5MetaConnect } from "./steps/Step5MetaConnect";
+import { Step5Packages } from "./steps/Step5Packages";
+import { Step6MetaConnect } from "./steps/Step6MetaConnect";
 import type { Tier } from "@/lib/paystack/plans";
+
+type PackageInitial = { name: string; price: string; description: string };
 
 export function OnboardWizard({
   startStep,
@@ -35,11 +38,12 @@ export function OnboardWizard({
     aboutText: string;
     servicesText: string;
     ctaLabel: string;
+    packages: PackageInitial[];
     metaPixelId: string;
     metaAdAccountId: string;
   };
 }) {
-  const totalSteps = tier === "foundation" ? 4 : 5;
+  const totalSteps = tier === "foundation" ? 5 : 6;
   const [step, setStep] = useState(Math.min(startStep, totalSteps + 1));
 
   if (step > totalSteps) {
@@ -98,11 +102,14 @@ export function OnboardWizard({
           onSuccess={() => setStep(5)}
         />
       )}
-      {step === 5 && tier !== "foundation" && (
-        <Step5MetaConnect
+      {step === 5 && (
+        <Step5Packages initialPackages={initialData.packages} onSuccess={() => setStep(6)} />
+      )}
+      {step === 6 && tier !== "foundation" && (
+        <Step6MetaConnect
           initialPixelId={initialData.metaPixelId}
           initialAdAccountId={initialData.metaAdAccountId}
-          onSuccess={() => setStep(6)}
+          onSuccess={() => setStep(7)}
         />
       )}
     </div>
