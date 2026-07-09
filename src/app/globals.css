@@ -3,9 +3,18 @@
 :root {
   --background: #ffffff;
   --foreground: #1f2937;
-  /* DigitalFlyer brand blue, per the real logo/hex — not a placeholder. */
+  /* DigitalFlyer brand blue, per the real logo/hex — the one non-negotiable
+     value. Everything else below is this project's own creative direction:
+     a deep near-black for confident, high-contrast sections (the opposite
+     of the pale blue-on-white every templated agency site defaults to),
+     and a warm amber to carry the "growth" energy the cool blue can't do
+     alone. */
   --brand: #1081b8;
   --brand-dark: #0b5f87;
+  --ink: #0b1220;
+  --ink-light: #1a2438;
+  --spark: #f2994a;
+  --spark-dark: #c9782f;
 }
 
 @theme inline {
@@ -13,8 +22,13 @@
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
   --color-brand-dark: var(--brand-dark);
+  --color-ink: var(--ink);
+  --color-ink-light: var(--ink-light);
+  --color-spark: var(--spark);
+  --color-spark-dark: var(--spark-dark);
   --font-sans: var(--font-geist-sans);
   --font-badge: var(--font-barlow-condensed);
+  --font-display: var(--font-barlow-condensed);
 }
 
 body {

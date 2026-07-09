@@ -23,14 +23,19 @@ export function TierCard({
 
   return (
     <div
-      className={`flex flex-col gap-4 rounded-lg border p-6 ${
-        highlighted ? "border-gray-900 shadow-sm" : "border-gray-200"
+      className={`flex flex-col gap-4 rounded-2xl bg-white p-6 ${
+        highlighted ? "border-2 border-brand shadow-lg" : "border border-gray-200"
       }`}
     >
+      {highlighted && (
+        <span className="w-fit rounded-full bg-spark px-3 py-1 text-xs font-semibold uppercase tracking-wide text-ink">
+          Most popular
+        </span>
+      )}
       <div>
-        <h3 className="text-lg font-semibold">{name}</h3>
-        <p className="text-2xl font-bold mt-1">{priceLabel}</p>
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <h3 className="font-display text-xl uppercase tracking-wide text-ink">{name}</h3>
+        <p className="mt-1 text-2xl font-bold text-ink">{priceLabel}</p>
+        <p className="mt-1 text-sm text-gray-500">{description}</p>
       </div>
 
       <ul className="flex flex-col gap-1 text-sm text-gray-700">
@@ -63,7 +68,7 @@ export function TierCard({
         <button
           type="submit"
           disabled={pending}
-          className="rounded bg-brand px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
         >
           {pending ? "Redirecting..." : "Get Started"}
         </button>
