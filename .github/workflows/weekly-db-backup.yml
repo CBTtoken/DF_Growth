@@ -1,0 +1,30 @@
+name: Weekly database backup
+
+# CLAUDE.md Section 12, Sprint 6 — not a substitute for Supabase's own
+# point-in-time recovery (Pro plan), but a free, independent copy that
+# doesn't depend on staying subscribed to that tier. Runs every Sunday at
+# 03:00 UTC (05:00 SAST), and can be triggered manually from the Actions tab.
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install postgresql-client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Dump database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges -F c -f backup.dump
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: db-backup-${{ github.run_id }}
+          path: backup.dump
+          retention-days: 90
