@@ -21,6 +21,8 @@ export async function sendCapiEvent({
   phone,
   fbclid,
   eventId,
+  eventSourceUrl,
+  clientUserAgent,
 }: {
   growthClientId: string;
   eventName: "Lead" | "Purchase" | "CompleteRegistration";
@@ -28,6 +30,12 @@ export async function sendCapiEvent({
   phone?: string;
   fbclid?: string | null;
   eventId: string;
+  // Both flagged "required parameter for Conversions API" in Meta's own
+  // setup wizard for better match quality — events still deliver without
+  // them (confirmed: got a real 200 during testing), but Meta's docs are
+  // explicit these materially improve attribution.
+  eventSourceUrl: string;
+  clientUserAgent: string;
 }) {
   const admin = createAdminClient();
 
@@ -56,10 +64,12 @@ export async function sendCapiEvent({
         event_time: Math.floor(Date.now() / 1000),
         event_id: eventId,
         action_source: "website",
+        event_source_url: eventSourceUrl,
         user_data: {
           em: email ? [sha256(email)] : undefined,
           ph: phone ? [sha256(phone)] : undefined,
           fbc: fbclid ? `fb.1.${Date.now()}.${fbclid}` : undefined,
+          client_user_agent: clientUserAgent,
         },
       },
     ],

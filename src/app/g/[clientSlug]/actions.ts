@@ -1,7 +1,7 @@
 "use server";
 
 import crypto from "crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { leadSchema } from "@/lib/schemas/lead";
 import { sendCapiEvent } from "@/lib/meta/capi";
@@ -12,6 +12,7 @@ type LeadState = { error?: Record<string, string[]> & { _form?: string[] }; succ
 export async function captureLead(
   growthClientId: string,
   landingPageId: string,
+  pageUrl: string,
   _prevState: LeadState,
   formData: FormData
 ): Promise<LeadState> {
@@ -29,6 +30,7 @@ export async function captureLead(
   const admin = createAdminClient();
   const cookieStore = await cookies();
   const fbclid = cookieStore.get("fbclid")?.value ?? null;
+  const userAgent = (await headers()).get("user-agent") ?? "";
 
   const { error } = await admin.from("leads").insert({
     growth_client_id: growthClientId,
@@ -60,6 +62,8 @@ export async function captureLead(
       phone: parsed.data.phone,
       fbclid,
       eventId,
+      eventSourceUrl: pageUrl,
+      clientUserAgent: userAgent,
     });
   } catch (err) {
     console.error("CAPI send failed", err);

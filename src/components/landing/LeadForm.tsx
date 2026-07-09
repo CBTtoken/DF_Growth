@@ -6,13 +6,15 @@ import { captureLead } from "@/app/g/[clientSlug]/actions";
 export function LeadForm({
   growthClientId,
   landingPageId,
+  pageUrl,
   primaryColor,
 }: {
   growthClientId: string;
   landingPageId: string;
+  pageUrl: string;
   primaryColor: string;
 }) {
-  const boundAction = captureLead.bind(null, growthClientId, landingPageId);
+  const boundAction = captureLead.bind(null, growthClientId, landingPageId, pageUrl);
   const [state, formAction, pending] = useActionState(boundAction, null);
 
   if (state?.success) {

@@ -69,6 +69,7 @@ export default async function ClientLandingPage({
       <LeadForm
         growthClientId={client.id}
         landingPageId={landingPage.id}
+        pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
         primaryColor={primaryColor}
       />
     </main>
