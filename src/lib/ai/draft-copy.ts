@@ -63,7 +63,10 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
     const block = message.content[0];
     if (block.type !== "text") return null;
 
-    const parsed = JSON.parse(block.text);
+    // Despite the system prompt saying not to, Claude sometimes wraps the
+    // JSON in a markdown code fence (```json ... ```) — strip it if present.
+    const jsonText = block.text.trim().replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+    const parsed = JSON.parse(jsonText);
     if (
       typeof parsed.headline !== "string" ||
       typeof parsed.subheadline !== "string" ||
