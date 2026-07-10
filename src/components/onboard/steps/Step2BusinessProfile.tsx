@@ -141,12 +141,12 @@ export function Step2BusinessProfile({
       {state?.error?.tagline && <p className="text-xs text-red-600">{state.error.tagline[0]}</p>}
 
       <label className={labelClass}>
-        Main products or services
+        Main products or services <span className="font-normal text-gray-400">(optional)</span>
         <textarea
           name="productsServices"
           defaultValue={initialProductsServices}
-          required
           maxLength={600}
+          placeholder="Leave blank if you don't have a fixed list — e.g. you just want people to get in touch"
           className={inputClass}
           rows={3}
         />

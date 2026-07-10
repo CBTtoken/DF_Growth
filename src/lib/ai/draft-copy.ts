@@ -81,6 +81,9 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
         "\"developed champions\", \"voted best...\")\n" +
         "- Any customer count, review count, or star rating\n" +
         "- Any service area not explicitly named in the input\n\n" +
+        "If no products/services list is given, leave servicesText as an empty " +
+        "string — some businesses (a consultant, a single-service contractor) just " +
+        "want people to get in touch, and don't have a list to invent one for.\n\n" +
         "If the input is sparse, the correct response is SHORT, plain copy that " +
         "only restates and lightly polishes what was actually said — not padded " +
         "with invented specifics to sound more impressive. A short honest headline " +
@@ -104,7 +107,7 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
             `Province: ${input.province}`,
             `Description (in the owner's own words): ${input.businessDescription}`,
             input.tagline ? `Tagline: ${input.tagline}` : null,
-            `Products/services: ${input.productsServices}`,
+            input.productsServices ? `Products/services: ${input.productsServices}` : null,
             input.additionalNotes ? `Additional notes: ${input.additionalNotes}` : null,
           ]
             .filter(Boolean)

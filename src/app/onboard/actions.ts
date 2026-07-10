@@ -55,7 +55,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
     businessAddress: formData.get("businessAddress"),
     businessDescription: formData.get("businessDescription"),
     tagline: formData.get("tagline") || "",
-    productsServices: formData.get("productsServices"),
+    productsServices: formData.get("productsServices") || "",
     additionalNotes: formData.get("additionalNotes") || "",
   });
   if (!parsed.success) {
@@ -74,7 +74,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
       business_address: parsed.data.businessAddress,
       business_description: parsed.data.businessDescription,
       tagline: parsed.data.tagline || null,
-      products_services: parsed.data.productsServices,
+      products_services: parsed.data.productsServices || null,
       additional_notes: parsed.data.additionalNotes || null,
     })
     .eq("id", client.id)
@@ -89,7 +89,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
     province: parsed.data.province,
     businessDescription: parsed.data.businessDescription,
     tagline: parsed.data.tagline ?? "",
-    productsServices: parsed.data.productsServices,
+    productsServices: parsed.data.productsServices ?? "",
     additionalNotes: parsed.data.additionalNotes ?? "",
   });
 
@@ -154,7 +154,7 @@ export async function saveStep4(_prevState: OnboardState, formData: FormData): P
     headline: formData.get("headline"),
     subheadline: formData.get("subheadline"),
     aboutText: formData.get("aboutText"),
-    servicesText: formData.get("servicesText"),
+    servicesText: formData.get("servicesText") || "",
     ctaLabel: formData.get("ctaLabel"),
   });
   if (!parsed.success) {
@@ -180,7 +180,7 @@ export async function saveStep4(_prevState: OnboardState, formData: FormData): P
       headline: parsed.data.headline,
       subheadline: parsed.data.subheadline,
       about_text: parsed.data.aboutText,
-      services_text: parsed.data.servicesText,
+      services_text: parsed.data.servicesText || null,
       cta_label: parsed.data.ctaLabel,
       // The rendered landing page (Section 7.1) treats the CTA as the lead
       // form trigger, not a real navigation target — this anchor just

@@ -90,13 +90,14 @@ export function Step4LandingCopy({
       {state?.error?.aboutText && <p className="text-xs text-red-600">{state.error.aboutText[0]}</p>}
 
       <label className={labelClass}>
-        Products / services
+        Products / services <span className="font-normal text-gray-400">(optional)</span>
         <textarea
           name="servicesText"
           defaultValue={initialServicesText}
-          required
           maxLength={600}
-          placeholder={"One per line, e.g.\nBridal hair styling\nColor correction\nKeratin treatments"}
+          placeholder={
+            "One per line, e.g.\nBridal hair styling\nColor correction\nKeratin treatments\n\nLeave blank if you'd rather people just get in touch"
+          }
           className={inputClass}
           rows={4}
         />

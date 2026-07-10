@@ -74,26 +74,34 @@ export function Step3BrandKit({
       )}
 
       {/* Live preview — a miniature of the real hero, so a color choice is
-          judged against how it actually renders, not just the picker swatch. */}
-      <div
-        className="flex flex-col items-center gap-2 rounded-2xl p-6 text-center"
-        style={{ backgroundColor: primaryColor }}
-      >
-        <span
-          className="rounded-full px-4 py-1.5 text-xs font-semibold"
-          style={{ backgroundColor: secondaryColor, color: ensureContrast(primaryColor, secondaryColor) }}
-        >
-          Get Started
-        </span>
-        <p className="text-lg font-bold" style={{ color: heroTextColor }}>
-          Your headline goes here
+          judged against how it actually renders, not just the picker swatch.
+          Explicitly labeled as a mockup after this confused a real client in
+          testing ("what is this for?") — the sample text isn't obviously
+          fake without it. */}
+      <div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          Preview — not your real content, just showing how these colors will look
         </p>
-      </div>
-      <div className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3">
-        <span className="font-mono text-xs uppercase tracking-widest" style={{ color: safeAccent }}>
-          01 — About
-        </span>
-        <span className="text-xs text-gray-400">on a white section, like most of the page</span>
+        <div
+          className="flex flex-col items-center gap-2 rounded-2xl p-6 text-center"
+          style={{ backgroundColor: primaryColor }}
+        >
+          <span
+            className="rounded-full px-4 py-1.5 text-xs font-semibold"
+            style={{ backgroundColor: secondaryColor, color: ensureContrast(primaryColor, secondaryColor) }}
+          >
+            Get Started
+          </span>
+          <p className="text-lg font-bold" style={{ color: heroTextColor }}>
+            Example headline
+          </p>
+        </div>
+        <div className="mt-2 flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3">
+          <span className="font-mono text-xs uppercase tracking-widest" style={{ color: safeAccent }}>
+            01 — About
+          </span>
+          <span className="text-xs text-gray-400">on a white section, like most of the page</span>
+        </div>
       </div>
       {wasAdjusted && (
         <p className="text-xs text-gray-500">

@@ -115,15 +115,8 @@ export default async function OnboardPage() {
     : null;
 
   return (
-    <main className="relative flex flex-1 flex-col items-center gap-10 overflow-hidden bg-gray-50 px-4 py-16">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 size-[42rem] -translate-x-1/2 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle at center, var(--brand), transparent 70%)" }}
-      />
-      <div className="relative">
-        <BrandHeader />
-      </div>
+    <main className="flex flex-1 flex-col items-center gap-10 bg-gray-50 px-4 py-16">
+      <BrandHeader />
       <OnboardWizard
         startStep={startStep}
         tier={tier}

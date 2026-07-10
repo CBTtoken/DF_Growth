@@ -28,7 +28,10 @@ export const step2Schema = z.object({
   businessAddress: z.string().min(2).max(200),
   businessDescription: z.string().min(10).max(600),
   tagline: z.string().max(80).optional().or(z.literal("")),
-  productsServices: z.string().min(2).max(600),
+  // Optional — a business that just wants people to get in touch (a
+  // consultant, a single-service contractor) doesn't necessarily have a
+  // products/services list to give, and shouldn't be forced to invent one.
+  productsServices: z.string().max(600).optional().or(z.literal("")),
   additionalNotes: z.string().max(600).optional().or(z.literal("")),
 });
 
@@ -41,7 +44,10 @@ export const step4Schema = z.object({
   headline: z.string().min(5).max(80),
   subheadline: z.string().min(10).max(160),
   aboutText: z.string().min(10).max(600),
-  servicesText: z.string().min(2).max(600),
+  // Optional for the same reason as step2's productsServices — a
+  // contact-first business isn't forced to invent a services list, and
+  // ServicesList already renders nothing when this is empty.
+  servicesText: z.string().max(600).optional().or(z.literal("")),
   ctaLabel: z.string().min(2).max(30),
 });
 
