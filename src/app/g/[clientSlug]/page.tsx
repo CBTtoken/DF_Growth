@@ -33,7 +33,9 @@ export default async function ClientLandingPage({
 
   const { data: client } = await admin
     .from("growth_clients")
-    .select("id, business_name, brand_primary_color, brand_secondary_color, tagline, business_address, packages")
+    .select(
+      "id, business_name, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path"
+    )
     .eq("slug", clientSlug)
     .eq("status", "active")
     .single();
@@ -75,6 +77,10 @@ export default async function ClientLandingPage({
 
   const packages = (client.packages as { name: string; price: string; description: string }[] | null) ?? [];
 
+  const logoUrl = client.logo_path
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
+    : null;
+
   // Numbered eyebrows ("01 — About", "02 — What we offer", ...) only count
   // sections that actually have content, so a client missing e.g. packages
   // or testimonials still sees a clean sequence instead of a gap (01, 02,
@@ -100,6 +106,7 @@ export default async function ClientLandingPage({
       <ConversionHero
         businessName={client.business_name}
         tagline={client.tagline}
+        logoUrl={logoUrl}
         headline={landingPage.headline}
         subheadline={landingPage.subheadline ?? ""}
         ctaLabel={landingPage.cta_label}

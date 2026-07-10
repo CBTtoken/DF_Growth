@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { shade, readableTextOn, ensureContrast } from "@/lib/color";
 
 // CLAUDE.md Section 7 rule 1 (five-second rule): logo, one-line value prop,
@@ -9,6 +10,7 @@ import { shade, readableTextOn, ensureContrast } from "@/lib/color";
 export function ConversionHero({
   businessName,
   tagline,
+  logoUrl,
   headline,
   subheadline,
   ctaLabel,
@@ -17,6 +19,7 @@ export function ConversionHero({
 }: {
   businessName: string;
   tagline: string | null;
+  logoUrl: string | null;
   headline: string;
   subheadline: string;
   ctaLabel: string;
@@ -64,12 +67,18 @@ export function ConversionHero({
 
       <div className="relative mx-auto flex max-w-5xl items-center justify-between px-5 py-5 sm:px-8">
         <span className="flex items-center gap-2 text-sm font-semibold tracking-tight" style={{ color: textColor }}>
-          <span
-            className="grid size-8 place-items-center rounded-md font-mono text-xs font-bold"
-            style={{ backgroundColor: `${textColor}26` }}
-          >
-            {initials}
-          </span>
+          {logoUrl ? (
+            <span className="grid size-8 place-items-center overflow-hidden rounded-md bg-white/90 p-1">
+              <Image src={logoUrl} alt={businessName} width={28} height={28} className="size-full object-contain" />
+            </span>
+          ) : (
+            <span
+              className="grid size-8 place-items-center rounded-md font-mono text-xs font-bold"
+              style={{ backgroundColor: `${textColor}26` }}
+            >
+              {initials}
+            </span>
+          )}
           {businessName}
         </span>
         <a

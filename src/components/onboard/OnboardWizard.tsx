@@ -33,6 +33,7 @@ export function OnboardWizard({
     additionalNotes: string;
     brandPrimaryColor: string;
     brandSecondaryColor: string;
+    logoUrl: string | null;
     headline: string;
     subheadline: string;
     aboutText: string;
@@ -96,6 +97,7 @@ export function OnboardWizard({
         <Step3BrandKit
           initialPrimaryColor={initialData.brandPrimaryColor}
           initialSecondaryColor={initialData.brandSecondaryColor}
+          initialLogoUrl={initialData.logoUrl}
           onSuccess={() => setStep(4)}
         />
       )}

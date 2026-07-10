@@ -56,7 +56,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, province, industry, business_address, business_description, tagline, products_services, additional_notes, ai_landing_draft, brand_primary_color, brand_secondary_color, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
+      "business_name, contact_email, province, industry, business_address, business_description, tagline, products_services, additional_notes, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -110,6 +110,10 @@ export default async function OnboardPage() {
 
   const packages = (growthClient.packages as { name: string; price: string; description: string }[] | null) ?? [];
 
+  const logoUrl = growthClient.logo_path
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${growthClient.logo_path}`
+    : null;
+
   return (
     <main className="relative flex flex-1 flex-col items-center gap-10 overflow-hidden bg-gray-50 px-4 py-16">
       <div
@@ -140,6 +144,7 @@ export default async function OnboardPage() {
           // DigitalFlyer's own blue instead.
           brandPrimaryColor: growthClient.brand_primary_color ?? "#1081b8",
           brandSecondaryColor: growthClient.brand_secondary_color ?? "#ffffff",
+          logoUrl,
           headline: landingPage?.headline ?? aiDraft?.headline ?? "",
           subheadline: landingPage?.subheadline ?? aiDraft?.subheadline ?? "",
           aboutText: landingPage?.about_text ?? aiDraft?.aboutText ?? "",

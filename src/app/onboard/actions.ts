@@ -114,11 +114,32 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
   if (client.error) return { error: { _form: [client.error] } };
 
   const admin = createAdminClient();
+
+  // Logo is optional and handled outside the Zod schema (a File isn't a
+  // string field like everything else here) — only touch logo_path if a
+  // real file came through, so resubmitting this step without picking a
+  // new file never clears an already-uploaded logo.
+  const logo = formData.get("logo");
+  let logoPath: string | null = null;
+  if (logo instanceof File && logo.size > 0) {
+    const ext = logo.name.split(".").pop() || "png";
+    const path = `${client.id}/logo.${ext}`;
+    const { error: uploadError } = await admin.storage
+      .from("client-logos")
+      .upload(path, logo, { contentType: logo.type, upsert: true });
+
+    if (uploadError) {
+      return { error: { _form: ["Could not upload logo — try a smaller file (under 2MB) or a different format."] } };
+    }
+    logoPath = path;
+  }
+
   const { error } = await admin
     .from("growth_clients")
     .update({
       brand_primary_color: parsed.data.brandPrimaryColor,
       brand_secondary_color: parsed.data.brandSecondaryColor,
+      ...(logoPath ? { logo_path: logoPath } : {}),
     })
     .eq("id", client.id);
 
