@@ -38,9 +38,9 @@ export function Step4LandingCopy({
           <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-brand/20 bg-brand/5 px-4 py-3">
             <span aria-hidden className="text-lg">✨</span>
             <p className="text-sm font-medium text-gray-700">
-              <span className="font-semibold text-brand">We&apos;ve drafted this for you</span> based on what you
-              told us in the last step. Nothing&apos;s final — read through each field below and edit anything
-              before continuing.
+              <span className="font-semibold text-brand">We&apos;ve drafted this for you</span>
+              {" "}based on what you told us in the last step. Nothing&apos;s final — read through each field
+              below and edit anything before continuing.
             </p>
           </div>
         ) : (
