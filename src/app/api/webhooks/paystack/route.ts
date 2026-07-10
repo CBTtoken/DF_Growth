@@ -71,28 +71,30 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  // generateLink creates the auth user but does not send an email itself —
-  // for the test/pilot phase we log the action_link so it can be copied
-  // manually. Wiring a transactional email send (Resend, per CLAUDE.md
-  // Section 4) is required before this goes to real customers.
-  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
-    type: "magiclink",
-    email,
-    options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard` },
+  // Found via a real customer signup never receiving an email: generateLink
+  // only ever *generates* a link, it never dispatches mail — the previous
+  // version of this code just logged the link to Vercel's server logs,
+  // invisible to the actual customer. inviteUserByEmail creates the auth
+  // user the same way but also sends it through Supabase's built-in mailer
+  // (confirmed live: `confirmation_sent_at` comes back populated). The
+  // email itself is generic/unbranded since custom SMTP isn't configured —
+  // acceptable for the pilot phase, a Resend-based branded email is still
+  // the real long-term fix (CLAUDE.md Section 4) but this unblocks every
+  // real signup in the meantime with a one-method change.
+  const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard`,
   });
 
-  if (linkError) {
-    console.error("Failed to generate magic link", linkError);
-  } else if (linkData?.user) {
+  if (inviteError) {
+    console.error("Failed to invite user by email", inviteError);
+  } else if (inviteData?.user) {
     const { error: memberError } = await admin.from("growth_members").insert({
-      user_id: linkData.user.id,
+      user_id: inviteData.user.id,
       growth_client_id: inserted.id,
       role: "growth_owner",
     });
     if (memberError) {
       console.error("Failed to create growth_member", memberError);
-    } else {
-      console.log(`Magic link for ${email}: ${linkData.properties?.action_link}`);
     }
   }
 
