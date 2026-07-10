@@ -31,6 +31,8 @@ export function OnboardWizard({
     tagline: string;
     productsServices: string;
     additionalNotes: string;
+    facebookUrl: string;
+    instagramUrl: string;
     brandPrimaryColor: string;
     brandSecondaryColor: string;
     logoUrl: string | null;
@@ -100,6 +102,8 @@ export function OnboardWizard({
           initialTagline={initialData.tagline}
           initialProductsServices={initialData.productsServices}
           initialAdditionalNotes={initialData.additionalNotes}
+          initialFacebookUrl={initialData.facebookUrl}
+          initialInstagramUrl={initialData.instagramUrl}
           onSuccess={() => setStep(3)}
         />
       )}

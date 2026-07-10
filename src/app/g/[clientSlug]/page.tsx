@@ -9,6 +9,7 @@ import { AboutSection } from "@/components/landing/AboutSection";
 import { ServicesList } from "@/components/landing/ServicesList";
 import { LocationMap } from "@/components/landing/LocationMap";
 import { PackagesSection } from "@/components/landing/PackagesSection";
+import { StorySection } from "@/components/landing/StorySection";
 import { ensureContrast } from "@/lib/color";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
@@ -34,7 +35,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path"
+      "id, business_name, contact_email, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -87,6 +88,7 @@ export default async function ClientLandingPage({
   // 04 — skipping 03 would read as a bug, not as "this section doesn't
   // apply to this client").
   const hasAbout = Boolean(landingPage.about_text);
+  const hasStory = Boolean(client.additional_notes);
   const hasServices = Boolean(landingPage.services_text?.trim());
   const hasPackages = packages.length > 0;
   const hasTestimonials = (testimonials?.length ?? 0) > 0;
@@ -95,6 +97,7 @@ export default async function ClientLandingPage({
   let sectionCount = 0;
   const nextNumber = (present: boolean) => (present ? String(++sectionCount).padStart(2, "0") : "");
   const aboutNumber = nextNumber(hasAbout);
+  const storyNumber = nextNumber(hasStory);
   const servicesNumber = nextNumber(hasServices);
   const packagesNumber = nextNumber(hasPackages);
   const trustNumber = nextNumber(hasTestimonials);
@@ -112,6 +115,8 @@ export default async function ClientLandingPage({
         ctaLabel={landingPage.cta_label}
         primaryColor={primaryColor}
         secondaryColor={secondaryColor}
+        facebookUrl={client.facebook_url}
+        instagramUrl={client.instagram_url}
       />
       <ScrollReveal>
         <AboutSection
@@ -121,6 +126,9 @@ export default async function ClientLandingPage({
           accentColor={accentColor}
           eyebrowNumber={aboutNumber}
         />
+      </ScrollReveal>
+      <ScrollReveal>
+        <StorySection storyText={client.additional_notes} accentColor={accentColor} eyebrowNumber={storyNumber} />
       </ScrollReveal>
       <ScrollReveal>
         <ServicesList
@@ -153,8 +161,16 @@ export default async function ClientLandingPage({
           landingPageId={landingPage.id}
           pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
           primaryColor={primaryColor}
+          contactEmail={client.contact_email}
+          businessName={client.business_name}
         />
       </ScrollReveal>
+      <footer className="bg-white py-6 text-center text-xs text-gray-400">
+        © {new Date().getFullYear()} {client.business_name} ·{" "}
+        <a href="/dashboard" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          Manage this page
+        </a>
+      </footer>
     </main>
   );
 }

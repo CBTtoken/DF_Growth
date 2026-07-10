@@ -9,13 +9,17 @@ export function LeadForm({
   landingPageId,
   pageUrl,
   primaryColor,
+  contactEmail,
+  businessName,
 }: {
   growthClientId: string;
   landingPageId: string;
   pageUrl: string;
   primaryColor: string;
+  contactEmail: string | null;
+  businessName: string;
 }) {
-  const boundAction = captureLead.bind(null, growthClientId, landingPageId, pageUrl);
+  const boundAction = captureLead.bind(null, growthClientId, landingPageId, pageUrl, businessName, contactEmail);
   const [state, formAction, pending] = useActionState(boundAction, null);
   const buttonTextColor = readableTextOn(primaryColor);
   // The success checkmark icon renders as text color on a near-white
@@ -37,7 +41,19 @@ export function LeadForm({
                 ✓
               </span>
               <h2 className="mt-2 text-2xl font-bold text-gray-900">You&apos;re in.</h2>
-              <p className="max-w-md text-gray-500">We&apos;ll be in touch shortly.</p>
+              <p className="max-w-md text-gray-500">
+                Thanks for reaching out — someone will be in touch shortly.
+                {contactEmail && " Need urgent assistance in the meantime?"}
+              </p>
+              {contactEmail && (
+                <a
+                  href={`mailto:${contactEmail}`}
+                  className="mt-1 text-sm font-semibold underline-offset-4 hover:underline"
+                  style={{ color: primaryColor }}
+                >
+                  {contactEmail}
+                </a>
+              )}
             </div>
           ) : (
             <>

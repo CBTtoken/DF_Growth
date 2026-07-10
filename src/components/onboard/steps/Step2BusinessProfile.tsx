@@ -27,6 +27,8 @@ export function Step2BusinessProfile({
   initialTagline,
   initialProductsServices,
   initialAdditionalNotes,
+  initialFacebookUrl,
+  initialInstagramUrl,
   onSuccess,
 }: {
   initialProvince: string;
@@ -36,6 +38,8 @@ export function Step2BusinessProfile({
   initialTagline: string;
   initialProductsServices: string;
   initialAdditionalNotes: string;
+  initialFacebookUrl: string;
+  initialInstagramUrl: string;
   onSuccess: () => void;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep2, null);
@@ -156,19 +160,49 @@ export function Step2BusinessProfile({
       )}
 
       <label className={labelClass}>
-        Anything else worth knowing? <span className="font-normal text-gray-400">(optional)</span>
+        Your story <span className="font-normal text-gray-400">(optional)</span>
         <textarea
           name="additionalNotes"
           defaultValue={initialAdditionalNotes}
           maxLength={600}
-          placeholder="Your story, what makes you stand out, anything you'd tell a new customer"
+          placeholder="Family-owned since 2015, what makes you different, anything you'd tell a new customer face to face"
           className={inputClass}
           rows={2}
         />
+        <span className="text-xs font-normal text-gray-400">
+          Shown on your page as its own &quot;Our Story&quot; section, word for word — specific details like a
+          founding year or a personal story belong here, not in the description above.
+        </span>
       </label>
       {state?.error?.additionalNotes && (
         <p className="text-xs text-red-600">{state.error.additionalNotes[0]}</p>
       )}
+
+      <label className={labelClass}>
+        Facebook page <span className="font-normal text-gray-400">(optional)</span>
+        <input
+          type="url"
+          name="facebookUrl"
+          defaultValue={initialFacebookUrl}
+          maxLength={300}
+          placeholder="https://facebook.com/yourbusiness"
+          className={inputClass}
+        />
+      </label>
+      {state?.error?.facebookUrl && <p className="text-xs text-red-600">{state.error.facebookUrl[0]}</p>}
+
+      <label className={labelClass}>
+        Instagram page <span className="font-normal text-gray-400">(optional)</span>
+        <input
+          type="url"
+          name="instagramUrl"
+          defaultValue={initialInstagramUrl}
+          maxLength={300}
+          placeholder="https://instagram.com/yourbusiness"
+          className={inputClass}
+        />
+      </label>
+      {state?.error?.instagramUrl && <p className="text-xs text-red-600">{state.error.instagramUrl[0]}</p>}
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 
       <button

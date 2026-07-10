@@ -56,7 +56,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, province, industry, business_address, business_description, tagline, products_services, additional_notes, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
+      "business_name, contact_email, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -131,6 +131,8 @@ export default async function OnboardPage() {
           tagline: growthClient.tagline ?? "",
           productsServices: growthClient.products_services ?? "",
           additionalNotes: growthClient.additional_notes ?? "",
+          facebookUrl: growthClient.facebook_url ?? "",
+          instagramUrl: growthClient.instagram_url ?? "",
           // Generic starting point for a new client's own color picker — not
           // tied to any particular client's brand. Was FortisLex's navy/steel
           // (a copy-paste leftover from an unrelated project), fixed to use

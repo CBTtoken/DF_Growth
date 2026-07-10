@@ -35,9 +35,14 @@ export function Step4LandingCopy({
       <div>
         <h2 className="text-xl font-bold tracking-tight text-ink">Your landing page</h2>
         {hasAiDraft ? (
-          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 text-xs font-semibold text-brand">
-            ✨ Drafted for you — edit anything before continuing
-          </span>
+          <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-brand/20 bg-brand/5 px-4 py-3">
+            <span aria-hidden className="text-lg">✨</span>
+            <p className="text-sm font-medium text-gray-700">
+              <span className="font-semibold text-brand">We&apos;ve drafted this for you</span> based on what you
+              told us in the last step. Nothing&apos;s final — read through each field below and edit anything
+              before continuing.
+            </p>
+          </div>
         ) : (
           <p className="mt-1 text-sm text-gray-500">
             One clear line on what you do, one line on why it matters, one call to action.

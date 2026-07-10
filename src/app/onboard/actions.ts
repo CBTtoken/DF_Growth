@@ -57,6 +57,8 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
     tagline: formData.get("tagline") || "",
     productsServices: formData.get("productsServices") || "",
     additionalNotes: formData.get("additionalNotes") || "",
+    facebookUrl: formData.get("facebookUrl") || "",
+    instagramUrl: formData.get("instagramUrl") || "",
   });
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
@@ -76,6 +78,8 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
       tagline: parsed.data.tagline || null,
       products_services: parsed.data.productsServices || null,
       additional_notes: parsed.data.additionalNotes || null,
+      facebook_url: parsed.data.facebookUrl || null,
+      instagram_url: parsed.data.instagramUrl || null,
     })
     .eq("id", client.id)
     .select("business_name")

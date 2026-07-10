@@ -5,6 +5,7 @@ import { cookies, headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { leadSchema } from "@/lib/schemas/lead";
 import { sendCapiEvent } from "@/lib/meta/capi";
+import { sendEmail } from "@/lib/email/resend";
 
 type LeadState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -13,6 +14,8 @@ export async function captureLead(
   growthClientId: string,
   landingPageId: string,
   pageUrl: string,
+  businessName: string,
+  ownerEmail: string | null,
   _prevState: LeadState,
   formData: FormData
 ): Promise<LeadState> {
@@ -44,6 +47,31 @@ export async function captureLead(
 
   if (error) {
     return { error: { _form: ["Could not save your details, please try again."] } };
+  }
+
+  // Found via real UAT: leads were being saved with no way for the business
+  // owner to ever find out one came in — no dashboard view read them back
+  // and nothing notified anyone. This is best-effort on purpose: a failed
+  // notification email must never make the visitor think their submission
+  // failed, since it didn't — the lead is already saved above.
+  if (ownerEmail) {
+    try {
+      await sendEmail({
+        to: ownerEmail,
+        subject: `New lead: ${parsed.data.name}`,
+        html: `
+          <p>You've got a new lead from your DigitalFlyer Growth page, <strong>${businessName}</strong>.</p>
+          <p>
+            <strong>Name:</strong> ${parsed.data.name}<br>
+            <strong>Email:</strong> ${parsed.data.email}<br>
+            <strong>Phone:</strong> ${parsed.data.phone ?? "not given"}
+          </p>
+          <p>View all your leads in your <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard">dashboard</a>.</p>
+        `,
+      });
+    } catch (err) {
+      console.error("Lead notification email failed", err);
+    }
   }
 
   // Deliberately awaited, not fire-and-forget. Tried a bare unawaited

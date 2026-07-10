@@ -24,35 +24,50 @@ export default async function DashboardPage() {
   }
 
   const admin = createAdminClient();
-  const [{ data: growthClient }, { data: testimonials }, { data: assets }, { data: secret }, { data: capiEvents }] =
-    await Promise.all([
-      admin
-        .from("growth_clients")
-        .select("business_name, slug, plan, meta_pixel_id, meta_setup_requested_help")
-        .eq("id", client.id)
-        .single(),
-      admin
-        .from("testimonials")
-        .select("id, author_name, quote, rating, created_at")
-        .eq("growth_client_id", client.id)
-        .order("created_at", { ascending: false }),
-      admin
-        .from("generated_assets")
-        .select("id, image_path, template, created_at")
-        .eq("growth_client_id", client.id)
-        .order("created_at", { ascending: false }),
-      admin
-        .from("growth_client_secrets")
-        .select("growth_client_id")
-        .eq("growth_client_id", client.id)
-        .maybeSingle(),
-      admin
-        .from("capi_events")
-        .select("id, event_name, response_status, sent_at")
-        .eq("growth_client_id", client.id)
-        .order("sent_at", { ascending: false })
-        .limit(10),
-    ]);
+  const [
+    { data: growthClient },
+    { data: testimonials },
+    { data: assets },
+    { data: secret },
+    { data: capiEvents },
+    { data: leads },
+  ] = await Promise.all([
+    admin
+      .from("growth_clients")
+      .select("business_name, slug, plan, meta_pixel_id, meta_setup_requested_help")
+      .eq("id", client.id)
+      .single(),
+    admin
+      .from("testimonials")
+      .select("id, author_name, quote, rating, created_at")
+      .eq("growth_client_id", client.id)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("generated_assets")
+      .select("id, image_path, template, created_at")
+      .eq("growth_client_id", client.id)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("growth_client_secrets")
+      .select("growth_client_id")
+      .eq("growth_client_id", client.id)
+      .maybeSingle(),
+    admin
+      .from("capi_events")
+      .select("id, event_name, response_status, sent_at")
+      .eq("growth_client_id", client.id)
+      .order("sent_at", { ascending: false })
+      .limit(10),
+    // Found via real UAT: leads were being captured with no way for a
+    // client to ever see them — this is the first read of the leads table
+    // anywhere in the codebase.
+    admin
+      .from("leads")
+      .select("id, name, email, phone, created_at")
+      .eq("growth_client_id", client.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
+  ]);
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
   // Found via real UAT: this used to also require meta_pixel_id to be set,
@@ -87,6 +102,32 @@ export default async function DashboardPage() {
             )}
           </div>
         </div>
+
+        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight text-ink">Leads ({leads?.length ?? 0})</h2>
+          <ul className="flex flex-col gap-2">
+            {(leads ?? []).map((l) => (
+              <li
+                key={l.id}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm"
+              >
+                <div>
+                  <p className="font-medium text-gray-900">{l.name}</p>
+                  <p className="text-gray-500">
+                    {l.email}
+                    {l.phone ? ` · ${l.phone}` : ""}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-400">{new Date(l.created_at).toLocaleString()}</span>
+              </li>
+            ))}
+            {(!leads || leads.length === 0) && (
+              <p className="text-sm text-gray-400">
+                No leads yet — this fills in as soon as someone contacts you through your page.
+              </p>
+            )}
+          </ul>
+        </section>
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Testimonials</h2>

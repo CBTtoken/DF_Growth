@@ -33,6 +33,8 @@ export const step2Schema = z.object({
   // products/services list to give, and shouldn't be forced to invent one.
   productsServices: z.string().max(600).optional().or(z.literal("")),
   additionalNotes: z.string().max(600).optional().or(z.literal("")),
+  facebookUrl: z.string().url("Should be a full link, e.g. https://facebook.com/yourpage").max(300).optional().or(z.literal("")),
+  instagramUrl: z.string().url("Should be a full link, e.g. https://instagram.com/yourhandle").max(300).optional().or(z.literal("")),
 });
 
 export const step3Schema = z.object({
