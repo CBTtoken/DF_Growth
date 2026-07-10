@@ -1,4 +1,4 @@
-import { shade, readableTextOn } from "@/lib/color";
+import { shade, readableTextOn, ensureContrast } from "@/lib/color";
 
 // CLAUDE.md Section 7 rule 1 (five-second rule): logo, one-line value prop,
 // one-line "why it matters", one high-contrast CTA — nothing else. Server
@@ -25,6 +25,11 @@ export function ConversionHero({
 }) {
   const textColor = readableTextOn(primaryColor);
   const glow = shade(primaryColor, 0.3);
+  // The CTA pill uses secondaryColor as its background with primaryColor as
+  // text — found live during testing that this pair can be just as
+  // unreadable as any other raw-color-as-text case if both colors are
+  // light (e.g. a light secondary with a light/bright primary).
+  const ctaTextColor = ensureContrast(primaryColor, secondaryColor);
 
   // Every client's headline is arbitrary free text, not a fixed string we
   // can hand-pick a word from — underlining the last word is a rule that
@@ -70,7 +75,7 @@ export function ConversionHero({
         <a
           href="#lead-form"
           className="rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5"
-          style={{ backgroundColor: secondaryColor, color: primaryColor }}
+          style={{ backgroundColor: secondaryColor, color: ctaTextColor }}
         >
           {ctaLabel}
         </a>
@@ -106,7 +111,7 @@ export function ConversionHero({
           <a
             href="#lead-form"
             className="rounded-full px-8 py-3.5 text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
-            style={{ backgroundColor: secondaryColor, color: primaryColor }}
+            style={{ backgroundColor: secondaryColor, color: ctaTextColor }}
           >
             {ctaLabel}
           </a>

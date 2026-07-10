@@ -9,6 +9,7 @@ import { AboutSection } from "@/components/landing/AboutSection";
 import { ServicesList } from "@/components/landing/ServicesList";
 import { LocationMap } from "@/components/landing/LocationMap";
 import { PackagesSection } from "@/components/landing/PackagesSection";
+import { ensureContrast } from "@/lib/color";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
 // through this one route by slug, never a hardcoded page. params is a
@@ -63,6 +64,15 @@ export default async function ClientLandingPage({
   const primaryColor = client.brand_primary_color ?? "#1081b8";
   const secondaryColor = client.brand_secondary_color ?? "#ffffff";
 
+  // The client's raw color is only ever safe to use as a BACKGROUND (hero,
+  // lead-form section, CTA buttons) — readableTextOn() already picks a safe
+  // white/dark text color for those. Every section below renders on a white
+  // card/page background instead, using the brand color as small text/icon
+  // color directly — found live during testing that a light client color
+  // (e.g. bright yellow) is then nearly invisible there. This variant is
+  // guaranteed readable on white specifically, for exactly those uses.
+  const accentColor = ensureContrast(primaryColor, "#ffffff");
+
   const packages = (client.packages as { name: string; price: string; description: string }[] | null) ?? [];
 
   // Numbered eyebrows ("01 — About", "02 — What we offer", ...) only count
@@ -101,14 +111,14 @@ export default async function ClientLandingPage({
           businessName={client.business_name}
           tagline={client.tagline}
           aboutText={landingPage.about_text}
-          accentColor={primaryColor}
+          accentColor={accentColor}
           eyebrowNumber={aboutNumber}
         />
       </ScrollReveal>
       <ScrollReveal>
         <ServicesList
           servicesText={landingPage.services_text}
-          accentColor={primaryColor}
+          accentColor={accentColor}
           eyebrowNumber={servicesNumber}
         />
       </ScrollReveal>
@@ -116,17 +126,17 @@ export default async function ClientLandingPage({
         <PackagesSection
           packages={packages}
           ctaLabel={landingPage.cta_label}
-          accentColor={primaryColor}
+          accentColor={accentColor}
           eyebrowNumber={packagesNumber}
         />
       </ScrollReveal>
       <ScrollReveal>
-        <TrustBadges testimonials={testimonials ?? []} accentColor={primaryColor} eyebrowNumber={trustNumber} />
+        <TrustBadges testimonials={testimonials ?? []} accentColor={accentColor} eyebrowNumber={trustNumber} />
       </ScrollReveal>
       <ScrollReveal>
         <LocationMap
           businessAddress={client.business_address}
-          accentColor={primaryColor}
+          accentColor={accentColor}
           eyebrowNumber={locationNumber}
         />
       </ScrollReveal>

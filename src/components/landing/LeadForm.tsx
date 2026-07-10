@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { captureLead } from "@/app/g/[clientSlug]/actions";
-import { readableTextOn } from "@/lib/color";
+import { readableTextOn, ensureContrast } from "@/lib/color";
 
 export function LeadForm({
   growthClientId,
@@ -18,6 +18,10 @@ export function LeadForm({
   const boundAction = captureLead.bind(null, growthClientId, landingPageId, pageUrl);
   const [state, formAction, pending] = useActionState(boundAction, null);
   const buttonTextColor = readableTextOn(primaryColor);
+  // The success checkmark icon renders as text color on a near-white
+  // (10%-alpha) tinted background — same unsafe-on-white pattern as the
+  // rest of the page's non-hero sections.
+  const iconColor = ensureContrast(primaryColor, "#ffffff");
 
   return (
     <section id="lead-form" className="scroll-mt-8" style={{ backgroundColor: primaryColor }}>
@@ -28,7 +32,7 @@ export function LeadForm({
               <span
                 aria-hidden
                 className="grid size-12 place-items-center rounded-full text-2xl"
-                style={{ backgroundColor: `${primaryColor}1a`, color: primaryColor }}
+                style={{ backgroundColor: `${primaryColor}1a`, color: iconColor }}
               >
                 ✓
               </span>
