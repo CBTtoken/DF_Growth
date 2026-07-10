@@ -54,16 +54,26 @@ export function OnboardWizard({
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>
         <h2 className="text-2xl font-bold tracking-tight text-ink">You&apos;re all set</h2>
         <p className="max-w-sm text-sm text-gray-500">
-          Your account is active and your landing page is live right now.
+          Your account is active and your landing page is live right now. Your dashboard is
+          where you&apos;ll manage testimonials, download your social assets, and check your ad
+          tracking connection.
         </p>
-        <a
-          href={pageUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
-        >
-          View your page
-        </a>
+        <div className="mt-2 flex flex-col items-center gap-3 sm:flex-row">
+          <a
+            href="/dashboard"
+            className="inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
+          >
+            Go to your dashboard
+          </a>
+          <a
+            href={pageUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-full border border-gray-200 px-6 py-3 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+          >
+            View your page
+          </a>
+        </div>
         <p className="text-xs text-gray-400">{pageUrl}</p>
       </div>
     );

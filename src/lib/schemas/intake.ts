@@ -43,7 +43,7 @@ export const step3Schema = z.object({
 export const step4Schema = z.object({
   headline: z.string().min(5).max(80),
   subheadline: z.string().min(10).max(160),
-  aboutText: z.string().min(10).max(600),
+  aboutText: z.string().min(10).max(800),
   // Optional for the same reason as step2's productsServices — a
   // contact-first business isn't forced to invent a services list, and
   // ServicesList already renders nothing when this is empty.

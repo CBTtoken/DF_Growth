@@ -84,10 +84,29 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
         "If no products/services list is given, leave servicesText as an empty " +
         "string — some businesses (a consultant, a single-service contractor) just " +
         "want people to get in touch, and don't have a list to invent one for.\n\n" +
-        "If the input is sparse, the correct response is SHORT, plain copy that " +
-        "only restates and lightly polishes what was actually said — not padded " +
-        "with invented specifics to sound more impressive. A short honest headline " +
-        "beats a longer one with a made-up detail.\n\n" +
+        "None of this means the copy should be thin. Grounded is not the same as " +
+        "generic: every fact you ARE given (industry, province, area, what they " +
+        "actually do day to day, who it's for, what makes their approach different) " +
+        "should be used, specifically, not summarized away into a vague sentence. " +
+        "Compare a weak version — 'We provide quality plumbing services in " +
+        "Pretoria' — against a strong version that does the same job with the same " +
+        "facts: 'Based in Pretoria, we handle everything from burst geysers to full " +
+        "bathroom re-piping, with someone who actually answers the phone when you " +
+        "call.' The strong version isn't longer because it invented anything — it's " +
+        "longer because it USED what it was given instead of compressing it into a " +
+        "generic label. aboutText specifically should read like a real paragraph a " +
+        "business owner would be proud to have written about themselves: 3-5 " +
+        "sentences, specific, warm, addressed to the customer reading it (\"you\"), " +
+        "not a two-line stub. If the input truly is just one or two words (e.g. " +
+        "\"plumber\" with no description at all), it's fine to stay shorter — the " +
+        "floor is 'don't invent facts to sound impressive', not 'always write the " +
+        "minimum possible'.\n\n" +
+        "If the input is sparse, the correct response restates and polishes what " +
+        "was actually said — not padded with invented specifics to sound more " +
+        "impressive. A short honest headline beats a longer one with a made-up " +
+        "detail. But 'sparse input' and 'thin output' are not the same axis: even " +
+        "modest input usually contains enough (industry + area + who it's for) to " +
+        "write a real paragraph, not just a slogan restated as a sentence.\n\n" +
         "The client's own tagline, if given, is displayed separately elsewhere on " +
         "the page — the headline must say something DIFFERENT from the tagline, " +
         "not repeat it verbatim or with only capitalization changed. Synthesize the " +
@@ -96,8 +115,11 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
         "Reply with ONLY a JSON object, no markdown fences, no commentary, matching " +
         "exactly this shape: " +
         '{"headline": string (max 60 chars), "subheadline": string (max 160 chars), ' +
-        '"aboutText": string (2-3 sentences), "servicesText": string (each service ' +
-        "on its own line, short phrases, no bullets or numbering)}.",
+        '"aboutText": string (3-5 sentences, specific and detailed per the guidance ' +
+        "above — do not default to 2 sentences when the input supports more, but " +
+        'keep the total under 700 characters so it isn\'t cut off), ' +
+        '"servicesText": string (each service on its own line, short phrases, no ' +
+        "bullets or numbering)}.",
       messages: [
         {
           role: "user",
@@ -138,7 +160,10 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
     const draft: DraftOutput = {
       headline: parsed.headline.slice(0, 80),
       subheadline: parsed.subheadline.slice(0, 160),
-      aboutText: parsed.aboutText.slice(0, 600),
+      // 800, not 700 (the prompt's own target) — headroom so an over-length
+      // response still gets cut at a word-ish boundary instead of exactly at
+      // the model's own target, which was truncating mid-word in testing.
+      aboutText: parsed.aboutText.slice(0, 800),
       servicesText: parsed.servicesText.slice(0, 600),
     };
 

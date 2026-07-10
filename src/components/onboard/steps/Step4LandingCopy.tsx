@@ -81,10 +81,10 @@ export function Step4LandingCopy({
           name="aboutText"
           defaultValue={initialAboutText}
           required
-          maxLength={600}
-          placeholder="A couple of sentences visitors can trust — who you are and what makes you worth choosing."
+          maxLength={800}
+          placeholder="A few sentences visitors can trust — who you are, what you actually do, and what makes you worth choosing."
           className={inputClass}
-          rows={3}
+          rows={5}
         />
       </label>
       {state?.error?.aboutText && <p className="text-xs text-red-600">{state.error.aboutText[0]}</p>}

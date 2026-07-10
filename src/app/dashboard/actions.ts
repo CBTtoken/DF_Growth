@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { testimonialSchema } from "@/lib/schemas/testimonial";
 import { metaTokenSchema } from "@/lib/schemas/meta-token";
+import { metaIdsSchema } from "@/lib/schemas/meta-ids";
 import { encrypt } from "@/lib/crypto";
 
 type DashboardState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
@@ -102,6 +103,41 @@ export async function saveMetaToken(
     },
     { onConflict: "growth_client_id" }
   );
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// Found via real UAT: a client who picked "I don't know / need help" during
+// onboarding (Step6MetaConnect) had no way to add these IDs later even after
+// finding them, and no confirmation anywhere that their help request had
+// actually been captured — the dashboard's Meta section was hidden entirely
+// whenever meta_pixel_id was null, which was every "I don't know" client,
+// forever. This gives them a self-serve path alongside the "we'll reach out"
+// promise, rather than that promise being the only option.
+export async function saveMetaIds(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const parsed = metaIdsSchema.safeParse({
+    metaPixelId: formData.get("metaPixelId"),
+    metaAdAccountId: formData.get("metaAdAccountId"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("growth_clients")
+    .update({
+      meta_pixel_id: parsed.data.metaPixelId,
+      meta_ad_account_id: parsed.data.metaAdAccountId,
+      meta_setup_requested_help: false,
+    })
+    .eq("id", client.id);
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 

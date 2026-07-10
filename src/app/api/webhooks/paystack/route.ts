@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { slugify } from "@/lib/slugify";
 
@@ -85,11 +86,59 @@ export async function POST(request: Request) {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard`,
   });
 
+  let ownerUserId: string | null = null;
+
   if (inviteError) {
-    console.error("Failed to invite user by email", inviteError);
+    if (inviteError.code === "email_exists") {
+      // Found via a real second signup on an email that already had an
+      // account (same person buying a second tier, or a repeat test):
+      // inviteUserByEmail only works for brand-new emails and fails with
+      // this exact code otherwise, and the previous code just logged that
+      // error and stopped — leaving a real, paid growth_clients row with no
+      // linked user and no email ever sent, silently stranding the
+      // customer. A user can legitimately belong to more than one
+      // growth_client (see the comment in onboard/page.tsx), so the correct
+      // behavior is to link their existing account to this new client, not
+      // reject the signup. inviteUserByEmail can't message an existing
+      // user, but signInWithOtp can — it emails a real working sign-in link
+      // through the same Supabase mailer, whether the account is new or not.
+      // admin.listUsers() has no email filter in this SDK version, so hit
+      // the REST endpoint directly (it does support ?email=).
+      const lookupRes = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
+        {
+          headers: {
+            apikey: process.env.SUPABASE_SECRET_KEY!,
+            Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
+          },
+        }
+      );
+      const lookupData = await lookupRes.json();
+      ownerUserId = lookupData?.users?.[0]?.id ?? null;
+
+      if (ownerUserId) {
+        const anon = createSupabaseClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+        );
+        const { error: otpError } = await anon.auth.signInWithOtp({
+          email,
+          options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard` },
+        });
+        if (otpError) {
+          console.error("Failed to send sign-in link to existing user", otpError);
+        }
+      }
+    } else {
+      console.error("Failed to invite user by email", inviteError);
+    }
   } else if (inviteData?.user) {
+    ownerUserId = inviteData.user.id;
+  }
+
+  if (ownerUserId) {
     const { error: memberError } = await admin.from("growth_members").insert({
-      user_id: inviteData.user.id,
+      user_id: ownerUserId,
       growth_client_id: inserted.id,
       role: "growth_owner",
     });

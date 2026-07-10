@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { AddTestimonialForm } from "@/components/dashboard/AddTestimonialForm";
 import { MetaTokenForm } from "@/components/dashboard/MetaTokenForm";
+import { MetaIdsForm } from "@/components/dashboard/MetaIdsForm";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 
 export default async function DashboardPage() {
@@ -25,7 +26,11 @@ export default async function DashboardPage() {
   const admin = createAdminClient();
   const [{ data: growthClient }, { data: testimonials }, { data: assets }, { data: secret }, { data: capiEvents }] =
     await Promise.all([
-      admin.from("growth_clients").select("business_name, slug, plan, meta_pixel_id").eq("id", client.id).single(),
+      admin
+        .from("growth_clients")
+        .select("business_name, slug, plan, meta_pixel_id, meta_setup_requested_help")
+        .eq("id", client.id)
+        .single(),
       admin
         .from("testimonials")
         .select("id, author_name, quote, rating, created_at")
@@ -50,7 +55,12 @@ export default async function DashboardPage() {
     ]);
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
-  const showMetaSection = growthClient?.plan !== "foundation" && !!growthClient?.meta_pixel_id;
+  // Found via real UAT: this used to also require meta_pixel_id to be set,
+  // which meant a client who picked "I don't know / need help" during
+  // onboarding never saw this section again — no confirmation their request
+  // was captured, no way to self-serve if they later found the details.
+  // Foundation clients still never see this; they never connect Meta at all.
+  const showMetaSection = growthClient?.plan !== "foundation";
   const pageUrl = growthClient?.slug ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/g/${growthClient.slug}` : null;
 
   return (
@@ -132,36 +142,51 @@ export default async function DashboardPage() {
         {showMetaSection && (
           <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-bold tracking-tight text-ink">Meta ad tracking</h2>
-            <MetaTokenForm hasToken={!!secret} />
 
-            <div className="flex flex-col gap-2">
-              <h3 className="text-sm font-semibold text-gray-700">Recent delivery status</h3>
-              <ul className="flex flex-col gap-1.5">
-                {(capiEvents ?? []).map((e) => (
-                  <li
-                    key={e.id}
-                    className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5 text-xs"
-                  >
-                    <span className="font-medium text-gray-700">{e.event_name}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 font-semibold ${
-                        e.response_status === 200
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {e.response_status ?? "pending"}
-                    </span>
-                    <span className="text-gray-400">{new Date(e.sent_at).toLocaleString()}</span>
-                  </li>
-                ))}
-                {(!capiEvents || capiEvents.length === 0) && (
-                  <p className="text-xs text-gray-400">
-                    No events sent yet — this fills in once your landing page starts getting leads.
-                  </p>
-                )}
-              </ul>
-            </div>
+            {!growthClient?.meta_pixel_id && growthClient?.meta_setup_requested_help && (
+              <p className="rounded-xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-gray-700">
+                You told us during signup you&apos;d like help connecting your Meta account — our
+                team will be in touch. If you find your Pixel ID and Ad Account ID before then,
+                add them yourself below and this section will switch on right away.
+              </p>
+            )}
+
+            {!growthClient?.meta_pixel_id ? (
+              <MetaIdsForm />
+            ) : (
+              <>
+                <MetaTokenForm hasToken={!!secret} />
+
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-sm font-semibold text-gray-700">Recent delivery status</h3>
+                  <ul className="flex flex-col gap-1.5">
+                    {(capiEvents ?? []).map((e) => (
+                      <li
+                        key={e.id}
+                        className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-2.5 text-xs"
+                      >
+                        <span className="font-medium text-gray-700">{e.event_name}</span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 font-semibold ${
+                            e.response_status === 200
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {e.response_status ?? "pending"}
+                        </span>
+                        <span className="text-gray-400">{new Date(e.sent_at).toLocaleString()}</span>
+                      </li>
+                    ))}
+                    {(!capiEvents || capiEvents.length === 0) && (
+                      <p className="text-xs text-gray-400">
+                        No events sent yet — this fills in once your landing page starts getting leads.
+                      </p>
+                    )}
+                  </ul>
+                </div>
+              </>
+            )}
           </section>
         )}
       </div>
