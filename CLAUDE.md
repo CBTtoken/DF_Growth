@@ -103,9 +103,11 @@ Same standing stack as the rest of DigitalFlyer SA, no new vendors:
 
 ## 4.1 Domain and routing strategy
 
-DigitalFlyer Growth is a fully separate project with its own domain, not a subdomain or subfolder of the existing DigitalFlyer.co.za platform. That platform continues to run independently; Growth shares the brand name but not the domain, codebase, or infrastructure. Domain name itself is TBD, register it as its own asset (a `.co.za` domain matching the sub-brand name is the obvious default, e.g. `digitalflyergrowth.co.za`) and point it at the `digitalflyer-growth` Vercel project through Cloudflare, same pattern as any other client domain in your stack.
+**Superseded 2026-07-09 by the DigitalFlyer SA Master Technical Build Scope** (Section 1): Growth's domain is `growth.digitalflyer.co.za`, a subdomain of the core `digitalflyer.co.za` domain — not the fully separate own-domain plan originally described below. No live custom domain existed for Growth at the time of that decision, so there's nothing to migrate; this is a target to point Growth's domain at once it's set up, not a completed cutover. Codebase and Supabase project stay separate regardless (Phase 1 federation, see the master doc's Section 2) — only the domain strategy changed.
 
-If DigitalFlyer.co.za and DigitalFlyer Growth are ever merged into one platform later, that becomes a domain migration exercise at that point (redirects, DNS changes), not something to design around now.
+Original plan, kept for context: DigitalFlyer Growth is a fully separate project, not a subdomain or subfolder of the existing DigitalFlyer.co.za platform. That platform continues to run independently; Growth shares the brand name but not the codebase or infrastructure. Point the `digitalflyer-growth` Vercel project at `growth.digitalflyer.co.za` through Cloudflare, same pattern as any other subdomain in your stack, rather than registering Growth's own separate domain as originally planned.
+
+If DigitalFlyer.co.za and DigitalFlyer Growth are ever merged into one codebase later (Phase 2 consolidation), that becomes a migration exercise at that point (data, not just DNS), not something to design around now.
 
 ## 5. Data model
 
