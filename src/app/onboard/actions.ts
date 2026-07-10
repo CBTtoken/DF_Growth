@@ -17,6 +17,7 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
   const parsed = step1Schema.safeParse({
     businessName: formData.get("businessName"),
     contactEmail: formData.get("contactEmail"),
+    contactPhone: formData.get("contactPhone") || "",
   });
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
@@ -31,6 +32,7 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
     .update({
       business_name: parsed.data.businessName,
       contact_email: parsed.data.contactEmail,
+      contact_phone: parsed.data.contactPhone || null,
     })
     .eq("id", client.id);
 

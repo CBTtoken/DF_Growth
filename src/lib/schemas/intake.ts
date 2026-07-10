@@ -17,6 +17,10 @@ const PROVINCES = [
 export const step1Schema = z.object({
   businessName: z.string().min(2),
   contactEmail: z.string().email(),
+  // Optional — shown alongside contactEmail when a lead's success state
+  // reveals contact details, so a visitor has a faster/more urgent option
+  // than email if the business has a WhatsApp or cell number to share.
+  contactPhone: z.string().max(30).optional().or(z.literal("")),
 });
 
 // Mirrors the fields already captured by the WhatsApp onboarding flow —

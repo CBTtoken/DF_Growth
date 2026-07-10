@@ -6,10 +6,12 @@ import { saveStep1, type OnboardState } from "@/app/onboard/actions";
 export function Step1BusinessInfo({
   initialBusinessName,
   initialContactEmail,
+  initialContactPhone,
   onSuccess,
 }: {
   initialBusinessName: string;
   initialContactEmail: string;
+  initialContactPhone: string;
   onSuccess: () => void;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep1, null);
@@ -51,6 +53,23 @@ export function Step1BusinessInfo({
       </label>
       {state?.error?.contactEmail && (
         <p className="text-xs text-red-600">{state.error.contactEmail[0]}</p>
+      )}
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+        WhatsApp or cell number <span className="font-normal text-gray-400">(optional)</span>
+        <input
+          type="tel"
+          name="contactPhone"
+          defaultValue={initialContactPhone}
+          placeholder="e.g. 082 123 4567"
+          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+        />
+        <span className="text-xs font-normal text-gray-400">
+          Shown to a visitor after they contact you, as a faster way to reach you than email
+        </span>
+      </label>
+      {state?.error?.contactPhone && (
+        <p className="text-xs text-red-600">{state.error.contactPhone[0]}</p>
       )}
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 

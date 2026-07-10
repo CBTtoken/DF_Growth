@@ -10,6 +10,7 @@ export function LeadForm({
   pageUrl,
   primaryColor,
   contactEmail,
+  contactPhone,
   businessName,
 }: {
   growthClientId: string;
@@ -17,6 +18,7 @@ export function LeadForm({
   pageUrl: string;
   primaryColor: string;
   contactEmail: string | null;
+  contactPhone: string | null;
   businessName: string;
 }) {
   const boundAction = captureLead.bind(null, growthClientId, landingPageId, pageUrl, businessName, contactEmail);
@@ -43,17 +45,28 @@ export function LeadForm({
               <h2 className="mt-2 text-2xl font-bold text-gray-900">You&apos;re in.</h2>
               <p className="max-w-md text-gray-500">
                 Thanks for reaching out — someone will be in touch shortly.
-                {contactEmail && " Need urgent assistance in the meantime?"}
+                {(contactEmail || contactPhone) && " Need urgent assistance in the meantime?"}
               </p>
-              {contactEmail && (
-                <a
-                  href={`mailto:${contactEmail}`}
-                  className="mt-1 text-sm font-semibold underline-offset-4 hover:underline"
-                  style={{ color: primaryColor }}
-                >
-                  {contactEmail}
-                </a>
-              )}
+              <div className="mt-1 flex flex-col items-center gap-1">
+                {contactPhone && (
+                  <a
+                    href={`tel:${contactPhone.replace(/\s+/g, "")}`}
+                    className="text-sm font-semibold underline-offset-4 hover:underline"
+                    style={{ color: primaryColor }}
+                  >
+                    {contactPhone}
+                  </a>
+                )}
+                {contactEmail && (
+                  <a
+                    href={`mailto:${contactEmail}`}
+                    className="text-sm font-semibold underline-offset-4 hover:underline"
+                    style={{ color: primaryColor }}
+                  >
+                    {contactEmail}
+                  </a>
+                )}
+              </div>
             </div>
           ) : (
             <>

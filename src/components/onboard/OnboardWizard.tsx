@@ -24,6 +24,7 @@ export function OnboardWizard({
   initialData: {
     businessName: string;
     contactEmail: string;
+    contactPhone: string;
     province: string;
     industry: string;
     businessAddress: string;
@@ -90,6 +91,7 @@ export function OnboardWizard({
         <Step1BusinessInfo
           initialBusinessName={initialData.businessName}
           initialContactEmail={initialData.contactEmail}
+          initialContactPhone={initialData.contactPhone}
           onSuccess={() => setStep(2)}
         />
       )}

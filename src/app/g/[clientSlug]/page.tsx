@@ -35,7 +35,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url"
+      "id, business_name, contact_email, contact_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -162,6 +162,7 @@ export default async function ClientLandingPage({
           pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
           primaryColor={primaryColor}
           contactEmail={client.contact_email}
+          contactPhone={client.contact_phone}
           businessName={client.business_name}
         />
       </ScrollReveal>

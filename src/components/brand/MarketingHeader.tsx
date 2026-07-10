@@ -12,12 +12,17 @@ export function MarketingHeader() {
         <span className="h-6 w-px bg-gray-300" aria-hidden />
         <span className="font-badge text-lg uppercase tracking-widest text-brand">Growth</span>
       </Link>
-      <a
-        href="#pricing"
-        className="rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
-      >
-        See pricing
-      </a>
+      <div className="flex items-center gap-4">
+        <Link href="/login" className="text-sm font-medium text-gray-600 transition hover:text-ink">
+          Log in
+        </Link>
+        <a
+          href="#pricing"
+          className="rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
+        >
+          See pricing
+        </a>
+      </div>
     </header>
   );
 }
