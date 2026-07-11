@@ -40,6 +40,7 @@ export async function provisionGrowthClient({
         plan,
         status,
         paystack_reference: paystackReference,
+        contact_email: email,
       })
       .select("id, slug")
       .single();

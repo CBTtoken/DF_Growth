@@ -55,7 +55,12 @@ export async function startCheckout(
       return { error: { _form: ["Could not start your trial, please try again."] } };
     }
 
-    redirect("/onboard");
+    // Not /onboard directly — that just shows whatever session happens to
+    // already be active in this browser, which is wrong the moment it
+    // isn't a brand new one (see the comment on this page for the real
+    // bug this caused). The new user isn't actually logged in until they
+    // click the magic link that was just emailed to them.
+    redirect("/pricing/trial-started");
   }
 
   const planCode = planCodeForTier(tier, interval);
