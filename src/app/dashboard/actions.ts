@@ -318,6 +318,11 @@ export async function uploadClientPhoto(_prevState: DashboardState, formData: Fo
   }
 
   revalidatePath("/dashboard");
+  // Sprint 1, Build Item 11: this action is now also called from the
+  // onboarding wizard's photo step, not just the dashboard — revalidating
+  // only /dashboard meant a photo uploaded mid-onboarding never actually
+  // appeared until the next full page load.
+  revalidatePath("/onboard");
 
   if (failed > 0) {
     return { error: { _form: [`${failed} photo${failed > 1 ? "s" : ""} couldn't be uploaded, try a smaller file or a different format.`] } };
@@ -358,6 +363,7 @@ export async function deleteClientPhoto(_prevState: DashboardState, formData: Fo
   if (error) return { error: { _form: ["Could not delete photo, please try again."] } };
 
   revalidatePath("/dashboard");
+  revalidatePath("/onboard");
   return { success: true };
 }
 

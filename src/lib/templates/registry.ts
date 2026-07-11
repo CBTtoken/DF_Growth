@@ -8,7 +8,7 @@ import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, 
 // ordering, it never duplicates their data-fetching or empty-state logic
 // (every one of them already renders nothing when its underlying field is
 // empty, e.g. no packages typed in onboarding = no packages section).
-export type SectionKey = "story" | "about" | "services" | "packages" | "trust" | "location" | "howItWorks";
+export type SectionKey = "story" | "about" | "services" | "packages" | "trust" | "gallery" | "location" | "howItWorks";
 
 export type TemplateId =
   | "single-action"
@@ -55,7 +55,7 @@ export const templates: TemplateMeta[] = [
     description: "Bold text locked left, a large photo showcase right.",
     icon: Columns3,
     hero: "split",
-    sections: ["story", "about", "services", "packages", "trust", "location"],
+    sections: ["story", "about", "services", "packages", "trust", "gallery", "location"],
   },
   {
     id: "feature-grid",
@@ -64,7 +64,7 @@ export const templates: TemplateMeta[] = [
     description: "Leads with your services and packages for businesses with a lot to offer.",
     icon: Grid3x3,
     hero: "default",
-    sections: ["services", "packages", "about", "story", "trust", "location"],
+    sections: ["services", "packages", "about", "story", "trust", "gallery", "location"],
   },
   {
     id: "storyteller",
@@ -73,7 +73,7 @@ export const templates: TemplateMeta[] = [
     description: "A founder's-story feel — your own words take center stage.",
     icon: BookOpen,
     hero: "editorial",
-    sections: ["story", "about", "services", "packages", "trust", "location"],
+    sections: ["story", "about", "services", "packages", "trust", "gallery", "location"],
   },
   {
     id: "dark-mode",
@@ -82,7 +82,7 @@ export const templates: TemplateMeta[] = [
     description: "Sleek premium dark hero with a glow in your own brand color.",
     icon: Moon,
     hero: "dark",
-    sections: ["about", "story", "services", "packages", "trust", "location"],
+    sections: ["about", "story", "services", "packages", "trust", "gallery", "location"],
   },
   {
     id: "social-proof",
@@ -91,7 +91,7 @@ export const templates: TemplateMeta[] = [
     description: "Your testimonials land right below the hero, before anything else.",
     icon: Star,
     hero: "compact",
-    sections: ["trust", "about", "services", "packages", "story", "location"],
+    sections: ["trust", "about", "services", "packages", "story", "gallery", "location"],
   },
   {
     id: "step-by-step",
@@ -100,7 +100,7 @@ export const templates: TemplateMeta[] = [
     description: "A simple 3-step process up top, ending in a clear call to get in touch.",
     icon: ListChecks,
     hero: "default",
-    sections: ["howItWorks", "about", "services", "packages", "trust", "location"],
+    sections: ["howItWorks", "about", "services", "packages", "trust", "gallery", "location"],
   },
   {
     id: "vibrant-geo",
@@ -109,7 +109,7 @@ export const templates: TemplateMeta[] = [
     description: "Overlapping color blocks in your own brand colors, never a fixed palette.",
     icon: Shapes,
     hero: "geometric",
-    sections: ["about", "story", "services", "packages", "trust", "location"],
+    sections: ["about", "story", "services", "packages", "trust", "gallery", "location"],
   },
   {
     id: "multi-product",
@@ -118,7 +118,7 @@ export const templates: TemplateMeta[] = [
     description: "Your packages and pricing take the spotlight, right after the hero.",
     icon: ShoppingBag,
     hero: "default",
-    sections: ["packages", "services", "about", "trust", "story", "location"],
+    sections: ["packages", "services", "about", "trust", "story", "gallery", "location"],
     ctaHref: "#packages",
   },
   {
@@ -128,7 +128,7 @@ export const templates: TemplateMeta[] = [
     description: "A tidy \"what's included\" checklist framed like a product screenshot.",
     icon: MonitorSmartphone,
     hero: "checklist",
-    sections: ["about", "story", "services", "packages", "trust", "location"],
+    sections: ["about", "story", "services", "packages", "trust", "gallery", "location"],
   },
 ];
 

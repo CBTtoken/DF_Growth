@@ -14,6 +14,7 @@ import { AboutSection } from "@/components/landing/AboutSection";
 import { ServicesList } from "@/components/landing/ServicesList";
 import { LocationMap } from "@/components/landing/LocationMap";
 import { PackagesSection } from "@/components/landing/PackagesSection";
+import { PhotoGallerySection } from "@/components/landing/PhotoGallerySection";
 import { StorySection } from "@/components/landing/StorySection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
@@ -115,7 +116,7 @@ export default async function ClientLandingPage({
   // ~1.8s higher than a page with no DB calls at all, roughly what one
   // extra serial Supabase round-trip costs).
   const supabase = await createServerClient();
-  const [{ data: landingPage }, { data: testimonials }, { data: authData }] = await Promise.all([
+  const [{ data: landingPage }, { data: testimonials }, { data: authData }, { data: photos }] = await Promise.all([
     admin
       .from("landing_pages")
       .select("id, headline, subheadline, about_text, services_text, cta_label")
@@ -124,7 +125,17 @@ export default async function ClientLandingPage({
       .single(),
     admin.from("testimonials").select("id, author_name, quote, rating").eq("growth_client_id", client.id).limit(5),
     supabase.auth.getUser(),
+    // Sprint 1, Build Item 10: fetched unconditionally now (previously only
+    // queried, limited to 1, for the Left-Heavy Split hero) — the dedicated
+    // gallery section needs the full ordered list regardless of template.
+    admin
+      .from("client_photos")
+      .select("id, storage_path")
+      .eq("growth_client_id", client.id)
+      .order("position", { ascending: true }),
   ]);
+
+  const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
 
   if (!landingPage) return notFound();
 
@@ -178,6 +189,10 @@ export default async function ClientLandingPage({
     services: Boolean(landingPage.services_text?.trim()),
     packages: packages.length > 0,
     trust: (testimonials?.length ?? 0) > 0,
+    // Sprint 1, Build Item 10: matches PhotoGallerySection's own 2-photo
+    // minimum — kept in sync here so the eyebrow numbering sequence never
+    // reserves a number for a section that won't actually render.
+    gallery: (photos?.length ?? 0) >= 2,
     location: Boolean(client.business_address) && client.business_address !== "Online",
     howItWorks: true,
   };
@@ -195,6 +210,7 @@ export default async function ClientLandingPage({
     const servicesNumber = nextNumber(hasContent.services);
     const packagesNumber = nextNumber(hasContent.packages);
     const trustNumber = nextNumber(hasContent.trust);
+    const galleryNumber = nextNumber(hasContent.gallery);
     const locationNumber = nextNumber(hasContent.location);
 
     return (
@@ -254,6 +270,14 @@ export default async function ClientLandingPage({
           <TrustBadges testimonials={testimonials ?? []} accentColor={accentColor} eyebrowNumber={trustNumber} />
         </ScrollReveal>
         <ScrollReveal>
+          <PhotoGallerySection
+            photos={photos ?? []}
+            storageBase={photosStorageBase}
+            accentColor={accentColor}
+            eyebrowNumber={galleryNumber}
+          />
+        </ScrollReveal>
+        <ScrollReveal>
           <LocationMap
             businessAddress={client.business_address}
             accentColor={accentColor}
@@ -290,23 +314,17 @@ export default async function ClientLandingPage({
   }
 
   // Only the Left-Heavy Split hero needs a real photo. A client's own
-  // uploaded photo (client_photos, ordered by position — the first one
-  // uploaded is the "primary" shown everywhere) always wins over a stock
-  // photo; Pexels search by industry is only the fallback for clients who
-  // haven't uploaded anything yet.
+  // uploaded photo (the first one uploaded is the "primary", shown
+  // everywhere) always wins over a stock photo; Pexels search by industry
+  // is only the fallback for clients who haven't uploaded anything yet.
+  // Reuses the same fetched list the gallery section below uses, rather
+  // than a second query for just the first row.
   let photoUrl: string | null = null;
   if (template.hero === "split") {
-    const { data: ownPhoto } = await admin
-      .from("client_photos")
-      .select("storage_path")
-      .eq("growth_client_id", client.id)
-      .order("position", { ascending: true })
-      .limit(1)
-      .maybeSingle();
-
-    photoUrl = ownPhoto
-      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos/${ownPhoto.storage_path}`
-      : await getIndustryPhoto(client.industry || client.business_name);
+    photoUrl =
+      photos && photos.length > 0
+        ? `${photosStorageBase}/${photos[0].storage_path}`
+        : await getIndustryPhoto(client.industry || client.business_name);
   }
 
   const checklistItems = ((landingPage.services_text as string | null) ?? "")
@@ -360,6 +378,15 @@ export default async function ClientLandingPage({
         );
       case "trust":
         return <TrustBadges testimonials={testimonials ?? []} accentColor={accentColor} eyebrowNumber={number} />;
+      case "gallery":
+        return (
+          <PhotoGallerySection
+            photos={photos ?? []}
+            storageBase={photosStorageBase}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+          />
+        );
       case "location":
         return (
           <LocationMap businessAddress={client.business_address} accentColor={accentColor} eyebrowNumber={number} />

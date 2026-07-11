@@ -88,25 +88,38 @@ export default async function OnboardPage() {
     .eq("slug", growthClient.slug)
     .maybeSingle();
 
+  // Sprint 1, Build Item 11: photos, ordered by position (first uploaded is
+  // the "primary", shown first) — same table/ordering the dashboard's
+  // gallery already uses.
+  const { data: photos } = await admin
+    .from("client_photos")
+    .select("id, storage_path")
+    .eq("growth_client_id", membership.growth_client_id)
+    .order("position", { ascending: true });
+
   const tier = growthClient.plan as Tier;
 
   // Resume where they left off: business_name always exists already (set at
   // checkout), so contact_email — the field step 1 actually adds — is what
   // marks step 1 as done. business_description is step 2's own field, so it
-  // marks step 2 done regardless of whether the AI draft succeeded.
-  // growthClient.template !== null marks step 4 (the template picker) done —
+  // marks step 2 done regardless of whether the AI draft succeeded. Step 4
+  // (photo upload) has no field of its own to check — it's skippable and
+  // writes nothing when skipped, so there's no direct "done" marker; a
+  // client sitting exactly at step 4 is caught correctly anyway, since
+  // brand_primary_color (step 3) is set but template (step 5) isn't yet.
+  // growthClient.template !== null marks step 5 (the template picker) done —
   // the Server Action always writes a real value, even "conversion" for the
   // classic layout, specifically so this check can't be confused with a
   // pre-templates client who never saw the picker (see templateSchema's
   // comment in lib/schemas/intake.ts). `landingPage` existing is what marks
-  // step 5 done — the AI draft is stored separately on
+  // step 6 done — the AI draft is stored separately on
   // growth_clients.ai_landing_draft precisely so it doesn't look like a
-  // finished step 5 on refresh (see the migration comment). packages !==
-  // null marks step 6 done — it's explicitly optional and an all-blank
-  // submit still writes an empty array, distinct from the pre-step6 null
+  // finished step 6 on refresh (see the migration comment). packages !==
+  // null marks step 7 done — it's explicitly optional and an all-blank
+  // submit still writes an empty array, distinct from the pre-step7 null
   // default. status === "active" is the authoritative "wizard finished"
   // signal (not meta_pixel_id being set — a client who chose "I need help"
-  // on step 7 legitimately finishes with it still null).
+  // on step 8 legitimately finishes with it still null).
   let startStep = 1;
   if (growthClient.contact_email) startStep = 2;
   if (growthClient.business_description) startStep = 3;
@@ -114,7 +127,11 @@ export default async function OnboardPage() {
   if (growthClient.template !== null) startStep = 5;
   if (landingPage) startStep = 6;
   if (growthClient.packages !== null) startStep = 7;
-  if (growthClient.status === "active") startStep = 8;
+  // 9, not 8 — the wizard shows its "you're all set" screen once step >
+  // totalSteps (now 7 for foundation, 8 otherwise, per the bump above), so
+  // this needs to land past whichever is relevant, matching how
+  // Step7MetaConnect's own onSuccess already advances to 9.
+  if (growthClient.status === "active") startStep = 9;
 
   const aiDraft = growthClient.ai_landing_draft as {
     headline?: string;
@@ -129,6 +146,8 @@ export default async function OnboardPage() {
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${growthClient.logo_path}`
     : null;
 
+  const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
+
   return (
     <main className="flex flex-1 flex-col items-center gap-10 bg-gray-50 px-4 py-16">
       <BrandHeader />
@@ -136,6 +155,8 @@ export default async function OnboardPage() {
         startStep={startStep}
         tier={tier}
         slug={growthClient.slug}
+        photos={photos ?? []}
+        photosStorageBase={photosStorageBase}
         initialData={{
           businessName: growthClient.business_name ?? "",
           contactEmail: growthClient.contact_email ?? "",

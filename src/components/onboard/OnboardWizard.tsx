@@ -5,6 +5,7 @@ import { ProgressBar } from "./ProgressBar";
 import { Step1BusinessInfo } from "./steps/Step1BusinessInfo";
 import { Step2BusinessProfile } from "./steps/Step2BusinessProfile";
 import { Step3BrandKit } from "./steps/Step3BrandKit";
+import { Step4PhotoUpload } from "./steps/Step4PhotoUpload";
 import { Step4TemplatePicker } from "./steps/Step4TemplatePicker";
 import { Step5LandingCopy } from "./steps/Step5LandingCopy";
 import { Step6Packages } from "./steps/Step6Packages";
@@ -12,16 +13,21 @@ import { Step7MetaConnect } from "./steps/Step7MetaConnect";
 import type { Tier } from "@/lib/paystack/plans";
 
 type PackageInitial = { name: string; price: string; description: string };
+type PhotoInitial = { id: string; storage_path: string };
 
 export function OnboardWizard({
   startStep,
   tier,
   slug,
+  photos,
+  photosStorageBase,
   initialData,
 }: {
   startStep: number;
   tier: Tier;
   slug: string;
+  photos: PhotoInitial[];
+  photosStorageBase: string;
   initialData: {
     businessName: string;
     contactEmail: string;
@@ -49,7 +55,13 @@ export function OnboardWizard({
     metaAdAccountId: string;
   };
 }) {
-  const totalSteps = tier === "foundation" ? 6 : 7;
+  // Sprint 1, Build Item 11: inserted a new Photo Upload step after Brand
+  // Kit — bumped from 6/7 to 7/8. The template picker, landing copy,
+  // packages, and Meta connect steps keep their existing component/action
+  // names below (already position-decoupled, following the same pattern
+  // saveStepTemplate established) — only the step===N branch numbers below
+  // shift, nothing else needed renaming.
+  const totalSteps = tier === "foundation" ? 7 : 8;
   const [step, setStep] = useState(Math.min(startStep, totalSteps + 1));
 
   if (step > totalSteps) {
@@ -120,9 +132,12 @@ export function OnboardWizard({
         />
       )}
       {step === 4 && (
-        <Step4TemplatePicker initialTemplate={initialData.template} onSuccess={() => setStep(5)} />
+        <Step4PhotoUpload initialPhotos={photos} storageBase={photosStorageBase} onSuccess={() => setStep(5)} />
       )}
       {step === 5 && (
+        <Step4TemplatePicker initialTemplate={initialData.template} onSuccess={() => setStep(6)} />
+      )}
+      {step === 6 && (
         <Step5LandingCopy
           initialHeadline={initialData.headline}
           initialSubheadline={initialData.subheadline}
@@ -130,17 +145,17 @@ export function OnboardWizard({
           initialAboutText={initialData.aboutText}
           initialServicesText={initialData.servicesText}
           hasAiDraft={Boolean(initialData.headline)}
-          onSuccess={() => setStep(6)}
+          onSuccess={() => setStep(7)}
         />
       )}
-      {step === 6 && (
-        <Step6Packages initialPackages={initialData.packages} onSuccess={() => setStep(7)} />
+      {step === 7 && (
+        <Step6Packages initialPackages={initialData.packages} onSuccess={() => setStep(8)} />
       )}
-      {step === 7 && tier !== "foundation" && (
+      {step === 8 && tier !== "foundation" && (
         <Step7MetaConnect
           initialPixelId={initialData.metaPixelId}
           initialAdAccountId={initialData.metaAdAccountId}
-          onSuccess={() => setStep(8)}
+          onSuccess={() => setStep(9)}
         />
       )}
       </div>
