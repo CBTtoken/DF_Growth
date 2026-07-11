@@ -1,0 +1,22 @@
+name: Onboarding nudge
+
+# Sprint 1, Build Item 5 — a client who signed up but hasn't finished
+# onboarding (or published a thin profile) gets one nudge, 3-4 days in.
+# Runs daily at 08:00 UTC (10:00 SAST), and can be triggered manually
+# from the Actions tab. Same secrets as trial-reminders.yml.
+on:
+  schedule:
+    - cron: "0 8 * * *"
+  workflow_dispatch:
+
+jobs:
+  nudge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call onboarding-nudge endpoint
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -sf -X GET "$SITE_URL/api/cron/onboarding-nudge" \
+            -H "Authorization: Bearer $CRON_SECRET"

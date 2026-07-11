@@ -14,6 +14,7 @@ import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSect
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
 import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
+import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
 import { SiteFooter } from "@/components/SiteFooter";
 
 // Private, signed-in-only — see onboard/page.tsx for the same reasoning.
@@ -50,7 +51,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address"
       )
       .eq("id", client.id)
       .single(),
@@ -131,6 +132,12 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        <ProfileCompletenessBanner
+          hasBusinessDescription={Boolean(growthClient?.business_description)}
+          hasBusinessAddress={Boolean(growthClient?.business_address)}
+          photoCount={photos?.length ?? 0}
+        />
 
         <PlatformFeatures plan={growthClient?.plan ?? null} />
 

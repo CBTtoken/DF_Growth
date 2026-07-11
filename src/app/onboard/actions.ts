@@ -13,6 +13,7 @@ import {
   step7Schema,
 } from "@/lib/schemas/intake";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
+import { sendWelcomeEmail } from "@/lib/email/welcome";
 
 type FieldErrors = Record<string, string[]> & { _form?: string[] };
 export type OnboardState = { error?: FieldErrors; success?: boolean } | null;
@@ -291,7 +292,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
     .from("growth_clients")
     .update({ packages })
     .eq("id", client.id)
-    .select("plan, status, slug")
+    .select("plan, status, slug, business_name, contact_email")
     .single();
 
   if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
@@ -306,7 +307,9 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   // the dashboard's "Edit your page" for an already-live client — without
   // this guard, editing packages after launch would reset trial_ends_at to
   // a fresh 7 days on every single edit, letting a trial be extended
-  // indefinitely just by re-saving packages.
+  // indefinitely just by re-saving packages. This same guard is what keeps
+  // the Sprint 1 Day 0 welcome email a true one-time send, not something
+  // that fires again on a later "Edit your page" package update.
   if (growthClient.plan === "foundation" && growthClient.status !== "active") {
     const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     await admin
@@ -314,6 +317,11 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
       .update({ status: "active", trial_ends_at: trialEndsAt })
       .eq("id", client.id);
     await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
+    await sendWelcomeEmail({
+      businessName: growthClient.business_name,
+      contactEmail: growthClient.contact_email,
+      slug: growthClient.slug,
+    });
   }
 
   revalidatePath("/onboard");
@@ -335,7 +343,7 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
   if (client.error) return { error: { _form: [client.error] } };
 
   const admin = createAdminClient();
-  const { error } =
+  const { data: growthClient, error } =
     parsed.data.hasMetaSetup === "yes"
       ? await admin
           .from("growth_clients")
@@ -346,6 +354,8 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
             status: "active",
           })
           .eq("id", client.id)
+          .select("business_name, contact_email, slug")
+          .single()
       : await admin
           .from("growth_clients")
           .update({
@@ -354,13 +364,23 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
             meta_setup_requested_help: true,
             status: "active",
           })
-          .eq("id", client.id);
+          .eq("id", client.id)
+          .select("business_name, contact_email, slug")
+          .single();
 
-  if (error) return { error: { _form: ["Could not save, please try again."] } };
+  if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
 
   // Step 7 is the finish line for growth_engine/enterprise, so this is
-  // where their page goes live (foundation publishes back in step 5).
+  // where their page goes live (foundation publishes back in step 5). This
+  // action is never reused post-launch (unlike saveStep6, "Edit your page"
+  // has no Meta-connect screen), so every call here is a genuine first
+  // launch — no extra guard needed before sending the Day 0 welcome email.
   await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
+  await sendWelcomeEmail({
+    businessName: growthClient.business_name,
+    contactEmail: growthClient.contact_email,
+    slug: growthClient.slug,
+  });
 
   revalidatePath("/onboard");
   return { success: true };
