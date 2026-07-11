@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { renderCard, type AssetStyleId } from "@/lib/assets/styles";
 
 // CLAUDE.md Section 8. Edge runtime for fast cold starts — this route gets
 // called once per testimonial (cached in generated_assets afterwards), not
@@ -13,7 +14,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   const { data: testimonial } = await admin
     .from("testimonials")
-    .select("*, growth_clients(business_name, brand_primary_color, brand_secondary_color)")
+    .select("*, growth_clients(business_name, brand_primary_color, brand_secondary_color, asset_style)")
     .eq("id", id)
     .single();
 
@@ -25,45 +26,22 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     business_name: string;
     brand_primary_color: string | null;
     brand_secondary_color: string | null;
+    asset_style: AssetStyleId | null;
   };
 
   const primaryColor = client?.brand_primary_color ?? "#1081b8";
   const secondaryColor = client?.brand_secondary_color ?? "#ffffff";
+  const style = client?.asset_style ?? "clean";
 
   return new ImageResponse(
-    (
-      <div
-        style={{
-          height: "100%",
-          width: "100%",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: primaryColor,
-          padding: "80px",
-        }}
-      >
-        <div
-          style={{
-            fontSize: 48,
-            color: secondaryColor,
-            textAlign: "center",
-            fontStyle: "italic",
-            maxWidth: "85%",
-            display: "flex",
-          }}
-        >
-          &ldquo;{testimonial.quote}&rdquo;
-        </div>
-        <div style={{ fontSize: 32, color: secondaryColor, marginTop: 48, opacity: 0.85, display: "flex" }}>
-          {testimonial.author_name}
-        </div>
-        <div style={{ fontSize: 24, color: secondaryColor, marginTop: 16, opacity: 0.6, display: "flex" }}>
-          {client?.business_name}
-        </div>
-      </div>
-    ),
+    renderCard(style, {
+      quote: testimonial.quote,
+      authorName: testimonial.author_name,
+      businessName: client?.business_name ?? "",
+      rating: testimonial.rating,
+      primaryColor,
+      secondaryColor,
+    }),
     { width: 1080, height: 1080 }
   );
 }

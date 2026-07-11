@@ -9,6 +9,9 @@ import { metaIdsSchema } from "@/lib/schemas/meta-ids";
 import { encrypt } from "@/lib/crypto";
 import { findActiveSubscription, disableSubscription } from "@/lib/paystack/subscriptions";
 import { templateSchema } from "@/lib/schemas/intake";
+import crypto from "crypto";
+
+const PHOTO_CAP = 10;
 
 type DashboardState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -208,6 +211,103 @@ export async function saveMetaIds(_prevState: DashboardState, formData: FormData
       meta_setup_requested_help: false,
     })
     .eq("id", client.id);
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// Real client photos for use in landing page templates (starting with
+// Left-Split's media showcase), separate from the single logo upload.
+// Capped at 10 — enough for a real gallery without turning this into a
+// full media library, and small enough that a client can meaningfully
+// review what they've uploaded at a glance.
+export async function uploadClientPhoto(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const photo = formData.get("photo");
+  if (!(photo instanceof File) || photo.size === 0) {
+    return { error: { _form: ["Choose a photo to upload."] } };
+  }
+
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("client_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("growth_client_id", client.id);
+
+  if ((count ?? 0) >= PHOTO_CAP) {
+    return { error: { _form: [`You've reached the ${PHOTO_CAP}-photo limit. Delete one first to add another.`] } };
+  }
+
+  const ext = photo.name.split(".").pop() || "jpg";
+  const path = `${client.id}/${crypto.randomUUID()}.${ext}`;
+  const { error: uploadError } = await admin.storage
+    .from("client-photos")
+    .upload(path, photo, { contentType: photo.type });
+
+  if (uploadError) {
+    return { error: { _form: ["Could not upload photo, try a smaller file (under 5MB) or a different format."] } };
+  }
+
+  const { error: insertError } = await admin
+    .from("client_photos")
+    .insert({ growth_client_id: client.id, storage_path: path, position: count ?? 0 });
+
+  if (insertError) return { error: { _form: ["Could not save your photo, please try again."] } };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+export async function deleteClientPhoto(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const photoId = formData.get("photoId");
+  if (typeof photoId !== "string") return { error: { _form: ["Missing photo."] } };
+
+  const admin = createAdminClient();
+  // Scoped to this client's own id, not just the photo id, otherwise any
+  // logged-in user could delete any other client's photo by guessing a
+  // UUID, since this runs with the service role and bypasses RLS.
+  const { data: photo } = await admin
+    .from("client_photos")
+    .select("storage_path")
+    .eq("id", photoId)
+    .eq("growth_client_id", client.id)
+    .single();
+
+  if (!photo) return { error: { _form: ["Photo not found."] } };
+
+  await admin.storage.from("client-photos").remove([photo.storage_path]);
+  const { error } = await admin.from("client_photos").delete().eq("id", photoId).eq("growth_client_id", client.id);
+
+  if (error) return { error: { _form: ["Could not delete photo, please try again."] } };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// Sets the default visual style for future auto-generated testimonial
+// images (src/lib/assets/styles.tsx) — mirrors changeTemplate's pattern.
+// Only ever affects assets generated after this changes; existing
+// downloaded images keep whatever style they were made with, same as
+// changing a landing page template doesn't retroactively alter anything
+// a client already downloaded.
+export async function changeAssetStyle(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const style = formData.get("style");
+  if (typeof style !== "string" || !["clean", "bold-quote", "star-card", "mono-badge"].includes(style)) {
+    return { error: { _form: ["Invalid style."] } };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("growth_clients").update({ asset_style: style }).eq("id", client.id);
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 

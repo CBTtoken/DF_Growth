@@ -9,6 +9,8 @@ import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { PlatformFeatures } from "@/components/dashboard/PlatformFeatures";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
+import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
+import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
@@ -35,10 +37,11 @@ export default async function DashboardPage() {
     { data: secret },
     { data: capiEvents },
     { data: leads },
+    { data: photos },
   ] = await Promise.all([
     admin
       .from("growth_clients")
-      .select("business_name, slug, plan, status, template, meta_pixel_id, meta_setup_requested_help")
+      .select("business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help")
       .eq("id", client.id)
       .single(),
     admin
@@ -71,9 +74,15 @@ export default async function DashboardPage() {
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false })
       .limit(50),
+    admin
+      .from("client_photos")
+      .select("id, storage_path")
+      .eq("growth_client_id", client.id)
+      .order("position", { ascending: true }),
   ]);
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
+  const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
   // Found via real UAT: this used to also require meta_pixel_id to be set,
   // which meant a client who picked "I don't know / need help" during
   // onboarding never saw this section again — no confirmation their request
@@ -114,6 +123,8 @@ export default async function DashboardPage() {
         )}
 
         <ChangeTemplateSection currentTemplate={growthClient?.template ?? "conversion"} />
+
+        <PhotoGallery photos={photos ?? []} storageBase={photosStorageBase} />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Leads ({leads?.length ?? 0})</h2>
@@ -159,6 +170,8 @@ export default async function DashboardPage() {
             )}
           </ul>
         </section>
+
+        <AssetStyleSection currentStyle={growthClient?.asset_style ?? "clean"} />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Generated social assets</h2>

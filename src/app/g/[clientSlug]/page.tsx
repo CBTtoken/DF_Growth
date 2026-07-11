@@ -218,9 +218,25 @@ export default async function ClientLandingPage({
     );
   }
 
-  // Only the Left-Heavy Split hero needs a real photo — searched live by the
-  // client's own industry, best-effort (see src/lib/images/pexels.ts).
-  const photoUrl = template.hero === "split" ? await getIndustryPhoto(client.industry || client.business_name) : null;
+  // Only the Left-Heavy Split hero needs a real photo. A client's own
+  // uploaded photo (client_photos, ordered by position — the first one
+  // uploaded is the "primary" shown everywhere) always wins over a stock
+  // photo; Pexels search by industry is only the fallback for clients who
+  // haven't uploaded anything yet.
+  let photoUrl: string | null = null;
+  if (template.hero === "split") {
+    const { data: ownPhoto } = await admin
+      .from("client_photos")
+      .select("storage_path")
+      .eq("growth_client_id", client.id)
+      .order("position", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    photoUrl = ownPhoto
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos/${ownPhoto.storage_path}`
+      : await getIndustryPhoto(client.industry || client.business_name);
+  }
 
   const checklistItems = ((landingPage.services_text as string | null) ?? "")
     .split("\n")
