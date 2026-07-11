@@ -13,25 +13,16 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     steps:
-      - name: Install postgresql-client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-
-      # TEMPORARY — diagnosing repeated "password authentication failed"
-      # despite a confirmed-correct, freshly reset password. Prints only the
-      # connection string's structure (host/port/username, password masked)
-      # and the password's character count — never the password itself — to
-      # tell apart "the GitHub secret isn't what we think it is" from "the
-      # password is genuinely wrong on Supabase's side". Remove once the
-      # real cause is found.
-      - name: Debug connection string (safe, no password shown)
-        env:
-          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      # Ubuntu's default apt repo ships postgresql-client 16, but this
+      # Supabase project runs Postgres 17 — pg_dump refuses to dump from a
+      # server newer than itself, so this pulls the matching client version
+      # from the official PostgreSQL apt repo instead of the Ubuntu default.
+      - name: Install postgresql-client 17
         run: |
-          echo "Total length: ${#SUPABASE_DB_URL}"
-          echo "Structure (password masked):"
-          echo "$SUPABASE_DB_URL" | sed -E 's#(postgresql://[^:]+:)[^@]+(@.*)#\1****\2#'
-          PW=$(echo "$SUPABASE_DB_URL" | sed -E 's#postgresql://[^:]+:([^@]+)@.*#\1#')
-          echo "Password segment length: ${#PW}"
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
 
       - name: Dump database
         env:
