@@ -33,41 +33,75 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  const { customer, metadata } = event.data;
+  const { customer, metadata, reference } = event.data;
   const email: string | undefined = customer?.email;
   const businessName: string | undefined = metadata?.business_name;
   const tier: string | undefined = metadata?.tier;
 
-  if (!email || !businessName || !tier) {
-    console.error("charge.success missing expected metadata", { email, businessName, tier });
+  if (!email || !businessName || !tier || !reference) {
+    console.error("charge.success missing expected metadata", { email, businessName, tier, reference });
     return NextResponse.json({ received: true });
   }
 
-  const slug = slugify(businessName);
   const admin = createAdminClient();
 
+  // Found via a real stress test: the old idempotency check was keyed on
+  // slug (derived from business_name), which meant any two businesses that
+  // ever picked the same name — not just concurrent signups, any two, ever
+  // — would collide. The second one would already have been charged by
+  // Paystack, then silently fail to get a growth_clients row at all: no
+  // account, no email, no admin visibility, nothing. Idempotency now keys on
+  // Paystack's own transaction reference, which is the actually-correct
+  // signal for "have I already processed this specific charge" (Paystack
+  // redelivers webhook events; this is the case that check is really for).
+  // Slug collisions are a separate, expected case — handled below by
+  // disambiguating the slug, not rejecting the signup.
   const { data: existing } = await admin
     .from("growth_clients")
     .select("id")
-    .eq("slug", slug)
+    .eq("paystack_reference", reference)
     .maybeSingle();
 
   if (existing) {
     return NextResponse.json({ received: true });
   }
 
-  const { data: inserted, error: insertError } = await admin
-    .from("growth_clients")
-    .insert({
-      business_name: businessName,
-      slug,
-      plan: tier,
-      status: "pending_intake",
-    })
-    .select("id")
-    .single();
+  const baseSlug = slugify(businessName);
+  let inserted: { id: string } | null = null;
+  let insertError: { message: string; code?: string } | null = null;
 
-  if (insertError || !inserted) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidateSlug = attempt === 0 ? baseSlug : `${baseSlug}-${crypto.randomBytes(2).toString("hex")}`;
+    const { data, error } = await admin
+      .from("growth_clients")
+      .insert({
+        business_name: businessName,
+        slug: candidateSlug,
+        plan: tier,
+        status: "pending_intake",
+        paystack_reference: reference,
+      })
+      .select("id")
+      .single();
+
+    if (!error) {
+      inserted = data;
+      insertError = null;
+      break;
+    }
+
+    insertError = error;
+    // 23505 = unique_violation. If it's the reference that collided, a
+    // concurrent request for this exact same event just won — safe to stop
+    // and treat as already handled. If it's the slug, retry with a
+    // disambiguated one; any other error, stop and log it below.
+    if (error.code !== "23505") break;
+    if (error.message.includes("paystack_reference")) {
+      return NextResponse.json({ received: true });
+    }
+  }
+
+  if (!inserted || insertError) {
     console.error("Failed to create growth_client", insertError);
     return NextResponse.json({ received: true });
   }
