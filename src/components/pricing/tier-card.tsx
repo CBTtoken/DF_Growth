@@ -10,6 +10,7 @@ export function TierCard({
   priceLabel,
   description,
   features,
+  ctaLabel,
   highlighted,
 }: {
   tier: Tier;
@@ -17,6 +18,7 @@ export function TierCard({
   priceLabel: string;
   description: string;
   features: string[];
+  ctaLabel: string;
   highlighted?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(startCheckout, null);
@@ -90,7 +92,7 @@ export function TierCard({
             href="mailto:info@digitalflyer.co.za?subject=Enterprise%20waitlist"
             className="rounded-full border border-gray-300 px-4 py-2.5 text-center text-sm font-semibold text-gray-700 transition hover:border-gray-400"
           >
-            Get notified
+            {ctaLabel}
           </a>
         </div>
       ) : (
@@ -156,7 +158,7 @@ export function TierCard({
             disabled={pending}
             className="rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
           >
-            {pending ? "Redirecting..." : tier === "foundation" ? "Start free trial" : "Get Started"}
+            {pending ? "Redirecting..." : ctaLabel}
           </button>
           <p className="text-xs text-gray-400 text-center">
             {tier === "foundation" ? "No card required" : "Secure payment via Paystack"}

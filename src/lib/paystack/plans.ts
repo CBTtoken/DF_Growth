@@ -10,44 +10,44 @@ export const TIERS: {
   priceLabel: string;
   description: string;
   features: string[];
+  ctaLabel: string;
 }[] = [
   {
     id: "foundation",
-    name: "Foundation",
+    name: "Founding Foundation",
     priceLabel: "Free for 7 days, then R100/month",
-    description: "For businesses not ready to run paid ads yet. No card needed to start.",
+    description: "Perfect for businesses ready to build a professional online presence.",
     features: [
-      "Conversion-optimized landing page",
-      "Brand kit",
-      "Monthly programmatic social asset generation",
-      "You post the assets yourself, manually",
+      "Professional Business Page",
+      "Marketplace Listing",
+      "Lead Generation Page",
+      "Business Profile",
+      "Monthly Digital Asset",
+      "Ready To Share Anywhere",
     ],
+    ctaLabel: "Become a Founding Business",
   },
   {
     id: "growth_engine",
     name: "Growth",
     priceLabel: "R180/month or R1,199/year",
-    description: "Everything in Foundation, plus managed Meta ad tracking.",
+    description: "Ready to reach more customers? Everything in Foundation, plus:",
     features: [
-      "Everything in Foundation",
-      "Meta CAPI tracking",
-      "Weekly asset generation",
-      "Managed campaign monitoring",
-      "Monthly performance summary",
+      "Campaign Landing Pages",
+      "Performance Tracking",
+      "Marketing Assets",
+      "Monthly Optimisation",
+      "Growth Reporting",
     ],
+    ctaLabel: "Start Growing",
   },
   {
     id: "enterprise",
     name: "Enterprise",
     priceLabel: "Coming soon",
-    description: "Full Meta + Google ad management for businesses ready to go further.",
-    features: [
-      "Everything in Growth",
-      "Custom multi-page site",
-      "Full ad account management, both platforms",
-      "Featured marketplace placement",
-      "Priority support",
-    ],
+    description: "For businesses ready to scale. Everything in Growth, plus:",
+    features: ["Advanced Campaign Management", "Priority Support", "Custom Solutions"],
+    ctaLabel: "Contact Us",
   },
 ];
 
