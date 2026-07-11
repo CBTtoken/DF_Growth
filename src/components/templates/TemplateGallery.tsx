@@ -19,6 +19,14 @@ const SCALE = 0.36;
 // [templateId]) at small scale rather than a text description or a static
 // screenshot, so a non-technical client can actually see what they're
 // choosing, and the preview can never drift out of sync with the template.
+//
+// Found via real UAT (mobile): the whole card used to be a <button>
+// wrapping the <iframe>, which is invalid HTML — a <button> can't contain
+// "interactive content" like an iframe. Desktop Chrome quietly tolerates
+// this; mobile Safari does not, and was silently dropping the iframe
+// entirely, leaving only the text row (exactly what showed up in
+// testing: a list of text pills with no preview image at all). Now a
+// plain div with a click/keyboard handler instead of a real button.
 export function TemplateGallery({
   selected,
   onSelect,
@@ -31,11 +39,18 @@ export function TemplateGallery({
       {TEMPLATE_OPTIONS.map((t) => {
         const isSelected = selected === t.id;
         return (
-          <button
+          <div
             key={t.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => onSelect(t.id)}
-            className={`flex flex-col overflow-hidden rounded-2xl border-2 text-left transition-colors ${
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect(t.id);
+              }
+            }}
+            className={`flex cursor-pointer flex-col overflow-hidden rounded-2xl border-2 text-left transition-colors ${
               isSelected ? "border-brand" : "border-gray-200 hover:border-gray-300"
             }`}
           >
@@ -64,7 +79,7 @@ export function TemplateGallery({
               <p className="text-sm font-semibold leading-snug text-gray-900">{t.name}</p>
               <p className="text-xs leading-relaxed text-gray-500">{t.description}</p>
             </div>
-          </button>
+          </div>
         );
       })}
     </div>

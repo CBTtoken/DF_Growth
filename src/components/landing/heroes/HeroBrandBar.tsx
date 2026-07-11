@@ -34,7 +34,7 @@ export function HeroBrandBar({
         style={{ color: textColor }}
       >
         {logoUrl ? (
-          <span className="grid size-10 place-items-center overflow-hidden rounded-md bg-white/90 p-1">
+          <span className="grid size-10 place-items-center overflow-hidden rounded-md bg-white/90 p-1 shadow-sm ring-1 ring-black/10">
             <Image src={logoUrl} alt={businessName} width={36} height={36} className="size-full object-contain" />
           </span>
         ) : (

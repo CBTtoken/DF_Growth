@@ -32,10 +32,11 @@ export function PhotoGallery({ photos, storageBase }: { photos: Photo[]; storage
           type="file"
           name="photo"
           accept="image/png,image/jpeg,image/webp"
+          multiple
           disabled={uploadPending || photos.length >= 10}
           className="text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200 disabled:opacity-50"
           onChange={(e) => {
-            if (e.target.files?.[0]) formRef.current?.requestSubmit();
+            if (e.target.files && e.target.files.length > 0) formRef.current?.requestSubmit();
           }}
         />
         {uploadPending && <span className="text-xs text-gray-400">Uploading...</span>}

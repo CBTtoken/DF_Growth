@@ -68,11 +68,16 @@ const STARTER_FEATURES = [
 
 // Three real, live-rendered templates (same /preview/[templateId] route the
 // picker uses) so a visitor sees an actual page, not a mockup, before ever
-// signing up.
+// signing up. Picked deliberately for maximum visual contrast at a glance,
+// not just three different hero colours — found via UAT that Social Proof
+// and Left-Split looked "boring and the same" side by side since both are
+// light-card layouts built from the client's own brand colour. Dark Mode,
+// Vibrant Geometric, and Storyteller each have a genuinely different
+// background, layout, and typography treatment regardless of colour.
 const TEMPLATE_SHOWCASE = [
-  { id: "social-proof", name: "Social Proof & Trust First" },
-  { id: "left-split", name: "Left-Heavy Split" },
   { id: "dark-mode", name: "High-Impact Dark Mode" },
+  { id: "vibrant-geo", name: "Bold & Vibrant Geometric" },
+  { id: "storyteller", name: "Storyteller Vertical" },
 ];
 
 const DIFFERENTIATORS = [
@@ -165,9 +170,9 @@ export default function PricingPage() {
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-[28rem] rounded-full bg-white/10 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-[26rem] rounded-full bg-white/10 blur-3xl" />
 
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-5">
-          <span className="inline-flex items-center gap-2 rounded-full border border-spark/50 bg-spark/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-spark">
-            <Flame className="size-3.5" aria-hidden />
+        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6">
+          <span className="inline-flex items-center gap-2.5 font-display text-2xl uppercase tracking-wide text-spark sm:text-4xl">
+            <Flame className="size-6 sm:size-8" aria-hidden />
             Only 10 Founding Business spots
           </span>
 
@@ -181,13 +186,13 @@ export default function PricingPage() {
             with customers, generate leads and grow, all from one place.
           </p>
 
-          <div className="mt-2 grid w-full max-w-lg grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="mt-2 grid w-full max-w-lg grid-cols-2 gap-2.5 sm:grid-cols-3">
             {TRUST_INDICATORS.map((item) => (
               <div
                 key={item}
-                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-left text-xs font-medium text-white"
+                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3.5 py-3 text-left text-sm font-medium text-white"
               >
-                <Check className="size-3.5 flex-shrink-0 text-spark" strokeWidth={3} aria-hidden />
+                <Check className="size-4 flex-shrink-0 text-spark" strokeWidth={3} aria-hidden />
                 {item}
               </div>
             ))}

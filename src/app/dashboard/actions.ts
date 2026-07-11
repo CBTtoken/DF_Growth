@@ -223,13 +223,17 @@ export async function saveMetaIds(_prevState: DashboardState, formData: FormData
 // Capped at 10 — enough for a real gallery without turning this into a
 // full media library, and small enough that a client can meaningfully
 // review what they've uploaded at a glance.
+// Accepts several files in one submission (the file input allows multi-
+// select) rather than requiring one upload round-trip per photo — found
+// via real UAT that only being able to add one at a time was real friction
+// for someone with a phone full of business photos to add.
 export async function uploadClientPhoto(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
 
-  const photo = formData.get("photo");
-  if (!(photo instanceof File) || photo.size === 0) {
-    return { error: { _form: ["Choose a photo to upload."] } };
+  const files = formData.getAll("photo").filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.length === 0) {
+    return { error: { _form: ["Choose at least one photo to upload."] } };
   }
 
   const admin = createAdminClient();
@@ -238,27 +242,51 @@ export async function uploadClientPhoto(_prevState: DashboardState, formData: Fo
     .select("id", { count: "exact", head: true })
     .eq("growth_client_id", client.id);
 
-  if ((count ?? 0) >= PHOTO_CAP) {
+  let nextPosition = count ?? 0;
+  const room = PHOTO_CAP - nextPosition;
+
+  if (room <= 0) {
     return { error: { _form: [`You've reached the ${PHOTO_CAP}-photo limit. Delete one first to add another.`] } };
   }
 
-  const ext = photo.name.split(".").pop() || "jpg";
-  const path = `${client.id}/${crypto.randomUUID()}.${ext}`;
-  const { error: uploadError } = await admin.storage
-    .from("client-photos")
-    .upload(path, photo, { contentType: photo.type });
+  const toUpload = files.slice(0, room);
+  let failed = 0;
 
-  if (uploadError) {
-    return { error: { _form: ["Could not upload photo, try a smaller file (under 5MB) or a different format."] } };
+  for (const photo of toUpload) {
+    const ext = photo.name.split(".").pop() || "jpg";
+    const path = `${client.id}/${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await admin.storage
+      .from("client-photos")
+      .upload(path, photo, { contentType: photo.type });
+
+    if (uploadError) {
+      failed++;
+      continue;
+    }
+
+    const { error: insertError } = await admin
+      .from("client_photos")
+      .insert({ growth_client_id: client.id, storage_path: path, position: nextPosition });
+
+    if (insertError) {
+      failed++;
+      continue;
+    }
+    nextPosition++;
   }
 
-  const { error: insertError } = await admin
-    .from("client_photos")
-    .insert({ growth_client_id: client.id, storage_path: path, position: count ?? 0 });
-
-  if (insertError) return { error: { _form: ["Could not save your photo, please try again."] } };
-
   revalidatePath("/dashboard");
+
+  if (failed > 0) {
+    return { error: { _form: [`${failed} photo${failed > 1 ? "s" : ""} couldn't be uploaded, try a smaller file or a different format.`] } };
+  }
+  if (files.length > toUpload.length) {
+    return {
+      error: {
+        _form: [`Uploaded ${toUpload.length}, but ${files.length - toUpload.length} were skipped, you're at the ${PHOTO_CAP}-photo limit.`],
+      },
+    };
+  }
   return { success: true };
 }
 

@@ -136,9 +136,18 @@ export default async function DashboardPage() {
               >
                 <div>
                   <p className="font-medium text-gray-900">{l.name}</p>
-                  <p className="text-gray-500">
-                    {l.email}
-                    {l.phone ? ` · ${l.phone}` : ""}
+                  <p className="flex flex-wrap items-center gap-x-2 text-gray-500">
+                    <a href={`mailto:${l.email}`} className="text-brand underline-offset-2 hover:underline">
+                      {l.email}
+                    </a>
+                    {l.phone && (
+                      <>
+                        <span aria-hidden>·</span>
+                        <a href={`tel:${l.phone.replace(/\s+/g, "")}`} className="text-brand underline-offset-2 hover:underline">
+                          {l.phone}
+                        </a>
+                      </>
+                    )}
                   </p>
                 </div>
                 <span className="text-xs text-gray-400">{new Date(l.created_at).toLocaleString()}</span>
