@@ -12,6 +12,7 @@ import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
 import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
+import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
@@ -42,7 +43,9 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     admin
       .from("growth_clients")
-      .select("business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help")
+      .select(
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification"
+      )
       .eq("id", client.id)
       .single(),
     admin
@@ -271,6 +274,14 @@ export default async function DashboardPage() {
             )}
           </section>
         )}
+
+        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight text-ink">Search &amp; ad platform verification</h2>
+          <DomainVerificationForm
+            initialGoogle={growthClient?.google_site_verification ?? ""}
+            initialFacebook={growthClient?.facebook_domain_verification ?? ""}
+          />
+        </section>
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <div>

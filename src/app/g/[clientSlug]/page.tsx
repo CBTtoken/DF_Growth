@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { OwnerBar } from "@/components/landing/OwnerBar";
+import { MetaPixelScript } from "@/components/landing/MetaPixelScript";
 import { ConversionHero } from "@/components/landing/ConversionHero";
 import { TrustBadges } from "@/components/landing/TrustBadges";
 import { LeadForm } from "@/components/landing/LeadForm";
@@ -36,6 +38,39 @@ import { getIndustryPhoto } from "@/lib/images/pexels";
 // LCP against a warm ~2.3s for the identical page).
 export const revalidate = 60;
 
+// Google Search Console and Meta Business domain verification both work by
+// looking for a specific meta tag in <head> — this is the one place that
+// happens, driven by whatever a client pasted into the dashboard's "Search &
+// ad platform verification" form. A small dedicated query rather than
+// threading the values through the page component below: generateMetadata
+// runs as a separate render pass in Next.js and keeping it self-contained is
+// simpler than restructuring the page's own data fetching to share it.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ clientSlug: string }>;
+}): Promise<Metadata> {
+  const { clientSlug } = await params;
+  const admin = createAdminClient();
+  const { data: client } = await admin
+    .from("growth_clients")
+    .select("google_site_verification, facebook_domain_verification")
+    .eq("slug", clientSlug)
+    .eq("status", "active")
+    .single();
+
+  if (!client) return {};
+
+  return {
+    verification: {
+      google: client.google_site_verification ?? undefined,
+      other: client.facebook_domain_verification
+        ? { "facebook-domain-verification": client.facebook_domain_verification }
+        : undefined,
+    },
+  };
+}
+
 export default async function ClientLandingPage({
   params,
 }: {
@@ -47,7 +82,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, contact_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, template, industry"
+      "id, business_name, contact_email, contact_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, template, industry, meta_pixel_id"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -148,6 +183,7 @@ export default async function ClientLandingPage({
       <main>
         {isOwner && <OwnerBar />}
         <FbclidCapture />
+        <MetaPixelScript pixelId={client.meta_pixel_id} />
         <ConversionHero
           businessName={client.business_name}
           tagline={client.tagline}

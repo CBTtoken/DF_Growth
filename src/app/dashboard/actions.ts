@@ -6,6 +6,7 @@ import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { testimonialSchema } from "@/lib/schemas/testimonial";
 import { metaTokenSchema } from "@/lib/schemas/meta-token";
 import { metaIdsSchema } from "@/lib/schemas/meta-ids";
+import { domainVerificationSchema } from "@/lib/schemas/domain-verification";
 import { encrypt } from "@/lib/crypto";
 import { findActiveSubscription, disableSubscription } from "@/lib/paystack/subscriptions";
 import { templateSchema } from "@/lib/schemas/intake";
@@ -215,6 +216,47 @@ export async function saveMetaIds(_prevState: DashboardState, formData: FormData
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// Found via real UAT: "sometimes for Google business page, they require to
+// add a header or something to verify their webpage, same with Facebook
+// pixel linking, is it possible to build this in?" Google Search Console and
+// Meta Business domain verification both boil down to a single meta tag with
+// a client-provided code, injected into the public page's <head> — see
+// generateMetadata in /g/[clientSlug]/page.tsx for where these actually get
+// used. Both fields optional and independent, saving one doesn't require
+// the other.
+export async function saveDomainVerification(
+  _prevState: DashboardState,
+  formData: FormData
+): Promise<DashboardState> {
+  const parsed = domainVerificationSchema.safeParse({
+    googleSiteVerification: formData.get("googleSiteVerification"),
+    facebookDomainVerification: formData.get("facebookDomainVerification"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { data: growthClient, error } = await admin
+    .from("growth_clients")
+    .update({
+      google_site_verification: parsed.data.googleSiteVerification,
+      facebook_domain_verification: parsed.data.facebookDomainVerification,
+    })
+    .eq("id", client.id)
+    .select("slug")
+    .single();
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  revalidatePath("/dashboard");
+  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
   return { success: true };
 }
 
