@@ -3,6 +3,7 @@ import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Ch
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { HomepageCredibilitySection } from "@/components/marketing/HomepageCredibilitySection";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
@@ -190,8 +191,26 @@ async function getFoundingSlotsRemaining(): Promise<number> {
   return Math.max(0, 10 - (count ?? 0));
 }
 
+// Sprint 1, Build Item 3: real client testimonials Dewald has flagged as
+// homepage-worthy — see HomepageCredibilitySection for why this is
+// cross-tenant (unlike every other testimonials query in this codebase,
+// which is scoped to one growth_client_id).
+async function getFeaturedTestimonials() {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("testimonials")
+    .select("id, author_name, quote, rating")
+    .eq("featured_on_homepage", true)
+    .order("created_at", { ascending: false })
+    .limit(6);
+  return data ?? [];
+}
+
 export default async function PricingPage() {
-  const foundingSlotsRemaining = await getFoundingSlotsRemaining();
+  const [foundingSlotsRemaining, featuredTestimonials] = await Promise.all([
+    getFoundingSlotsRemaining(),
+    getFeaturedTestimonials(),
+  ]);
   return (
     <main className="flex flex-1 flex-col">
       <MarketingHeader />
@@ -353,6 +372,8 @@ export default async function PricingPage() {
       </section>
 
       <SectionDivider />
+
+      <HomepageCredibilitySection testimonials={featuredTestimonials} />
 
       {/* Pricing — the plain-language explainer above the cards does the
           persuading; the cards themselves just need to be scannable. Cards
