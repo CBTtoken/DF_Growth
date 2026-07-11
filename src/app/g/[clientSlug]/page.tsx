@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { OwnerBar } from "@/components/landing/OwnerBar";
 import { MetaPixelScript } from "@/components/landing/MetaPixelScript";
+import { LocalBusinessSchema } from "@/components/landing/LocalBusinessSchema";
 import { ConversionHero } from "@/components/landing/ConversionHero";
 import { TrustBadges } from "@/components/landing/TrustBadges";
 import { LeadForm } from "@/components/landing/LeadForm";
@@ -38,13 +39,15 @@ import { getIndustryPhoto } from "@/lib/images/pexels";
 // LCP against a warm ~2.3s for the identical page).
 export const revalidate = 60;
 
-// Google Search Console and Meta Business domain verification both work by
-// looking for a specific meta tag in <head> — this is the one place that
-// happens, driven by whatever a client pasted into the dashboard's "Search &
-// ad platform verification" form. A small dedicated query rather than
-// threading the values through the page component below: generateMetadata
-// runs as a separate render pass in Next.js and keeping it self-contained is
-// simpler than restructuring the page's own data fetching to share it.
+// Every client page previously inherited the root layout's generic
+// "DigitalFlyer Growth" title/description — meaning a client's own business
+// name never appeared in their own browser tab or Google search result.
+// This gives every client a real, individual title/description/social
+// preview, plus the domain-verification tags added earlier. A small
+// dedicated query rather than threading values through the page component
+// below: generateMetadata runs as a separate render pass in Next.js and
+// keeping it self-contained is simpler than restructuring the page's own
+// data fetching to share it.
 export async function generateMetadata({
   params,
 }: {
@@ -54,14 +57,29 @@ export async function generateMetadata({
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("growth_clients")
-    .select("google_site_verification, facebook_domain_verification")
+    .select(
+      "business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification"
+    )
     .eq("slug", clientSlug)
     .eq("status", "active")
     .single();
 
   if (!client) return {};
 
+  const title = client.business_name;
+  const description =
+    client.tagline || client.business_description?.slice(0, 160) || `${client.business_name} on DigitalFlyer.`;
+  const image = client.logo_path
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
+    : "/brand/logo-blue.png";
+  const url = `/g/${clientSlug}`;
+
   return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: { title, description, url, images: [image] },
+    twitter: { card: "summary_large_image", title, description, images: [image] },
     verification: {
       google: client.google_site_verification ?? undefined,
       other: client.facebook_domain_verification
@@ -184,6 +202,15 @@ export default async function ClientLandingPage({
         {isOwner && <OwnerBar />}
         <FbclidCapture />
         <MetaPixelScript pixelId={client.meta_pixel_id} />
+        <LocalBusinessSchema
+          businessName={client.business_name}
+          description={landingPage.about_text ?? client.tagline}
+          url={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
+          logoUrl={logoUrl}
+          telephone={client.contact_phone}
+          email={client.contact_email}
+          address={client.business_address}
+        />
         <ConversionHero
           businessName={client.business_name}
           tagline={client.tagline}
@@ -338,6 +365,16 @@ export default async function ClientLandingPage({
     <main>
       {isOwner && <OwnerBar />}
       <FbclidCapture />
+      <MetaPixelScript pixelId={client.meta_pixel_id} />
+      <LocalBusinessSchema
+        businessName={client.business_name}
+        description={landingPage.about_text ?? client.tagline}
+        url={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
+        logoUrl={logoUrl}
+        telephone={client.contact_phone}
+        email={client.contact_email}
+        address={client.business_address}
+      />
       {template.hero === "minimal" && <MinimalHero {...heroProps} />}
       {template.hero === "split" && <SplitHero {...heroProps} photoUrl={photoUrl} />}
       {template.hero === "editorial" && <EditorialHero {...heroProps} />}

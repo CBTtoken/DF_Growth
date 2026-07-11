@@ -21,9 +21,30 @@ const barlowCondensed = Barlow_Condensed({
   subsets: ["latin"],
 });
 
+// metadataBase resolves every relative OG/twitter image URL below (root and
+// per-page) into an absolute one — without it, Next.js falls back to
+// whatever host is currently serving the request, which breaks social-card
+// previews on preview/staging deployments. Falls back to the confirmed
+// production URL since NEXT_PUBLIC_SITE_URL isn't set in every environment
+// (e.g. local dev).
 export const metadata: Metadata = {
-  title: "DigitalFlyer Growth",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://df-growth.vercel.app"),
+  title: {
+    default: "DigitalFlyer Growth",
+    template: "%s | DigitalFlyer Growth",
+  },
   description: "Growth-as-a-service platform for South African small businesses",
+  openGraph: {
+    title: "DigitalFlyer Growth",
+    description: "Growth-as-a-service platform for South African small businesses",
+    images: ["/brand/logo-blue.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DigitalFlyer Growth",
+    description: "Growth-as-a-service platform for South African small businesses",
+    images: ["/brand/logo-blue.png"],
+  },
 };
 
 export default function RootLayout({

@@ -1,8 +1,12 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { EditPageClient } from "@/components/dashboard/EditPageClient";
+
+// Private, signed-in-only — see onboard/page.tsx for the same reasoning.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function EditPage() {
   const client = await requireGrowthClientId();

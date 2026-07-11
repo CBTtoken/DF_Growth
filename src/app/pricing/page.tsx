@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Check, Flame, Search, PuzzleIcon, Wallet, ShieldCheck } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
@@ -155,6 +156,18 @@ const FAQS = [
       "We're only inviting our first 10 Founding Businesses during launch. Joining now means you'll help shape DigitalFlyer from the beginning while receiving exclusive Founding Member benefits.",
   },
 ];
+
+const PAGE_TITLE = "Build Your Presence. Grow Your Business.";
+const PAGE_DESCRIPTION =
+  "DigitalFlyer helps South African businesses build a professional online presence, connect with customers, generate leads and grow, all from one place.";
+
+export const metadata: Metadata = {
+  title: PAGE_TITLE,
+  description: PAGE_DESCRIPTION,
+  alternates: { canonical: "/pricing" },
+  openGraph: { title: PAGE_TITLE, description: PAGE_DESCRIPTION, url: "/pricing" },
+  twitter: { title: PAGE_TITLE, description: PAGE_DESCRIPTION },
+};
 
 export default function PricingPage() {
   return (

@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+
+// Private, allowlist-only — see onboard/page.tsx for the same reasoning.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 // Minimal, per CLAUDE.md Section 3 ("admin visibility is just a read-only
 // view over the same data", no separate admin auth needed) and Sprint 0

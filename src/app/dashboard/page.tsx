@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -13,6 +14,9 @@ import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSect
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
 import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
+
+// Private, signed-in-only — see onboard/page.tsx for the same reasoning.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();

@@ -1,8 +1,13 @@
+import type { Metadata } from "next";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OnboardWizard } from "@/components/onboard/OnboardWizard";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import type { Tier } from "@/lib/paystack/plans";
+
+// Private, signed-in-only flow — nothing here should ever show up in search
+// results, so this overrides the root layout's indexable default.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function OnboardPage() {
   const supabase = await createServerClient();
