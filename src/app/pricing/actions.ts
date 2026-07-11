@@ -53,6 +53,12 @@ export async function startCheckout(
       // the pilot; the slug disambiguation at least keeps both usable.
       paystackReference: null,
       consentedAt,
+      // Foundation has no annual option today — always "monthly" (matches
+      // the sprint doc's own note on this). Never eligible for founding
+      // status regardless: confirmed 2026-07-11 that only Growth's annual
+      // plan qualifies.
+      billingCycle: "monthly",
+      foundingSignupNumber: null,
     });
 
     if ("error" in result) {
@@ -86,6 +92,7 @@ export async function startCheckout(
       metadata: {
         business_name: businessName,
         tier,
+        interval,
         consent_timestamp: consentedAt,
       },
     }),

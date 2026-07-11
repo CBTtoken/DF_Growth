@@ -43,6 +43,7 @@ export async function POST(request: Request) {
   const trialClientId: string | undefined = metadata?.growth_client_id;
   const upgradeTo: string | undefined = metadata?.upgrade_to;
   const consentTimestamp: string | undefined = metadata?.consent_timestamp;
+  const interval: string | undefined = metadata?.interval;
 
   if (!reference || (!trialClientId && (!email || !businessName || !tier))) {
     console.error("charge.success missing expected metadata", { email, businessName, tier, reference, trialClientId });
@@ -96,16 +97,51 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  const result = await provisionGrowthClient({
-    businessName: businessName!,
-    email: email!,
-    plan: tier as "foundation" | "growth_engine" | "enterprise",
-    status: "pending_intake",
-    paystackReference: reference,
-    consentedAt: consentTimestamp ?? null,
-  });
+  const billingCycle: "monthly" | "annual" = interval === "annual" ? "annual" : "monthly";
+  // Sprint 1, Build Item 1: founding-member status is scoped to Growth
+  // annual only (confirmed 2026-07-11) — Foundation and Growth monthly are
+  // never eligible, regardless of how many founding slots remain.
+  const eligibleForFounding = tier === "growth_engine" && billingCycle === "annual";
 
-  if ("error" in result) {
+  let result: Awaited<ReturnType<typeof provisionGrowthClient>> | null = null;
+
+  // Retries up to 5 times only on a genuine founding-slot race (two
+  // different Growth-annual signups both computing the same "next" number
+  // at the same time) — the founding_signup_number unique constraint is
+  // what makes this detectable at all; provisionGrowthClient surfaces it as
+  // "duplicate_founding_number" specifically so this loop knows to
+  // re-count and retry, rather than treating it as a hard failure. Not
+  // needed for the ordinary case (no collision), which returns on the
+  // first pass.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    let foundingSignupNumber: number | null = null;
+
+    if (eligibleForFounding) {
+      const { count } = await admin
+        .from("growth_clients")
+        .select("id", { count: "exact", head: true })
+        .eq("is_founding_member", true);
+
+      if ((count ?? 0) < 10) {
+        foundingSignupNumber = (count ?? 0) + 1;
+      }
+    }
+
+    result = await provisionGrowthClient({
+      businessName: businessName!,
+      email: email!,
+      plan: tier as "foundation" | "growth_engine" | "enterprise",
+      status: "pending_intake",
+      paystackReference: reference,
+      consentedAt: consentTimestamp ?? null,
+      billingCycle,
+      foundingSignupNumber,
+    });
+
+    if (!("error" in result) || result.error !== "duplicate_founding_number") break;
+  }
+
+  if (result && "error" in result) {
     console.error("Failed to provision growth_client from webhook", result.error);
   }
 

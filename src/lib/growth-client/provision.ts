@@ -19,6 +19,8 @@ export async function provisionGrowthClient({
   status,
   paystackReference,
   consentedAt,
+  billingCycle,
+  foundingSignupNumber,
 }: {
   businessName: string;
   email: string;
@@ -30,6 +32,15 @@ export async function provisionGrowthClient({
   // through here so it lands on the row the moment it's created rather
   // than needing a separate update after the fact.
   consentedAt: string | null;
+  // Sprint 1, Build Item 1: captured for every plan (useful regardless of
+  // founding eligibility) — Foundation is always "monthly", it has no
+  // annual option today.
+  billingCycle: "monthly" | "annual";
+  // Non-null only for the specific case that actually qualifies for
+  // founding status (Growth annual, under the cap) — the caller (the
+  // webhook) decides eligibility and the candidate number; this function
+  // only needs to know whether to write it and detect a real collision.
+  foundingSignupNumber: number | null;
 }): Promise<ProvisionResult> {
   const admin = createAdminClient();
   const baseSlug = slugify(businessName);
@@ -48,6 +59,9 @@ export async function provisionGrowthClient({
         paystack_reference: paystackReference,
         contact_email: email,
         consented_at: consentedAt,
+        billing_cycle: billingCycle,
+        is_founding_member: foundingSignupNumber !== null,
+        founding_signup_number: foundingSignupNumber,
       })
       .select("id, slug")
       .single();
@@ -61,11 +75,19 @@ export async function provisionGrowthClient({
     insertError = error;
     // 23505 = unique_violation. If it's the reference that collided, a
     // concurrent request for this exact same event just won — safe to stop
-    // and treat as already handled. If it's the slug, retry with a
-    // disambiguated one; any other error, stop and log it below.
+    // and treat as already handled. If it's the founding slot number, a
+    // genuinely different concurrent Growth-annual signup won the same
+    // slot first — the caller (the webhook) re-counts and retries the
+    // whole thing with a fresh candidate number, this function itself
+    // doesn't retry that case since it doesn't own the counting logic. If
+    // it's the slug, retry with a disambiguated one here; any other error,
+    // stop and log it below.
     if (error.code !== "23505") break;
     if (paystackReference && error.message.includes("paystack_reference")) {
       return { error: "duplicate_reference" };
+    }
+    if (foundingSignupNumber !== null && error.message.includes("founding_signup_number")) {
+      return { error: "duplicate_founding_number" };
     }
   }
 

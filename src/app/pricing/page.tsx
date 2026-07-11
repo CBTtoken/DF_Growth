@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Check, Flame, Search, PuzzleIcon, Wallet, ShieldCheck } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
@@ -125,9 +126,14 @@ const FAQS = [
     answer: "Yes. Every DigitalFlyer member is automatically included in the DigitalFlyer Marketplace.",
   },
   {
+    // Sprint 1, Build Item 1 (2026-07-11): this used to describe founding
+    // status as open to "our first 10" signups generally — the real
+    // mechanic is narrower (Growth annual only) and Dewald was explicit
+    // this needs to be unambiguous, so the qualifying detail is spelled
+    // out directly rather than left implicit.
     question: "What is a Founding Business?",
     answer:
-      "Our first 10 Founding Businesses are helping launch DigitalFlyer. They'll receive exclusive launch recognition, early access to new features and Founding Member benefits.",
+      "The first 10 businesses to join Growth on the annual plan (R1,199/year) become Founding Businesses. You'll lock in that price for life, and once Enterprise launches, you get 2 years of Enterprise access while still paying the Growth price.",
   },
   {
     question: "Can I cancel at any time?",
@@ -154,7 +160,7 @@ const FAQS = [
   {
     question: "Why should I join now?",
     answer:
-      "We're only inviting our first 10 Founding Businesses during launch. Joining now means you'll help shape DigitalFlyer from the beginning while receiving exclusive Founding Member benefits.",
+      "Only 10 Founding Business spots are available on Growth's annual plan. Joining now means you'll help shape DigitalFlyer from the beginning while locking in Founding Member benefits for life.",
   },
 ];
 
@@ -170,7 +176,22 @@ export const metadata: Metadata = {
   twitter: { title: PAGE_TITLE, description: PAGE_DESCRIPTION },
 };
 
-export default function PricingPage() {
+// Sprint 1, Build Item 1 (4.4): live, accurate "X of 10 remaining" counter,
+// not hardcoded or manually updated. Cached with the same 60s revalidation
+// window used for client pages, rather than querying on every request.
+export const revalidate = 60;
+
+async function getFoundingSlotsRemaining(): Promise<number> {
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("growth_clients")
+    .select("id", { count: "exact", head: true })
+    .eq("is_founding_member", true);
+  return Math.max(0, 10 - (count ?? 0));
+}
+
+export default async function PricingPage() {
+  const foundingSlotsRemaining = await getFoundingSlotsRemaining();
   return (
     <main className="flex flex-1 flex-col">
       <MarketingHeader />
@@ -185,10 +206,12 @@ export default function PricingPage() {
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-[26rem] rounded-full bg-white/10 blur-3xl" />
 
         <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6">
-          <span className="inline-flex items-center gap-2.5 font-display text-2xl uppercase tracking-wide text-spark sm:text-4xl">
-            <Flame className="size-6 sm:size-8" aria-hidden />
-            Only 10 Founding Business spots
-          </span>
+          {foundingSlotsRemaining > 0 && (
+            <span className="inline-flex items-center gap-2.5 font-display text-2xl uppercase tracking-wide text-spark sm:text-4xl">
+              <Flame className="size-6 sm:size-8" aria-hidden />
+              Only {foundingSlotsRemaining} Founding Business {foundingSlotsRemaining === 1 ? "spot" : "spots"} left
+            </span>
+          )}
 
           <h1 className="font-display text-4xl uppercase leading-[1.05] tracking-tight text-white sm:text-6xl">
             Build Your Presence.
@@ -358,6 +381,7 @@ export default function PricingPage() {
                 features={t.features}
                 ctaLabel={t.ctaLabel}
                 highlighted={t.id === "growth_engine"}
+                foundingSlotsRemaining={foundingSlotsRemaining}
               />
             ))}
           </div>

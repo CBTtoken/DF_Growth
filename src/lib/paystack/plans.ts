@@ -13,8 +13,13 @@ export const TIERS: {
   ctaLabel: string;
 }[] = [
   {
+    // Sprint 1, Build Item 1 (2026-07-11): Foundation is never eligible for
+    // founding-member status — that's Growth-annual only, confirmed by
+    // Dewald. Was "Founding Foundation" / "Become a Founding Business",
+    // which actively claimed the opposite of the real mechanic. Renamed to
+    // remove the false claim rather than leave it and rely on a disclaimer.
     id: "foundation",
-    name: "Founding Foundation",
+    name: "Foundation",
     priceLabel: "Free for 7 days, then R100/month",
     description: "Perfect for businesses ready to build a professional online presence.",
     features: [
@@ -25,7 +30,7 @@ export const TIERS: {
       "Monthly Digital Asset",
       "Ready To Share Anywhere",
     ],
-    ctaLabel: "Become a Founding Business",
+    ctaLabel: "Start Your Free Trial",
   },
   {
     id: "growth_engine",
