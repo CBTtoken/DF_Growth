@@ -15,6 +15,7 @@ export function Step5LandingCopy({
   initialServicesText,
   hasAiDraft,
   onSuccess,
+  submitLabel = "Continue",
 }: {
   initialHeadline: string;
   initialSubheadline: string;
@@ -23,6 +24,7 @@ export function Step5LandingCopy({
   initialServicesText: string;
   hasAiDraft: boolean;
   onSuccess: () => void;
+  submitLabel?: string;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep5, null);
 
@@ -130,7 +132,7 @@ export function Step5LandingCopy({
         disabled={pending}
         className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
-        {pending ? "Saving..." : "Continue"}
+        {pending ? "Saving..." : submitLabel}
       </button>
     </form>
   );

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { AddTestimonialForm } from "@/components/dashboard/AddTestimonialForm";
@@ -113,6 +114,12 @@ export default async function DashboardPage() {
                 View your page ↗
               </a>
             )}
+            <Link
+              href="/dashboard/edit"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Edit your page
+            </Link>
           </div>
         </div>
 

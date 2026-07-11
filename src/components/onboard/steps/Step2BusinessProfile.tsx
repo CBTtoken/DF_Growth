@@ -30,6 +30,7 @@ export function Step2BusinessProfile({
   initialFacebookUrl,
   initialInstagramUrl,
   onSuccess,
+  submitLabel = "Continue",
 }: {
   initialProvince: string;
   initialIndustry: string;
@@ -41,6 +42,7 @@ export function Step2BusinessProfile({
   initialFacebookUrl: string;
   initialInstagramUrl: string;
   onSuccess: () => void;
+  submitLabel?: string;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep2, null);
   const [isOnline, setIsOnline] = useState(initialBusinessAddress === "Online");
@@ -210,7 +212,7 @@ export function Step2BusinessProfile({
         disabled={pending}
         className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
       >
-        {pending ? "Saving..." : "Continue"}
+        {pending ? "Saving..." : submitLabel}
       </button>
     </form>
   );

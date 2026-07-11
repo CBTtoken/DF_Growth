@@ -35,18 +35,21 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
   if (client.error) return { error: { _form: [client.error] } };
 
   const admin = createAdminClient();
-  const { error } = await admin
+  const { data: growthClient, error } = await admin
     .from("growth_clients")
     .update({
       business_name: parsed.data.businessName,
       contact_email: parsed.data.contactEmail,
       contact_phone: parsed.data.contactPhone || null,
     })
-    .eq("id", client.id);
+    .eq("id", client.id)
+    .select("slug")
+    .single();
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
+  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -92,7 +95,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
       instagram_url: parsed.data.instagramUrl || null,
     })
     .eq("id", client.id)
-    .select("business_name")
+    .select("business_name, slug")
     .single();
 
   if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
@@ -112,6 +115,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
   }
 
   revalidatePath("/onboard");
+  if (growthClient.slug) revalidatePath(`/g/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -148,18 +152,21 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
     logoPath = path;
   }
 
-  const { error } = await admin
+  const { data: growthClient, error } = await admin
     .from("growth_clients")
     .update({
       brand_primary_color: parsed.data.brandPrimaryColor,
       brand_secondary_color: parsed.data.brandSecondaryColor,
       ...(logoPath ? { logo_path: logoPath } : {}),
     })
-    .eq("id", client.id);
+    .eq("id", client.id)
+    .select("slug")
+    .single();
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
+  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -210,7 +217,7 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
   const admin = createAdminClient();
   const { data: growthClient } = await admin
     .from("growth_clients")
-    .select("slug, plan")
+    .select("slug, plan, status")
     .eq("id", client.id)
     .single();
 
@@ -229,9 +236,14 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
       // form trigger, not a real navigation target — this anchor just
       // satisfies the NOT NULL constraint, it's not shown to visitors.
       cta_href: "#lead-form",
-      // Never published here anymore — step 6 (packages) is now the finish
-      // line for Foundation, step 7 (Meta) for growth_engine/enterprise.
-      published: false,
+      // Step 6 (packages) is the finish line for Foundation, step 7 (Meta)
+      // for growth_engine/enterprise, that's still true for first-time
+      // onboarding. But this same action is now also reused by the
+      // dashboard's "Edit your page" for an already-live client — an
+      // unconditional false here would silently take their real, already
+      // published page offline the moment they fixed a typo. Only force
+      // it false for a client who was never active in the first place.
+      published: growthClient.status === "active",
     },
     { onConflict: "growth_client_id,slug" }
   );
@@ -239,6 +251,7 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
   if (landingPageError) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
+  if (growthClient.slug) revalidatePath(`/g/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -278,7 +291,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
     .from("growth_clients")
     .update({ packages })
     .eq("id", client.id)
-    .select("plan")
+    .select("plan, status, slug")
     .single();
 
   if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
@@ -288,7 +301,13 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   // trial clock starts now, when their page actually goes live, not back
   // at signup — a client who takes three days to finish onboarding still
   // gets a full 7 days of a working page.
-  if (growthClient.plan === "foundation") {
+  //
+  // Gated on status !== "active" because this same action is now reused by
+  // the dashboard's "Edit your page" for an already-live client — without
+  // this guard, editing packages after launch would reset trial_ends_at to
+  // a fresh 7 days on every single edit, letting a trial be extended
+  // indefinitely just by re-saving packages.
+  if (growthClient.plan === "foundation" && growthClient.status !== "active") {
     const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     await admin
       .from("growth_clients")
@@ -298,6 +317,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   }
 
   revalidatePath("/onboard");
+  if (growthClient.slug) revalidatePath(`/g/${growthClient.slug}`);
   return { success: true };
 }
 
