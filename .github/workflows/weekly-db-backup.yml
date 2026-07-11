@@ -24,11 +24,16 @@ jobs:
           sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
           sudo apt-get install -y postgresql-client-17
 
+      # ubuntu-latest runners ship with an older postgresql-client
+      # pre-installed on PATH — installing v17 above doesn't override that,
+      # since apt/update-alternatives leaves the pre-installed one as the
+      # priority default. Calling the versioned binary directly sidesteps
+      # PATH resolution entirely rather than fighting alternatives priority.
       - name: Dump database
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
-          pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges -F c -f backup.dump
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" --no-owner --no-privileges -F c -f backup.dump
 
       - name: Upload backup artifact
         uses: actions/upload-artifact@v4
