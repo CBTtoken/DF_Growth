@@ -6,6 +6,7 @@ import { MetaTokenForm } from "@/components/dashboard/MetaTokenForm";
 import { MetaIdsForm } from "@/components/dashboard/MetaIdsForm";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
+import { PlatformFeatures } from "@/components/dashboard/PlatformFeatures";
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
@@ -103,6 +104,8 @@ export default async function DashboardPage() {
             )}
           </div>
         </div>
+
+        <PlatformFeatures plan={growthClient?.plan ?? null} />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Leads ({leads?.length ?? 0})</h2>
