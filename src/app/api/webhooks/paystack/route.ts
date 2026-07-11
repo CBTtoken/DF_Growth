@@ -36,9 +36,12 @@ export async function POST(request: Request) {
   const email: string | undefined = customer?.email;
   const businessName: string | undefined = metadata?.business_name;
   const tier: string | undefined = metadata?.tier;
-  // Set only by src/app/api/trial/convert — identifies this charge as an
-  // existing Foundation trial converting to paid, not a brand-new signup.
+  // Set by src/app/api/trial/convert (trial converting to paid) or
+  // src/app/api/plan/upgrade (existing client switching tiers) —
+  // identifies this charge as an update to an existing account, not a
+  // brand-new signup.
   const trialClientId: string | undefined = metadata?.growth_client_id;
+  const upgradeTo: string | undefined = metadata?.upgrade_to;
 
   if (!reference || (!trialClientId && (!email || !businessName || !tier))) {
     console.error("charge.success missing expected metadata", { email, businessName, tier, reference, trialClientId });
@@ -68,9 +71,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  // Trial conversion: the account, slug, and onboarding are already done —
-  // this charge just switches billing on and lifts the pause a lapsed trial
-  // may have set (src/app/api/cron/trial-reminders).
+  // Trial conversion or plan upgrade: the account, slug, and onboarding are
+  // already done — this charge just switches billing on (and, for an
+  // upgrade, changes which tier they're actually on) and lifts the pause a
+  // lapsed trial may have set (src/app/api/cron/trial-reminders).
   if (trialClientId) {
     // paystack_subscription_code stays untouched here — charge.success's
     // payload doesn't reliably carry it (same limitation noted for
@@ -81,11 +85,12 @@ export async function POST(request: Request) {
       .update({
         status: "active",
         paystack_reference: reference,
+        ...(upgradeTo ? { plan: upgradeTo } : {}),
       })
       .eq("id", trialClientId);
 
     if (error) {
-      console.error("Failed to convert trial to paid", error);
+      console.error("Failed to convert trial/upgrade to paid", error);
     }
     return NextResponse.json({ received: true });
   }

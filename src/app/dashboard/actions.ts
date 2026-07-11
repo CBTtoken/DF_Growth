@@ -7,6 +7,8 @@ import { testimonialSchema } from "@/lib/schemas/testimonial";
 import { metaTokenSchema } from "@/lib/schemas/meta-token";
 import { metaIdsSchema } from "@/lib/schemas/meta-ids";
 import { encrypt } from "@/lib/crypto";
+import { findActiveSubscription, disableSubscription } from "@/lib/paystack/subscriptions";
+import { templateSchema } from "@/lib/schemas/intake";
 
 type DashboardState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -107,6 +109,74 @@ export async function saveMetaToken(
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// The pricing/marketing copy promises self-serve cancellation with no
+// long-term contract — this is what actually makes that true, rather than
+// leaving it as a claim someone has to email in to act on.
+// paystack_subscription_code was never actually captured at signup (see
+// the webhook's own comment), so this looks the subscription up live by
+// the client's own email instead of trusting a stored code that mostly
+// doesn't exist yet. A Foundation client still on their free trial has no
+// Paystack subscription at all — that's a valid case, not an error, it
+// just means there's nothing to disable before marking the account
+// cancelled.
+export async function cancelSubscription(_prevState: DashboardState, _formData: FormData): Promise<DashboardState> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { data: growthClient } = await admin
+    .from("growth_clients")
+    .select("contact_email")
+    .eq("id", client.id)
+    .single();
+
+  if (!growthClient?.contact_email) return { error: { _form: ["Could not find your account, please try again."] } };
+
+  const subscription = await findActiveSubscription(growthClient.contact_email);
+  if (subscription) {
+    const result = await disableSubscription(subscription.subscriptionCode, subscription.emailToken);
+    if (!result.ok) {
+      console.error("Failed to disable Paystack subscription", result.error);
+      return { error: { _form: ["Could not cancel your subscription with Paystack, please try again or contact us."] } };
+    }
+  }
+
+  const { error } = await admin.from("growth_clients").update({ status: "cancelled" }).eq("id", client.id);
+  if (error) return { error: { _form: ["Could not update your account, please try again."] } };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// Found via real UAT: the onboarding picker was a one-shot, irreversible
+// choice — a client who picked wrong (or just changed their mind) had no
+// way back in without asking us to do it manually. Reuses the exact same
+// templateSchema/TemplateGallery as onboarding step 4, just a different
+// save path and revalidation target (the live public page, not /onboard).
+export async function changeTemplate(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const parsed = templateSchema.safeParse({ template: formData.get("template") });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { data: growthClient, error } = await admin
+    .from("growth_clients")
+    .update({ template: parsed.data.template })
+    .eq("id", client.id)
+    .select("slug")
+    .single();
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  revalidatePath("/dashboard");
+  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
   return { success: true };
 }
 

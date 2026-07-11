@@ -7,6 +7,8 @@ import { MetaIdsForm } from "@/components/dashboard/MetaIdsForm";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { PlatformFeatures } from "@/components/dashboard/PlatformFeatures";
+import { AccountSection } from "@/components/dashboard/AccountSection";
+import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
@@ -36,7 +38,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     admin
       .from("growth_clients")
-      .select("business_name, slug, plan, meta_pixel_id, meta_setup_requested_help")
+      .select("business_name, slug, plan, status, template, meta_pixel_id, meta_setup_requested_help")
       .eq("id", client.id)
       .single(),
     admin
@@ -106,6 +108,12 @@ export default async function DashboardPage() {
         </div>
 
         <PlatformFeatures plan={growthClient?.plan ?? null} />
+
+        {growthClient && client.id && (
+          <AccountSection growthClientId={client.id} plan={growthClient.plan} status={growthClient.status} />
+        )}
+
+        <ChangeTemplateSection currentTemplate={growthClient?.template ?? "conversion"} />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Leads ({leads?.length ?? 0})</h2>
