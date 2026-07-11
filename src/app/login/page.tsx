@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 // Found via real UAT: there was no way for an existing client to get back
 // into their dashboard without still having their original signup email
@@ -68,6 +69,7 @@ export default function LoginPage() {
           </>
         )}
       </div>
+      <SiteFooter />
     </main>
   );
 }

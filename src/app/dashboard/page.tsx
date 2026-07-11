@@ -14,6 +14,7 @@ import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSect
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
 import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
+import { SiteFooter } from "@/components/SiteFooter";
 
 // Private, signed-in-only — see onboard/page.tsx for the same reasoning.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -31,6 +32,7 @@ export default async function DashboardPage() {
             Use the magic link we sent you to get here — this page needs you to be signed in.
           </p>
         </div>
+        <SiteFooter />
       </main>
     );
   }
@@ -297,6 +299,7 @@ export default async function DashboardPage() {
           <EcosystemAccess />
         </section>
       </div>
+      <SiteFooter />
     </main>
   );
 }

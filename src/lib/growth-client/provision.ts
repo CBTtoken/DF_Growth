@@ -18,12 +18,18 @@ export async function provisionGrowthClient({
   plan,
   status,
   paystackReference,
+  consentedAt,
 }: {
   businessName: string;
   email: string;
   plan: Tier;
   status: "pending_intake" | "active";
   paystackReference: string | null;
+  // Sprint 1, Build Item 9: captured at the point of registration (the
+  // pricing-page form, before payment or trial activation), threaded
+  // through here so it lands on the row the moment it's created rather
+  // than needing a separate update after the fact.
+  consentedAt: string | null;
 }): Promise<ProvisionResult> {
   const admin = createAdminClient();
   const baseSlug = slugify(businessName);
@@ -41,6 +47,7 @@ export async function provisionGrowthClient({
         status,
         paystack_reference: paystackReference,
         contact_email: email,
+        consented_at: consentedAt,
       })
       .select("id, slug")
       .single();

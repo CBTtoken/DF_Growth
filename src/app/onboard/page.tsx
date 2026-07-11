@@ -3,6 +3,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OnboardWizard } from "@/components/onboard/OnboardWizard";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import type { Tier } from "@/lib/paystack/plans";
 
 // Private, signed-in-only flow — nothing here should ever show up in search
@@ -26,6 +27,7 @@ export default async function OnboardPage() {
             signed in.
           </p>
         </div>
+        <SiteFooter />
       </main>
     );
   }
@@ -54,6 +56,7 @@ export default async function OnboardPage() {
             and refresh — otherwise, get in touch.
           </p>
         </div>
+        <SiteFooter />
       </main>
     );
   }
@@ -73,6 +76,7 @@ export default async function OnboardPage() {
         <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
           <h1 className="text-xl font-bold tracking-tight text-ink">No account found</h1>
         </div>
+        <SiteFooter />
       </main>
     );
   }
@@ -163,6 +167,7 @@ export default async function OnboardPage() {
           metaAdAccountId: growthClient.meta_ad_account_id ?? "",
         }}
       />
+      <SiteFooter />
     </main>
   );
 }

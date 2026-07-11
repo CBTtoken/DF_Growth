@@ -10,6 +10,7 @@ type CheckoutState = {
     businessName?: string[];
     email?: string[];
     tier?: string[];
+    consent?: string[];
     _form?: string[];
   };
 } | null;
@@ -29,6 +30,7 @@ export async function startCheckout(
     email: formData.get("email"),
     tier: formData.get("tier"),
     interval: formData.get("interval") || undefined,
+    consent: formData.get("consent"),
   });
 
   if (!parsed.success) {
@@ -36,6 +38,7 @@ export async function startCheckout(
   }
 
   const { businessName, email, tier, interval } = parsed.data;
+  const consentedAt = new Date().toISOString();
 
   if (tier === "foundation") {
     const result = await provisionGrowthClient({
@@ -49,6 +52,7 @@ export async function startCheckout(
       // other unauthenticated form without a payment gate. Acceptable for
       // the pilot; the slug disambiguation at least keeps both usable.
       paystackReference: null,
+      consentedAt,
     });
 
     if ("error" in result) {
@@ -82,6 +86,7 @@ export async function startCheckout(
       metadata: {
         business_name: businessName,
         tier,
+        consent_timestamp: consentedAt,
       },
     }),
   });

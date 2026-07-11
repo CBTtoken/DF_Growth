@@ -6,6 +6,7 @@ import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { SectionDivider } from "@/components/marketing/SectionDivider";
+import { SiteFooter } from "@/components/SiteFooter";
 
 const TRUST_INDICATORS = [
   "Professional Business Page",
@@ -440,6 +441,8 @@ export default function PricingPage() {
           <p className="mt-1 text-sm text-white/70">Your DigitalFlyer journey starts in just a few minutes.</p>
         </div>
       </section>
+
+      <SiteFooter />
     </main>
   );
 }

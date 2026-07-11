@@ -152,6 +152,24 @@ export function TierCard({
             className="rounded border border-gray-300 px-3 py-2 text-sm"
           />
           {state?.error?.email && <p className="text-xs text-red-600">{state.error.email[0]}</p>}
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-gray-500">
+            <input type="checkbox" name="consent" required className="mt-0.5" />
+            <span>
+              I agree to the{" "}
+              <a href="/privacy" target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">
+                Privacy Policy
+              </a>{" "}
+              and{" "}
+              <a href="/terms" target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">
+                Terms &amp; Conditions
+              </a>
+              . I understand that DigitalFlyer will process my personal and business information to
+              provide the service, and that I remain the owner of any leads generated through my page. I
+              also agree to receive occasional updates and news from DigitalFlyer via email or WhatsApp (I
+              can unsubscribe at any time).
+            </span>
+          </label>
+          {state?.error?.consent && <p className="text-xs text-red-600">{state.error.consent[0]}</p>}
           {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
           <button
             type="submit"

@@ -275,6 +275,14 @@ export default async function ClientLandingPage({
           © {new Date().getFullYear()} {client.business_name} ·{" "}
           <a href="/dashboard" className="underline-offset-2 hover:text-gray-600 hover:underline">
             Manage this page
+          </a>{" "}
+          ·{" "}
+          <a href="/privacy" className="underline-offset-2 hover:text-gray-600 hover:underline">
+            Privacy Policy
+          </a>{" "}
+          ·{" "}
+          <a href="/terms" className="underline-offset-2 hover:text-gray-600 hover:underline">
+            Terms &amp; Conditions
           </a>
         </footer>
       </main>
@@ -405,6 +413,14 @@ export default async function ClientLandingPage({
         © {new Date().getFullYear()} {client.business_name} ·{" "}
         <a href="/dashboard" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Manage this page
+        </a>{" "}
+        ·{" "}
+        <a href="/privacy" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          Privacy Policy
+        </a>{" "}
+        ·{" "}
+        <a href="/terms" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          Terms &amp; Conditions
         </a>
       </footer>
     </main>

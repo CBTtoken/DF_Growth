@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { EditPageClient } from "@/components/dashboard/EditPageClient";
+import { SiteFooter } from "@/components/SiteFooter";
 
 // Private, signed-in-only — see onboard/page.tsx for the same reasoning.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -21,6 +22,7 @@ export default async function EditPage() {
             Use the magic link we sent you to get here — this page needs you to be signed in.
           </p>
         </div>
+        <SiteFooter />
       </main>
     );
   }
@@ -48,6 +50,7 @@ export default async function EditPage() {
         <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
           <h1 className="text-xl font-bold tracking-tight text-ink">No account found</h1>
         </div>
+        <SiteFooter />
       </main>
     );
   }
@@ -104,6 +107,7 @@ export default async function EditPage() {
           }}
         />
       </div>
+      <SiteFooter />
     </main>
   );
 }

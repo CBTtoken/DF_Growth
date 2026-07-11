@@ -42,6 +42,7 @@ export async function POST(request: Request) {
   // brand-new signup.
   const trialClientId: string | undefined = metadata?.growth_client_id;
   const upgradeTo: string | undefined = metadata?.upgrade_to;
+  const consentTimestamp: string | undefined = metadata?.consent_timestamp;
 
   if (!reference || (!trialClientId && (!email || !businessName || !tier))) {
     console.error("charge.success missing expected metadata", { email, businessName, tier, reference, trialClientId });
@@ -101,6 +102,7 @@ export async function POST(request: Request) {
     plan: tier as "foundation" | "growth_engine" | "enterprise",
     status: "pending_intake",
     paystackReference: reference,
+    consentedAt: consentTimestamp ?? null,
   });
 
   if ("error" in result) {
