@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { startCheckoutSchema } from "@/lib/schemas/pricing";
 import { planCodeForTier, amountForTier } from "@/lib/paystack/plans";
+import { provisionGrowthClient } from "@/lib/growth-client/provision";
 
 type CheckoutState = {
   error?: {
@@ -13,10 +14,12 @@ type CheckoutState = {
   };
 } | null;
 
-// CLAUDE.md Section 2.1: the client picks a tier, we create a Paystack
-// transaction with that tier's plan attached, and redirect to the hosted
-// checkout. Paystack's webhook (not this action) does the actual
-// provisioning once payment succeeds.
+// CLAUDE.md Section 2.1, updated 2026-07-11: Foundation is now a 7-day free
+// trial with no card at signup, so it can't go through Paystack checkout at
+// all — there's no charge.success event to provision the account from.
+// growth_engine and enterprise still pay upfront the same way they always
+// did; the Paystack webhook (not this action) does their provisioning once
+// payment succeeds.
 export async function startCheckout(
   _prevState: CheckoutState,
   formData: FormData
@@ -25,15 +28,38 @@ export async function startCheckout(
     businessName: formData.get("businessName"),
     email: formData.get("email"),
     tier: formData.get("tier"),
+    interval: formData.get("interval") || undefined,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
   }
 
-  const { businessName, email, tier } = parsed.data;
-  const planCode = planCodeForTier(tier);
-  const amount = await amountForTier(tier);
+  const { businessName, email, tier, interval } = parsed.data;
+
+  if (tier === "foundation") {
+    const result = await provisionGrowthClient({
+      businessName,
+      email,
+      plan: "foundation",
+      status: "pending_intake",
+      // No payment ever happens at signup for a trial, so there's no
+      // Paystack transaction reference to key idempotency on — a real
+      // double-submit of this form just makes two accounts, same as any
+      // other unauthenticated form without a payment gate. Acceptable for
+      // the pilot; the slug disambiguation at least keeps both usable.
+      paystackReference: null,
+    });
+
+    if ("error" in result) {
+      return { error: { _form: ["Could not start your trial, please try again."] } };
+    }
+
+    redirect("/onboard");
+  }
+
+  const planCode = planCodeForTier(tier, interval);
+  const amount = await amountForTier(tier, interval);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL!;
 
   const res = await fetch("https://api.paystack.co/transaction/initialize", {

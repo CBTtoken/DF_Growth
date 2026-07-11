@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { slugify } from "@/lib/slugify";
+import { provisionGrowthClient } from "@/lib/growth-client/provision";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -37,9 +36,12 @@ export async function POST(request: Request) {
   const email: string | undefined = customer?.email;
   const businessName: string | undefined = metadata?.business_name;
   const tier: string | undefined = metadata?.tier;
+  // Set only by src/app/api/trial/convert — identifies this charge as an
+  // existing Foundation trial converting to paid, not a brand-new signup.
+  const trialClientId: string | undefined = metadata?.growth_client_id;
 
-  if (!email || !businessName || !tier || !reference) {
-    console.error("charge.success missing expected metadata", { email, businessName, tier, reference });
+  if (!reference || (!trialClientId && (!email || !businessName || !tier))) {
+    console.error("charge.success missing expected metadata", { email, businessName, tier, reference, trialClientId });
     return NextResponse.json({ received: true });
   }
 
@@ -54,8 +56,8 @@ export async function POST(request: Request) {
   // Paystack's own transaction reference, which is the actually-correct
   // signal for "have I already processed this specific charge" (Paystack
   // redelivers webhook events; this is the case that check is really for).
-  // Slug collisions are a separate, expected case — handled below by
-  // disambiguating the slug, not rejecting the signup.
+  // Slug collisions are a separate, expected case — handled by
+  // provisionGrowthClient disambiguating the slug, not rejecting the signup.
   const { data: existing } = await admin
     .from("growth_clients")
     .select("id")
@@ -66,119 +68,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  const baseSlug = slugify(businessName);
-  let inserted: { id: string } | null = null;
-  let insertError: { message: string; code?: string } | null = null;
-
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const candidateSlug = attempt === 0 ? baseSlug : `${baseSlug}-${crypto.randomBytes(2).toString("hex")}`;
-    const { data, error } = await admin
+  // Trial conversion: the account, slug, and onboarding are already done —
+  // this charge just switches billing on and lifts the pause a lapsed trial
+  // may have set (src/app/api/cron/trial-reminders).
+  if (trialClientId) {
+    // paystack_subscription_code stays untouched here — charge.success's
+    // payload doesn't reliably carry it (same limitation noted for
+    // brand-new signups above), needs a separate reconciliation pass once
+    // something actually reads that column.
+    const { error } = await admin
       .from("growth_clients")
-      .insert({
-        business_name: businessName,
-        slug: candidateSlug,
-        plan: tier,
-        status: "pending_intake",
+      .update({
+        status: "active",
         paystack_reference: reference,
       })
-      .select("id")
-      .single();
+      .eq("id", trialClientId);
 
-    if (!error) {
-      inserted = data;
-      insertError = null;
-      break;
+    if (error) {
+      console.error("Failed to convert trial to paid", error);
     }
-
-    insertError = error;
-    // 23505 = unique_violation. If it's the reference that collided, a
-    // concurrent request for this exact same event just won — safe to stop
-    // and treat as already handled. If it's the slug, retry with a
-    // disambiguated one; any other error, stop and log it below.
-    if (error.code !== "23505") break;
-    if (error.message.includes("paystack_reference")) {
-      return NextResponse.json({ received: true });
-    }
-  }
-
-  if (!inserted || insertError) {
-    console.error("Failed to create growth_client", insertError);
     return NextResponse.json({ received: true });
   }
 
-  // Found via a real customer signup never receiving an email: generateLink
-  // only ever *generates* a link, it never dispatches mail — the previous
-  // version of this code just logged the link to Vercel's server logs,
-  // invisible to the actual customer. inviteUserByEmail creates the auth
-  // user the same way but also sends it through Supabase's built-in mailer
-  // (confirmed live: `confirmation_sent_at` comes back populated). The
-  // email itself is generic/unbranded since custom SMTP isn't configured —
-  // acceptable for the pilot phase, a Resend-based branded email is still
-  // the real long-term fix (CLAUDE.md Section 4) but this unblocks every
-  // real signup in the meantime with a one-method change.
-  const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard`,
+  const result = await provisionGrowthClient({
+    businessName: businessName!,
+    email: email!,
+    plan: tier as "foundation" | "growth_engine" | "enterprise",
+    status: "pending_intake",
+    paystackReference: reference,
   });
 
-  let ownerUserId: string | null = null;
-
-  if (inviteError) {
-    if (inviteError.code === "email_exists") {
-      // Found via a real second signup on an email that already had an
-      // account (same person buying a second tier, or a repeat test):
-      // inviteUserByEmail only works for brand-new emails and fails with
-      // this exact code otherwise, and the previous code just logged that
-      // error and stopped — leaving a real, paid growth_clients row with no
-      // linked user and no email ever sent, silently stranding the
-      // customer. A user can legitimately belong to more than one
-      // growth_client (see the comment in onboard/page.tsx), so the correct
-      // behavior is to link their existing account to this new client, not
-      // reject the signup. inviteUserByEmail can't message an existing
-      // user, but signInWithOtp can — it emails a real working sign-in link
-      // through the same Supabase mailer, whether the account is new or not.
-      // admin.listUsers() has no email filter in this SDK version, so hit
-      // the REST endpoint directly (it does support ?email=).
-      const lookupRes = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
-        {
-          headers: {
-            apikey: process.env.SUPABASE_SECRET_KEY!,
-            Authorization: `Bearer ${process.env.SUPABASE_SECRET_KEY}`,
-          },
-        }
-      );
-      const lookupData = await lookupRes.json();
-      ownerUserId = lookupData?.users?.[0]?.id ?? null;
-
-      if (ownerUserId) {
-        const anon = createSupabaseClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-        );
-        const { error: otpError } = await anon.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard` },
-        });
-        if (otpError) {
-          console.error("Failed to send sign-in link to existing user", otpError);
-        }
-      }
-    } else {
-      console.error("Failed to invite user by email", inviteError);
-    }
-  } else if (inviteData?.user) {
-    ownerUserId = inviteData.user.id;
-  }
-
-  if (ownerUserId) {
-    const { error: memberError } = await admin.from("growth_members").insert({
-      user_id: ownerUserId,
-      growth_client_id: inserted.id,
-      role: "growth_owner",
-    });
-    if (memberError) {
-      console.error("Failed to create growth_member", memberError);
-    }
+  if ("error" in result) {
+    console.error("Failed to provision growth_client from webhook", result.error);
   }
 
   return NextResponse.json({ received: true });

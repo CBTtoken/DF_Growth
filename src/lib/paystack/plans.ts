@@ -1,19 +1,21 @@
 export type Tier = "foundation" | "growth_engine" | "enterprise";
+// Only growth_engine offers a choice — Foundation's only plan is its
+// post-trial R100/month, Enterprise has no live checkout yet. Present for
+// every tier for a uniform call signature; ignored otherwise.
+export type BillingInterval = "monthly" | "annual";
 
 export const TIERS: {
   id: Tier;
   name: string;
   priceLabel: string;
-  planCodeEnvVar: string;
   description: string;
   features: string[];
 }[] = [
   {
     id: "foundation",
     name: "Foundation",
-    priceLabel: "R550/month",
-    planCodeEnvVar: "PAYSTACK_PLAN_FOUNDATION",
-    description: "For businesses not ready to run paid ads yet.",
+    priceLabel: "Free for 7 days, then R100/month",
+    description: "For businesses not ready to run paid ads yet. No card needed to start.",
     features: [
       "Conversion-optimized landing page",
       "Brand kit",
@@ -23,9 +25,8 @@ export const TIERS: {
   },
   {
     id: "growth_engine",
-    name: "Growth Engine",
-    priceLabel: "R1,400/month",
-    planCodeEnvVar: "PAYSTACK_PLAN_GROWTH_ENGINE",
+    name: "Growth",
+    priceLabel: "R180/month or R1,199/year",
     description: "Everything in Foundation, plus managed Meta ad tracking.",
     features: [
       "Everything in Foundation",
@@ -38,29 +39,28 @@ export const TIERS: {
   {
     id: "enterprise",
     name: "Enterprise",
-    priceLabel: "R3,500/month",
-    planCodeEnvVar: "PAYSTACK_PLAN_ENTERPRISE",
-    description: "Everything in Growth Engine, plus a custom multi-page site.",
+    priceLabel: "Coming soon",
+    description: "Full Meta + Google ad management for businesses ready to go further.",
     features: [
-      "Everything in Growth Engine",
+      "Everything in Growth",
       "Custom multi-page site",
-      "Dedicated infrastructure isolation",
+      "Full ad account management, both platforms",
       "Featured marketplace placement",
       "Priority support",
     ],
   },
 ];
 
-function tierEntry(tier: Tier) {
-  const entry = TIERS.find((t) => t.id === tier);
-  if (!entry) throw new Error(`Unknown tier: ${tier}`);
-  return entry;
+function planCodeEnvVar(tier: Tier, interval: BillingInterval): string {
+  if (tier === "foundation") return "PAYSTACK_PLAN_FOUNDATION";
+  if (tier === "enterprise") return "PAYSTACK_PLAN_ENTERPRISE";
+  return interval === "annual" ? "PAYSTACK_PLAN_GROWTH_ANNUAL" : "PAYSTACK_PLAN_GROWTH_MONTHLY";
 }
 
-export function planCodeForTier(tier: Tier): string {
-  const entry = tierEntry(tier);
-  const code = process.env[entry.planCodeEnvVar];
-  if (!code) throw new Error(`Missing env var ${entry.planCodeEnvVar}`);
+export function planCodeForTier(tier: Tier, interval: BillingInterval = "monthly"): string {
+  const envVar = planCodeEnvVar(tier, interval);
+  const code = process.env[envVar];
+  if (!code) throw new Error(`Missing env var ${envVar}`);
   return code;
 }
 
@@ -70,8 +70,8 @@ export function planCodeForTier(tier: Tier): string {
 // price genuinely sourced from Paystack's Plan config, matching CLAUDE.md
 // Section 2.2 ("amount lives in Paystack's Plan configuration, not
 // hardcoded in the app").
-export async function amountForTier(tier: Tier): Promise<number> {
-  const planCode = planCodeForTier(tier);
+export async function amountForTier(tier: Tier, interval: BillingInterval = "monthly"): Promise<number> {
+  const planCode = planCodeForTier(tier, interval);
   const res = await fetch(`https://api.paystack.co/plan/${planCode}`, {
     headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
   });

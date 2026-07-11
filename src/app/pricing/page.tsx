@@ -69,10 +69,10 @@ export default function PricingPage() {
               Start with what you&apos;ve got.
             </h2>
             <p className="mt-3 text-gray-600">
-              Foundation: a real, converting page and branded content, no ad budget needed.
-              Growth Engine: everything in Foundation, plus your ad tracking actually working the
-              way it&apos;s supposed to. Enterprise: a fully custom build for businesses ready to
-              go further.
+              Foundation: a real, converting page and branded content, free for 7 days, no card
+              needed to start. Growth: everything in Foundation, plus your ad tracking actually
+              working the way it&apos;s supposed to. Enterprise: full ad management for businesses
+              ready to go further — coming soon.
             </p>
           </div>
 

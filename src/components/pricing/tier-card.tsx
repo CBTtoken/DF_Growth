@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { startCheckout } from "@/app/pricing/actions";
-import type { Tier } from "@/lib/paystack/plans";
+import type { Tier, BillingInterval } from "@/lib/paystack/plans";
 
 export function TierCard({
   tier,
@@ -21,6 +21,7 @@ export function TierCard({
 }) {
   const [state, formAction, pending] = useActionState(startCheckout, null);
   const [businessName, setBusinessName] = useState("");
+  const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [availability, setAvailability] = useState<{ checking: boolean; available: boolean | null; slug?: string }>({
     checking: false,
     available: null,
@@ -50,6 +51,9 @@ export function TierCard({
     return () => clearTimeout(timeout);
   }, [businessName]);
 
+  const displayPrice =
+    tier === "growth_engine" ? (interval === "annual" ? "R1,199/year" : "R180/month") : priceLabel;
+
   return (
     <div
       className={`flex flex-col gap-4 rounded-2xl bg-white p-6 ${
@@ -63,7 +67,7 @@ export function TierCard({
       )}
       <div>
         <h3 className="font-display text-xl uppercase tracking-wide text-ink">{name}</h3>
-        <p className="mt-1 text-2xl font-bold text-ink">{priceLabel}</p>
+        <p className="mt-1 text-2xl font-bold text-ink">{displayPrice}</p>
         <p className="mt-1 text-sm text-gray-500">{description}</p>
       </div>
 
@@ -73,47 +77,92 @@ export function TierCard({
         ))}
       </ul>
 
-      <form action={formAction} className="flex flex-col gap-2 mt-auto pt-4">
-        <input type="hidden" name="tier" value={tier} />
-        <input
-          type="text"
-          name="businessName"
-          placeholder="Business name"
-          required
-          value={businessName}
-          onChange={(e) => setBusinessName(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
-        />
-        {availability.checking && <p className="text-xs text-gray-400">Checking availability...</p>}
-        {!availability.checking && availability.available === true && (
-          <p className="text-xs text-green-600">✓ {availability.slug} is available</p>
-        )}
-        {!availability.checking && availability.available === false && (
-          <p className="text-xs text-amber-600">
-            That name is already taken — you can still continue, we&apos;ll add a short code to your link
+      {tier === "enterprise" ? (
+        <div className="mt-auto flex flex-col gap-2 pt-4">
+          <span className="w-fit rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            Coming soon
+          </span>
+          <p className="text-xs text-gray-500">
+            Full Meta + Google ad management is on its way — get in touch and we&apos;ll let you know
+            the moment it&apos;s ready.
           </p>
-        )}
-        {state?.error?.businessName && (
-          <p className="text-xs text-red-600">{state.error.businessName[0]}</p>
-        )}
-        <input
-          type="email"
-          name="email"
-          placeholder="you@business.co.za"
-          required
-          className="rounded border border-gray-300 px-3 py-2 text-sm"
-        />
-        {state?.error?.email && <p className="text-xs text-red-600">{state.error.email[0]}</p>}
-        {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
-        <button
-          type="submit"
-          disabled={pending}
-          className="rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
-        >
-          {pending ? "Redirecting..." : "Get Started"}
-        </button>
-        <p className="text-xs text-gray-400 text-center">Secure payment via Paystack</p>
-      </form>
+          <a
+            href="mailto:info@digitalflyer.co.za?subject=Enterprise%20waitlist"
+            className="rounded-full border border-gray-300 px-4 py-2.5 text-center text-sm font-semibold text-gray-700 transition hover:border-gray-400"
+          >
+            Get notified
+          </a>
+        </div>
+      ) : (
+        <form action={formAction} className="flex flex-col gap-2 mt-auto pt-4">
+          <input type="hidden" name="tier" value={tier} />
+          {tier === "growth_engine" && (
+            <>
+              <input type="hidden" name="interval" value={interval} />
+              <div className="flex gap-1.5 rounded-full bg-gray-100 p-1 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setInterval("monthly")}
+                  className={`flex-1 rounded-full py-1.5 transition-colors ${
+                    interval === "monthly" ? "bg-white text-ink shadow-sm" : "text-gray-500"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInterval("annual")}
+                  className={`flex-1 rounded-full py-1.5 transition-colors ${
+                    interval === "annual" ? "bg-white text-ink shadow-sm" : "text-gray-500"
+                  }`}
+                >
+                  Annual
+                </button>
+              </div>
+            </>
+          )}
+          <input
+            type="text"
+            name="businessName"
+            placeholder="Business name"
+            required
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            className="rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+          {availability.checking && <p className="text-xs text-gray-400">Checking availability...</p>}
+          {!availability.checking && availability.available === true && (
+            <p className="text-xs text-green-600">✓ {availability.slug} is available</p>
+          )}
+          {!availability.checking && availability.available === false && (
+            <p className="text-xs text-amber-600">
+              That name is already taken — you can still continue, we&apos;ll add a short code to your link
+            </p>
+          )}
+          {state?.error?.businessName && (
+            <p className="text-xs text-red-600">{state.error.businessName[0]}</p>
+          )}
+          <input
+            type="email"
+            name="email"
+            placeholder="you@business.co.za"
+            required
+            className="rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+          {state?.error?.email && <p className="text-xs text-red-600">{state.error.email[0]}</p>}
+          {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
+          <button
+            type="submit"
+            disabled={pending}
+            className="rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
+          >
+            {pending ? "Redirecting..." : tier === "foundation" ? "Start free trial" : "Get Started"}
+          </button>
+          <p className="text-xs text-gray-400 text-center">
+            {tier === "foundation" ? "No card required" : "Secure payment via Paystack"}
+          </p>
+        </form>
+      )}
     </div>
   );
 }

@@ -284,9 +284,16 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
 
   // Foundation has no step 7 (no Meta connection to make), so the wizard
-  // ends here for them — this step is now their finish line.
+  // ends here for them — this step is now their finish line. The 7-day free
+  // trial clock starts now, when their page actually goes live, not back
+  // at signup — a client who takes three days to finish onboarding still
+  // gets a full 7 days of a working page.
   if (growthClient.plan === "foundation") {
-    await admin.from("growth_clients").update({ status: "active" }).eq("id", client.id);
+    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    await admin
+      .from("growth_clients")
+      .update({ status: "active", trial_ends_at: trialEndsAt })
+      .eq("id", client.id);
     await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
   }
 
