@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { OwnerBar } from "@/components/landing/OwnerBar";
 import { ConversionHero } from "@/components/landing/ConversionHero";
 import { TrustBadges } from "@/components/landing/TrustBadges";
 import { LeadForm } from "@/components/landing/LeadForm";
@@ -53,12 +55,14 @@ export default async function ClientLandingPage({
 
   if (!client) return notFound();
 
-  // landing_pages and testimonials don't depend on each other — running them
-  // sequentially was adding a full extra network round-trip to the time
-  // before the hero could render (confirmed via Lighthouse: this route's LCP
-  // element render delay was ~1.8s higher than a page with no DB calls at
-  // all, roughly what one extra serial Supabase round-trip costs).
-  const [{ data: landingPage }, { data: testimonials }] = await Promise.all([
+  // landing_pages, testimonials, and the visitor's own auth session don't
+  // depend on each other — running them sequentially was adding a full
+  // extra network round-trip to the time before the hero could render
+  // (confirmed via Lighthouse: this route's LCP element render delay was
+  // ~1.8s higher than a page with no DB calls at all, roughly what one
+  // extra serial Supabase round-trip costs).
+  const supabase = await createServerClient();
+  const [{ data: landingPage }, { data: testimonials }, { data: authData }] = await Promise.all([
     admin
       .from("landing_pages")
       .select("id, headline, subheadline, about_text, services_text, cta_label")
@@ -66,9 +70,27 @@ export default async function ClientLandingPage({
       .eq("published", true)
       .single(),
     admin.from("testimonials").select("id, author_name, quote, rating").eq("growth_client_id", client.id).limit(5),
+    supabase.auth.getUser(),
   ]);
 
   if (!landingPage) return notFound();
+
+  // Found via real UAT: the only way back to the dashboard was a small
+  // footer link a real owner testing their own page didn't notice at all
+  // (see OwnerBar.tsx). Checked against growth_members for THIS specific
+  // client, not just "is someone logged in" — a user can own more than one
+  // growth_client, and a customer who happens to be logged in elsewhere
+  // must never see another business's owner controls.
+  let isOwner = false;
+  if (authData.user) {
+    const { data: membership } = await admin
+      .from("growth_members")
+      .select("id")
+      .eq("user_id", authData.user.id)
+      .eq("growth_client_id", client.id)
+      .maybeSingle();
+    isOwner = Boolean(membership);
+  }
 
   // Defensive fallback only — the wizard requires a color before a client
   // can publish, so this shouldn't normally be hit. Was FortisLex's navy
@@ -124,6 +146,7 @@ export default async function ClientLandingPage({
 
     return (
       <main>
+        {isOwner && <OwnerBar />}
         <FbclidCapture />
         <ConversionHero
           businessName={client.business_name}
@@ -261,6 +284,7 @@ export default async function ClientLandingPage({
 
   return (
     <main>
+      {isOwner && <OwnerBar />}
       <FbclidCapture />
       {template.hero === "minimal" && <MinimalHero {...heroProps} />}
       {template.hero === "split" && <SplitHero {...heroProps} photoUrl={photoUrl} />}
