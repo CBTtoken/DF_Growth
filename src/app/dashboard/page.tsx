@@ -5,6 +5,7 @@ import { AddTestimonialForm } from "@/components/dashboard/AddTestimonialForm";
 import { MetaTokenForm } from "@/components/dashboard/MetaTokenForm";
 import { MetaIdsForm } from "@/components/dashboard/MetaIdsForm";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+import { EcosystemAccess } from "@/components/EcosystemAccess";
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
@@ -230,6 +231,16 @@ export default async function DashboardPage() {
             )}
           </section>
         )}
+
+        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-ink">Also available to you</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              As a Growth client, you&apos;re also part of the wider DigitalFlyer SA ecosystem.
+            </p>
+          </div>
+          <EcosystemAccess />
+        </section>
       </div>
     </main>
   );

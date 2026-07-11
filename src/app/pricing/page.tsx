@@ -2,6 +2,7 @@ import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { HeroSwoosh } from "@/components/brand/HeroSwoosh";
+import { EcosystemAccess } from "@/components/EcosystemAccess";
 
 export default function PricingPage() {
   return (
@@ -87,6 +88,27 @@ export default function PricingPage() {
                 highlighted={t.id === "growth_engine"}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Ecosystem access — the wider DigitalFlyer SA brand, not just the
+          Growth product on its own. Kept honest: marketplace listing is a
+          real manual/concierge process, not instant automation, so this
+          routes through WhatsApp rather than implying a self-serve form. */}
+      <section className="bg-white px-6 py-20">
+        <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-3xl uppercase tracking-wide text-ink">
+              What you also get access to.
+            </h2>
+            <p className="mt-3 text-gray-600">
+              Growth is part of the wider DigitalFlyer SA ecosystem — every client can also tap
+              into these.
+            </p>
+          </div>
+          <div className="mt-10">
+            <EcosystemAccess />
           </div>
         </div>
       </section>
