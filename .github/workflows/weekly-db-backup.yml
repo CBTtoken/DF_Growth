@@ -16,6 +16,23 @@ jobs:
       - name: Install postgresql-client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
+      # TEMPORARY — diagnosing repeated "password authentication failed"
+      # despite a confirmed-correct, freshly reset password. Prints only the
+      # connection string's structure (host/port/username, password masked)
+      # and the password's character count — never the password itself — to
+      # tell apart "the GitHub secret isn't what we think it is" from "the
+      # password is genuinely wrong on Supabase's side". Remove once the
+      # real cause is found.
+      - name: Debug connection string (safe, no password shown)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          echo "Total length: ${#SUPABASE_DB_URL}"
+          echo "Structure (password masked):"
+          echo "$SUPABASE_DB_URL" | sed -E 's#(postgresql://[^:]+:)[^@]+(@.*)#\1****\2#'
+          PW=$(echo "$SUPABASE_DB_URL" | sed -E 's#postgresql://[^:]+:([^@]+)@.*#\1#')
+          echo "Password segment length: ${#PW}"
+
       - name: Dump database
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
