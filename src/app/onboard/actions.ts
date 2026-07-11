@@ -3,7 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
-import { step1Schema, step2Schema, step3Schema, step4Schema, step5Schema, step6Schema } from "@/lib/schemas/intake";
+import {
+  step1Schema,
+  step2Schema,
+  step3Schema,
+  templateSchema,
+  step5Schema,
+  step6Schema,
+  step7Schema,
+} from "@/lib/schemas/intake";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
 
 type FieldErrors = Record<string, string[]> & { _form?: string[] };
@@ -155,8 +163,37 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
   return { success: true };
 }
 
-export async function saveStep4(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
-  const parsed = step4Schema.safeParse({
+// Which of the 10 landing-page layouts (src/lib/templates/registry.ts) the
+// client picked, or the literal "conversion" sentinel for the original
+// hand-built layout. Always writes a real, non-null value — see the
+// comment on templateSchema — so onboard/page.tsx's resume logic can tell
+// "hasn't reached this step yet" (template still null) apart from
+// "deliberately kept the classic layout" (template === "conversion").
+export async function saveStepTemplate(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = templateSchema.safeParse({
+    template: formData.get("template"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("growth_clients")
+    .update({ template: parsed.data.template })
+    .eq("id", client.id);
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  revalidatePath("/onboard");
+  return { success: true };
+}
+
+export async function saveStep5(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step5Schema.safeParse({
     headline: formData.get("headline"),
     subheadline: formData.get("subheadline"),
     aboutText: formData.get("aboutText"),
@@ -192,8 +229,8 @@ export async function saveStep4(_prevState: OnboardState, formData: FormData): P
       // form trigger, not a real navigation target — this anchor just
       // satisfies the NOT NULL constraint, it's not shown to visitors.
       cta_href: "#lead-form",
-      // Never published here anymore — step 5 (packages) is now the finish
-      // line for Foundation, step 6 (Meta) for growth_engine/enterprise.
+      // Never published here anymore — step 6 (packages) is now the finish
+      // line for Foundation, step 7 (Meta) for growth_engine/enterprise.
       published: false,
     },
     { onConflict: "growth_client_id,slug" }
@@ -208,8 +245,8 @@ export async function saveStep4(_prevState: OnboardState, formData: FormData): P
 // Applies to every tier, unlike the Meta step — most small businesses have
 // some kind of pricing structure even if they don't run ads. Entirely
 // optional: an all-blank submit is valid, just stores an empty array.
-export async function saveStep5(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
-  const parsed = step5Schema.safeParse({
+export async function saveStep6(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step6Schema.safeParse({
     package1Name: formData.get("package1Name") || "",
     package1Price: formData.get("package1Price") || "",
     package1Description: formData.get("package1Description") || "",
@@ -246,7 +283,7 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
 
   if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
 
-  // Foundation has no step 6 (no Meta connection to make), so the wizard
+  // Foundation has no step 7 (no Meta connection to make), so the wizard
   // ends here for them — this step is now their finish line.
   if (growthClient.plan === "foundation") {
     await admin.from("growth_clients").update({ status: "active" }).eq("id", client.id);
@@ -257,8 +294,8 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
   return { success: true };
 }
 
-export async function saveStep6(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
-  const parsed = step6Schema.safeParse({
+export async function saveStep7(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
+  const parsed = step7Schema.safeParse({
     hasMetaSetup: formData.get("hasMetaSetup"),
     metaPixelId: formData.get("metaPixelId") || undefined,
     metaAdAccountId: formData.get("metaAdAccountId") || undefined,
@@ -294,7 +331,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
-  // Step 6 is the finish line for growth_engine/enterprise, so this is
+  // Step 7 is the finish line for growth_engine/enterprise, so this is
   // where their page goes live (foundation publishes back in step 5).
   await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
 

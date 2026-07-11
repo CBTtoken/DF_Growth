@@ -111,7 +111,7 @@ export async function saveMetaToken(
 }
 
 // Found via real UAT: a client who picked "I don't know / need help" during
-// onboarding (Step6MetaConnect) had no way to add these IDs later even after
+// onboarding (Step7MetaConnect) had no way to add these IDs later even after
 // finding them, and no confirmation anywhere that their help request had
 // actually been captured — the dashboard's Meta section was hidden entirely
 // whenever meta_pixel_id was null, which was every "I don't know" client,

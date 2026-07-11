@@ -18,6 +18,7 @@ export function ConversionHero({
   secondaryColor,
   facebookUrl,
   instagramUrl,
+  ctaHref = "#lead-form",
 }: {
   businessName: string;
   tagline: string | null;
@@ -29,6 +30,10 @@ export function ConversionHero({
   secondaryColor: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
+  // Lets the "Multi-Product Showcase" template point this hero's CTA at
+  // #packages instead of the lead form — every other template uses the
+  // default, unchanged from before this prop existed.
+  ctaHref?: string;
 }) {
   const textColor = readableTextOn(primaryColor);
   const glow = shade(primaryColor, 0.3);
@@ -122,7 +127,7 @@ export function ConversionHero({
           )}
         </div>
         <a
-          href="#lead-form"
+          href={ctaHref}
           className="rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5"
           style={{ backgroundColor: secondaryColor, color: ctaTextColor }}
         >
@@ -158,7 +163,7 @@ export function ConversionHero({
 
         <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
           <a
-            href="#lead-form"
+            href={ctaHref}
             className="rounded-full px-8 py-3.5 text-base font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
             style={{ backgroundColor: secondaryColor, color: ctaTextColor }}
           >

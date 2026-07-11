@@ -56,7 +56,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, contact_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
+      "business_name, contact_email, contact_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, template, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -85,21 +85,27 @@ export default async function OnboardPage() {
   // checkout), so contact_email — the field step 1 actually adds — is what
   // marks step 1 as done. business_description is step 2's own field, so it
   // marks step 2 done regardless of whether the AI draft succeeded.
-  // `landingPage` existing is what marks step 4 done — the AI draft is
-  // stored separately on growth_clients.ai_landing_draft precisely so it
-  // doesn't look like a finished step 4 on refresh (see the migration
-  // comment). packages !== null marks step 5 done — it's explicitly optional
-  // and an all-blank submit still writes an empty array, distinct from the
-  // pre-step5 null default. status === "active" is the authoritative
-  // "wizard finished" signal (not meta_pixel_id being set — a client who
-  // chose "I need help" on step 6 legitimately finishes with it still null).
+  // growthClient.template !== null marks step 4 (the template picker) done —
+  // the Server Action always writes a real value, even "conversion" for the
+  // classic layout, specifically so this check can't be confused with a
+  // pre-templates client who never saw the picker (see templateSchema's
+  // comment in lib/schemas/intake.ts). `landingPage` existing is what marks
+  // step 5 done — the AI draft is stored separately on
+  // growth_clients.ai_landing_draft precisely so it doesn't look like a
+  // finished step 5 on refresh (see the migration comment). packages !==
+  // null marks step 6 done — it's explicitly optional and an all-blank
+  // submit still writes an empty array, distinct from the pre-step6 null
+  // default. status === "active" is the authoritative "wizard finished"
+  // signal (not meta_pixel_id being set — a client who chose "I need help"
+  // on step 7 legitimately finishes with it still null).
   let startStep = 1;
   if (growthClient.contact_email) startStep = 2;
   if (growthClient.business_description) startStep = 3;
   if (growthClient.brand_primary_color) startStep = 4;
-  if (landingPage) startStep = 5;
-  if (growthClient.packages !== null) startStep = 6;
-  if (growthClient.status === "active") startStep = 7;
+  if (growthClient.template !== null) startStep = 5;
+  if (landingPage) startStep = 6;
+  if (growthClient.packages !== null) startStep = 7;
+  if (growthClient.status === "active") startStep = 8;
 
   const aiDraft = growthClient.ai_landing_draft as {
     headline?: string;
@@ -141,6 +147,7 @@ export default async function OnboardPage() {
           brandPrimaryColor: growthClient.brand_primary_color ?? "#1081b8",
           brandSecondaryColor: growthClient.brand_secondary_color ?? "#ffffff",
           logoUrl,
+          template: growthClient.template ?? "",
           headline: landingPage?.headline ?? aiDraft?.headline ?? "",
           subheadline: landingPage?.subheadline ?? aiDraft?.subheadline ?? "",
           aboutText: landingPage?.about_text ?? aiDraft?.aboutText ?? "",

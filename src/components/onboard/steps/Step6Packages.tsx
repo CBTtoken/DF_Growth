@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { saveStep5, type OnboardState } from "@/app/onboard/actions";
+import { saveStep6, type OnboardState } from "@/app/onboard/actions";
 
 type PackageInitial = { name: string; price: string; description: string };
 type FieldErrors = (Record<string, string[]> & { _form?: string[] }) | undefined;
@@ -60,14 +60,14 @@ function PackageFields({
   );
 }
 
-export function Step5Packages({
+export function Step6Packages({
   initialPackages,
   onSuccess,
 }: {
   initialPackages: PackageInitial[];
   onSuccess: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep5, null);
+  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep6, null);
 
   useEffect(() => {
     if (state?.success) onSuccess();

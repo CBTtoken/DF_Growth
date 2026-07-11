@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
       // Generated social assets and any future uploaded photos/logos live
       // in Supabase Storage — wildcarded so it isn't tied to one project ref.
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+      // Stock photography for the Left-Heavy Split landing template
+      // (src/lib/images/pexels.ts), searched live by the client's industry.
+      { protocol: "https", hostname: "images.pexels.com" },
     ],
   },
   experimental: {

@@ -1,13 +1,13 @@
 "use client";
 
 import { useActionState, useEffect } from "react";
-import { saveStep4, type OnboardState } from "@/app/onboard/actions";
+import { saveStep5, type OnboardState } from "@/app/onboard/actions";
 
 const inputClass =
   "rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
 const labelClass = "flex flex-col gap-1.5 text-sm font-medium text-gray-700";
 
-export function Step4LandingCopy({
+export function Step5LandingCopy({
   initialHeadline,
   initialSubheadline,
   initialCtaLabel,
@@ -24,7 +24,7 @@ export function Step4LandingCopy({
   hasAiDraft: boolean;
   onSuccess: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep4, null);
+  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep5, null);
 
   useEffect(() => {
     if (state?.success) onSuccess();

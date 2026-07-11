@@ -1,13 +1,13 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { saveStep6, type OnboardState } from "@/app/onboard/actions";
+import { saveStep7, type OnboardState } from "@/app/onboard/actions";
 
 const inputClass =
   "rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
 const labelClass = "flex flex-col gap-1.5 text-sm font-medium text-gray-700";
 
-export function Step6MetaConnect({
+export function Step7MetaConnect({
   initialPixelId,
   initialAdAccountId,
   onSuccess,
@@ -16,7 +16,7 @@ export function Step6MetaConnect({
   initialAdAccountId: string;
   onSuccess: () => void;
 }) {
-  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep6, null);
+  const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep7, null);
   const [hasMetaSetup, setHasMetaSetup] = useState<"yes" | "no" | null>(
     initialPixelId ? "yes" : null
   );

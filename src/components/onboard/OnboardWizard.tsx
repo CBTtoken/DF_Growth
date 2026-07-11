@@ -5,9 +5,10 @@ import { ProgressBar } from "./ProgressBar";
 import { Step1BusinessInfo } from "./steps/Step1BusinessInfo";
 import { Step2BusinessProfile } from "./steps/Step2BusinessProfile";
 import { Step3BrandKit } from "./steps/Step3BrandKit";
-import { Step4LandingCopy } from "./steps/Step4LandingCopy";
-import { Step5Packages } from "./steps/Step5Packages";
-import { Step6MetaConnect } from "./steps/Step6MetaConnect";
+import { Step4TemplatePicker } from "./steps/Step4TemplatePicker";
+import { Step5LandingCopy } from "./steps/Step5LandingCopy";
+import { Step6Packages } from "./steps/Step6Packages";
+import { Step7MetaConnect } from "./steps/Step7MetaConnect";
 import type { Tier } from "@/lib/paystack/plans";
 
 type PackageInitial = { name: string; price: string; description: string };
@@ -37,6 +38,7 @@ export function OnboardWizard({
     brandPrimaryColor: string;
     brandSecondaryColor: string;
     logoUrl: string | null;
+    template: string;
     headline: string;
     subheadline: string;
     aboutText: string;
@@ -47,7 +49,7 @@ export function OnboardWizard({
     metaAdAccountId: string;
   };
 }) {
-  const totalSteps = tier === "foundation" ? 5 : 6;
+  const totalSteps = tier === "foundation" ? 6 : 7;
   const [step, setStep] = useState(Math.min(startStep, totalSteps + 1));
 
   if (step > totalSteps) {
@@ -118,24 +120,27 @@ export function OnboardWizard({
         />
       )}
       {step === 4 && (
-        <Step4LandingCopy
+        <Step4TemplatePicker initialTemplate={initialData.template} onSuccess={() => setStep(5)} />
+      )}
+      {step === 5 && (
+        <Step5LandingCopy
           initialHeadline={initialData.headline}
           initialSubheadline={initialData.subheadline}
           initialCtaLabel={initialData.ctaLabel}
           initialAboutText={initialData.aboutText}
           initialServicesText={initialData.servicesText}
           hasAiDraft={Boolean(initialData.headline)}
-          onSuccess={() => setStep(5)}
+          onSuccess={() => setStep(6)}
         />
       )}
-      {step === 5 && (
-        <Step5Packages initialPackages={initialData.packages} onSuccess={() => setStep(6)} />
+      {step === 6 && (
+        <Step6Packages initialPackages={initialData.packages} onSuccess={() => setStep(7)} />
       )}
-      {step === 6 && tier !== "foundation" && (
-        <Step6MetaConnect
+      {step === 7 && tier !== "foundation" && (
+        <Step7MetaConnect
           initialPixelId={initialData.metaPixelId}
           initialAdAccountId={initialData.metaAdAccountId}
-          onSuccess={() => setStep(7)}
+          onSuccess={() => setStep(8)}
         />
       )}
       </div>

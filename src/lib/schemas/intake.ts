@@ -46,7 +46,30 @@ export const step3Schema = z.object({
   brandSecondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
 });
 
-export const step4Schema = z.object({
+// "conversion" is the original hand-built layout (growth_clients.template
+// stored as this literal string, not left null) — see src/lib/templates/
+// registry.ts, whose 10 real archetypes are the other allowed values. Null
+// is reserved for clients who existed before this step did and never saw a
+// picker; onboard/page.tsx's resume logic relies on that distinction, so a
+// client who deliberately picks the classic layout still needs a real,
+// non-null value written here.
+export const templateSchema = z.object({
+  template: z.enum([
+    "conversion",
+    "single-action",
+    "left-split",
+    "feature-grid",
+    "storyteller",
+    "dark-mode",
+    "social-proof",
+    "step-by-step",
+    "vibrant-geo",
+    "multi-product",
+    "app-dashboard",
+  ]),
+});
+
+export const step5Schema = z.object({
   headline: z.string().min(5).max(80),
   subheadline: z.string().min(10).max(160),
   aboutText: z.string().min(10).max(800),
@@ -59,7 +82,7 @@ export const step4Schema = z.object({
 
 // All optional, all tiers — most small businesses won't have named
 // packages, and typing nothing at all is a valid, expected submission.
-export const step5Schema = z.object({
+export const step6Schema = z.object({
   package1Name: z.string().max(60).optional().or(z.literal("")),
   package1Price: z.string().max(40).optional().or(z.literal("")),
   package1Description: z.string().max(300).optional().or(z.literal("")),
@@ -74,7 +97,7 @@ export const step5Schema = z.object({
 // The client picks a lane before typing anything, rather than being handed
 // an "optional" text box with no explanation — that invited people who
 // don't know what a Pixel ID is to either freeze or type a guess.
-export const step6Schema = z.discriminatedUnion("hasMetaSetup", [
+export const step7Schema = z.discriminatedUnion("hasMetaSetup", [
   z.object({
     hasMetaSetup: z.literal("yes"),
     metaPixelId: z.string().regex(/^\d{10,20}$/, "Should be a 10-20 digit number"),
