@@ -85,8 +85,8 @@ export function TierCard({
             Coming soon
           </span>
           <p className="text-xs text-gray-500">
-            Full Meta + Google ad management is on its way — get in touch and we&apos;ll let you know
-            the moment it&apos;s ready.
+            Full Meta + Google ad management is on its way. Get in touch and we&apos;ll let you know the
+            moment it&apos;s ready.
           </p>
           <a
             href="mailto:info@digitalflyer.co.za?subject=Enterprise%20waitlist"
@@ -138,7 +138,7 @@ export function TierCard({
           )}
           {!availability.checking && availability.available === false && (
             <p className="text-xs text-amber-600">
-              That name is already taken — you can still continue, we&apos;ll add a short code to your link
+              That name is already taken. You can still continue, we&apos;ll add a short code to your link
             </p>
           )}
           {state?.error?.businessName && (

@@ -28,7 +28,7 @@ export function EcosystemAccess() {
       <div className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="text-base font-bold tracking-tight text-ink">DigitalFlyer SA Marketplace</h3>
         <p className="text-sm text-gray-500">
-          Every paid membership gets a spot on our marketplace directory too — say hello and
+          Every paid membership gets a spot on our marketplace directory too. Say hello and
           we&apos;ll take care of the rest.
         </p>
         <a
@@ -44,7 +44,7 @@ export function EcosystemAccess() {
       <div className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="text-base font-bold tracking-tight text-ink">RE:Biz Nomads Community</h3>
         <p className="text-sm text-gray-500">
-          Join our private community of South African business owners — deals, support, and real
+          Join our private community of South African business owners. Deals, support, and real
           conversations with people building the same thing you are.
         </p>
         <a

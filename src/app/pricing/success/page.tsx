@@ -8,8 +8,8 @@ export default function PricingSuccessPage() {
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>
         <h1 className="text-2xl font-bold tracking-tight text-ink">Payment received</h1>
         <p className="text-sm text-gray-500">
-          Check your email for a magic link to get started — it lands you straight in your
-          onboarding wizard, no password needed.
+          Check your email for a magic link to get started. It lands you straight in your onboarding
+          wizard, no password needed.
         </p>
       </div>
     </main>

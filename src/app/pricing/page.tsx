@@ -1,10 +1,10 @@
-import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Check } from "lucide-react";
+import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Check, Flame, Search, PuzzleIcon, Wallet, ShieldCheck } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
-import { HeroSwoosh } from "@/components/brand/HeroSwoosh";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
+import { SectionDivider } from "@/components/marketing/SectionDivider";
 
 const TRUST_INDICATORS = [
   "Professional Business Page",
@@ -12,6 +12,33 @@ const TRUST_INDICATORS = [
   "Lead Generation Page",
   "No Hidden Fees",
   "Built in South Africa",
+];
+
+// Merges the original "Why DigitalFlyer" narrative with the separate "why
+// this makes sense" pain-points ask into one section instead of two, since
+// stacking both back to back said the same thing twice.
+const PAIN_POINTS = [
+  {
+    icon: Search,
+    title: "Customers can't find you online",
+    description:
+      "Most small businesses rely on word of mouth and posts that disappear in a day, with no real place a new customer can find them.",
+  },
+  {
+    icon: PuzzleIcon,
+    title: "Marketing feels too complicated",
+    description: "Ad platforms, websites, social media. Most business owners simply do not have time to learn it all.",
+  },
+  {
+    icon: Wallet,
+    title: "Agencies cost too much, too soon",
+    description: "Big agencies want a big budget before they will even take your call.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "No way to prove you're legit",
+    description: "Without a real online presence, a new customer has no way to trust you before they call.",
+  },
 ];
 
 const STARTER_FEATURES = [
@@ -39,6 +66,15 @@ const STARTER_FEATURES = [
   },
 ];
 
+// Three real, live-rendered templates (same /preview/[templateId] route the
+// picker uses) so a visitor sees an actual page, not a mockup, before ever
+// signing up.
+const TEMPLATE_SHOWCASE = [
+  { id: "social-proof", name: "Social Proof & Trust First" },
+  { id: "left-split", name: "Left-Heavy Split" },
+  { id: "dark-mode", name: "High-Impact Dark Mode" },
+];
+
 const DIFFERENTIATORS = [
   {
     icon: MapPin,
@@ -64,7 +100,7 @@ const DIFFERENTIATORS = [
 ];
 
 // "Our WhatsApp onboarding" from the original brief was adjusted to match
-// what's actually live today — the real signup (Foundation's no-card trial,
+// what's actually live today, the real signup (Foundation's no-card trial,
 // Growth/Enterprise's Paystack checkout) is a web flow, not WhatsApp. Swap
 // this copy back once WhatsApp is the live entry point.
 const FAQS = [
@@ -102,7 +138,7 @@ const FAQS = [
   },
   {
     question: "How long does setup take?",
-    answer: "Only a few minutes — our online signup walks you through everything, step by step.",
+    answer: "Only a few minutes. Our online signup walks you through everything, step by step.",
   },
   {
     question: "Are there any hidden costs?",
@@ -120,13 +156,21 @@ export default function PricingPage() {
     <main className="flex flex-1 flex-col">
       <MarketingHeader />
 
-      {/* Hero — the official brand blue, not the near-black block this
-          section used before. Same swoosh decoration, same pill-button
-          language, just the actual "official colours" instead of a neutral
-          dark that was never really one of the two brand hues. */}
-      <section className="relative overflow-hidden bg-brand px-6 py-24 text-center sm:py-32">
-        <HeroSwoosh />
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6">
+      {/* Hero — brand blue, a soft glow instead of the swoosh (found via
+          UAT: the flowing lines behind the text made the hero read as
+          cluttered, not premium). Founding-business urgency is now a real
+          callout badge above the headline, not small print at the bottom.
+          Trust indicators are boxed chips, not a wrapped inline list. */}
+      <section className="relative overflow-hidden bg-brand px-6 py-20 text-center sm:py-28">
+        <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-[28rem] rounded-full bg-white/10 blur-3xl" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-[26rem] rounded-full bg-white/10 blur-3xl" />
+
+        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-5">
+          <span className="inline-flex items-center gap-2 rounded-full border border-spark/50 bg-spark/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wide text-spark">
+            <Flame className="size-3.5" aria-hidden />
+            Only 10 Founding Business spots
+          </span>
+
           <h1 className="font-display text-4xl uppercase leading-[1.05] tracking-tight text-white sm:text-6xl">
             Build Your Presence.
             <br />
@@ -134,49 +178,68 @@ export default function PricingPage() {
           </h1>
           <p className="max-w-xl text-lg text-white/85">
             DigitalFlyer helps South African businesses build a professional online presence, connect
-            with customers, generate leads and grow — all from one place.
+            with customers, generate leads and grow, all from one place.
           </p>
 
-          <ul className="mt-2 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+          <div className="mt-2 grid w-full max-w-lg grid-cols-2 gap-2 sm:grid-cols-3">
             {TRUST_INDICATORS.map((item) => (
-              <li key={item} className="flex items-center gap-2 text-sm font-medium text-white/90">
-                <Check className="size-4 flex-shrink-0 text-spark" strokeWidth={3} aria-hidden />
+              <div
+                key={item}
+                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3 py-2.5 text-left text-xs font-medium text-white"
+              >
+                <Check className="size-3.5 flex-shrink-0 text-spark" strokeWidth={3} aria-hidden />
                 {item}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
 
           <a
             href="#pricing"
-            className="mt-2 rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
+            className="mt-3 rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
           >
             Become a Founding Business
           </a>
           <p className="max-w-md text-sm text-white/70">
-            We&apos;re looking for our first 10 Founding Businesses to help launch DigitalFlyer. Join
-            us and help shape the future of a platform built specifically for South African
-            businesses.
+            Help us launch DigitalFlyer and shape the future of a platform built specifically for
+            South African businesses.
           </p>
         </div>
       </section>
 
-      {/* Why DigitalFlyer — the one narrative block on the page with no
-          card/grid structure, deliberately: this is the "conversation"
-          moment the brief asks for, not another scannable module. */}
-      <section className="bg-white px-6 py-20">
-        <div className="mx-auto flex max-w-2xl flex-col gap-5 text-center">
-          <h2 className="font-display text-3xl uppercase tracking-wide text-ink">Why DigitalFlyer?</h2>
-          <p className="text-lg leading-relaxed text-gray-600">
-            Running a small business isn&apos;t easy. Every day thousands of business owners post in
-            Facebook groups, reply in WhatsApp chats and rely on word of mouth, hoping the next
-            customer finds them.
-          </p>
-          <p className="text-lg leading-relaxed text-gray-600">We believe there should be a better way.</p>
-          <p className="text-lg leading-relaxed text-gray-600">
+      <SectionDivider />
+
+      {/* Why DigitalFlyer — the narrative plus the "why this makes sense"
+          pain points in one structured section instead of two separate
+          ones saying the same thing twice. */}
+      <section className="bg-white px-6 py-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-3xl uppercase tracking-wide text-ink">Why DigitalFlyer?</h2>
+            <p className="mt-4 text-lg leading-relaxed text-gray-600">
+              Running a small business isn&apos;t easy. Every day thousands of business owners post in
+              Facebook groups, reply in WhatsApp chats and rely on word of mouth, hoping the next
+              customer finds them. We believe there should be a better way.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 sm:grid-cols-2">
+            {PAIN_POINTS.map((p) => (
+              <div key={p.title} className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <span className="grid size-11 flex-shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
+                  <p.icon className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold tracking-tight text-ink">{p.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-600">{p.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="mx-auto mt-10 max-w-2xl text-center text-lg leading-relaxed text-gray-600">
             DigitalFlyer was built to <strong className="text-ink">Enable &amp; Connect</strong> South
-            African Business — not by replacing the tools you already use, but by giving every
-            business one professional online home where customers can find you, trust you and connect
-            with you.
+            African Business. Not by replacing the tools you already use, but by giving every business
+            one professional online home where customers can find you, trust you and connect with you.
           </p>
         </div>
       </section>
@@ -184,7 +247,7 @@ export default function PricingPage() {
       {/* Everything Starts Here — light blue tint (5% brand) rather than the
           usual gray-50, so the palette carries through even in a "neutral"
           section instead of defaulting to a generic gray. */}
-      <section className="bg-brand/5 px-6 py-20">
+      <section className="bg-brand/5 px-6 py-16">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl uppercase tracking-wide text-ink">Everything Starts Here</h2>
@@ -193,7 +256,7 @@ export default function PricingPage() {
               business.
             </p>
           </div>
-          <div className="mt-12 grid gap-5 sm:grid-cols-2">
+          <div className="mt-10 grid gap-5 sm:grid-cols-2">
             {STARTER_FEATURES.map((f) => (
               <div key={f.title} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <span className="grid size-11 place-items-center rounded-xl bg-brand/10 text-brand">
@@ -207,19 +270,61 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* See It In Action — real, live-rendered template previews (same
+          mechanism the onboarding picker uses) so a visitor sees an actual
+          page, not a mockup, before ever signing up. */}
+      <section className="bg-white px-6 py-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-3xl uppercase tracking-wide text-ink">See It In Action</h2>
+            <p className="mt-3 text-gray-600">
+              Real layouts, not mockups. Pick the one that feels like your business when you sign up.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-5 sm:grid-cols-3">
+            {TEMPLATE_SHOWCASE.map((t) => (
+              <div key={t.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                <div className="relative overflow-hidden bg-gray-50" style={{ height: 760 * 0.3 }}>
+                  <iframe
+                    src={`/preview/${t.id}`}
+                    title={t.name}
+                    loading="lazy"
+                    tabIndex={-1}
+                    style={{
+                      width: 1200,
+                      height: 760,
+                      transform: "scale(0.3)",
+                      transformOrigin: "top left",
+                      pointerEvents: "none",
+                      border: 0,
+                    }}
+                  />
+                </div>
+                <p className="px-4 py-3 text-sm font-semibold text-gray-900">{t.name}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-6 text-center text-sm text-gray-500">
+            10 styles available. Choose yours during signup, change any time.
+          </p>
+        </div>
+      </section>
+
+      <SectionDivider />
+
       {/* Pricing — the plain-language explainer above the cards does the
           persuading; the cards themselves just need to be scannable. Cards
           unchanged structurally per the brief, only copy/labels updated. */}
-      <section id="pricing" className="bg-gray-50 px-6 py-20">
+      <section id="pricing" className="bg-gray-50 px-6 py-16">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl uppercase tracking-wide text-ink">
               Start Where Your Business Is Today
             </h2>
             <p className="mt-3 text-gray-600">
-              You don&apos;t need a huge budget. You don&apos;t need an expensive marketing agency.
-              You don&apos;t need to know everything about digital marketing. Simply choose the
-              package that fits your business today and upgrade whenever you&apos;re ready.
+              You don&apos;t need a huge budget, an expensive marketing agency, or to know everything
+              about digital marketing. Simply choose the package that fits your business today and
+              upgrade whenever you&apos;re ready.
             </p>
           </div>
 
@@ -243,12 +348,12 @@ export default function PricingPage() {
       {/* Why Businesses Choose DigitalFlyer — same light-tint rhythm as
           "Everything Starts Here", alternating with the white/gray-50
           sections around it. */}
-      <section className="bg-brand/5 px-6 py-20">
+      <section className="bg-brand/5 px-6 py-16">
         <div className="mx-auto max-w-5xl">
           <h2 className="text-center font-display text-3xl uppercase tracking-wide text-ink">
             Why Businesses Choose DigitalFlyer
           </h2>
-          <div className="mt-12 grid gap-8 sm:grid-cols-2 sm:gap-10">
+          <div className="mt-10 grid gap-8 sm:grid-cols-2 sm:gap-10">
             {DIFFERENTIATORS.map((d) => (
               <div key={d.title} className="flex items-start gap-4">
                 <span className="grid size-11 flex-shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
@@ -265,7 +370,7 @@ export default function PricingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="bg-white px-6 py-20">
+      <section className="bg-white px-6 py-16">
         <div className="mx-auto max-w-2xl">
           <h2 className="text-center font-display text-3xl uppercase tracking-wide text-ink">
             Frequently Asked Questions
@@ -276,16 +381,18 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <SectionDivider />
+
       {/* Ecosystem access — kept from the previous page, still true and
           still relevant right before the final push. */}
-      <section className="bg-gray-50 px-6 py-20">
+      <section className="bg-gray-50 px-6 py-16">
         <div className="mx-auto max-w-4xl">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl uppercase tracking-wide text-ink">
               What you also get access to.
             </h2>
             <p className="mt-3 text-gray-600">
-              Growth is part of the wider DigitalFlyer SA ecosystem — every client can also tap into
+              Growth is part of the wider DigitalFlyer SA ecosystem. Every client can also tap into
               these.
             </p>
           </div>
@@ -296,7 +403,7 @@ export default function PricingPage() {
       </section>
 
       {/* Final CTA — bookends the hero with the same brand-blue treatment. */}
-      <section className="bg-brand px-6 py-20 text-center">
+      <section className="bg-brand px-6 py-16 text-center">
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
           <h2 className="font-display text-3xl uppercase tracking-wide text-white sm:text-4xl">
             Every Business Starts Somewhere.

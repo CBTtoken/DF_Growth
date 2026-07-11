@@ -60,9 +60,9 @@ export function TemplateGallery({
                 </span>
               )}
             </div>
-            <div className="flex flex-col gap-0.5 border-t border-gray-100 bg-white px-4 py-3">
-              <span className="text-sm font-semibold text-gray-900">{t.name}</span>
-              <span className="text-xs text-gray-500">{t.description}</span>
+            <div className="flex flex-col gap-1 border-t border-gray-100 bg-white px-4 py-3.5">
+              <p className="text-sm font-semibold leading-snug text-gray-900">{t.name}</p>
+              <p className="text-xs leading-relaxed text-gray-500">{t.description}</p>
             </div>
           </button>
         );
