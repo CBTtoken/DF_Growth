@@ -38,6 +38,16 @@ export function TemplateGallery({
     <div className="flex max-h-[480px] flex-col gap-3 overflow-y-auto pr-1">
       {TEMPLATE_OPTIONS.map((t) => {
         const isSelected = selected === t.id;
+        // Combined spec Sec 8: without shrink-0 here and on the preview-image
+        // wrapper below, these cards are flex items with Tailwind's default
+        // flex-shrink:1 inside the scrollable list above — once ten cards'
+        // combined height exceeds the list's max-h-[480px], the browser
+        // squeezes every card down to a ~33px sliver instead of letting the
+        // list scroll as intended, collapsing the preview image to nothing
+        // and clipping the name/description text. That's what was actually
+        // showing up as "misaligned, off-center" text — confirmed by
+        // reproducing it live and testing shrink-0 as the fix before
+        // applying it here.
         return (
           <div
             key={t.id}
@@ -50,11 +60,11 @@ export function TemplateGallery({
                 onSelect(t.id);
               }
             }}
-            className={`flex cursor-pointer flex-col overflow-hidden rounded-2xl border-2 text-left transition-colors ${
+            className={`flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border-2 text-left transition-colors ${
               isSelected ? "border-brand" : "border-gray-200 hover:border-gray-300"
             }`}
           >
-            <div className="relative overflow-hidden bg-gray-50" style={{ height: PREVIEW_HEIGHT * SCALE }}>
+            <div className="relative shrink-0 overflow-hidden bg-gray-50" style={{ height: PREVIEW_HEIGHT * SCALE }}>
               <iframe
                 src={`/preview/${t.id}`}
                 title={`${t.name} preview`}
