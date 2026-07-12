@@ -61,8 +61,8 @@ export function Step4PhotoUpload({
 
       {initialPhotos.length > 0 && (
         <div className="grid grid-cols-4 gap-3">
-          {initialPhotos.map((photo, i) => (
-            <DeletablePhoto key={photo.id} photo={photo} isPrimary={i === 0} storageBase={storageBase} />
+          {initialPhotos.map((photo) => (
+            <DeletablePhoto key={photo.id} photo={photo} storageBase={storageBase} />
           ))}
         </div>
       )}
@@ -85,7 +85,7 @@ export function Step4PhotoUpload({
   );
 }
 
-function DeletablePhoto({ photo, isPrimary, storageBase }: { photo: Photo; isPrimary: boolean; storageBase: string }) {
+function DeletablePhoto({ photo, storageBase }: { photo: Photo; storageBase: string }) {
   const [state, action, pending] = useActionState(deleteClientPhoto, null);
 
   return (
@@ -98,11 +98,6 @@ function DeletablePhoto({ photo, isPrimary, storageBase }: { photo: Photo; isPri
         sizes="120px"
         className="object-cover"
       />
-      {isPrimary && (
-        <span className="absolute left-1.5 top-1.5 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-white">
-          Primary
-        </span>
-      )}
       <button
         type="submit"
         disabled={pending}

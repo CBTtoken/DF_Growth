@@ -367,6 +367,50 @@ export async function deleteClientPhoto(_prevState: DashboardState, formData: Fo
   return { success: true };
 }
 
+// Combined spec Sec 7: the hero background image used to just be "whichever
+// gallery photo was uploaded first" — no client control, and the wrong
+// photo for a hero banner (a receipt, a close-up, anything not meant to be
+// a wide background) would end up cropped and cut off on the live page.
+// This is the explicit opt-in action instead: a client picks one photo, by
+// id, from their own gallery. Passing null clears the selection and falls
+// back to the Pexels stock photo, same as having zero gallery photos.
+export async function setHeroPhoto(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const raw = formData.get("photoId");
+  const photoId = typeof raw === "string" && raw.length > 0 ? raw : null;
+  const admin = createAdminClient();
+
+  if (photoId) {
+    // Confirms the photo actually belongs to this client before pointing
+    // hero_photo_id at it — otherwise a logged-in user could set another
+    // client's photo id as their own hero image by guessing a UUID, since
+    // this runs with the service role and bypasses RLS.
+    const { data: photo } = await admin
+      .from("client_photos")
+      .select("id")
+      .eq("id", photoId)
+      .eq("growth_client_id", client.id)
+      .maybeSingle();
+    if (!photo) return { error: { _form: ["Photo not found."] } };
+  }
+
+  const { data: growthClient, error } = await admin
+    .from("growth_clients")
+    .update({ hero_photo_id: photoId })
+    .eq("id", client.id)
+    .select("slug")
+    .single();
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/preview");
+  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
+  return { success: true };
+}
+
 // Sets the default visual style for future auto-generated testimonial
 // images (src/lib/assets/styles.tsx) — mirrors changeTemplate's pattern.
 // Only ever affects assets generated after this changes; existing

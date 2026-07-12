@@ -41,6 +41,7 @@ type ClientData = {
   template: string | null;
   industry: string | null;
   meta_pixel_id: string | null;
+  hero_photo_id: string | null;
 };
 
 type LandingPageData = {
@@ -243,10 +244,15 @@ export async function ClientLandingPageView({
 
   let photoUrl: string | null = null;
   if (template.hero === "split") {
-    photoUrl =
-      photos.length > 0
-        ? `${photosStorageBase}/${photos[0].storage_path}`
-        : await getIndustryPhoto(client.industry || client.business_name);
+    // Combined spec Sec 7: uploading a gallery photo must not silently make
+    // it the hero background — only an explicit hero_photo_id selection
+    // does that. No selection falls back to the same Pexels stock photo
+    // used when there are zero gallery photos at all, never "whichever
+    // photo happened to be uploaded first."
+    const heroPhoto = client.hero_photo_id ? photos.find((p) => p.id === client.hero_photo_id) : undefined;
+    photoUrl = heroPhoto
+      ? `${photosStorageBase}/${heroPhoto.storage_path}`
+      : await getIndustryPhoto(client.industry || client.business_name);
   }
 
   const checklistItems = (landingPage.services_text ?? "")

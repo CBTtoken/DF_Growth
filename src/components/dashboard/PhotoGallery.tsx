@@ -2,11 +2,22 @@
 
 import { useActionState, useRef } from "react";
 import Image from "next/image";
-import { uploadClientPhoto, deleteClientPhoto } from "@/app/dashboard/actions";
+import { uploadClientPhoto, deleteClientPhoto, setHeroPhoto } from "@/app/dashboard/actions";
 
 type Photo = { id: string; storage_path: string };
 
-export function PhotoGallery({ photos, storageBase }: { photos: Photo[]; storageBase: string }) {
+// Combined spec Sec 7: heroPhotoId is the client's own explicit choice
+// (growth_clients.hero_photo_id), not upload order — uploading a photo here
+// no longer implies it becomes the page's hero background.
+export function PhotoGallery({
+  photos,
+  storageBase,
+  heroPhotoId,
+}: {
+  photos: Photo[];
+  storageBase: string;
+  heroPhotoId: string | null;
+}) {
   const [uploadState, uploadAction, uploadPending] = useActionState(uploadClientPhoto, null);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -15,8 +26,8 @@ export function PhotoGallery({ photos, storageBase }: { photos: Photo[]; storage
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Your photos</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Up to 10 real photos of your business, used in templates that showcase real imagery. Your
-          first photo is the one shown first.
+          Up to 10 real photos of your business, used in templates that showcase real imagery. Pick
+          one as your hero image below if your page style shows one, otherwise skip it.
         </p>
       </div>
 
@@ -46,8 +57,13 @@ export function PhotoGallery({ photos, storageBase }: { photos: Photo[]; storage
 
       {photos.length > 0 ? (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-          {photos.map((photo, i) => (
-            <DeletablePhoto key={photo.id} photo={photo} isPrimary={i === 0} storageBase={storageBase} />
+          {photos.map((photo) => (
+            <GalleryPhoto
+              key={photo.id}
+              photo={photo}
+              isHero={photo.id === heroPhotoId}
+              storageBase={storageBase}
+            />
           ))}
         </div>
       ) : (
@@ -57,12 +73,12 @@ export function PhotoGallery({ photos, storageBase }: { photos: Photo[]; storage
   );
 }
 
-function DeletablePhoto({ photo, isPrimary, storageBase }: { photo: Photo; isPrimary: boolean; storageBase: string }) {
-  const [state, action, pending] = useActionState(deleteClientPhoto, null);
+function GalleryPhoto({ photo, isHero, storageBase }: { photo: Photo; isHero: boolean; storageBase: string }) {
+  const [deleteState, deleteAction, deletePending] = useActionState(deleteClientPhoto, null);
+  const [heroState, heroAction, heroPending] = useActionState(setHeroPhoto, null);
 
   return (
-    <form action={action} className="group relative aspect-square overflow-hidden rounded-xl border border-gray-100">
-      <input type="hidden" name="photoId" value={photo.id} />
+    <div className="group relative aspect-square overflow-hidden rounded-xl border border-gray-100">
       <Image
         src={`${storageBase}/${photo.storage_path}`}
         alt="Business photo"
@@ -70,23 +86,38 @@ function DeletablePhoto({ photo, isPrimary, storageBase }: { photo: Photo; isPri
         sizes="150px"
         className="object-cover"
       />
-      {isPrimary && (
+      {isHero && (
         <span className="absolute left-1.5 top-1.5 rounded-full bg-brand px-2 py-0.5 text-[10px] font-semibold text-white">
-          Primary
+          Hero image
         </span>
       )}
-      <button
-        type="submit"
-        disabled={pending}
-        className="absolute inset-0 flex items-center justify-center bg-black/50 text-xs font-semibold text-white opacity-0 transition-opacity group-hover:opacity-100 disabled:opacity-100"
-      >
-        {pending ? "Removing..." : "Remove"}
-      </button>
-      {state?.error?._form && (
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+        <form action={heroAction}>
+          <input type="hidden" name="photoId" value={isHero ? "" : photo.id} />
+          <button
+            type="submit"
+            disabled={heroPending}
+            className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-ink disabled:opacity-50"
+          >
+            {heroPending ? "Saving..." : isHero ? "Unset hero image" : "Use as hero image"}
+          </button>
+        </form>
+        <form action={deleteAction}>
+          <input type="hidden" name="photoId" value={photo.id} />
+          <button
+            type="submit"
+            disabled={deletePending}
+            className="text-[10px] font-semibold text-white underline-offset-2 hover:underline disabled:opacity-50"
+          >
+            {deletePending ? "Removing..." : "Remove"}
+          </button>
+        </form>
+      </div>
+      {(deleteState?.error?._form || heroState?.error?._form) && (
         <span className="absolute bottom-1 left-1 right-1 rounded bg-red-600/90 px-1.5 py-1 text-[10px] text-white">
-          {state.error._form[0]}
+          {deleteState?.error?._form?.[0] ?? heroState?.error?._form?.[0]}
         </span>
       )}
-    </form>
+    </div>
   );
 }
