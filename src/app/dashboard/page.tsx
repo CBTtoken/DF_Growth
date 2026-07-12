@@ -249,8 +249,21 @@ export default async function DashboardPage() {
         </section>
 
         {showMetaSection && (
-          <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold tracking-tight text-ink">Meta ad tracking</h2>
+          <section id="meta-ad-tracking" className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div>
+              <h2 className="text-lg font-bold tracking-tight text-ink">Meta ad tracking</h2>
+              {/* Combined spec Sec 26: cross-references the search/domain
+                  verification section below, since they're easy to confuse
+                  — this one is specifically about Meta ad campaigns. */}
+              <p className="mt-1 text-sm text-gray-500">
+                For tracking Meta (Facebook/Instagram) ad campaigns specifically. Setting up Google
+                Search Console or Facebook Business verification instead? See{" "}
+                <a href="#search-ad-verification" className="font-semibold text-brand hover:underline">
+                  Search &amp; ad platform verification
+                </a>{" "}
+                below.
+              </p>
+            </div>
 
             {!growthClient?.meta_pixel_id && growthClient?.meta_setup_requested_help && (
               <p className="rounded-xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-gray-700">
@@ -299,8 +312,31 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-bold tracking-tight text-ink">Search &amp; ad platform verification</h2>
+        <section id="search-ad-verification" className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-ink">Search &amp; ad platform verification</h2>
+            {/* Combined spec Sec 26: plain-language explanation + cross-
+                reference to Meta ad tracking, which is a related but
+                separate thing (that one's for tracking ad campaign
+                results; this one's for proving you own this page to
+                Google/Facebook's own tools). Only shown to Growth-tier
+                clients, who have both sections — Foundation never sees
+                Meta ad tracking at all. */}
+            <p className="mt-1 text-sm text-gray-500">
+              This helps your page show up correctly in Google Search Console and Facebook Business
+              tools you may already have.
+              {showMetaSection && (
+                <>
+                  {" "}
+                  Tracking Meta ad campaigns instead? See{" "}
+                  <a href="#meta-ad-tracking" className="font-semibold text-brand hover:underline">
+                    Meta ad tracking
+                  </a>{" "}
+                  above.
+                </>
+              )}
+            </p>
+          </div>
           <DomainVerificationForm
             initialGoogle={growthClient?.google_site_verification ?? ""}
             initialFacebook={growthClient?.facebook_domain_verification ?? ""}
