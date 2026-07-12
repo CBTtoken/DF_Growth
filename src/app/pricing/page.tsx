@@ -10,12 +10,16 @@ import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { SectionDivider } from "@/components/marketing/SectionDivider";
 import { SiteFooter } from "@/components/SiteFooter";
 
+// Combined spec Sec 14: was 5 chips, an odd number that left the grid
+// visually unbalanced. The 6th calls out the SEO/schema/Pixel foundation
+// as a genuine differentiator, not filler.
 const TRUST_INDICATORS = [
   "Professional Business Page",
   "Included in the DigitalFlyer Marketplace",
   "Lead Generation Page",
   "No Hidden Fees",
   "Built in South Africa",
+  "Built for Google & Meta",
 ];
 
 // Merges the original "Why DigitalFlyer" narrative with the separate "why
@@ -250,7 +254,7 @@ export default async function PricingPage() {
             {TRUST_INDICATORS.map((item) => (
               <div
                 key={item}
-                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-3.5 py-3 text-left text-sm font-medium text-white"
+                className="flex items-center justify-center gap-2 rounded-xl border-2 border-white/30 bg-white/10 px-3.5 py-3 text-center text-sm font-medium text-white"
               >
                 <Check className="size-4 flex-shrink-0 text-spark" strokeWidth={3} aria-hidden />
                 {item}
@@ -264,9 +268,11 @@ export default async function PricingPage() {
           >
             Become a Founding Business
           </a>
-          <p className="max-w-md text-sm text-white/70">
-            Help us launch DigitalFlyer and shape the future of a platform built specifically for
-            South African businesses.
+          {/* Combined spec Sec 15: confirmed replacement copy, slightly
+              larger than before (text-sm to text-base). */}
+          <p className="max-w-md text-base text-white/70">
+            We built DigitalFlyer to help South African businesses get found, get trusted, and
+            grow. Join as a Founding Business and lock in your price, for good.
           </p>
         </div>
       </section>
