@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState } from "react";
 import Image from "next/image";
-import { uploadClientPhoto, deleteClientPhoto } from "@/app/dashboard/actions";
+import { deleteClientPhoto } from "@/app/dashboard/actions";
 import { PexelsPicker } from "@/components/dashboard/PexelsPicker";
+import { PhotoUploadInput } from "@/components/dashboard/PhotoUploadInput";
 
 type Photo = { id: string; storage_path: string };
 
@@ -26,9 +27,6 @@ export function Step4PhotoUpload({
   industryHint?: string;
   onSuccess: () => void;
 }) {
-  const [uploadState, uploadAction, uploadPending] = useActionState(uploadClientPhoto, null);
-  const formRef = useRef<HTMLFormElement>(null);
-
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -39,28 +37,7 @@ export function Step4PhotoUpload({
         </p>
       </div>
 
-      <form
-        ref={formRef}
-        action={(formData) => {
-          uploadAction(formData);
-          formRef.current?.reset();
-        }}
-        className="flex items-center gap-3"
-      >
-        <input
-          type="file"
-          name="photo"
-          accept="image/png,image/jpeg,image/webp"
-          multiple
-          disabled={uploadPending || initialPhotos.length >= 10}
-          className="text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200 disabled:opacity-50"
-          onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) formRef.current?.requestSubmit();
-          }}
-        />
-        {uploadPending && <span className="text-xs text-gray-400">Uploading...</span>}
-      </form>
-      {uploadState?.error?._form && <p className="text-xs text-red-600">{uploadState.error._form[0]}</p>}
+      <PhotoUploadInput disabled={initialPhotos.length >= 10} />
 
       <PexelsPicker industryHint={industryHint} disabled={initialPhotos.length >= 10} />
 

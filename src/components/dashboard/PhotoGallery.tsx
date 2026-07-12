@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState } from "react";
 import Image from "next/image";
-import { uploadClientPhoto, deleteClientPhoto, setHeroPhoto } from "@/app/dashboard/actions";
+import { deleteClientPhoto, setHeroPhoto } from "@/app/dashboard/actions";
 import { PexelsPicker } from "@/components/dashboard/PexelsPicker";
+import { PhotoUploadInput } from "@/components/dashboard/PhotoUploadInput";
 
 type Photo = { id: string; storage_path: string };
 
@@ -23,9 +24,6 @@ export function PhotoGallery({
   // own industry, so the first search they see is already relevant.
   industryHint?: string;
 }) {
-  const [uploadState, uploadAction, uploadPending] = useActionState(uploadClientPhoto, null);
-  const formRef = useRef<HTMLFormElement>(null);
-
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
       <div>
@@ -36,28 +34,7 @@ export function PhotoGallery({
         </p>
       </div>
 
-      <form
-        ref={formRef}
-        action={(formData) => {
-          uploadAction(formData);
-          formRef.current?.reset();
-        }}
-        className="flex items-center gap-3"
-      >
-        <input
-          type="file"
-          name="photo"
-          accept="image/png,image/jpeg,image/webp"
-          multiple
-          disabled={uploadPending || photos.length >= 10}
-          className="text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200 disabled:opacity-50"
-          onChange={(e) => {
-            if (e.target.files && e.target.files.length > 0) formRef.current?.requestSubmit();
-          }}
-        />
-        {uploadPending && <span className="text-xs text-gray-400">Uploading...</span>}
-      </form>
-      {uploadState?.error?._form && <p className="text-xs text-red-600">{uploadState.error._form[0]}</p>}
+      <PhotoUploadInput disabled={photos.length >= 10} />
       {photos.length >= 10 && <p className="text-xs text-gray-400">Photo limit reached, delete one to add another.</p>}
 
       <PexelsPicker industryHint={industryHint} disabled={photos.length >= 10} />

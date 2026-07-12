@@ -13,14 +13,18 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     serverActions: {
-      // Default is 1MB, silently rejecting the whole request (including the
-      // other Brand Kit fields, not just the file) before it ever reaches
-      // saveStep3 — found live when a real logo upload broke the wizard
-      // with a generic "This page couldn't load" error. The client-logos
-      // Storage bucket already caps uploads at 2MB, so 3MB here just needs
-      // to comfortably clear that plus the rest of the form/multipart
-      // overhead, not raise the real limit.
-      bodySizeLimit: "3mb",
+      // Default is 1MB, silently rejecting the whole request before it ever
+      // reaches the Server Action — found live twice now: once for a single
+      // logo upload (fixed by raising this from 1MB to 3MB), and again for
+      // real client photos, which the UI promises can be "under 5MB each"
+      // (PhotoGallery.tsx). 3MB didn't leave room for that promise on a
+      // single file, let alone the old multi-file-in-one-request upload
+      // path (now fixed separately in PhotoUploadInput.tsx to send one
+      // file per request, removing the combined-batch-size problem
+      // entirely) — this just needs to comfortably clear one photo up to
+      // 5MB plus multipart overhead, not raise some general "big upload"
+      // ceiling.
+      bodySizeLimit: "8mb",
     },
   },
 };
