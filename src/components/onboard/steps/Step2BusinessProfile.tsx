@@ -29,6 +29,7 @@ export function Step2BusinessProfile({
   initialAdditionalNotes,
   initialFacebookUrl,
   initialInstagramUrl,
+  initialWebsiteUrl,
   onSuccess,
   submitLabel = "Continue",
 }: {
@@ -41,6 +42,7 @@ export function Step2BusinessProfile({
   initialAdditionalNotes: string;
   initialFacebookUrl: string;
   initialInstagramUrl: string;
+  initialWebsiteUrl: string;
   onSuccess: () => void;
   submitLabel?: string;
 }) {
@@ -205,6 +207,27 @@ export function Step2BusinessProfile({
         />
       </label>
       {state?.error?.instagramUrl && <p className="text-xs text-red-600">{state.error.instagramUrl[0]}</p>}
+
+      {/* Combined spec Sec 27: replaces the old "email us to request a
+          Marketplace listing" flow — the client sets their own website
+          link directly, shown on their public page. Real Marketplace
+          auto-provisioning is separate, cross-product work (see
+          EcosystemAccess.tsx). */}
+      <label className={labelClass}>
+        Website URL <span className="font-normal text-gray-400">(optional)</span>
+        <input
+          type="url"
+          name="websiteUrl"
+          defaultValue={initialWebsiteUrl}
+          maxLength={300}
+          placeholder="https://yourbusiness.co.za"
+          className={inputClass}
+        />
+        <span className="text-xs font-normal text-gray-400">
+          Shown as your website link on your page, if you already have one
+        </span>
+      </label>
+      {state?.error?.websiteUrl && <p className="text-xs text-red-600">{state.error.websiteUrl[0]}</p>}
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 
       <button

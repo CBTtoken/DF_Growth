@@ -1,5 +1,5 @@
 import { OwnerBarGate } from "@/components/landing/OwnerBarGate";
-import { MetaPixelScript } from "@/components/landing/MetaPixelScript";
+import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 import { LocalBusinessSchema } from "@/components/landing/LocalBusinessSchema";
 import { ConversionHero } from "@/components/landing/ConversionHero";
 import { TrustBadges } from "@/components/landing/TrustBadges";
@@ -40,6 +40,7 @@ type ClientData = {
   additional_notes: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
+  website_url: string | null;
   template: string | null;
   industry: string | null;
   meta_pixel_id: string | null;
@@ -115,7 +116,7 @@ export async function ClientLandingPageView({
     <>
       <OwnerBarGate growthClientId={client.id} />
       <FbclidCapture />
-      <MetaPixelScript pixelId={client.meta_pixel_id} />
+      <PixelConsentGate pixelId={client.meta_pixel_id} />
     </>
   );
 
@@ -182,6 +183,7 @@ export async function ClientLandingPageView({
           secondaryColor={secondaryColor}
           facebookUrl={client.facebook_url}
           instagramUrl={client.instagram_url}
+          websiteUrl={client.website_url}
         />
         <ScrollReveal>
           <AboutSection
@@ -270,6 +272,7 @@ export async function ClientLandingPageView({
     secondaryColor,
     facebookUrl: client.facebook_url,
     instagramUrl: client.instagram_url,
+    websiteUrl: client.website_url,
   };
 
   let sectionCount = 0;

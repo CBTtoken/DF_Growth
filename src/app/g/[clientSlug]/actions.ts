@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { leadSchema } from "@/lib/schemas/lead";
 import { sendCapiEvent } from "@/lib/meta/capi";
 import { sendEmail } from "@/lib/email/resend";
+import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 
 type LeadState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -19,6 +20,14 @@ export async function captureLead(
   _prevState: LeadState,
   formData: FormData
 ): Promise<LeadState> {
+  // Combined spec Sec 35: keyed by IP across every client page, not per
+  // client — the actual threat is one script hitting lead forms in a tight
+  // loop, not a real visitor submitting the same business's form twice.
+  const ip = clientIpFromHeaders(await headers());
+  if (isRateLimited(`lead:${ip}`, 5, 10 * 60 * 1000)) {
+    return { error: { _form: ["Too many submissions — please wait a few minutes and try again."] } };
+  }
+
   const parsed = leadSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),

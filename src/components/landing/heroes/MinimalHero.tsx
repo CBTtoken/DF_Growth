@@ -15,6 +15,7 @@ export function MinimalHero({
   secondaryColor,
   facebookUrl,
   instagramUrl,
+  websiteUrl,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -25,6 +26,7 @@ export function MinimalHero({
   secondaryColor: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
+  websiteUrl?: string | null;
 }) {
   const textColor = readableTextOn(secondaryColor);
 
@@ -36,6 +38,7 @@ export function MinimalHero({
           logoUrl={logoUrl}
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
+          websiteUrl={websiteUrl}
           textColor={textColor}
         />
       </div>

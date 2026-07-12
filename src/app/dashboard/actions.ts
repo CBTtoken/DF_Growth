@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { testimonialSchema } from "@/lib/schemas/testimonial";
@@ -582,4 +584,14 @@ export async function changeAssetStyle(_prevState: DashboardState, formData: For
 
   revalidatePath("/dashboard");
   return { success: true };
+}
+
+// Combined spec Sec 28: there was no way at all to end a session — a
+// shared/borrowed device stayed signed in indefinitely. Server Action (not
+// a client-side supabase.auth.signOut() call) so the auth cookie is cleared
+// server-side, matching how the rest of this app treats session state.
+export async function logOut() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/login");
 }

@@ -2,50 +2,56 @@
 // (dashboard, as an actionable next step) — same block works for both, the
 // surrounding heading/framing differs by page, not this component.
 //
-// Both of these are deliberately NOT self-serve web forms. Marketplace
-// listing is a real, live benefit of any paid membership (every tier gets
-// their page in the marketplace) — it is NOT "coming soon"; only the
-// WhatsApp channel for requesting it is still pending Meta verification.
-// Falls back to a plain email request in the meantime so the benefit is
-// actually usable today, matching the same fallback pattern used for
-// Enterprise's waitlist CTA. Dewald builds the marketplace page himself
-// once someone reaches out (a real manual/concierge process, not instant
-// automation) — routing through WhatsApp-or-email matches that reality.
-// RE:Biz Nomads is a live Facebook group, joining is literally just
-// clicking through and requesting to join.
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+// Combined spec Sec 27: Marketplace listing is automatic for every paid
+// membership — there's no request step to chase Dewald for anymore.
+// websiteUrl is optional (only the dashboard, post-signup, has a real
+// client to read it from) — when set, it's shown as what the marketplace
+// listing will link out to; when not, this still just confirms inclusion.
+// Real Marketplace auto-provisioning (actually creating the listing) is
+// Core/Stoep-side work outside this repo, tracked separately.
+// Combined spec Sec 33: audited — RE:Biz Nomads is a live Facebook group,
+// joining is literally just clicking through and requesting to join, with
+// no price, checkout, or payment reference anywhere in this flow. Business
+// email/phone for cross-product matching is whatever Growth already
+// captured at onboarding (contact_email, call_phone, whatsapp_phone) —
+// nothing new to collect here, since this is just a link, not a form.
 const REBIZ_GROUP_URL = "https://www.facebook.com/groups/rebiznomadsdealroom";
 
-export function EcosystemAccess() {
-  const whatsappHref = WHATSAPP_NUMBER
-    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-        "Hi, I'd like to get my business listed on the DigitalFlyer SA marketplace."
-      )}`
-    : "mailto:info@digitalflyer.co.za?subject=Marketplace%20listing%20request";
-
+export function EcosystemAccess({ websiteUrl }: { websiteUrl?: string | null }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="text-base font-bold tracking-tight text-ink">DigitalFlyer SA Marketplace</h3>
         <p className="text-sm text-gray-500">
-          Every paid membership gets a spot on our marketplace directory too. Say hello and
-          we&apos;ll take care of the rest.
+          Every paid membership gets a spot on our marketplace directory automatically —
+          there&apos;s nothing to request.
         </p>
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
-        >
-          {WHATSAPP_NUMBER ? "Message us on WhatsApp" : "Request your listing"}
-        </a>
+        {websiteUrl ? (
+          <p className="mt-1 text-sm text-gray-500">
+            Your listing will link out to{" "}
+            <a
+              href={websiteUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="font-semibold text-brand hover:underline"
+            >
+              {websiteUrl}
+            </a>
+            .
+          </p>
+        ) : (
+          <p className="mt-1 text-sm text-gray-500">
+            Add a website URL in Edit your page and your listing will link out to it.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="text-base font-bold tracking-tight text-ink">RE:Biz Nomads Community</h3>
         <p className="text-sm text-gray-500">
-          Join our private community of South African business owners. Deals, support, and real
-          conversations with people building the same thing you are.
+          Free and included with every membership — no extra cost. Join our private community of
+          South African business owners for deals, support, and real conversations with people
+          building the same thing you are.
         </p>
         <a
           href={REBIZ_GROUP_URL}

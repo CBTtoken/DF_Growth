@@ -18,6 +18,7 @@ export function SplitHero({
   secondaryColor,
   facebookUrl,
   instagramUrl,
+  websiteUrl,
   photoUrl,
 }: {
   businessName: string;
@@ -29,6 +30,7 @@ export function SplitHero({
   secondaryColor: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
+  websiteUrl?: string | null;
   photoUrl: string | null;
 }) {
   const textColor = readableTextOn(secondaryColor);
@@ -42,6 +44,7 @@ export function SplitHero({
           logoUrl={logoUrl}
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
+          websiteUrl={websiteUrl}
           textColor={textColor}
         />
         <div className="flex flex-col gap-5">

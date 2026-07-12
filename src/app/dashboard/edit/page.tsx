@@ -32,7 +32,7 @@ export default async function EditPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, contact_email, call_phone, whatsapp_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, brand_primary_color, brand_secondary_color, logo_path, packages, slug"
+        "business_name, contact_email, call_phone, whatsapp_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, website_url, brand_primary_color, brand_secondary_color, logo_path, packages, slug"
       )
       .eq("id", client.id)
       .single(),
@@ -101,6 +101,7 @@ export default async function EditPage() {
             additionalNotes: growthClient.additional_notes ?? "",
             facebookUrl: growthClient.facebook_url ?? "",
             instagramUrl: growthClient.instagram_url ?? "",
+            websiteUrl: growthClient.website_url ?? "",
             brandPrimaryColor: growthClient.brand_primary_color ?? "#1081b8",
             brandSecondaryColor: growthClient.brand_secondary_color ?? "#ffffff",
             logoUrl,

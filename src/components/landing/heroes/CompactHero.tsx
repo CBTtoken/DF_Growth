@@ -18,6 +18,7 @@ export function CompactHero({
   secondaryColor,
   facebookUrl,
   instagramUrl,
+  websiteUrl,
   testimonialCount,
 }: {
   businessName: string;
@@ -29,6 +30,7 @@ export function CompactHero({
   secondaryColor: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
+  websiteUrl?: string | null;
   testimonialCount: number;
 }) {
   const textColor = readableTextOn(secondaryColor);
@@ -42,6 +44,7 @@ export function CompactHero({
           logoUrl={logoUrl}
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
+          websiteUrl={websiteUrl}
           textColor={textColor}
         />
         <a

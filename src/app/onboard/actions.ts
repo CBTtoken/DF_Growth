@@ -14,9 +14,21 @@ import {
 } from "@/lib/schemas/intake";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
+import { isRateLimited } from "@/lib/rate-limit";
 
 type FieldErrors = Record<string, string[]> & { _form?: string[] };
 export type OnboardState = { error?: FieldErrors; success?: boolean } | null;
+
+// Combined spec Sec 35: every wizard step shares this one generous per-
+// account check — normal use is a handful of submits per session, so 20
+// per minute only ever catches a scripted/looping submit, never a real
+// client clicking through steps. Keyed by account (client.id), not IP,
+// since this is authenticated traffic and IP would wrongly penalize an
+// office/shared connection.
+function rateLimitOnboardStep(clientId: string | undefined): boolean {
+  if (!clientId) return false;
+  return isRateLimited(`onboard:${clientId}`, 20, 60 * 1000);
+}
 
 // CLAUDE.md Section 6: every step is its own Server Action, auto-saving on
 // submit rather than waiting for a final "finish" click, so a client can
@@ -35,6 +47,9 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+  if (rateLimitOnboardStep(client.id)) {
+    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+  }
 
   const admin = createAdminClient();
   const { data: growthClient, error } = await admin
@@ -75,6 +90,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
     additionalNotes: formData.get("additionalNotes") || "",
     facebookUrl: formData.get("facebookUrl") || "",
     instagramUrl: formData.get("instagramUrl") || "",
+    websiteUrl: formData.get("websiteUrl") || "",
   });
   if (!parsed.success) {
     return { error: parsed.error.flatten().fieldErrors };
@@ -82,6 +98,9 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+  if (rateLimitOnboardStep(client.id)) {
+    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+  }
 
   const admin = createAdminClient();
   const { data: growthClient, error } = await admin
@@ -96,6 +115,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
       additional_notes: parsed.data.additionalNotes || null,
       facebook_url: parsed.data.facebookUrl || null,
       instagram_url: parsed.data.instagramUrl || null,
+      website_url: parsed.data.websiteUrl || null,
     })
     .eq("id", client.id)
     .select("business_name, slug")
@@ -103,15 +123,26 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
 
   if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
 
-  const draft = await generateLandingCopy({
-    businessName: growthClient.business_name,
-    industry: parsed.data.industry,
-    province: parsed.data.province,
-    businessDescription: parsed.data.businessDescription,
-    tagline: parsed.data.tagline ?? "",
-    productsServices: parsed.data.productsServices ?? "",
-    additionalNotes: parsed.data.additionalNotes ?? "",
-  });
+  // Combined spec Sec 35: stricter, separate limit on top of the general
+  // per-step one above — this is the one step with a real per-call cost
+  // (the Claude API), so it gets its own tighter budget. Rate-limited here
+  // means only the AI draft is skipped, not the whole step — same
+  // graceful-degradation path as an outright AI failure (see the comment
+  // above this function): the client just gets a blank Landing Copy step
+  // to fill in themselves.
+  const aiRateLimited = isRateLimited(`ai-draft:${client.id}`, 5, 10 * 60 * 1000);
+
+  const draft = aiRateLimited
+    ? null
+    : await generateLandingCopy({
+        businessName: growthClient.business_name,
+        industry: parsed.data.industry,
+        province: parsed.data.province,
+        businessDescription: parsed.data.businessDescription,
+        tagline: parsed.data.tagline ?? "",
+        productsServices: parsed.data.productsServices ?? "",
+        additionalNotes: parsed.data.additionalNotes ?? "",
+      });
 
   if (draft) {
     await admin.from("growth_clients").update({ ai_landing_draft: draft }).eq("id", client.id);
@@ -133,6 +164,9 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+  if (rateLimitOnboardStep(client.id)) {
+    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+  }
 
   const admin = createAdminClient();
 
@@ -189,6 +223,9 @@ export async function saveStepTemplate(_prevState: OnboardState, formData: FormD
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+  if (rateLimitOnboardStep(client.id)) {
+    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+  }
 
   const admin = createAdminClient();
   const { error } = await admin
@@ -216,6 +253,9 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+  if (rateLimitOnboardStep(client.id)) {
+    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+  }
 
   const admin = createAdminClient();
   const { data: growthClient } = await admin
@@ -282,6 +322,9 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+  if (rateLimitOnboardStep(client.id)) {
+    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+  }
 
   // A slot only counts as a real package if it has a name — a price or
   // description typed into an otherwise-blank slot without a name isn't
@@ -363,6 +406,9 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+  if (rateLimitOnboardStep(client.id)) {
+    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+  }
 
   const admin = createAdminClient();
   // Combined spec Sec 10: this used to be the finish line for

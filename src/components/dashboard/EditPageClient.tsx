@@ -33,6 +33,7 @@ export function EditPageClient({
     additionalNotes: string;
     facebookUrl: string;
     instagramUrl: string;
+    websiteUrl: string;
     brandPrimaryColor: string;
     brandSecondaryColor: string;
     logoUrl: string | null;
@@ -90,6 +91,7 @@ export function EditPageClient({
           initialAdditionalNotes={initialData.additionalNotes}
           initialFacebookUrl={initialData.facebookUrl}
           initialInstagramUrl={initialData.instagramUrl}
+          initialWebsiteUrl={initialData.websiteUrl}
           onSuccess={showSaved}
           submitLabel="Save changes"
         />

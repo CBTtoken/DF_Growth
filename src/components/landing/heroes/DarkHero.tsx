@@ -16,6 +16,7 @@ export function DarkHero({
   primaryColor,
   facebookUrl,
   instagramUrl,
+  websiteUrl,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -25,6 +26,7 @@ export function DarkHero({
   primaryColor: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
+  websiteUrl?: string | null;
 }) {
   const bg = "#0a0a0f";
   const textColor = "#f5f5f7";
@@ -53,6 +55,7 @@ export function DarkHero({
           logoUrl={logoUrl}
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
+          websiteUrl={websiteUrl}
           textColor={textColor}
         />
         <a

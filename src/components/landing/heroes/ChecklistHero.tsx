@@ -19,6 +19,7 @@ export function ChecklistHero({
   secondaryColor,
   facebookUrl,
   instagramUrl,
+  websiteUrl,
   checklistItems,
 }: {
   businessName: string;
@@ -30,6 +31,7 @@ export function ChecklistHero({
   secondaryColor: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
+  websiteUrl?: string | null;
   checklistItems: string[];
 }) {
   const textColor = readableTextOn(primaryColor);
@@ -43,6 +45,7 @@ export function ChecklistHero({
           logoUrl={logoUrl}
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
+          websiteUrl={websiteUrl}
           textColor={textColor}
         />
         <a

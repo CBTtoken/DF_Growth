@@ -16,6 +16,7 @@ export function GeometricHero({
   secondaryColor,
   facebookUrl,
   instagramUrl,
+  websiteUrl,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -26,6 +27,7 @@ export function GeometricHero({
   secondaryColor: string;
   facebookUrl?: string | null;
   instagramUrl?: string | null;
+  websiteUrl?: string | null;
 }) {
   const bg = shade(secondaryColor, 0.85);
   const textColor = readableTextOn(bg);
@@ -57,6 +59,7 @@ export function GeometricHero({
           logoUrl={logoUrl}
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
+          websiteUrl={websiteUrl}
           textColor={textColor}
         />
       </div>

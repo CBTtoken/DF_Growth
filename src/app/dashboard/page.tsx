@@ -17,6 +17,7 @@ import { SocialAssetGenerator } from "@/components/dashboard/SocialAssetGenerato
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
 import { SiteFooter } from "@/components/SiteFooter";
+import { logOut } from "@/app/dashboard/actions";
 
 // Private, signed-in-only — see onboard/page.tsx for the same reasoning.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -52,7 +53,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url"
       )
       .eq("id", client.id)
       .single(),
@@ -107,7 +108,22 @@ export default async function DashboardPage() {
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
         <div className="flex flex-col gap-6">
-          <BrandHeader />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <BrandHeader />
+            {/* Combined spec Sec 28: there was previously no way at all to
+                end a session on a shared/borrowed device. A plain form
+                posting to a Server Action, not a client-side button, so it
+                works with JS disabled and clears the auth cookie
+                server-side. */}
+            <form action={logOut}>
+              <button
+                type="submit"
+                className="text-sm font-medium text-gray-400 underline-offset-2 transition hover:text-gray-600 hover:underline"
+              >
+                Log out
+              </button>
+            </form>
+          </div>
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-ink">Dashboard</h1>
@@ -350,7 +366,7 @@ export default async function DashboardPage() {
               As a Growth client, you&apos;re also part of the wider DigitalFlyer SA ecosystem.
             </p>
           </div>
-          <EcosystemAccess />
+          <EcosystemAccess websiteUrl={growthClient?.website_url ?? null} />
         </section>
       </div>
       <SiteFooter />

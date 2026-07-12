@@ -1,8 +1,10 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { startCheckoutSchema } from "@/lib/schemas/pricing";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
+import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 
 type CheckoutState = {
   error?: {
@@ -31,6 +33,17 @@ export async function startCheckout(
   _prevState: CheckoutState,
   formData: FormData
 ): Promise<CheckoutState> {
+  // Combined spec Sec 35: this is the one fully public, unauthenticated
+  // endpoint that creates a real account — Foundation's trial in
+  // particular has no payment gate at all, so a script could otherwise
+  // mint accounts indefinitely. 5 attempts per 10 minutes per IP is
+  // generous for a real prospect (who submits once, maybe twice after a
+  // typo) but stops a tight loop.
+  const ip = clientIpFromHeaders(await headers());
+  if (isRateLimited(`checkout:${ip}`, 5, 10 * 60 * 1000)) {
+    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+  }
+
   const parsed = startCheckoutSchema.safeParse({
     businessName: formData.get("businessName"),
     email: formData.get("email"),

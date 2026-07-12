@@ -42,6 +42,8 @@ export const step2Schema = z.object({
   additionalNotes: z.string().max(600).optional().or(z.literal("")),
   facebookUrl: z.string().url("Should be a full link, e.g. https://facebook.com/yourpage").max(300).optional().or(z.literal("")),
   instagramUrl: z.string().url("Should be a full link, e.g. https://instagram.com/yourhandle").max(300).optional().or(z.literal("")),
+  // Combined spec Sec 27.
+  websiteUrl: z.string().url("Should be a full link, e.g. https://yourbusiness.co.za").max(300).optional().or(z.literal("")),
 });
 
 export const step3Schema = z.object({
