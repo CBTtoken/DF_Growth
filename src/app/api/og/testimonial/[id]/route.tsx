@@ -35,8 +35,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
   return new ImageResponse(
     renderCard(style, {
-      quote: testimonial.quote,
-      authorName: testimonial.author_name,
+      headline: testimonial.quote,
+      subtext: testimonial.author_name,
       businessName: client?.business_name ?? "",
       rating: testimonial.rating,
       primaryColor,

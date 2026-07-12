@@ -13,6 +13,7 @@ import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
 import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
+import { SocialAssetGenerator } from "@/components/dashboard/SocialAssetGenerator";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -212,6 +213,8 @@ export default async function DashboardPage() {
         </section>
 
         <AssetStyleSection currentStyle={growthClient?.asset_style ?? "clean"} />
+
+        <SocialAssetGenerator photos={photos ?? []} storageBase={photosStorageBase} />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Generated social assets</h2>

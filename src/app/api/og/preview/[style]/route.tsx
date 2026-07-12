@@ -4,8 +4,8 @@ import { renderCard, type AssetStyleId } from "@/lib/assets/styles";
 export const runtime = "edge";
 
 const SAMPLE = {
-  quote: "Came out within the hour on a Sunday. Lifesavers.",
-  authorName: "Sarah M.",
+  headline: "Came out within the hour on a Sunday. Lifesavers.",
+  subtext: "Sarah M.",
   businessName: "Thabo's Plumbing Co.",
   rating: 5,
   primaryColor: "#1081b8",

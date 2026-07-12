@@ -10,6 +10,7 @@ import { domainVerificationSchema } from "@/lib/schemas/domain-verification";
 import { encrypt } from "@/lib/crypto";
 import { findActiveSubscription, disableSubscription } from "@/lib/paystack/subscriptions";
 import { templateSchema } from "@/lib/schemas/intake";
+import { socialAssetSchema } from "@/lib/schemas/social-asset";
 import crypto from "crypto";
 
 const PHOTO_CAP = 10;
@@ -76,6 +77,92 @@ export async function addTestimonial(
     }
   } catch (err) {
     console.error("Failed to generate testimonial asset", err);
+  }
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// Combined spec Sec 25: the generic counterpart to addTestimonial above,
+// for the four new content types — nothing stored beyond the resulting
+// image (no testimonials-style row to key off), same generated_assets
+// table and same "generate once on submit, not on every future view"
+// approach.
+export async function generateSocialAsset(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const parsed = socialAssetSchema.safeParse({
+    contentType: formData.get("contentType"),
+    headline: formData.get("headline"),
+    subtext: formData.get("subtext") || "",
+    imageUrl: formData.get("imageUrl") || "",
+    beforeImageUrl: formData.get("beforeImageUrl") || "",
+    afterImageUrl: formData.get("afterImageUrl") || "",
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.flatten().fieldErrors };
+  }
+
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  if (parsed.data.contentType === "before-after" && (!parsed.data.beforeImageUrl || !parsed.data.afterImageUrl)) {
+    return { error: { _form: ["Choose both a before and an after photo."] } };
+  }
+
+  const admin = createAdminClient();
+  const { data: growthClient } = await admin
+    .from("growth_clients")
+    .select("business_name, brand_primary_color, brand_secondary_color, asset_style")
+    .eq("id", client.id)
+    .single();
+
+  if (!growthClient) return { error: { _form: ["Could not find your account, please try again."] } };
+
+  const primaryColor = growthClient.brand_primary_color ?? "#1081b8";
+  const secondaryColor = growthClient.brand_secondary_color ?? "#ffffff";
+  const style = growthClient.asset_style ?? "clean";
+
+  try {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const imageRes = await fetch(`${siteUrl}/api/og/asset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contentType: parsed.data.contentType,
+        style,
+        headline: parsed.data.headline,
+        subtext: parsed.data.subtext,
+        businessName: growthClient.business_name,
+        primaryColor,
+        secondaryColor,
+        imageUrl: parsed.data.imageUrl || null,
+        beforeImageUrl: parsed.data.beforeImageUrl || undefined,
+        afterImageUrl: parsed.data.afterImageUrl || undefined,
+      }),
+    });
+
+    if (!imageRes.ok) {
+      return { error: { _form: ["Could not generate that image, please try again."] } };
+    }
+
+    const imageBytes = await imageRes.arrayBuffer();
+    const path = `${client.id}/${parsed.data.contentType}-${crypto.randomUUID()}.png`;
+    const { error: uploadError } = await admin.storage
+      .from("generated-assets")
+      .upload(path, imageBytes, { contentType: "image/png" });
+
+    if (uploadError) {
+      return { error: { _form: ["Could not save that image, please try again."] } };
+    }
+
+    await admin.from("generated_assets").insert({
+      growth_client_id: client.id,
+      testimonial_id: null,
+      template: `${parsed.data.contentType}-square`,
+      image_path: path,
+    });
+  } catch (err) {
+    console.error("Failed to generate social asset", err);
+    return { error: { _form: ["Could not generate that image, please try again."] } };
   }
 
   revalidatePath("/dashboard");

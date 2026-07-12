@@ -1,8 +1,8 @@
-// Shared between the real generation route (/api/og/testimonial/[id]) and
-// the style-picker preview route (/api/og/preview/[style]) so a preview
-// can never drift from what actually gets generated. Every element needs
-// an explicit display (flex or none) — next/og's renderer (satori) doesn't
-// support implicit block layout the way a real browser does.
+// Shared between the real generation routes (/api/og/testimonial/[id] and
+// /api/og/asset) and the style-picker preview route (/api/og/preview/[style])
+// so a preview can never drift from what actually gets generated. Every
+// element needs an explicit display (flex or none) — next/og's renderer
+// (satori) doesn't support implicit block layout the way a real browser does.
 export type AssetStyleId = "clean" | "bold-quote" | "star-card" | "mono-badge";
 
 export const ASSET_STYLES: { id: AssetStyleId; name: string; description: string }[] = [
@@ -12,13 +12,23 @@ export const ASSET_STYLES: { id: AssetStyleId; name: string; description: string
   { id: "mono-badge", name: "Mono Badge", description: "Clean white background, bold text, a name badge." },
 ];
 
+// Combined spec Sec 25: generalized from the original testimonial-only
+// shape (quote/authorName) to headline/subtext, generic enough for a
+// special offer, announcement, or new-arrival spotlight too — a
+// testimonial just maps quote->headline, authorName->subtext, same as
+// before. rating stays testimonial-specific (null for every other content
+// type). imageUrl is new: when set, every style renders it as a full-bleed
+// background with a brand-color scrim over it instead of a flat color, so
+// the client's own photo (or one they picked via Pexels/their gallery)
+// carries the design instead of just brand color alone.
 export type CardData = {
-  quote: string;
-  authorName: string;
+  headline: string;
+  subtext: string;
   businessName: string;
   rating: number | null;
   primaryColor: string;
   secondaryColor: string;
+  imageUrl?: string | null;
 };
 
 // A Unicode star glyph (★) renders as a missing-glyph box under next/og's
@@ -36,13 +46,28 @@ function Stars({ rating, color }: { rating: number; color: string }) {
   );
 }
 
+// The image + scrim background layer shared by every style below — an
+// absolutely-positioned pair (photo, then a tinted overlay in the
+// client's own primary color for text legibility) sitting behind the
+// style's normal content, only rendered when imageUrl is present.
+function ImageBackground({ imageUrl, tint }: { imageUrl: string; tint: string }) {
+  return (
+    <div style={{ position: "absolute", inset: 0, display: "flex" }}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- satori (next/og) renders its own image pipeline, not the browser's */}
+      <img src={imageUrl} alt="" width="1080" height="1080" style={{ objectFit: "cover", display: "flex" }} />
+      <div style={{ position: "absolute", inset: 0, display: "flex", backgroundColor: tint, opacity: 0.55 }} />
+    </div>
+  );
+}
+
 export function renderCard(style: AssetStyleId, data: CardData) {
-  const { quote, authorName, businessName, rating, primaryColor, secondaryColor } = data;
+  const { headline, subtext, businessName, rating, primaryColor, secondaryColor, imageUrl } = data;
 
   if (style === "bold-quote") {
     return (
       <div
         style={{
+          position: "relative",
           height: "100%",
           width: "100%",
           display: "flex",
@@ -52,15 +77,27 @@ export function renderCard(style: AssetStyleId, data: CardData) {
           padding: "90px",
         }}
       >
+        {imageUrl && <ImageBackground imageUrl={imageUrl} tint="#000000" />}
         <div style={{ display: "flex", fontSize: 220, color: primaryColor, lineHeight: 1, opacity: 0.9 }}>&ldquo;</div>
-        <div style={{ display: "flex", fontSize: 46, color: "#0b1220", fontWeight: 700, lineHeight: 1.25, marginTop: -40 }}>
-          {quote}
+        <div
+          style={{
+            display: "flex",
+            fontSize: 46,
+            color: imageUrl ? "#ffffff" : "#0b1220",
+            fontWeight: 700,
+            lineHeight: 1.25,
+            marginTop: -40,
+          }}
+        >
+          {headline}
         </div>
         <div style={{ display: "flex", width: 80, height: 6, backgroundColor: primaryColor, marginTop: 40 }} />
         <div style={{ display: "flex", fontSize: 30, color: primaryColor, fontWeight: 700, marginTop: 24 }}>
-          {authorName}
+          {subtext}
         </div>
-        <div style={{ display: "flex", fontSize: 24, color: "#6b7280", marginTop: 6 }}>{businessName}</div>
+        <div style={{ display: "flex", fontSize: 24, color: imageUrl ? "#e5e7eb" : "#6b7280", marginTop: 6 }}>
+          {businessName}
+        </div>
       </div>
     );
   }
@@ -69,6 +106,7 @@ export function renderCard(style: AssetStyleId, data: CardData) {
     return (
       <div
         style={{
+          position: "relative",
           height: "100%",
           width: "100%",
           display: "flex",
@@ -79,8 +117,10 @@ export function renderCard(style: AssetStyleId, data: CardData) {
           padding: "70px",
         }}
       >
+        {imageUrl && <ImageBackground imageUrl={imageUrl} tint={primaryColor} />}
         <div
           style={{
+            position: "relative",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -102,10 +142,10 @@ export function renderCard(style: AssetStyleId, data: CardData) {
               fontWeight: 600,
             }}
           >
-            {quote}
+            {headline}
           </div>
           <div style={{ display: "flex", fontSize: 28, color: primaryColor, fontWeight: 700, marginTop: 36 }}>
-            {authorName}
+            {subtext}
           </div>
           <div style={{ display: "flex", fontSize: 22, color: "#6b7280", marginTop: 4 }}>{businessName}</div>
         </div>
@@ -117,6 +157,7 @@ export function renderCard(style: AssetStyleId, data: CardData) {
     return (
       <div
         style={{
+          position: "relative",
           height: "100%",
           width: "100%",
           display: "flex",
@@ -124,6 +165,7 @@ export function renderCard(style: AssetStyleId, data: CardData) {
           backgroundColor: "#ffffff",
         }}
       >
+        {imageUrl && <ImageBackground imageUrl={imageUrl} tint="#000000" />}
         <div style={{ display: "flex", width: "100%", height: 18, backgroundColor: primaryColor }} />
         <div
           style={{
@@ -149,10 +191,20 @@ export function renderCard(style: AssetStyleId, data: CardData) {
           >
             {businessName}
           </div>
-          <div style={{ display: "flex", fontSize: 48, color: "#0b1220", fontWeight: 800, lineHeight: 1.25 }}>
-            {quote}
+          <div
+            style={{
+              display: "flex",
+              fontSize: 48,
+              color: imageUrl ? "#ffffff" : "#0b1220",
+              fontWeight: 800,
+              lineHeight: 1.25,
+            }}
+          >
+            {headline}
           </div>
-          <div style={{ display: "flex", fontSize: 26, color: "#6b7280", marginTop: 36 }}>{authorName}</div>
+          <div style={{ display: "flex", fontSize: 26, color: imageUrl ? "#e5e7eb" : "#6b7280", marginTop: 36 }}>
+            {subtext}
+          </div>
         </div>
       </div>
     );
@@ -162,6 +214,7 @@ export function renderCard(style: AssetStyleId, data: CardData) {
   return (
     <div
       style={{
+        position: "relative",
         height: "100%",
         width: "100%",
         display: "flex",
@@ -172,8 +225,10 @@ export function renderCard(style: AssetStyleId, data: CardData) {
         padding: "80px",
       }}
     >
+      {imageUrl && <ImageBackground imageUrl={imageUrl} tint={primaryColor} />}
       <div
         style={{
+          position: "relative",
           fontSize: 48,
           color: secondaryColor,
           textAlign: "center",
@@ -182,13 +237,95 @@ export function renderCard(style: AssetStyleId, data: CardData) {
           display: "flex",
         }}
       >
-        &ldquo;{quote}&rdquo;
+        &ldquo;{headline}&rdquo;
       </div>
-      <div style={{ fontSize: 32, color: secondaryColor, marginTop: 48, opacity: 0.85, display: "flex" }}>
-        {authorName}
+      <div style={{ position: "relative", fontSize: 32, color: secondaryColor, marginTop: 48, opacity: 0.85, display: "flex" }}>
+        {subtext}
       </div>
-      <div style={{ fontSize: 24, color: secondaryColor, marginTop: 16, opacity: 0.6, display: "flex" }}>
+      <div style={{ position: "relative", fontSize: 24, color: secondaryColor, marginTop: 16, opacity: 0.6, display: "flex" }}>
         {businessName}
+      </div>
+    </div>
+  );
+}
+
+// Combined spec Sec 25 item 1: Before & After needs two photos side by
+// side, structurally different from every other style's single-block
+// layout — rather than forcing it into the 4 existing styles (which would
+// mean redesigning all 4 twice over), it gets one dedicated layout that
+// still uses the client's own brand color, no separate style choice.
+export function renderBeforeAfter({
+  beforeImageUrl,
+  afterImageUrl,
+  businessName,
+  headline,
+  primaryColor,
+  secondaryColor,
+}: {
+  beforeImageUrl: string;
+  afterImageUrl: string;
+  businessName: string;
+  headline: string;
+  primaryColor: string;
+  secondaryColor: string;
+}) {
+  return (
+    <div
+      style={{
+        height: "100%",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: primaryColor,
+      }}
+    >
+      <div style={{ display: "flex", flex: 1 }}>
+        <div style={{ position: "relative", display: "flex", flex: 1 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={beforeImageUrl} alt="" width="540" height="864" style={{ objectFit: "cover", display: "flex" }} />
+          <span
+            style={{
+              position: "absolute",
+              left: 24,
+              top: 24,
+              display: "flex",
+              backgroundColor: "rgba(0,0,0,0.6)",
+              color: "#ffffff",
+              fontSize: 26,
+              fontWeight: 700,
+              padding: "8px 20px",
+              borderRadius: 999,
+            }}
+          >
+            Before
+          </span>
+        </div>
+        <div style={{ position: "relative", display: "flex", flex: 1 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={afterImageUrl} alt="" width="540" height="864" style={{ objectFit: "cover", display: "flex" }} />
+          <span
+            style={{
+              position: "absolute",
+              right: 24,
+              top: 24,
+              display: "flex",
+              backgroundColor: primaryColor,
+              color: secondaryColor,
+              fontSize: 26,
+              fontWeight: 700,
+              padding: "8px 20px",
+              borderRadius: 999,
+            }}
+          >
+            After
+          </span>
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", padding: "36px 48px" }}>
+        <div style={{ display: "flex", fontSize: 34, fontWeight: 800, color: secondaryColor }}>{headline}</div>
+        <div style={{ display: "flex", fontSize: 22, color: secondaryColor, opacity: 0.8, marginTop: 4 }}>
+          {businessName}
+        </div>
       </div>
     </div>
   );
