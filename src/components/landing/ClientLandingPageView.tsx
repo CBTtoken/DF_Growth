@@ -13,6 +13,7 @@ import { PackagesSection } from "@/components/landing/PackagesSection";
 import { PhotoGallerySection } from "@/components/landing/PhotoGallerySection";
 import { StorySection } from "@/components/landing/StorySection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { EarlyContactCta } from "@/components/landing/EarlyContactCta";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
 import { SplitHero } from "@/components/landing/heroes/SplitHero";
 import { EditorialHero } from "@/components/landing/heroes/EditorialHero";
@@ -190,6 +191,7 @@ export async function ClientLandingPageView({
             eyebrowNumber={aboutNumber}
           />
         </ScrollReveal>
+        {packages.length === 0 && <EarlyContactCta accentColor={accentColor} />}
         <ScrollReveal>
           <StorySection storyText={client.additional_notes} accentColor={accentColor} eyebrowNumber={storyNumber} />
         </ScrollReveal>
@@ -339,6 +341,10 @@ export async function ClientLandingPageView({
       {template.hero === "default" && (
         <ConversionHero {...heroProps} tagline={client.tagline} ctaHref={template.ctaHref} />
       )}
+      {/* Combined spec Sec 19: templates don't share a fixed section order
+          (About isn't always first), so this goes right after the hero
+          instead — the other position the spec allows for. */}
+      {packages.length === 0 && <EarlyContactCta accentColor={accentColor} />}
 
       {template.sections.map((key) => (
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>
