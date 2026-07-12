@@ -103,7 +103,9 @@ export async function provisionGrowthClient({
   // populated). The email itself is generic/unbranded since custom SMTP
   // isn't configured — acceptable for the pilot phase.
   const { data: inviteData, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard`,
+    // Sprint 1 fix, Section 1 — see src/app/auth/callback/page.tsx's own
+    // comment for why this can no longer point straight at /onboard.
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
   });
 
   let ownerUserId: string | null = null;
@@ -135,7 +137,11 @@ export async function provisionGrowthClient({
         );
         const { error: otpError } = await anon.auth.signInWithOtp({
           email,
-          options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/onboard` },
+          // Sprint 1 fix, Section 1 — this is the exact code path most
+          // likely to have caused the reported bug: an email that already
+          // has an account (and quite possibly an active browser session)
+          // being linked to a brand-new growth_client and re-invited.
+          options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
         });
         if (otpError) {
           console.error("Failed to send sign-in link to existing user", otpError);

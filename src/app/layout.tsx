@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Geist, Barlow_Condensed } from "next/font/google";
-import { AuthHashHandler } from "@/components/AuthHashHandler";
 import "./globals.css";
 
 // Geist_Mono was defined here but never applied to any rendered text —
@@ -58,7 +57,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${barlowCondensed.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-foreground">
-        <AuthHashHandler />
         {children}
       </body>
     </html>

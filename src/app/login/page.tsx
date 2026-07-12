@@ -22,7 +22,9 @@ export default function LoginPage() {
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/onboard` },
+      // Sprint 1 fix, Section 1 — see src/app/auth/callback/page.tsx's own
+      // comment for why this can no longer point straight at /onboard.
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
     setStatus(error ? "error" : "sent");
   }
