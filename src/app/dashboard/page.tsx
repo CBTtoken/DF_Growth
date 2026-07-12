@@ -139,12 +139,6 @@ export default async function DashboardPage() {
           photoCount={photos?.length ?? 0}
         />
 
-        <PlatformFeatures plan={growthClient?.plan ?? null} />
-
-        {growthClient && client.id && (
-          <AccountSection growthClientId={client.id} plan={growthClient.plan} status={growthClient.status} />
-        )}
-
         <ChangeTemplateSection currentTemplate={growthClient?.template ?? "conversion"} />
 
         <PhotoGallery
@@ -187,6 +181,15 @@ export default async function DashboardPage() {
             )}
           </ul>
         </section>
+
+        {/* Combined spec Sec 23: moved down from right after the header —
+            plan/billing is real but not what a client opens the dashboard
+            to actually do day to day. Leads and page-management (template,
+            photos) now come first. */}
+        {growthClient && client.id && (
+          <AccountSection growthClientId={client.id} plan={growthClient.plan} status={growthClient.status} />
+        )}
+        <PlatformFeatures plan={growthClient?.plan ?? null} />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Testimonials</h2>

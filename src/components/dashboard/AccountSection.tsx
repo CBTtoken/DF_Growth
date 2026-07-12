@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { cancelSubscription } from "@/app/dashboard/actions";
+import { TIERS } from "@/lib/paystack/plans";
 
 const PLAN_LABELS: Record<string, string> = {
   foundation: "Foundation",
@@ -25,6 +26,10 @@ export function AccountSection({
 }) {
   const [state, formAction, pending] = useActionState(cancelSubscription, null);
   const [confirming, setConfirming] = useState(false);
+  // Combined spec Sec 23: was just the plan name, no sense of what's
+  // actually included — reuses the same feature list already shown on
+  // /pricing rather than maintaining a second copy of it.
+  const currentTier = plan ? TIERS.find((t) => t.id === plan) : undefined;
 
   if (status === "cancelled" || state?.success) {
     return (
@@ -50,6 +55,17 @@ export function AccountSection({
           <span className="font-semibold text-ink">{(plan && PLAN_LABELS[plan]) ?? plan ?? "no plan"}</span>.
         </p>
       </div>
+
+      {currentTier && (
+        <ul className="grid grid-cols-1 gap-x-4 gap-y-1.5 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm text-gray-700 sm:grid-cols-2">
+          {currentTier.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-1.5">
+              <span aria-hidden className="text-brand">✓</span>
+              {feature}
+            </li>
+          ))}
+        </ul>
+      )}
 
       {plan === "foundation" && (
         <div className="flex flex-col gap-2 rounded-xl border border-brand/20 bg-brand/5 p-4">
