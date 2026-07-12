@@ -8,6 +8,7 @@ type CheckoutState = {
   error?: {
     businessName?: string[];
     email?: string[];
+    confirmEmail?: string[];
     tier?: string[];
     consent?: string[];
     _form?: string[];
@@ -33,13 +34,25 @@ export async function startCheckout(
   const parsed = startCheckoutSchema.safeParse({
     businessName: formData.get("businessName"),
     email: formData.get("email"),
+    confirmEmail: formData.get("confirmEmail"),
     tier: formData.get("tier"),
     interval: formData.get("interval") || undefined,
     consent: formData.get("consent"),
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.flatten().fieldErrors };
+    // Combined spec Sec 12: the email-match check is a top-level .refine,
+    // not a per-field check, so zod's flatten() puts its message under
+    // formErrors, not fieldErrors.confirmEmail — surface it there
+    // explicitly so it still lands right under the confirm-email input
+    // instead of only in the generic form-level error line.
+    const flattened = parsed.error.flatten();
+    return {
+      error: {
+        ...flattened.fieldErrors,
+        confirmEmail: [...(flattened.fieldErrors.confirmEmail ?? []), ...flattened.formErrors],
+      },
+    };
   }
 
   const { businessName, email, tier, interval } = parsed.data;

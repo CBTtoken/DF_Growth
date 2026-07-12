@@ -29,6 +29,8 @@ export function TierCard({
 }) {
   const [state, formAction, pending] = useActionState(startCheckout, null);
   const [businessName, setBusinessName] = useState("");
+  const [email, setEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [availability, setAvailability] = useState<{ checking: boolean; available: boolean | null; slug?: string }>({
     checking: false,
@@ -164,9 +166,34 @@ export function TierCard({
             name="email"
             placeholder="you@business.co.za"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="rounded border border-gray-300 px-3 py-2 text-sm"
           />
           {state?.error?.email && <p className="text-xs text-red-600">{state.error.email[0]}</p>}
+          {/* Combined spec Sec 12: a typo here is unrecoverable — there's no
+              other way to reach someone who mistypes the one address their
+              account and magic links go to. Paste/drop/autofill all bypass
+              retyping the address, defeating the point of a confirmation
+              field, so all three are blocked here; onChange still fires
+              normally for a real second keystroke-by-keystroke entry. */}
+          <input
+            type="email"
+            name="confirmEmail"
+            placeholder="Confirm your email"
+            required
+            autoComplete="off"
+            value={confirmEmail}
+            onChange={(e) => setConfirmEmail(e.target.value)}
+            onPaste={(e) => e.preventDefault()}
+            onDrop={(e) => e.preventDefault()}
+            className="rounded border border-gray-300 px-3 py-2 text-sm"
+          />
+          {confirmEmail.length > 0 && email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase() ? (
+            <p className="text-xs text-red-600">Emails don&apos;t match</p>
+          ) : (
+            state?.error?.confirmEmail && <p className="text-xs text-red-600">{state.error.confirmEmail[0]}</p>
+          )}
           <label className="flex items-start gap-2 text-xs leading-relaxed text-gray-500">
             <input type="checkbox" name="consent" required className="mt-0.5" />
             <span>
