@@ -67,12 +67,7 @@ export default async function EditPage() {
         <div className="flex flex-col gap-6">
           <BrandHeader />
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-ink">Edit your page</h1>
-              <p className="mt-1 text-sm text-gray-500">
-                Update your details any time — changes go live on your page right away.
-              </p>
-            </div>
+            <h1 className="text-2xl font-bold tracking-tight text-ink">Edit your page</h1>
             <Link
               href="/dashboard"
               className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
@@ -80,6 +75,15 @@ export default async function EditPage() {
               ← Back to dashboard
             </Link>
           </div>
+          {/* Combined spec Sec 22: was a muted one-line subtitle under the
+              heading, easy to read as decorative rather than an actual
+              behavioral notice — a real callout makes it clear this isn't
+              a draft you publish later, every save here is instantly
+              live. */}
+          <p className="rounded-xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-gray-700">
+            Everything you save on this screen is <span className="font-semibold">immediately visible</span> on
+            your live public page, there&apos;s no separate publish step.
+          </p>
         </div>
 
         <EditPageClient

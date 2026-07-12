@@ -16,6 +16,12 @@ export function Step5LandingCopy({
   hasAiDraft,
   onSuccess,
   submitLabel = "Continue",
+  // Combined spec Sec 22: the dashboard's "Edit your page" reuses this
+  // exact step component post-launch, where "Your landing page" reads
+  // ambiguously — is this describing the page, or editing it? Overridden
+  // there to make clear this shows what's live today, not something new
+  // being set up. Onboarding keeps the original heading.
+  heading = "Your landing page",
 }: {
   initialHeadline: string;
   initialSubheadline: string;
@@ -25,6 +31,7 @@ export function Step5LandingCopy({
   hasAiDraft: boolean;
   onSuccess: () => void;
   submitLabel?: string;
+  heading?: string;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep5, null);
 
@@ -35,7 +42,7 @@ export function Step5LandingCopy({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-xl font-bold tracking-tight text-ink">Your landing page</h2>
+        <h2 className="text-xl font-bold tracking-tight text-ink">{heading}</h2>
         {hasAiDraft ? (
           <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-brand/20 bg-brand/5 px-4 py-3">
             <span aria-hidden className="text-lg">✨</span>

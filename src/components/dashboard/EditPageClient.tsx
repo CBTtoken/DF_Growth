@@ -113,6 +113,7 @@ export function EditPageClient({
           initialAboutText={initialData.aboutText}
           initialServicesText={initialData.servicesText}
           hasAiDraft={false}
+          heading="Your current content on your landing page"
           onSuccess={showSaved}
           submitLabel="Save changes"
         />
