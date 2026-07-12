@@ -4,6 +4,18 @@
 // Renders nothing if the client never filled this in.
 type Package = { name: string; price: string; description: string };
 
+// Combined spec Sec 4: the onboarding field's placeholder hints at typing
+// "R350/month" or "From R200", but a client typing a bare number ("550")
+// rendered exactly that, no currency symbol at all. Only prepends "R" when
+// the price looks like a bare number with no currency or percent sign
+// already present — leaves "R350/month", "From R200", or a future Discount
+// type's "15% off" (Sec 5) untouched, rather than risking "RR350" or "R15%".
+function formatPrice(price: string): string {
+  const trimmed = price.trim();
+  if (/[R%]/i.test(trimmed) || !/^\d/.test(trimmed)) return trimmed;
+  return `R${trimmed}`;
+}
+
 export function PackagesSection({
   packages,
   ctaLabel,
@@ -52,7 +64,7 @@ export function PackagesSection({
                   </span>
                 )}
                 <h3 className="text-lg font-semibold text-gray-900">{pkg.name}</h3>
-                {pkg.price && <p className="text-xl font-bold" style={{ color: accentColor }}>{pkg.price}</p>}
+                {pkg.price && <p className="text-xl font-bold" style={{ color: accentColor }}>{formatPrice(pkg.price)}</p>}
                 {pkg.description && <p className="text-sm text-gray-600">{pkg.description}</p>}
                 <a
                   href="#lead-form"
