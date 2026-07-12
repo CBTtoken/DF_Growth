@@ -17,15 +17,16 @@ export function TrustBadges({
   accentColor: string;
   eyebrowNumber: string;
 }) {
+  // Combined spec Sec 2: this "Secure payment via Paystack" badge used to
+  // render unconditionally here, right below Packages on every client page
+  // — but a client page has no actual Paystack checkout connected to
+  // Packages (they only scroll to the contact form, see Sec 3), so the
+  // badge referenced a capability that doesn't exist there. It's accurate
+  // on the main DigitalFlyer site itself (real subscription billing does
+  // run through Paystack) — moved to SiteFooter.tsx instead, not removed
+  // outright.
   return (
     <section className="border-b border-gray-100 bg-white">
-      <div className="border-b border-gray-100" style={{ backgroundColor: `${accentColor}0d` }}>
-        <div className="mx-auto flex max-w-5xl items-center justify-center gap-2.5 px-4 py-4 sm:px-8">
-          <span aria-hidden style={{ color: accentColor }}>🔒</span>
-          <p className="text-sm font-medium text-gray-700">Secure payment via Paystack</p>
-        </div>
-      </div>
-
       {testimonials.length > 0 && (
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
           <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
