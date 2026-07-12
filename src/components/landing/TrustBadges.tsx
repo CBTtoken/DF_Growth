@@ -29,7 +29,7 @@ export function TrustBadges({
     <section className="border-b border-gray-100 bg-white">
       {testimonials.length > 0 && (
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
-          <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+          <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
             {eyebrowNumber} — What people say
           </p>
           <div className="mt-10 flex w-full gap-4 overflow-x-auto pb-2">

@@ -33,7 +33,7 @@ export function PhotoGallerySection({
   return (
     <section className="border-b border-gray-100 bg-white">
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
-        <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+        <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
           {eyebrowNumber} — Gallery
         </p>
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

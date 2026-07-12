@@ -14,7 +14,7 @@ export function HowItWorksSection({ accentColor, eyebrowNumber }: { accentColor:
   return (
     <section className="border-b border-gray-100 bg-white">
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
-        <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+        <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
           {eyebrowNumber} — How it works
         </p>
         <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">

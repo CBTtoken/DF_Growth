@@ -21,7 +21,7 @@ export function AboutSection({
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
           <div>
-            <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+            <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
               {eyebrowNumber} — About
             </p>
             <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">

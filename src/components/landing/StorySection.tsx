@@ -18,7 +18,7 @@ export function StorySection({
   return (
     <section id="story" className="border-b border-gray-100 bg-gray-50">
       <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8 sm:py-24">
-        <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
+        <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
           {eyebrowNumber} — Our story
         </p>
         <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-gray-600">{storyText}</p>
