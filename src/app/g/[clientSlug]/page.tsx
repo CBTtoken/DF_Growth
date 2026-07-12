@@ -171,7 +171,8 @@ export default async function ClientLandingPage({
   // guaranteed readable on white specifically, for exactly those uses.
   const accentColor = ensureContrast(primaryColor, "#ffffff");
 
-  const packages = (client.packages as { name: string; price: string; description: string }[] | null) ?? [];
+  const packages =
+    (client.packages as { name: string; price: string; description: string; type?: "package" | "special" | "discount" }[] | null) ?? [];
 
   const logoUrl = client.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`

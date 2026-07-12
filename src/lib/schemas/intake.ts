@@ -82,13 +82,25 @@ export const step5Schema = z.object({
 
 // All optional, all tiers — most small businesses won't have named
 // packages, and typing nothing at all is a valid, expected submission.
+// Combined spec Sec 5: not every business has a fixed price list — a
+// package can be a straight Package (as before), a time-limited Special,
+// or a Discount (a percentage off, e.g. "15% off standard callout fee").
+// Defaults to "package" so existing client data (saved before this field
+// existed) reads correctly with no migration needed — packages live in a
+// jsonb column, not a typed table column, so a genuinely new field like
+// this just starts appearing in new writes.
+export const packageTypeSchema = z.enum(["package", "special", "discount"]);
+
 export const step6Schema = z.object({
+  package1Type: packageTypeSchema.optional(),
   package1Name: z.string().max(60).optional().or(z.literal("")),
   package1Price: z.string().max(40).optional().or(z.literal("")),
   package1Description: z.string().max(300).optional().or(z.literal("")),
+  package2Type: packageTypeSchema.optional(),
   package2Name: z.string().max(60).optional().or(z.literal("")),
   package2Price: z.string().max(40).optional().or(z.literal("")),
   package2Description: z.string().max(300).optional().or(z.literal("")),
+  package3Type: packageTypeSchema.optional(),
   package3Name: z.string().max(60).optional().or(z.literal("")),
   package3Price: z.string().max(40).optional().or(z.literal("")),
   package3Description: z.string().max(300).optional().or(z.literal("")),

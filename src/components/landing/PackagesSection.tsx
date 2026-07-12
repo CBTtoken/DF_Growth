@@ -2,7 +2,22 @@
 // entirely optional, distinct from ServicesList (a flat list of what they
 // do) since packages carry a price and a name a visitor can pick between.
 // Renders nothing if the client never filled this in.
-type Package = { name: string; price: string; description: string };
+type PackageType = "package" | "special" | "discount";
+type Package = { name: string; price: string; description: string; type?: PackageType };
+
+// Combined spec Sec 5: the section header reflects what the client actually
+// set up, not a fixed "Packages" label regardless of content — a business
+// running only Specials shouldn't have its page call them "Packages".
+// Undefined type on older data (saved before this field existed) is
+// treated as "package", matching the same default used when saving.
+function sectionTitle(packages: Package[]): string {
+  const types = new Set(packages.map((p) => p.type ?? "package"));
+  if (types.size > 1) return "What we offer";
+  const [only] = types;
+  if (only === "special") return "Specials";
+  if (only === "discount") return "Discounts";
+  return "Packages";
+}
 
 // Combined spec Sec 4: the onboarding field's placeholder hints at typing
 // "R350/month" or "From R200", but a client typing a bare number ("550")
@@ -33,12 +48,13 @@ export function PackagesSection({
   // matches the "Most popular" convention already used on Growth's own
   // /pricing page, not something invented for this component alone.
   const highlightIndex = packages.length === 3 ? 1 : -1;
+  const title = sectionTitle(packages);
 
   return (
     <section id="packages" className="border-b border-gray-100 bg-gray-50">
       <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
         <p className="font-mono text-xs uppercase tracking-[0.2em]" style={{ color: accentColor }}>
-          {eyebrowNumber} — Packages
+          {eyebrowNumber} — {title}
         </p>
         <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
           Pick what fits you.

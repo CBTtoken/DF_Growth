@@ -7,7 +7,7 @@ import { Step3BrandKit } from "@/components/onboard/steps/Step3BrandKit";
 import { Step5LandingCopy } from "@/components/onboard/steps/Step5LandingCopy";
 import { Step6Packages } from "@/components/onboard/steps/Step6Packages";
 
-type PackageInitial = { name: string; price: string; description: string };
+type PackageInitial = { name: string; price: string; description: string; type?: "package" | "special" | "discount" };
 
 // Reuses the exact same components, schemas, and Server Actions as the
 // onboarding wizard — found via UAT that there was no way at all to fix a

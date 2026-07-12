@@ -12,7 +12,7 @@ import { Step6Packages } from "./steps/Step6Packages";
 import { Step7MetaConnect } from "./steps/Step7MetaConnect";
 import type { Tier } from "@/lib/paystack/plans";
 
-type PackageInitial = { name: string; price: string; description: string };
+type PackageInitial = { name: string; price: string; description: string; type?: "package" | "special" | "discount" };
 type PhotoInitial = { id: string; storage_path: string };
 
 export function OnboardWizard({

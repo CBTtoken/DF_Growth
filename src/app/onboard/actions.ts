@@ -261,12 +261,15 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
 // optional: an all-blank submit is valid, just stores an empty array.
 export async function saveStep6(_prevState: OnboardState, formData: FormData): Promise<OnboardState> {
   const parsed = step6Schema.safeParse({
+    package1Type: formData.get("package1Type") || undefined,
     package1Name: formData.get("package1Name") || "",
     package1Price: formData.get("package1Price") || "",
     package1Description: formData.get("package1Description") || "",
+    package2Type: formData.get("package2Type") || undefined,
     package2Name: formData.get("package2Name") || "",
     package2Price: formData.get("package2Price") || "",
     package2Description: formData.get("package2Description") || "",
+    package3Type: formData.get("package3Type") || undefined,
     package3Name: formData.get("package3Name") || "",
     package3Price: formData.get("package3Price") || "",
     package3Description: formData.get("package3Description") || "",
@@ -280,11 +283,28 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
 
   // A slot only counts as a real package if it has a name — a price or
   // description typed into an otherwise-blank slot without a name isn't
-  // something we can render sensibly.
+  // something we can render sensibly. Sec 5: type defaults to "package"
+  // when not set (the radio always has a checked default, this is just a
+  // defensive fallback for a malformed submit).
   const packages = [
-    { name: parsed.data.package1Name, price: parsed.data.package1Price, description: parsed.data.package1Description },
-    { name: parsed.data.package2Name, price: parsed.data.package2Price, description: parsed.data.package2Description },
-    { name: parsed.data.package3Name, price: parsed.data.package3Price, description: parsed.data.package3Description },
+    {
+      type: parsed.data.package1Type ?? "package",
+      name: parsed.data.package1Name,
+      price: parsed.data.package1Price,
+      description: parsed.data.package1Description,
+    },
+    {
+      type: parsed.data.package2Type ?? "package",
+      name: parsed.data.package2Name,
+      price: parsed.data.package2Price,
+      description: parsed.data.package2Description,
+    },
+    {
+      type: parsed.data.package3Type ?? "package",
+      name: parsed.data.package3Name,
+      price: parsed.data.package3Price,
+      description: parsed.data.package3Description,
+    },
   ].filter((p) => p.name);
 
   const admin = createAdminClient();

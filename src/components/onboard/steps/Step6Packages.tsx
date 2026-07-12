@@ -1,14 +1,25 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { saveStep6, type OnboardState } from "@/app/onboard/actions";
 
-type PackageInitial = { name: string; price: string; description: string };
+type PackageType = "package" | "special" | "discount";
+type PackageInitial = { name: string; price: string; description: string; type?: PackageType };
 type FieldErrors = (Record<string, string[]> & { _form?: string[] }) | undefined;
 
 const inputClass =
   "rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
 
+const TYPE_OPTIONS: { value: PackageType; label: string }[] = [
+  { value: "package", label: "Package" },
+  { value: "special", label: "Special" },
+  { value: "discount", label: "Discount" },
+];
+
+// Combined spec Sec 5: not every business has a fixed price list. Segmented
+// toggle rather than a plain <select>, matching the Monthly/Annual pattern
+// already used on /pricing's own TierCard — a client picks a lane before
+// typing anything, same reasoning already applied to Step7MetaConnect.
 function PackageFields({
   index,
   initial,
@@ -18,11 +29,30 @@ function PackageFields({
   initial: PackageInitial;
   errors: FieldErrors;
 }) {
+  const [type, setType] = useState<PackageType>(initial.type ?? "package");
+  const priceLabel = type === "discount" ? "Discount, e.g. 15% off" : "Price, e.g. R350/month or From R200";
+
   return (
     <fieldset className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
       <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-brand">
         Package {index}
       </legend>
+
+      <input type="hidden" name={`package${index}Type`} value={type} />
+      <div className="flex gap-1.5 rounded-full bg-gray-200 p-1 text-xs font-semibold">
+        {TYPE_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setType(opt.value)}
+            className={`flex-1 rounded-full py-1.5 transition-colors ${
+              type === opt.value ? "bg-white text-ink shadow-sm" : "text-gray-500"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
 
       <input
         type="text"
@@ -39,7 +69,7 @@ function PackageFields({
         type="text"
         name={`package${index}Price`}
         defaultValue={initial.price}
-        placeholder="Price, e.g. R350/month or From R200"
+        placeholder={priceLabel}
         className={inputClass}
       />
       {errors?.[`package${index}Price`] && (

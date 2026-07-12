@@ -140,7 +140,8 @@ export default async function OnboardPage() {
     servicesText?: string;
   } | null;
 
-  const packages = (growthClient.packages as { name: string; price: string; description: string }[] | null) ?? [];
+  const packages =
+    (growthClient.packages as { name: string; price: string; description: string; type?: "package" | "special" | "discount" }[] | null) ?? [];
 
   const logoUrl = growthClient.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${growthClient.logo_path}`
