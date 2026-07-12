@@ -43,7 +43,7 @@ export default async function AdminPage() {
   const { data: clients } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, plan, status, paystack_reference, meta_pixel_id, meta_setup_requested_help, call_phone, whatsapp_phone, business_description, brand_primary_color, template, packages, created_at"
+      "id, business_name, contact_email, plan, status, paystack_reference, meta_pixel_id, meta_setup_requested_help, call_phone, whatsapp_phone, business_description, brand_primary_color, template, packages, created_at, signup_channel"
     )
     .order("created_at", { ascending: false });
 
@@ -101,6 +101,7 @@ export default async function AdminPage() {
                   <th className="py-2 pr-4">Plan</th>
                   <th className="py-2 pr-4">Status</th>
                   <th className="py-2 pr-4">Meta</th>
+                  <th className="py-2 pr-4">Channel</th>
                   <th className="py-2 pr-4">Signed up</th>
                   <th className="py-2 pr-4" />
                 </tr>
@@ -146,6 +147,17 @@ export default async function AdminPage() {
                             : c.meta_setup_requested_help
                               ? "Needs help"
                               : "Not connected"}
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                            c.signup_channel === "whatsapp"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {c.signup_channel === "whatsapp" ? "WhatsApp" : "Web"}
+                        </span>
                       </td>
                       <td className="py-2.5 pr-4 text-gray-400">{new Date(c.created_at).toLocaleDateString()}</td>
                       <td className="py-2.5 pr-4 text-right">
