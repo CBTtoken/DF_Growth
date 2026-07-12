@@ -44,11 +44,11 @@ export async function GET(request: Request) {
       to: client.contact_email,
       subject: "Your free trial ends in 2 days",
       html: `
-        <p>Hi ${client.business_name},</p>
-        <p>Your DigitalFlyer Growth free trial ends on ${new Date(client.trial_ends_at).toLocaleDateString("en-ZA")}.</p>
-        <p>To keep your page live with no interruption, add payment now — it's R100/month after the trial:</p>
+        <p>Good day ${client.business_name},</p>
+        <p>Your DigitalFlyer SA free trial ends on ${new Date(client.trial_ends_at).toLocaleDateString("en-ZA")}.</p>
+        <p>To keep your page live with no interruption, add payment now, it's R100/month after the trial:</p>
         <p><a href="${convertUrl}">Add payment</a></p>
-        <p>If you don't add payment, your page will be paused until you do — nothing is lost, you can reactivate any time.</p>
+        <p>If you don't add payment, your page will be paused until you do. Nothing is lost, you can reactivate any time.</p>
       `,
     });
 
@@ -88,9 +88,9 @@ export async function GET(request: Request) {
       to: client.contact_email,
       subject: "Your free trial has ended",
       html: `
-        <p>Hi ${client.business_name},</p>
-        <p>Your DigitalFlyer Growth free trial has ended, so your page is paused for now.</p>
-        <p>Add payment any time to reactivate it immediately — R100/month, no long-term contract:</p>
+        <p>Good day ${client.business_name},</p>
+        <p>Your DigitalFlyer SA free trial has ended, so your page is paused for now.</p>
+        <p>Add payment any time to reactivate it immediately, R100/month, no long-term contract:</p>
         <p><a href="${convertUrl}">Reactivate my page</a></p>
       `,
     });

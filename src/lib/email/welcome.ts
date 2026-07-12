@@ -34,14 +34,14 @@ export async function sendWelcomeEmail({
     to: contactEmail,
     subject: "Your page is live!",
     html: `
-      <p>Hi ${businessName},</p>
-      <p>Great news — your DigitalFlyer page is live right now:</p>
+      <p>Good day ${businessName},</p>
+      <p>Great news, your DigitalFlyer SA page is live right now:</p>
       <p><a href="${pageUrl}">${pageUrl}</a></p>
       <p>Head to your dashboard any time to add testimonials, check your leads, and manage your page:</p>
       <p><a href="${dashboardUrl}">Go to your dashboard</a></p>
       ${
         assetUrl
-          ? `<p>Before you go, take 5-10 minutes to read our quick-start guide — it'll help you get the most out of your new page:</p><p><a href="${assetUrl}">Read the 5 to 10 Minute Rule</a></p>`
+          ? `<p>Before you go, take 5-10 minutes to read our quick-start guide, it'll help you get the most out of your new page:</p><p><a href="${assetUrl}">Read the 5 to 10 Minute Rule</a></p>`
           : ""
       }
     `,

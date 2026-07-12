@@ -69,7 +69,8 @@ export async function captureLead(
         to: ownerEmail,
         subject: `New lead: ${parsed.data.name}`,
         html: `
-          <p>You've got a new lead from your DigitalFlyer Growth page, <strong>${businessName}</strong>.</p>
+          <p>Good day ${businessName},</p>
+          <p>You've got a new lead from your DigitalFlyer SA page.</p>
           <p>
             <strong>Name:</strong> ${parsed.data.name}<br>
             <strong>Email:</strong> ${parsed.data.email}<br>

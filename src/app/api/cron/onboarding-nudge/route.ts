@@ -52,9 +52,9 @@ export async function GET(request: Request) {
 
     const result = await sendEmail({
       to: client.contact_email,
-      subject: "Finish setting up your DigitalFlyer page",
+      subject: "Finish setting up your DigitalFlyer SA page",
       html: `
-        <p>Hi ${client.business_name},</p>
+        <p>Good day ${client.business_name},</p>
         <p>You're a few steps away from a page that's ready to bring in real customers.</p>
         <p><a href="${siteUrl}/onboard">Pick up right where you left off</a></p>
       `,
