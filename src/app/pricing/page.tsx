@@ -5,7 +5,6 @@ import { TierCard } from "@/components/pricing/tier-card";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { HomepageCredibilitySection } from "@/components/marketing/HomepageCredibilitySection";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
-import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { SectionDivider } from "@/components/marketing/SectionDivider";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -20,6 +19,24 @@ const TRUST_INDICATORS = [
   "No Hidden Fees",
   "Built in South Africa",
   "Built for Google & Meta",
+];
+
+// Combined spec Sec 16: factual one-liners for the footer section, now
+// that persuasion for these three lives in the pricing cards themselves —
+// "what does this actually do?", not a second sales pitch.
+const ECOSYSTEM_QUICK_REFERENCE = [
+  {
+    name: "DigitalFlyer Marketplace",
+    description: "A shared directory where customers can discover your business alongside other DigitalFlyer members.",
+  },
+  {
+    name: "RE:Biz Nomads",
+    description: "A private community of South African business owners, deals, support, and real conversations.",
+  },
+  {
+    name: "BizUp",
+    description: "In-chat messaging and payments, so you can talk to and get paid by customers in one place.",
+  },
 ];
 
 // Merges the original "Why DigitalFlyer" narrative with the separate "why
@@ -457,21 +474,29 @@ export default async function PricingPage() {
 
       <SectionDivider />
 
-      {/* Ecosystem access — kept from the previous page, still true and
-          still relevant right before the final push. */}
+      {/* Combined spec Sec 16: was a persuasion section (with its own
+          WhatsApp/join CTAs, via EcosystemAccess) duplicating what the
+          pricing cards above now say directly — this section's job is
+          quick clarification now, not a second sales pitch. Deliberately
+          not reusing EcosystemAccess here: that component's actionable
+          CTAs are still exactly right on the dashboard (a real client
+          taking a real next step), just wrong for a factual one-liner
+          answering "what does this actually do?" here. */}
       <section className="bg-gray-50 px-6 py-16">
         <div className="mx-auto max-w-4xl">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl uppercase tracking-wide text-ink">
               What you also get access to.
             </h2>
-            <p className="mt-3 text-gray-600">
-              Growth is part of the wider DigitalFlyer SA ecosystem. Every client can also tap into
-              these.
-            </p>
+            <p className="mt-3 text-gray-600">Every tier includes all three, at no extra cost.</p>
           </div>
-          <div className="mt-10">
-            <EcosystemAccess />
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            {ECOSYSTEM_QUICK_REFERENCE.map((item) => (
+              <div key={item.name} className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <h3 className="text-base font-bold tracking-tight text-ink">{item.name}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{item.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

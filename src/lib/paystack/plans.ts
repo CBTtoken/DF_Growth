@@ -29,6 +29,12 @@ export const TIERS: {
       "Business Profile",
       "Monthly Digital Asset",
       "Ready To Share Anywhere",
+      // Combined spec Sec 16: bundled into every tier at no extra cost, but
+      // previously only mentioned (Marketplace and RE:Biz Nomads) or not at
+      // all (BizUp) in a separate section near the footer — a prospect
+      // looking at just this card never saw the full value included.
+      "RE:Biz Nomads Community",
+      "BizUp In-Chat Payments",
     ],
     ctaLabel: "Start Your Free Trial",
   },
@@ -43,6 +49,13 @@ export const TIERS: {
       "Marketing Assets",
       "Monthly Optimisation",
       "Growth Reporting",
+      // Combined spec Sec 16: this card's own feature list didn't repeat
+      // what "Everything in Foundation" already includes, so a prospect
+      // comparing tiers side by side never saw these three on the Growth
+      // card at all.
+      "Marketplace Listing",
+      "RE:Biz Nomads Community",
+      "BizUp In-Chat Payments",
     ],
     ctaLabel: "Start Growing",
   },
