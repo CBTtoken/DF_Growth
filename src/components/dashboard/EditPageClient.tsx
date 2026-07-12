@@ -58,6 +58,15 @@ export function EditPageClient({
         </div>
       )}
 
+      <a
+        href="/dashboard/preview"
+        target="_blank"
+        rel="noreferrer"
+        className="self-end text-sm font-semibold text-brand transition hover:text-brand-dark"
+      >
+        Preview your page ↗
+      </a>
+
       <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <Step1BusinessInfo
           initialBusinessName={initialData.businessName}

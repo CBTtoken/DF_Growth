@@ -35,13 +35,27 @@ export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: st
           <input type="hidden" name="template" value={selected} />
           <TemplateGallery selected={selected} onSelect={setSelected} />
           {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
-          <button
-            type="submit"
-            disabled={pending || selected === currentTemplate}
-            className="w-fit rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
-          >
-            {pending ? "Saving..." : "Save this style"}
-          </button>
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="submit"
+              disabled={pending || selected === currentTemplate}
+              className="w-fit rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50 disabled:hover:translate-y-0"
+            >
+              {pending ? "Saving..." : "Save this style"}
+            </button>
+            {/* Combined spec Sec 6/9: lets a client see this style with
+                their own content before committing to it, via
+                /dashboard/preview's templateOverride param — doesn't save
+                anything itself. */}
+            <a
+              href={`/dashboard/preview?template=${encodeURIComponent(selected)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-sm font-semibold text-brand transition hover:text-brand-dark"
+            >
+              Preview with your content ↗
+            </a>
+          </div>
         </form>
       )}
     </section>

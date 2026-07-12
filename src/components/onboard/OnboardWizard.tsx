@@ -99,6 +99,20 @@ export function OnboardWizard({
   return (
     <div className="flex w-full max-w-lg flex-col gap-6">
       <ProgressBar step={step} totalSteps={totalSteps} />
+      {/* Combined spec Sec 6: only shown once landing copy (internal step 6)
+          has been saved — earlier than that /dashboard/preview would just
+          show its "not enough to preview yet" message, which isn't useful
+          to link to. */}
+      {step >= 7 && (
+        <a
+          href="/dashboard/preview"
+          target="_blank"
+          rel="noreferrer"
+          className="self-end text-sm font-semibold text-brand transition hover:text-brand-dark"
+        >
+          Preview your page ↗
+        </a>
+      )}
       <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
 
       {step === 1 && (
