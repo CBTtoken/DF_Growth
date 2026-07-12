@@ -38,6 +38,18 @@ import { getIndustryPhoto } from "@/lib/images/pexels";
 // single biggest source of LCP variance in testing (a cold run measured 8.9s
 // LCP against a warm ~2.3s for the identical page).
 export const revalidate = 60;
+// Task #12, real root cause found by testing locally rather than guessing:
+// a route with a dynamic segment ([clientSlug]) and no generateStaticParams
+// defaults to on-demand SSR in this Next.js version — `revalidate` alone
+// doesn't make it static-cacheable, regardless of whether any Dynamic API
+// is actually used (confirmed: removing the two real cookies() call sites
+// on this page and its header, in the two commits before this one, made no
+// difference at all — X-Vercel-Cache stayed MISS on every request). Forcing
+// static generation explicitly is what actually fixes it — verified via a
+// local production build (`npm run build`) that this page compiles and
+// generates successfully as static (○) with this set, with no error about
+// a remaining dynamic API, before ever redeploying to test it live again.
+export const dynamic = "force-static";
 
 // Every client page previously inherited the root layout's generic
 // "DigitalFlyer Growth" title/description — meaning a client's own business
