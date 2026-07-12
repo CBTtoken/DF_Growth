@@ -12,7 +12,6 @@ export const TEMPLATE_OPTIONS = [CLASSIC, ...templates.map((t) => ({ id: t.id, n
 
 const PREVIEW_WIDTH = 1200;
 const PREVIEW_HEIGHT = 760;
-const SCALE = 0.36;
 
 // Shared by the onboarding picker (Step4TemplatePicker) and the dashboard's
 // "Change template" — real, live-rendered previews (src/app/preview/
@@ -64,7 +63,10 @@ export function TemplateGallery({
               isSelected ? "border-brand" : "border-gray-200 hover:border-gray-300"
             }`}
           >
-            <div className="relative shrink-0 overflow-hidden bg-gray-50" style={{ height: PREVIEW_HEIGHT * SCALE }}>
+            <div
+              className="relative w-full shrink-0 overflow-hidden bg-gray-50 [container-type:inline-size]"
+              style={{ aspectRatio: `${PREVIEW_WIDTH} / ${PREVIEW_HEIGHT}` }}
+            >
               <iframe
                 src={`/preview/${t.id}`}
                 title={`${t.name} preview`}
@@ -73,7 +75,15 @@ export function TemplateGallery({
                 style={{
                   width: PREVIEW_WIDTH,
                   height: PREVIEW_HEIGHT,
-                  transform: `scale(${SCALE})`,
+                  // Combined spec Sec 9 (quick win): scales to the actual
+                  // rendered width of this card via CSS container query
+                  // units, instead of a single fixed-pixel constant — the
+                  // old fixed scale (0.36) was tuned for the wizard's old
+                  // narrow column and clipped badly on mobile once anything
+                  // wider was used to make the preview "clearer, larger" on
+                  // desktop. This gives every screen size the biggest
+                  // preview that actually fits its own card width.
+                  transform: `scale(calc(100cqw / ${PREVIEW_WIDTH}px))`,
                   transformOrigin: "top left",
                   pointerEvents: "none",
                   border: 0,

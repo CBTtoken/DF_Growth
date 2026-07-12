@@ -96,8 +96,15 @@ export function OnboardWizard({
     );
   }
 
+  // Combined spec Sec 9 (quick win): every other step fits the wizard's
+  // normal max-w-lg card, but the template picker's live previews were
+  // being squeezed into that same ~460px column, capping how large/clear
+  // each preview could get. Widening just for this one step gives the
+  // previews real room without changing the layout everywhere else.
+  const isTemplateStep = step === 5;
+
   return (
-    <div className="flex w-full max-w-lg flex-col gap-6">
+    <div className={`flex w-full flex-col gap-6 ${isTemplateStep ? "max-w-2xl" : "max-w-lg"}`}>
       <ProgressBar step={step} totalSteps={totalSteps} />
       {/* Combined spec Sec 6: only shown once landing copy (internal step 6)
           has been saved — earlier than that /dashboard/preview would just
