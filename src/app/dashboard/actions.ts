@@ -337,6 +337,68 @@ export async function uploadClientPhoto(_prevState: DashboardState, formData: Fo
   return { success: true };
 }
 
+// Combined spec Sec 24: the Pexels picker (PexelsPicker.tsx) only ever
+// hands this a URL to one of Pexels' own hosted images, never a file — so
+// "adding" a Pexels photo means downloading it once, server-side, and
+// storing it exactly like an uploaded one, in the same bucket and table.
+// Everything downstream (the gallery, hero-photo selection, the public
+// page) then treats a Pexels-sourced photo identically to a client's own
+// upload, no separate code path needed anywhere else.
+export async function addPhotoFromPexels(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: { _form: [client.error] } };
+
+  const photoUrl = formData.get("photoUrl");
+  // Pexels' own CDN domain only — this fetches a server-supplied URL from
+  // formData, so restricting it to a known-safe host prevents it being
+  // used as an open fetch-anything-and-store-it proxy.
+  if (typeof photoUrl !== "string" || !/^https:\/\/images\.pexels\.com\//.test(photoUrl)) {
+    return { error: { _form: ["Invalid photo."] } };
+  }
+
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("client_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("growth_client_id", client.id);
+
+  const nextPosition = count ?? 0;
+  if (nextPosition >= PHOTO_CAP) {
+    return { error: { _form: [`You've reached the ${PHOTO_CAP}-photo limit. Delete one first to add another.`] } };
+  }
+
+  let imageRes: Response;
+  try {
+    imageRes = await fetch(photoUrl);
+  } catch {
+    return { error: { _form: ["Could not fetch that photo, please try again."] } };
+  }
+  if (!imageRes.ok) {
+    return { error: { _form: ["Could not fetch that photo, please try again."] } };
+  }
+
+  const contentType = imageRes.headers.get("content-type") ?? "image/jpeg";
+  const ext = contentType.includes("png") ? "png" : "jpg";
+  const path = `${client.id}/${crypto.randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await imageRes.arrayBuffer());
+
+  const { error: uploadError } = await admin.storage
+    .from("client-photos")
+    .upload(path, buffer, { contentType });
+
+  if (uploadError) return { error: { _form: ["Could not save that photo, please try again."] } };
+
+  const { error: insertError } = await admin
+    .from("client_photos")
+    .insert({ growth_client_id: client.id, storage_path: path, position: nextPosition });
+
+  if (insertError) return { error: { _form: ["Could not save that photo, please try again."] } };
+
+  revalidatePath("/dashboard");
+  revalidatePath("/onboard");
+  return { success: true };
+}
+
 export async function deleteClientPhoto(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };

@@ -3,6 +3,7 @@
 import { useActionState, useRef } from "react";
 import Image from "next/image";
 import { uploadClientPhoto, deleteClientPhoto } from "@/app/dashboard/actions";
+import { PexelsPicker } from "@/components/dashboard/PexelsPicker";
 
 type Photo = { id: string; storage_path: string };
 
@@ -17,10 +18,12 @@ type Photo = { id: string; storage_path: string };
 export function Step4PhotoUpload({
   initialPhotos,
   storageBase,
+  industryHint,
   onSuccess,
 }: {
   initialPhotos: Photo[];
   storageBase: string;
+  industryHint?: string;
   onSuccess: () => void;
 }) {
   const [uploadState, uploadAction, uploadPending] = useActionState(uploadClientPhoto, null);
@@ -58,6 +61,8 @@ export function Step4PhotoUpload({
         {uploadPending && <span className="text-xs text-gray-400">Uploading...</span>}
       </form>
       {uploadState?.error?._form && <p className="text-xs text-red-600">{uploadState.error._form[0]}</p>}
+
+      <PexelsPicker industryHint={industryHint} disabled={initialPhotos.length >= 10} />
 
       {initialPhotos.length > 0 && (
         <div className="grid grid-cols-4 gap-3">

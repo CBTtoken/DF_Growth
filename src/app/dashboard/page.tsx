@@ -51,7 +51,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry"
       )
       .eq("id", client.id)
       .single(),
@@ -145,6 +145,7 @@ export default async function DashboardPage() {
           photos={photos ?? []}
           storageBase={photosStorageBase}
           heroPhotoId={growthClient?.hero_photo_id ?? null}
+          industryHint={growthClient?.industry ?? undefined}
         />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

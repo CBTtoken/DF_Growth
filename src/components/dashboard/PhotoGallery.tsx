@@ -3,6 +3,7 @@
 import { useActionState, useRef } from "react";
 import Image from "next/image";
 import { uploadClientPhoto, deleteClientPhoto, setHeroPhoto } from "@/app/dashboard/actions";
+import { PexelsPicker } from "@/components/dashboard/PexelsPicker";
 
 type Photo = { id: string; storage_path: string };
 
@@ -13,10 +14,14 @@ export function PhotoGallery({
   photos,
   storageBase,
   heroPhotoId,
+  industryHint,
 }: {
   photos: Photo[];
   storageBase: string;
   heroPhotoId: string | null;
+  // Combined spec Sec 24: pre-fills the Pexels search with the client's
+  // own industry, so the first search they see is already relevant.
+  industryHint?: string;
 }) {
   const [uploadState, uploadAction, uploadPending] = useActionState(uploadClientPhoto, null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -54,6 +59,8 @@ export function PhotoGallery({
       </form>
       {uploadState?.error?._form && <p className="text-xs text-red-600">{uploadState.error._form[0]}</p>}
       {photos.length >= 10 && <p className="text-xs text-gray-400">Photo limit reached, delete one to add another.</p>}
+
+      <PexelsPicker industryHint={industryHint} disabled={photos.length >= 10} />
 
       {photos.length > 0 ? (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">

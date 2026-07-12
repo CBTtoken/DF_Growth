@@ -162,7 +162,12 @@ export function OnboardWizard({
         />
       )}
       {step === 4 && (
-        <Step4PhotoUpload initialPhotos={photos} storageBase={photosStorageBase} onSuccess={() => setStep(5)} />
+        <Step4PhotoUpload
+          initialPhotos={photos}
+          storageBase={photosStorageBase}
+          industryHint={initialData.industry}
+          onSuccess={() => setStep(5)}
+        />
       )}
       {step === 5 && (
         <Step4TemplatePicker initialTemplate={initialData.template} onSuccess={() => setStep(6)} />
