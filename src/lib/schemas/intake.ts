@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-const PROVINCES = [
+// Exported so the WhatsApp onboarding conversation (lib/whatsapp/
+// conversation.ts) can validate against the exact same canonical list
+// instead of a second, easy-to-drift copy.
+export const PROVINCES = [
   "Eastern Cape",
   "Free State",
   "Gauteng",

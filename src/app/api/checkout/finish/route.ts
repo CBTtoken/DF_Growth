@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
-import { planCodeForTier, amountForTier, type BillingInterval } from "@/lib/paystack/plans";
+import type { BillingInterval } from "@/lib/paystack/plans";
+import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 
 // Combined spec Sec 10: the final step of the onboarding wizard for any
 // paid tier (growth_engine today; enterprise shares this same generic path
@@ -37,40 +38,21 @@ export async function GET() {
 
   const interval = (growthClient.billing_cycle ?? "monthly") as BillingInterval;
   const tier = growthClient.plan as "growth_engine" | "enterprise";
-  const planCode = planCodeForTier(tier, interval);
-  const amount = await amountForTier(tier, interval);
 
-  const res = await fetch("https://api.paystack.co/transaction/initialize", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: growthClient.contact_email,
-      amount,
-      plan: planCode,
-      currency: "ZAR",
-      callback_url: `${siteUrl}/pricing/success`,
-      // Matches the exact metadata shape the webhook's existing
-      // trialClientId branch already expects (see
-      // src/app/api/webhooks/paystack) — no webhook change needed for the
-      // "activate this account" half of the update; only the
-      // founding-member check there needed extending, since that used to
-      // only run for a brand-new signup's very first charge.success.
-      metadata: { growth_client_id: growthClient.id },
-    }),
+  const result = await initializePaystackCheckout({
+    growthClientId: growthClient.id,
+    email: growthClient.contact_email,
+    tier,
+    interval,
+    callbackUrl: `${siteUrl}/pricing/success`,
   });
 
-  const data = await res.json();
-
-  if (!data.status || !data.data?.authorization_url) {
-    console.error("Failed to initialize checkout for pending signup", data);
+  if ("error" in result) {
     // Back to the wizard rather than a bare error page — status is still
     // pending_intake, so onboard/page.tsx's resume-logic lands them right
     // back on this same payment step to retry.
     return NextResponse.redirect(`${siteUrl}/onboard`);
   }
 
-  return NextResponse.redirect(data.data.authorization_url);
+  return NextResponse.redirect(result.authorizationUrl);
 }
