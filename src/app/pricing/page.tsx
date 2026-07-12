@@ -8,6 +8,7 @@ import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { SectionDivider } from "@/components/marketing/SectionDivider";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SHOWCASE_SAMPLES } from "@/lib/templates/sample-showcase";
 
 // Combined spec Sec 14: was 5 chips, an odd number that left the grid
 // visually unbalanced. The 6th calls out the SEO/schema/Pixel foundation
@@ -99,11 +100,13 @@ const STARTER_FEATURES = [
 // light-card layouts built from the client's own brand colour. Dark Mode,
 // Vibrant Geometric, and Storyteller each have a genuinely different
 // background, layout, and typography treatment regardless of colour.
-const TEMPLATE_SHOWCASE = [
-  { id: "dark-mode", name: "High-Impact Dark Mode" },
-  { id: "vibrant-geo", name: "Bold & Vibrant Geometric" },
-  { id: "storyteller", name: "Storyteller Vertical" },
-];
+//
+// Combined spec Sec 36: now points at three honestly-labeled sample
+// businesses (src/lib/templates/sample-showcase.ts) instead of the bare
+// template-picker previews — Growth has no real, permission-granted client
+// pages yet, so this is fictional-but-clearly-marked content rather than
+// the shared picker business shown three times.
+const TEMPLATE_SHOWCASE = Object.values(SHOWCASE_SAMPLES);
 
 const DIFFERENTIATORS = [
   {
@@ -366,16 +369,25 @@ export default async function PricingPage() {
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="font-display text-3xl uppercase tracking-wide text-ink">See It In Action</h2>
             <p className="mt-3 text-gray-600">
-              Real layouts, not mockups. Pick the one that feels like your business when you sign up.
+              Real layouts, not mockups, built with sample businesses so you can see a full page in action.
             </p>
           </div>
           <div className="mt-10 grid gap-5 sm:grid-cols-3">
             {TEMPLATE_SHOWCASE.map((t) => (
-              <div key={t.id} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+              <a
+                key={t.slug}
+                href={`/sample/${t.slug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
                 <div className="relative overflow-hidden bg-gray-50" style={{ height: 760 * 0.3 }}>
+                  <span className="absolute right-2 top-2 z-10 rounded-full bg-ink/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                    Sample
+                  </span>
                   <iframe
-                    src={`/preview/${t.id}`}
-                    title={t.name}
+                    src={`/sample/${t.slug}`}
+                    title={t.businessName}
                     loading="lazy"
                     tabIndex={-1}
                     style={{
@@ -388,8 +400,13 @@ export default async function PricingPage() {
                     }}
                   />
                 </div>
-                <p className="px-4 py-3 text-sm font-semibold text-gray-900">{t.name}</p>
-              </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                  <span className="text-sm font-semibold text-gray-900">{t.businessName}</span>
+                  <span className="text-xs font-semibold text-brand opacity-0 transition group-hover:opacity-100">
+                    View full page ↗
+                  </span>
+                </div>
+              </a>
             ))}
           </div>
           <p className="mt-6 text-center text-sm text-gray-500">
