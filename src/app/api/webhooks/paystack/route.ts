@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
+import { sendWelcomeEmail } from "@/lib/email/welcome";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -73,11 +74,74 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  // Trial conversion or plan upgrade: the account, slug, and onboarding are
-  // already done — this charge just switches billing on (and, for an
-  // upgrade, changes which tier they're actually on) and lifts the pause a
-  // lapsed trial may have set (src/app/api/cron/trial-reminders).
+  // Trial conversion, plan upgrade, or (Combined spec Sec 10) a brand-new
+  // growth_engine/enterprise signup's first-ever payment — all three now
+  // reach here the same way, since Sec 10 moved that signup's payment from
+  // pricing/actions.ts (upfront) to the wizard's final step
+  // (src/app/api/checkout/finish), which tags its charge with
+  // growth_client_id exactly like the other two already did. The account,
+  // slug, and (for the first two) onboarding are already done — this
+  // charge just switches billing on (and, for an upgrade, changes which
+  // tier they're actually on) and lifts the pause a lapsed trial may have
+  // set (src/app/api/cron/trial-reminders).
   if (trialClientId) {
+    const { data: existingClient } = await admin
+      .from("growth_clients")
+      .select("plan, billing_cycle, status, is_founding_member, business_name, contact_email, slug")
+      .eq("id", trialClientId)
+      .single();
+
+    // Combined spec Sec 10: this is the "did they just finish onboarding
+    // and pay for the first time" case — the same signal used for founding
+    // eligibility below. A trial conversion or plan upgrade is already
+    // "active" by the time it reaches here, so neither one re-triggers
+    // this. Foundation itself never reaches this branch with status
+    // pending_intake at all (it goes live at step 6, long before any
+    // payment exists to convert).
+    const isFirstPaymentForPendingSignup = existingClient?.status === "pending_intake";
+
+    // Founding-member eligibility used to only be computed for a brand-new
+    // signup's very first charge.success (below) — Sec 10 means that same
+    // moment can now arrive here instead, for a Growth-annual client whose
+    // account was provisioned (pending_intake) before they ever paid. A
+    // trial conversion is always plan "foundation" (never matches), and a
+    // plan upgrade's status is already "active" by the time it gets here
+    // (src/app/api/plan/upgrade requires it) — both naturally excluded
+    // without needing a separate flag to distinguish this case.
+    const eligibleForFoundingHere =
+      !upgradeTo &&
+      existingClient?.plan === "growth_engine" &&
+      existingClient?.billing_cycle === "annual" &&
+      existingClient?.status === "pending_intake" &&
+      !existingClient?.is_founding_member;
+
+    let founding: { is_founding_member: true; founding_signup_number: number } | Record<string, never> = {};
+
+    for (let attempt = 0; eligibleForFoundingHere && attempt < 5; attempt++) {
+      const { count } = await admin
+        .from("growth_clients")
+        .select("id", { count: "exact", head: true })
+        .eq("is_founding_member", true);
+
+      if ((count ?? 0) >= 10) break;
+
+      const { error: foundingError } = await admin
+        .from("growth_clients")
+        .update({ is_founding_member: true, founding_signup_number: (count ?? 0) + 1 })
+        .eq("id", trialClientId);
+
+      if (!foundingError) {
+        founding = { is_founding_member: true, founding_signup_number: (count ?? 0) + 1 };
+        break;
+      }
+      // 23505 on founding_signup_number = a different concurrent signup
+      // won this same slot number first — re-count and retry. Any other
+      // error, stop trying for a founding slot but still activate the
+      // account below; a failed founding-status grant shouldn't block a
+      // real payment from activating someone's account.
+      if (foundingError.code !== "23505") break;
+    }
+
     // paystack_subscription_code stays untouched here — charge.success's
     // payload doesn't reliably carry it (same limitation noted for
     // brand-new signups above), needs a separate reconciliation pass once
@@ -88,15 +152,32 @@ export async function POST(request: Request) {
         status: "active",
         paystack_reference: reference,
         ...(upgradeTo ? { plan: upgradeTo } : {}),
+        ...founding,
       })
       .eq("id", trialClientId);
 
     if (error) {
-      console.error("Failed to convert trial/upgrade to paid", error);
+      console.error("Failed to convert trial/upgrade/pending signup to paid", error);
+    } else if (isFirstPaymentForPendingSignup && existingClient) {
+      // Mirrors exactly what saveStep7 (Meta Connect) used to do
+      // unconditionally at the old finish line, before Sec 10 moved
+      // payment to be the real last step.
+      await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", trialClientId);
+      await sendWelcomeEmail({
+        businessName: existingClient.business_name,
+        contactEmail: existingClient.contact_email,
+        slug: existingClient.slug,
+      });
     }
     return NextResponse.json({ received: true });
   }
 
+  // Combined spec Sec 10: growth_engine no longer reaches this branch —
+  // its signups now always carry growth_client_id (provisioned up front,
+  // pays last), landing in the trialClientId branch above instead. Left
+  // in place as-is for enterprise, which explicitly stays out of this
+  // sprint's scope and would need this exact upfront-pay-then-provision
+  // pattern the moment it gets a real checkout button.
   const billingCycle: "monthly" | "annual" = interval === "annual" ? "annual" : "monthly";
   // Sprint 1, Build Item 1: founding-member status is scoped to Growth
   // annual only (confirmed 2026-07-11) — Foundation and Growth monthly are

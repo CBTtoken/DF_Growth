@@ -64,7 +64,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, contact_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, template, packages, meta_pixel_id, meta_ad_account_id, plan, slug, status"
+      "business_name, contact_email, contact_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, template, packages, meta_pixel_id, meta_ad_account_id, meta_setup_requested_help, plan, slug, status, billing_cycle"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -117,9 +117,19 @@ export default async function OnboardPage() {
   // finished step 6 on refresh (see the migration comment). packages !==
   // null marks step 7 done — it's explicitly optional and an all-blank
   // submit still writes an empty array, distinct from the pre-step7 null
-  // default. status === "active" is the authoritative "wizard finished"
-  // signal (not meta_pixel_id being set — a client who chose "I need help"
-  // on step 8 legitimately finishes with it still null).
+  // default.
+  //
+  // Combined spec Sec 10: status === "active" used to be the single
+  // authoritative "wizard finished" signal, because Meta Connect (step 8)
+  // used to set it directly — payment had already happened before the
+  // wizard even started. Now payment is its own final step (9) that
+  // happens after Meta Connect, so status stays "pending_intake" through
+  // step 8 too, and a separate signal is needed to tell "Meta Connect
+  // answered, not paid yet" apart from "still on Meta Connect": either
+  // field it can write is enough (a client who chose "I need help" leaves
+  // meta_pixel_id null but meta_setup_requested_help becomes true, never
+  // both still at their pre-step-8 defaults). Never true for Foundation,
+  // which doesn't have this step at all.
   let startStep = 1;
   if (growthClient.contact_email) startStep = 2;
   if (growthClient.business_description) startStep = 3;
@@ -127,11 +137,11 @@ export default async function OnboardPage() {
   if (growthClient.template !== null) startStep = 5;
   if (landingPage) startStep = 6;
   if (growthClient.packages !== null) startStep = 7;
-  // 9, not 8 — the wizard shows its "you're all set" screen once step >
-  // totalSteps (now 7 for foundation, 8 otherwise, per the bump above), so
-  // this needs to land past whichever is relevant, matching how
-  // Step7MetaConnect's own onSuccess already advances to 9.
-  if (growthClient.status === "active") startStep = 9;
+  if (growthClient.meta_pixel_id !== null || growthClient.meta_setup_requested_help) startStep = 9;
+  // Past totalSteps (now 9 for non-foundation, 7 for foundation) either
+  // way, so the wizard shows its "you're all set" screen once payment (or,
+  // for foundation, packages) is done.
+  if (growthClient.status === "active") startStep = 10;
 
   const aiDraft = growthClient.ai_landing_draft as {
     headline?: string;
@@ -155,6 +165,7 @@ export default async function OnboardPage() {
       <OnboardWizard
         startStep={startStep}
         tier={tier}
+        billingCycle={growthClient.billing_cycle === "annual" ? "annual" : "monthly"}
         slug={growthClient.slug}
         photos={photos ?? []}
         photosStorageBase={photosStorageBase}

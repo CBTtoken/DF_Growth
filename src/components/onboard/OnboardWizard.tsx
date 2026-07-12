@@ -10,7 +10,8 @@ import { Step4TemplatePicker } from "./steps/Step4TemplatePicker";
 import { Step5LandingCopy } from "./steps/Step5LandingCopy";
 import { Step6Packages } from "./steps/Step6Packages";
 import { Step7MetaConnect } from "./steps/Step7MetaConnect";
-import type { Tier } from "@/lib/paystack/plans";
+import { StepPayment } from "./steps/StepPayment";
+import type { Tier, BillingInterval } from "@/lib/paystack/plans";
 
 type PackageInitial = { name: string; price: string; description: string; type?: "package" | "special" | "discount" };
 type PhotoInitial = { id: string; storage_path: string };
@@ -18,6 +19,7 @@ type PhotoInitial = { id: string; storage_path: string };
 export function OnboardWizard({
   startStep,
   tier,
+  billingCycle,
   slug,
   photos,
   photosStorageBase,
@@ -25,6 +27,7 @@ export function OnboardWizard({
 }: {
   startStep: number;
   tier: Tier;
+  billingCycle: BillingInterval;
   slug: string;
   photos: PhotoInitial[];
   photosStorageBase: string;
@@ -61,7 +64,11 @@ export function OnboardWizard({
   // names below (already position-decoupled, following the same pattern
   // saveStepTemplate established) — only the step===N branch numbers below
   // shift, nothing else needed renaming.
-  const totalSteps = tier === "foundation" ? 7 : 8;
+  //
+  // Combined spec Sec 10: bumped 8 to 9 for non-foundation — payment is now
+  // a real final step (StepPayment) after Meta Connect, not something that
+  // already happened before the wizard even started.
+  const totalSteps = tier === "foundation" ? 7 : 9;
   const [step, setStep] = useState(Math.min(startStep, totalSteps + 1));
 
   if (step > totalSteps) {
@@ -179,6 +186,7 @@ export function OnboardWizard({
           onSuccess={() => setStep(9)}
         />
       )}
+      {step === 9 && tier !== "foundation" && <StepPayment tier={tier} billingCycle={billingCycle} />}
       </div>
     </div>
   );

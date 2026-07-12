@@ -2,7 +2,6 @@
 
 import { redirect } from "next/navigation";
 import { startCheckoutSchema } from "@/lib/schemas/pricing";
-import { planCodeForTier, amountForTier } from "@/lib/paystack/plans";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 
 type CheckoutState = {
@@ -15,12 +14,18 @@ type CheckoutState = {
   };
 } | null;
 
-// CLAUDE.md Section 2.1, updated 2026-07-11: Foundation is now a 7-day free
-// trial with no card at signup, so it can't go through Paystack checkout at
-// all — there's no charge.success event to provision the account from.
-// growth_engine and enterprise still pay upfront the same way they always
-// did; the Paystack webhook (not this action) does their provisioning once
-// payment succeeds.
+// Combined spec Sec 10, confirmed as a standing principle (not a one-off
+// fix): capture the prospect's information first, take payment last, on
+// any flow where payment applies. growth_engine (and enterprise, which
+// shares this same generic path today, though it has no live checkout
+// button yet) used to pay upfront right here before ever seeing the
+// onboarding wizard — if someone dropped off at the Paystack redirect,
+// DigitalFlyer had no record of them at all. Now every non-Foundation tier
+// provisions immediately, the same no-payment-yet way Foundation's trial
+// already did, and pays at the very end of the wizard instead (see
+// src/app/api/checkout/finish, the new final wizard step). Foundation
+// itself is untouched — still a genuine no-card trial, never a payment
+// step at signup at all.
 export async function startCheckout(
   _prevState: CheckoutState,
   formData: FormData
@@ -73,36 +78,28 @@ export async function startCheckout(
     redirect("/pricing/trial-started");
   }
 
-  const planCode = planCodeForTier(tier, interval);
-  const amount = await amountForTier(tier, interval);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL!;
-
-  const res = await fetch("https://api.paystack.co/transaction/initialize", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email,
-      amount,
-      plan: planCode,
-      currency: "ZAR",
-      callback_url: `${siteUrl}/pricing/success`,
-      metadata: {
-        business_name: businessName,
-        tier,
-        interval,
-        consent_timestamp: consentedAt,
-      },
-    }),
+  const result = await provisionGrowthClient({
+    businessName,
+    email,
+    plan: tier,
+    status: "pending_intake",
+    // No Paystack transaction has happened yet — payment is now the
+    // wizard's final step (src/app/api/checkout/finish), not this one. A
+    // real double-submit of this form just makes two pending accounts,
+    // same tradeoff Foundation's trial signup already accepts.
+    paystackReference: null,
+    consentedAt,
+    billingCycle: interval === "annual" ? "annual" : "monthly",
+    // Founding-member number is assigned only once payment actually
+    // succeeds (src/app/api/webhooks/paystack), not here — reserving one
+    // of the 10 real founding slots before anyone's paid would defeat the
+    // point of capping it.
+    foundingSignupNumber: null,
   });
 
-  const data = await res.json();
-
-  if (!data.status || !data.data?.authorization_url) {
-    return { error: { _form: [data.message ?? "Could not start checkout, please try again."] } };
+  if ("error" in result) {
+    return { error: { _form: ["Could not start your signup, please try again."] } };
   }
 
-  redirect(data.data.authorization_url);
+  redirect("/pricing/signup-started");
 }

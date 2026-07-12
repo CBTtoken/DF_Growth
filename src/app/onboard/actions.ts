@@ -363,7 +363,16 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
   if (client.error) return { error: { _form: [client.error] } };
 
   const admin = createAdminClient();
-  const { data: growthClient, error } =
+  // Combined spec Sec 10: this used to be the finish line for
+  // growth_engine/enterprise — status flipped to "active" and the page
+  // went live right here, since payment had already happened before the
+  // wizard even started. Now payment is the wizard's actual final step
+  // (Step8Payment, see OnboardWizard.tsx), so this step is just data
+  // capture like any other — going live and the Day 0 welcome email both
+  // moved to the payment webhook (src/app/api/webhooks/paystack), gated on
+  // the same "this is a pending signup's first successful payment" check
+  // that grants founding-member eligibility there.
+  const { error } =
     parsed.data.hasMetaSetup === "yes"
       ? await admin
           .from("growth_clients")
@@ -371,36 +380,18 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
             meta_pixel_id: parsed.data.metaPixelId,
             meta_ad_account_id: parsed.data.metaAdAccountId,
             meta_setup_requested_help: false,
-            status: "active",
           })
           .eq("id", client.id)
-          .select("business_name, contact_email, slug")
-          .single()
       : await admin
           .from("growth_clients")
           .update({
             meta_pixel_id: null,
             meta_ad_account_id: null,
             meta_setup_requested_help: true,
-            status: "active",
           })
-          .eq("id", client.id)
-          .select("business_name, contact_email, slug")
-          .single();
+          .eq("id", client.id);
 
-  if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
-
-  // Step 7 is the finish line for growth_engine/enterprise, so this is
-  // where their page goes live (foundation publishes back in step 5). This
-  // action is never reused post-launch (unlike saveStep6, "Edit your page"
-  // has no Meta-connect screen), so every call here is a genuine first
-  // launch — no extra guard needed before sending the Day 0 welcome email.
-  await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", client.id);
-  await sendWelcomeEmail({
-    businessName: growthClient.business_name,
-    contactEmail: growthClient.contact_email,
-    slug: growthClient.slug,
-  });
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
   return { success: true };
