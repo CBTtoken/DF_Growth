@@ -29,7 +29,8 @@ type ClientData = {
   id: string;
   business_name: string;
   contact_email: string | null;
-  contact_phone: string | null;
+  call_phone: string | null;
+  whatsapp_phone: string | null;
   brand_primary_color: string | null;
   brand_secondary_color: string | null;
   tagline: string | null;
@@ -147,7 +148,7 @@ export async function ClientLandingPageView({
       description={landingPage.about_text ?? client.tagline}
       url={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
       logoUrl={logoUrl}
-      telephone={client.contact_phone}
+      telephone={client.call_phone}
       email={client.contact_email}
       address={client.business_address}
     />
@@ -203,12 +204,7 @@ export async function ClientLandingPageView({
           />
         </ScrollReveal>
         <ScrollReveal>
-          <PackagesSection
-            packages={packages}
-            ctaLabel={landingPage.cta_label}
-            accentColor={accentColor}
-            eyebrowNumber={packagesNumber}
-          />
+          <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={packagesNumber} />
         </ScrollReveal>
         <ScrollReveal>
           <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={trustNumber} />
@@ -235,7 +231,8 @@ export async function ClientLandingPageView({
             pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
             primaryColor={primaryColor}
             contactEmail={client.contact_email}
-            contactPhone={client.contact_phone}
+            callPhone={client.call_phone}
+            whatsappPhone={client.whatsapp_phone}
             businessName={client.business_name}
           />
         </ScrollReveal>
@@ -299,12 +296,7 @@ export async function ClientLandingPageView({
         );
       case "packages":
         return (
-          <PackagesSection
-            packages={packages}
-            ctaLabel={landingPage.cta_label}
-            accentColor={accentColor}
-            eyebrowNumber={number}
-          />
+          <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} />
         );
       case "trust":
         return <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} />;
@@ -357,7 +349,8 @@ export async function ClientLandingPageView({
           pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
           primaryColor={primaryColor}
           contactEmail={client.contact_email}
-          contactPhone={client.contact_phone}
+          callPhone={client.call_phone}
+          whatsappPhone={client.whatsapp_phone}
           businessName={client.business_name}
         />
       </ScrollReveal>

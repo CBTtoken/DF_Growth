@@ -38,6 +38,7 @@ export async function startCheckout(
     tier: formData.get("tier"),
     interval: formData.get("interval") || undefined,
     consent: formData.get("consent"),
+    marketingConsent: formData.get("marketingConsent") || undefined,
   });
 
   if (!parsed.success) {
@@ -55,7 +56,7 @@ export async function startCheckout(
     };
   }
 
-  const { businessName, email, tier, interval } = parsed.data;
+  const { businessName, email, tier, interval, marketingConsent } = parsed.data;
   const consentedAt = new Date().toISOString();
 
   if (tier === "foundation") {
@@ -71,6 +72,7 @@ export async function startCheckout(
       // the pilot; the slug disambiguation at least keeps both usable.
       paystackReference: null,
       consentedAt,
+      marketingConsent: marketingConsent === "on",
       // Foundation has no annual option today — always "monthly" (matches
       // the sprint doc's own note on this). Never eligible for founding
       // status regardless: confirmed 2026-07-11 that only Growth's annual
@@ -102,6 +104,7 @@ export async function startCheckout(
     // same tradeoff Foundation's trial signup already accepts.
     paystackReference: null,
     consentedAt,
+    marketingConsent: marketingConsent === "on",
     billingCycle: interval === "annual" ? "annual" : "monthly",
     // Founding-member number is assigned only once payment actually
     // succeeds (src/app/api/webhooks/paystack), not here — reserving one

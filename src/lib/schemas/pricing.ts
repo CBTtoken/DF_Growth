@@ -21,6 +21,9 @@ export const startCheckoutSchema = z
     // there's no "false" value to parse, only presence or absence. Sprint 1
     // Build Item 9: signup cannot complete without this being checked.
     consent: z.literal("on", { errorMap: () => ({ message: "You must agree to the Privacy Policy and Terms & Conditions to continue" }) }),
+    // Combined spec Sec 17: separate, optional, unticked by default —
+    // signup completes fine whether or not this is checked.
+    marketingConsent: z.literal("on").optional(),
   })
   .refine((data) => data.email.trim().toLowerCase() === data.confirmEmail.trim().toLowerCase(), {
     message: "Emails don't match",

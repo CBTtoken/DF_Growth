@@ -108,13 +108,15 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           <Field label="Signed up" value={new Date(client.created_at).toLocaleString()} />
           <Field label="Trial ends" value={client.trial_ends_at ? new Date(client.trial_ends_at).toLocaleDateString() : null} />
           <Field label="Consented at" value={client.consented_at ? new Date(client.consented_at).toLocaleString() : null} />
+          <Field label="Marketing opt-in" value={client.marketing_consent ? "Yes" : "No"} />
         </section>
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Contact & business details</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Contact email" value={client.contact_email} />
-            <Field label="Contact phone" value={client.contact_phone} />
+            <Field label="Call number" value={client.call_phone} />
+            <Field label="WhatsApp number" value={client.whatsapp_phone} />
             <Field label="Province" value={client.province} />
             <Field label="Industry" value={client.industry} />
             <Field label="Business address" value={client.business_address} />

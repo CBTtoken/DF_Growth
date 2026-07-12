@@ -88,7 +88,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, contact_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, template, industry, meta_pixel_id, hero_photo_id"
+      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, template, industry, meta_pixel_id, hero_photo_id"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")

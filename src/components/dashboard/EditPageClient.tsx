@@ -22,7 +22,8 @@ export function EditPageClient({
   initialData: {
     businessName: string;
     contactEmail: string;
-    contactPhone: string;
+    callPhone: string;
+    whatsappPhone: string;
     province: string;
     industry: string;
     businessAddress: string;
@@ -71,7 +72,8 @@ export function EditPageClient({
         <Step1BusinessInfo
           initialBusinessName={initialData.businessName}
           initialContactEmail={initialData.contactEmail}
-          initialContactPhone={initialData.contactPhone}
+          initialCallPhone={initialData.callPhone}
+          initialWhatsappPhone={initialData.whatsappPhone}
           onSuccess={showSaved}
           submitLabel="Save changes"
         />

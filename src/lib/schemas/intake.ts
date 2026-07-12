@@ -17,10 +17,13 @@ const PROVINCES = [
 export const step1Schema = z.object({
   businessName: z.string().min(2),
   contactEmail: z.string().email(),
+  // Combined spec Sec 20: split from one shared contactPhone field — a
+  // business may want calls to ring a different line than WhatsApp.
   // Optional — shown alongside contactEmail when a lead's success state
   // reveals contact details, so a visitor has a faster/more urgent option
-  // than email if the business has a WhatsApp or cell number to share.
-  contactPhone: z.string().max(30).optional().or(z.literal("")),
+  // than email if the business has these to share.
+  callPhone: z.string().max(30).optional().or(z.literal("")),
+  whatsappPhone: z.string().max(30).optional().or(z.literal("")),
 });
 
 // Mirrors the fields already captured by the WhatsApp onboarding flow —

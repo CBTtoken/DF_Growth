@@ -215,6 +215,12 @@ export async function POST(request: Request) {
       status: "pending_intake",
       paystackReference: reference,
       consentedAt: consentTimestamp ?? null,
+      // This upfront-payment path's metadata bag (set at the old
+      // transaction/initialize call) never carried a marketing-consent
+      // flag — dormant for growth_engine since Sec 10 (see the comment a
+      // few lines up), false is the correct conservative default if
+      // enterprise ever starts using it for real.
+      marketingConsent: false,
       billingCycle,
       foundingSignupNumber,
     });

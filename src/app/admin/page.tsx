@@ -43,7 +43,7 @@ export default async function AdminPage() {
   const { data: clients } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, plan, status, paystack_reference, meta_pixel_id, meta_setup_requested_help, contact_phone, business_description, brand_primary_color, template, packages, created_at"
+      "id, business_name, contact_email, plan, status, paystack_reference, meta_pixel_id, meta_setup_requested_help, call_phone, whatsapp_phone, business_description, brand_primary_color, template, packages, created_at"
     )
     .order("created_at", { ascending: false });
 

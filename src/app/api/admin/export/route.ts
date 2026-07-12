@@ -16,7 +16,8 @@ const COLUMNS = [
   "is_founding_member",
   "founding_signup_number",
   "contact_email",
-  "contact_phone",
+  "call_phone",
+  "whatsapp_phone",
   "province",
   "industry",
   "business_address",
@@ -32,6 +33,7 @@ const COLUMNS = [
   "meta_setup_requested_help",
   "trial_ends_at",
   "consented_at",
+  "marketing_consent",
   "created_at",
 ] as const;
 

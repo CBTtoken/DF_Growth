@@ -63,7 +63,7 @@ export default async function TemplatePreviewPage({
         />
         <StorySection storyText={SAMPLE_DATA.additionalNotes} accentColor={accentColor} eyebrowNumber={num()} />
         <ServicesList servicesText={SAMPLE_DATA.servicesText} accentColor={accentColor} eyebrowNumber={num()} />
-        <PackagesSection packages={packages} ctaLabel={SAMPLE_DATA.ctaLabel} accentColor={accentColor} eyebrowNumber={num()} />
+        <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={num()} />
         <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={num()} />
         <LocationMap businessAddress={SAMPLE_DATA.businessAddress} accentColor={accentColor} eyebrowNumber={num()} />
         <PreviewLeadForm primaryColor={primaryColor} />
@@ -107,9 +107,7 @@ export default async function TemplatePreviewPage({
       case "services":
         return <ServicesList servicesText={SAMPLE_DATA.servicesText} accentColor={accentColor} eyebrowNumber={number} />;
       case "packages":
-        return (
-          <PackagesSection packages={packages} ctaLabel={SAMPLE_DATA.ctaLabel} accentColor={accentColor} eyebrowNumber={number} />
-        );
+        return <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} />;
       case "trust":
         return <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} />;
       case "location":

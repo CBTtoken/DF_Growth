@@ -33,12 +33,10 @@ function formatPrice(price: string): string {
 
 export function PackagesSection({
   packages,
-  ctaLabel,
   accentColor,
   eyebrowNumber,
 }: {
   packages: Package[];
-  ctaLabel: string;
   accentColor: string;
   eyebrowNumber: string;
 }) {
@@ -82,12 +80,18 @@ export function PackagesSection({
                 <h3 className="text-lg font-semibold text-gray-900">{pkg.name}</h3>
                 {pkg.price && <p className="text-xl font-bold" style={{ color: accentColor }}>{formatPrice(pkg.price)}</p>}
                 {pkg.description && <p className="text-sm text-gray-600">{pkg.description}</p>}
+                {/* Combined spec Sec 21: was the shared, client-editable
+                    hero ctaLabel (defaulting to "Get Started") — misleading
+                    on a package button specifically, since it scrolls to a
+                    contact form, not a checkout. Fixed and accurate
+                    instead, decoupled from whatever the client set for
+                    their hero's own CTA. */}
                 <a
                   href="#lead-form"
                   className="mt-auto rounded-full px-5 py-2.5 text-center text-sm font-semibold shadow-sm transition hover:-translate-y-0.5"
                   style={{ backgroundColor: `${accentColor}1a`, color: accentColor }}
                 >
-                  {ctaLabel}
+                  Enquire Now
                 </a>
               </div>
             );

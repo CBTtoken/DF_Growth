@@ -194,10 +194,15 @@ export function TierCard({
           ) : (
             state?.error?.confirmEmail && <p className="text-xs text-red-600">{state.error.confirmEmail[0]}</p>
           )}
+          {/* Combined spec Sec 17: split from one bundled required checkbox
+              into a required legal agreement and a separate, optional,
+              unticked-by-default marketing opt-in — a stronger position
+              under POPIA than requiring marketing consent to sign up at
+              all. */}
           <label className="flex items-start gap-2 text-xs leading-relaxed text-gray-500">
             <input type="checkbox" name="consent" required className="mt-0.5" />
             <span>
-              I agree to the{" "}
+              I have read and agree to the{" "}
               <a href="/privacy" target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">
                 Privacy Policy
               </a>{" "}
@@ -205,13 +210,14 @@ export function TierCard({
               <a href="/terms" target="_blank" rel="noreferrer" className="text-brand underline-offset-2 hover:underline">
                 Terms &amp; Conditions
               </a>
-              . I understand that DigitalFlyer will process my personal and business information to
-              provide the service, and that I remain the owner of any leads generated through my page. I
-              also agree to receive occasional updates and news from DigitalFlyer via email or WhatsApp (I
-              can unsubscribe at any time).
+              .
             </span>
           </label>
           {state?.error?.consent && <p className="text-xs text-red-600">{state.error.consent[0]}</p>}
+          <label className="flex items-start gap-2 text-xs leading-relaxed text-gray-500">
+            <input type="checkbox" name="marketingConsent" className="mt-0.5" />
+            <span>Yes, send me occasional updates via email or WhatsApp.</span>
+          </label>
           {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
           <button
             type="submit"

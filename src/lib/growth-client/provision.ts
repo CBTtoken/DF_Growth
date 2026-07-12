@@ -19,6 +19,7 @@ export async function provisionGrowthClient({
   status,
   paystackReference,
   consentedAt,
+  marketingConsent,
   billingCycle,
   foundingSignupNumber,
 }: {
@@ -32,6 +33,10 @@ export async function provisionGrowthClient({
   // through here so it lands on the row the moment it's created rather
   // than needing a separate update after the fact.
   consentedAt: string | null;
+  // Combined spec Sec 17: the separate, optional "send me updates"
+  // checkbox — distinct from consentedAt, which only ever covers the
+  // required legal agreement.
+  marketingConsent: boolean;
   // Sprint 1, Build Item 1: captured for every plan (useful regardless of
   // founding eligibility) — Foundation is always "monthly", it has no
   // annual option today.
@@ -59,6 +64,7 @@ export async function provisionGrowthClient({
         paystack_reference: paystackReference,
         contact_email: email,
         consented_at: consentedAt,
+        marketing_consent: marketingConsent,
         billing_cycle: billingCycle,
         is_founding_member: foundingSignupNumber !== null,
         founding_signup_number: foundingSignupNumber,

@@ -4,13 +4,24 @@ import { useActionState } from "react";
 import { captureLead } from "@/app/g/[clientSlug]/actions";
 import { readableTextOn, ensureContrast } from "@/lib/color";
 
+// South African cell numbers are typically entered locally ("082 123
+// 4567"), but wa.me links need the full international number with no
+// leading zero. Good enough for the common case without asking a
+// non-technical client to type it in international format themselves.
+function toWhatsAppLink(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const international = digits.startsWith("0") ? `27${digits.slice(1)}` : digits;
+  return `https://wa.me/${international}`;
+}
+
 export function LeadForm({
   growthClientId,
   landingPageId,
   pageUrl,
   primaryColor,
   contactEmail,
-  contactPhone,
+  callPhone,
+  whatsappPhone,
   businessName,
 }: {
   growthClientId: string;
@@ -18,9 +29,15 @@ export function LeadForm({
   pageUrl: string;
   primaryColor: string;
   contactEmail: string | null;
-  contactPhone: string | null;
+  callPhone: string | null;
+  // Combined spec Sec 20: falls back to callPhone when left blank at
+  // signup (matches the onboarding field's own "leave blank if it's the
+  // same as your call number" hint) — a business with one number for both
+  // shouldn't have to type it twice.
+  whatsappPhone: string | null;
   businessName: string;
 }) {
+  const effectiveWhatsapp = whatsappPhone || callPhone;
   const boundAction = captureLead.bind(null, growthClientId, landingPageId, pageUrl, businessName, contactEmail);
   const [state, formAction, pending] = useActionState(boundAction, null);
   const buttonTextColor = readableTextOn(primaryColor);
@@ -42,19 +59,33 @@ export function LeadForm({
               >
                 ✓
               </span>
-              <h2 className="mt-2 text-2xl font-bold text-gray-900">You&apos;re in.</h2>
+              {/* Combined spec Sec 21: warmer, specific confirmation copy,
+                  and (Sec 20) this is the one and only place call/WhatsApp
+                  numbers are ever shown on the page. */}
+              <h2 className="mt-2 text-2xl font-bold text-gray-900">Thank you for reaching out!</h2>
               <p className="max-w-md text-gray-500">
-                Thanks for reaching out — someone will be in touch shortly.
-                {(contactEmail || contactPhone) && " Need urgent assistance in the meantime?"}
+                {businessName} will be in touch shortly.
+                {(callPhone || effectiveWhatsapp) && " In the meantime, feel free to call or WhatsApp directly."}
               </p>
               <div className="mt-1 flex flex-col items-center gap-1">
-                {contactPhone && (
+                {callPhone && (
                   <a
-                    href={`tel:${contactPhone.replace(/\s+/g, "")}`}
+                    href={`tel:${callPhone.replace(/\s+/g, "")}`}
                     className="text-sm font-semibold underline-offset-4 hover:underline"
                     style={{ color: primaryColor }}
                   >
-                    {contactPhone}
+                    Call {callPhone}
+                  </a>
+                )}
+                {effectiveWhatsapp && (
+                  <a
+                    href={toWhatsAppLink(effectiveWhatsapp)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold underline-offset-4 hover:underline"
+                    style={{ color: primaryColor }}
+                  >
+                    WhatsApp {effectiveWhatsapp}
                   </a>
                 )}
                 {contactEmail && (

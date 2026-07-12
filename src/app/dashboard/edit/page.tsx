@@ -32,7 +32,7 @@ export default async function EditPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, contact_email, contact_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, brand_primary_color, brand_secondary_color, logo_path, packages, slug"
+        "business_name, contact_email, call_phone, whatsapp_phone, province, industry, business_address, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, brand_primary_color, brand_secondary_color, logo_path, packages, slug"
       )
       .eq("id", client.id)
       .single(),
@@ -86,7 +86,8 @@ export default async function EditPage() {
           initialData={{
             businessName: growthClient.business_name ?? "",
             contactEmail: growthClient.contact_email ?? "",
-            contactPhone: growthClient.contact_phone ?? "",
+            callPhone: growthClient.call_phone ?? "",
+            whatsappPhone: growthClient.whatsapp_phone ?? "",
             province: growthClient.province ?? "",
             industry: growthClient.industry ?? "",
             businessAddress: growthClient.business_address ?? "",
