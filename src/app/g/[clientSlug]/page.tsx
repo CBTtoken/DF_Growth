@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient as createServerClient } from "@/lib/supabase/server";
-import { OwnerBar } from "@/components/landing/OwnerBar";
+import { OwnerBarGate } from "@/components/landing/OwnerBarGate";
 import { MetaPixelScript } from "@/components/landing/MetaPixelScript";
 import { LocalBusinessSchema } from "@/components/landing/LocalBusinessSchema";
 import { ConversionHero } from "@/components/landing/ConversionHero";
@@ -109,14 +108,20 @@ export default async function ClientLandingPage({
 
   if (!client) return notFound();
 
-  // landing_pages, testimonials, and the visitor's own auth session don't
-  // depend on each other — running them sequentially was adding a full
-  // extra network round-trip to the time before the hero could render
-  // (confirmed via Lighthouse: this route's LCP element render delay was
-  // ~1.8s higher than a page with no DB calls at all, roughly what one
-  // extra serial Supabase round-trip costs).
-  const supabase = await createServerClient();
-  const [{ data: landingPage }, { data: testimonials }, { data: authData }, { data: photos }] = await Promise.all([
+  // landing_pages, testimonials, and photos don't depend on each other —
+  // running them sequentially was adding a full extra network round-trip
+  // to the time before the hero could render (confirmed via Lighthouse:
+  // this route's LCP element render delay was ~1.8s higher than a page
+  // with no DB calls at all, roughly what one extra serial Supabase
+  // round-trip costs). The visitor's own auth session used to be fetched
+  // here too, server-side — moved to OwnerBarGate (client-side) as part of
+  // Task #12's cold-start fix, since reading cookies() anywhere in this
+  // route's render path was forcing the entire page to bypass static
+  // rendering/ISR on every single request, regardless of the `revalidate`
+  // export below (confirmed live: Cache-Control was no-store/must-
+  // revalidate and X-Vercel-Cache was MISS on every request, not
+  // intermittently — this page was never actually eligible for caching).
+  const [{ data: landingPage }, { data: testimonials }, { data: photos }] = await Promise.all([
     admin
       .from("landing_pages")
       .select("id, headline, subheadline, about_text, services_text, cta_label")
@@ -124,7 +129,6 @@ export default async function ClientLandingPage({
       .eq("published", true)
       .single(),
     admin.from("testimonials").select("id, author_name, quote, rating").eq("growth_client_id", client.id).limit(5),
-    supabase.auth.getUser(),
     // Sprint 1, Build Item 10: fetched unconditionally now (previously only
     // queried, limited to 1, for the Left-Heavy Split hero) — the dedicated
     // gallery section needs the full ordered list regardless of template.
@@ -138,23 +142,6 @@ export default async function ClientLandingPage({
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
 
   if (!landingPage) return notFound();
-
-  // Found via real UAT: the only way back to the dashboard was a small
-  // footer link a real owner testing their own page didn't notice at all
-  // (see OwnerBar.tsx). Checked against growth_members for THIS specific
-  // client, not just "is someone logged in" — a user can own more than one
-  // growth_client, and a customer who happens to be logged in elsewhere
-  // must never see another business's owner controls.
-  let isOwner = false;
-  if (authData.user) {
-    const { data: membership } = await admin
-      .from("growth_members")
-      .select("id")
-      .eq("user_id", authData.user.id)
-      .eq("growth_client_id", client.id)
-      .maybeSingle();
-    isOwner = Boolean(membership);
-  }
 
   // Defensive fallback only — the wizard requires a color before a client
   // can publish, so this shouldn't normally be hit. Was FortisLex's navy
@@ -215,7 +202,7 @@ export default async function ClientLandingPage({
 
     return (
       <main>
-        {isOwner && <OwnerBar />}
+        <OwnerBarGate growthClientId={client.id} />
         <FbclidCapture />
         <MetaPixelScript pixelId={client.meta_pixel_id} />
         <LocalBusinessSchema
@@ -398,7 +385,7 @@ export default async function ClientLandingPage({
 
   return (
     <main>
-      {isOwner && <OwnerBar />}
+      <OwnerBarGate growthClientId={client.id} />
       <FbclidCapture />
       <MetaPixelScript pixelId={client.meta_pixel_id} />
       <LocalBusinessSchema
