@@ -225,9 +225,13 @@ export default async function PricingPage() {
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-[26rem] rounded-full bg-white/10 blur-3xl" />
 
         <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6">
+          {/* Combined spec Sec 13: was styled text in the brand-blue hero —
+              easy to miss against everything else competing for attention
+              there. A solid block makes it read as urgent at a glance
+              rather than as one more line of copy. */}
           {foundingSlotsRemaining > 0 && (
-            <span className="inline-flex items-center gap-2.5 font-display text-2xl uppercase tracking-wide text-spark sm:text-4xl">
-              <Flame className="size-6 sm:size-8" aria-hidden />
+            <span className="inline-flex items-center gap-2.5 rounded-full bg-spark px-5 py-2.5 font-display text-lg uppercase tracking-wide text-white shadow-lg sm:px-6 sm:py-3 sm:text-2xl">
+              <Flame className="size-5 sm:size-7" aria-hidden />
               Only {foundingSlotsRemaining} Founding Business {foundingSlotsRemaining === 1 ? "spot" : "spots"} left
             </span>
           )}
