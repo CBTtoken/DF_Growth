@@ -22,6 +22,7 @@ export function LeadForm({
   contactEmail,
   callPhone,
   whatsappPhone,
+  websiteUrl,
   businessName,
 }: {
   growthClientId: string;
@@ -35,6 +36,13 @@ export function LeadForm({
   // same as your call number" hint) — a business with one number for both
   // shouldn't have to type it twice.
   whatsappPhone: string | null;
+  // Public Beta Polish Sprint Sec 11: this is the client-facing use of
+  // Website URL — shown alongside their other public contact details once
+  // a lead form (or a package's "Enquire Now", which just scrolls here) is
+  // submitted. Not to be confused with the separate, admin-only
+  // Marketplace URL (EcosystemAccess.tsx), which is never shown to a
+  // visitor at all.
+  websiteUrl: string | null;
   businessName: string;
 }) {
   const effectiveWhatsapp = whatsappPhone || callPhone;
@@ -95,6 +103,17 @@ export function LeadForm({
                     style={{ color: primaryColor }}
                   >
                     {contactEmail}
+                  </a>
+                )}
+                {websiteUrl && (
+                  <a
+                    href={websiteUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm font-semibold underline-offset-4 hover:underline"
+                    style={{ color: primaryColor }}
+                  >
+                    Visit website
                   </a>
                 )}
               </div>

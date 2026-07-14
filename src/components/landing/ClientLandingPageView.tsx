@@ -235,6 +235,7 @@ export async function ClientLandingPageView({
             contactEmail={client.contact_email}
             callPhone={client.call_phone}
             whatsappPhone={client.whatsapp_phone}
+            websiteUrl={client.website_url}
             businessName={client.business_name}
           />
         </ScrollReveal>
@@ -354,6 +355,7 @@ export async function ClientLandingPageView({
           contactEmail={client.contact_email}
           callPhone={client.call_phone}
           whatsappPhone={client.whatsapp_phone}
+          websiteUrl={client.website_url}
           businessName={client.business_name}
         />
       </ScrollReveal>

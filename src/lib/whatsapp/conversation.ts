@@ -3,23 +3,33 @@ import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
 import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 import { fetchWhatsAppMedia } from "@/lib/whatsapp/graph-api";
+import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { PROVINCES } from "@/lib/schemas/intake";
 import type { IncomingWhatsAppMessage } from "@/lib/whatsapp/parse-webhook";
 import type { BillingInterval } from "@/lib/paystack/plans";
 
 // Combined spec Sec 32.3. Deliberately reordered from the spec's own listed
-// sequence: billing choice moves up right after contact_email (was step 7,
-// last) so the growth_clients row can be provisioned immediately once
-// business_name + email + tier/billing are known — mirrors exactly how the
-// web flow already works (tier picked on /pricing, account provisioned,
-// *then* the wizard collects profile details), rather than collecting a
-// whole profile before knowing what to even provision. Template (spec step
-// 4) isn't its own step here — confirmed with Dewald (AskUserQuestion) that
-// every WhatsApp signup auto-assigns "Classic Conversion", so it's just
-// written at provisioning time with a one-line mention, not a question.
+// sequence: tier/billing choice moves up right after contact_email (was
+// step 7, last) so the growth_clients row can be provisioned immediately
+// once business_name + email + tier/billing are known — mirrors exactly
+// how the web flow already works (tier picked on /pricing, account
+// provisioned, *then* the wizard collects profile details), rather than
+// collecting a whole profile before knowing what to even provision.
+// Template (spec step 4) isn't its own step here — confirmed with Dewald
+// (AskUserQuestion) that every WhatsApp signup auto-assigns "Classic
+// Conversion", so it's just written at provisioning time with a one-line
+// mention, not a question.
+//
+// Public Beta Polish Sprint Sec 2: WhatsApp was Growth-only at first —
+// confirmed decision that it should offer Foundation's free trial too,
+// not just paid Growth, since it's an entry channel, not a separate paid
+// product. "tier" is the new step this adds; "billing_cycle" is now only
+// ever reached for Growth (Foundation has no monthly/annual choice, same
+// as the web wizard).
 type StepId =
   | "business_name"
   | "contact_email"
+  | "tier"
   | "billing_cycle"
   | "province"
   | "industry"
@@ -112,9 +122,70 @@ export async function advanceConversation(
       }
       return {
         reply:
-          "DigitalFlyer Growth is R180/month, or R1,199/year (locks in a lower price for life if you're one of our first 10 Founding Businesses).\n\nReply 1 for monthly or 2 for annual.",
-        nextStep: "billing_cycle",
+          "Which sounds right for you?\n1️⃣ Foundation, free for 7 days, then R100/month. A professional page, leads, and our full ecosystem.\n2️⃣ Growth, R180/month or R1,199/year. Everything in Foundation, plus ad tracking and campaign pages.\nReply 1 or 2.",
+        nextStep: "tier",
         stepData: { ...stepData, contactEmail: text },
+        growthClientId: null,
+      };
+    }
+
+    case "tier": {
+      if (text === "1") {
+        const businessName = String(stepData.businessName);
+        const contactEmail = String(stepData.contactEmail);
+
+        // Foundation has no monthly/annual choice (same as web) — provision
+        // immediately, same as Growth does once its own billing_cycle
+        // answer comes in below.
+        const result = await provisionGrowthClient({
+          businessName,
+          email: contactEmail,
+          plan: "foundation",
+          status: "pending_intake",
+          paystackReference: null,
+          consentedAt: new Date().toISOString(),
+          marketingConsent: false,
+          billingCycle: "monthly",
+          foundingSignupNumber: null,
+        });
+
+        if ("error" in result) {
+          return {
+            reply: "Something went wrong setting up your account, please try again in a moment.",
+            nextStep: "tier",
+            stepData,
+            growthClientId: null,
+          };
+        }
+
+        await admin
+          .from("growth_clients")
+          .update({ signup_channel: "whatsapp", template: "conversion" })
+          .eq("id", result.id);
+
+        return {
+          reply:
+            "You're all set up! I've picked our classic page layout for you, you can change it any time from your dashboard later.\n\nNow let's get your business page details. Which province are you in? (e.g. Gauteng, Western Cape)",
+          nextStep: "province",
+          stepData: { ...stepData, tier: "foundation" },
+          growthClientId: result.id,
+        };
+      }
+
+      if (text === "2") {
+        return {
+          reply:
+            "DigitalFlyer Growth is R180/month, or R1,199/year (locks in a lower price for life if you're one of our first 10 Day One Businesses).\n\nReply 1 for monthly or 2 for annual.",
+          nextStep: "billing_cycle",
+          stepData: { ...stepData, tier: "growth_engine" },
+          growthClientId: null,
+        };
+      }
+
+      return {
+        reply: "Please reply 1 for Foundation (free trial) or 2 for Growth.",
+        nextStep: "tier",
+        stepData,
         growthClientId: null,
       };
     }
@@ -434,13 +505,44 @@ export async function advanceConversation(
 
       const { data: growthClient } = await admin
         .from("growth_clients")
-        .select("contact_email, billing_cycle")
+        .select("contact_email, billing_cycle, business_name, slug, status")
         .eq("id", conversation.growth_client_id)
         .single();
 
       if (!growthClient?.contact_email) {
         return {
           reply: "Something went wrong finding your account, please message us again to restart.",
+          nextStep: "done",
+          stepData,
+          growthClientId: conversation.growth_client_id,
+        };
+      }
+
+      // Public Beta Polish Sprint Sec 2: Foundation has no payment step at
+      // all — mirrors saveStep6's exact activation block in
+      // src/app/onboard/actions.ts (the web wizard's Foundation finish
+      // line) rather than a parallel implementation of it. Trial clock
+      // starts now, at onboarding completion, not back at the tier choice.
+      if (stepData.tier === "foundation") {
+        if (growthClient.status !== "active") {
+          const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          await admin
+            .from("growth_clients")
+            .update({ status: "active", trial_ends_at: trialEndsAt })
+            .eq("id", conversation.growth_client_id);
+          await admin
+            .from("landing_pages")
+            .update({ published: true })
+            .eq("growth_client_id", conversation.growth_client_id);
+          await sendWelcomeEmail({
+            businessName: growthClient.business_name,
+            contactEmail: growthClient.contact_email,
+            slug: growthClient.slug,
+          });
+        }
+
+        return {
+          reply: `Your page is live! ${process.env.NEXT_PUBLIC_SITE_URL}/g/${growthClient.slug}\n\nYour free 7-day trial has started, no card needed. We've emailed you a link into your dashboard.`,
           nextStep: "done",
           stepData,
           growthClientId: conversation.growth_client_id,

@@ -36,7 +36,10 @@ export const step2Schema = z.object({
   province: z.enum(PROVINCES),
   industry: z.string().min(2).max(100),
   businessAddress: z.string().min(2).max(200),
-  businessDescription: z.string().min(10).max(600),
+  // Public Beta Polish Sprint Sec 7: uncapped — was max(600), a real
+  // business description shouldn't be truncated. The DB column itself is
+  // already `text` (unbounded), no migration needed.
+  businessDescription: z.string().min(10),
   tagline: z.string().max(80).optional().or(z.literal("")),
   // Optional — a business that just wants people to get in touch (a
   // consultant, a single-service contractor) doesn't necessarily have a

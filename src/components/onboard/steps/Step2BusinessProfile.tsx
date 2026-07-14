@@ -125,7 +125,6 @@ export function Step2BusinessProfile({
           name="businessDescription"
           defaultValue={initialBusinessDescription}
           required
-          maxLength={600}
           placeholder="In your own words — what do you do and who is it for?"
           className={inputClass}
           rows={3}
