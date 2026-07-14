@@ -52,7 +52,7 @@ export async function provisionGrowthClient({
   // "Growth" or "Admin" isn't refused a page outright — this just forces
   // the same random-suffix disambiguation every subsequent-attempt slug
   // already gets, so the reserved word can never itself become a live,
-  // unsuffixed slug at /g/[slug].
+  // unsuffixed slug at /[slug].
   const baseSlugReserved = RESERVED_SLUGS.has(baseSlug);
   let inserted: { id: string; slug: string } | null = null;
   let insertError: { message: string; code?: string } | null = null;

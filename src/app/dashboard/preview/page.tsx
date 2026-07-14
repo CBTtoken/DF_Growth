@@ -10,7 +10,7 @@ import { BrandHeader } from "@/components/brand/BrandHeader";
 // real public page (ClientLandingPageView) rather than a second, easy-to-
 // drift copy of it. Works regardless of published/active status — a
 // mid-onboarding client can preview before they've ever gone live, unlike
-// /g/[slug] which requires both. Also accepts ?template=X so the template
+// /[slug] which requires both. Also accepts ?template=X so the template
 // picker (Sec 9) can show "what would my own page look like in this
 // template" without saving that choice first.
 //

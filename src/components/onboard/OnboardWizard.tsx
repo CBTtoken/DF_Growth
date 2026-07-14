@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ProgressBar } from "./ProgressBar";
 import { Step1BusinessInfo } from "./steps/Step1BusinessInfo";
 import { Step2BusinessProfile } from "./steps/Step2BusinessProfile";
@@ -74,7 +75,7 @@ export function OnboardWizard({
   const [step, setStep] = useState(Math.min(startStep, totalSteps + 1));
 
   if (step > totalSteps) {
-    const pageUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/g/${slug}`;
+    const pageUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${slug}`;
     return (
       <div className="relative flex w-full max-w-lg flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-10 text-center shadow-sm">
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>
@@ -85,12 +86,12 @@ export function OnboardWizard({
           tracking connection.
         </p>
         <div className="mt-2 flex flex-col items-center gap-3 sm:flex-row">
-          <a
+          <Link
             href="/dashboard"
             className="inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
           >
             Go to your dashboard
-          </a>
+          </Link>
           <a
             href={pageUrl}
             target="_blank"

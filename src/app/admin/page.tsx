@@ -72,6 +72,8 @@ export default async function AdminPage() {
                 </span>
               )}
             </Link>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /api/admin/export is a
+                file-download Route Handler, not a page; Link's client-side routing doesn't apply. */}
             <a
               href="/api/admin/export"
               className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"

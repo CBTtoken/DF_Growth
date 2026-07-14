@@ -5,16 +5,18 @@
 // page.tsx against growth_members, not just "someone is logged in") — a
 // customer browsing the same page never sees it, so it stays out of the way
 // of the actual sales page.
+import Link from "next/link";
+
 export function OwnerBar() {
   return (
     <div className="flex items-center justify-center gap-3 bg-ink px-4 py-2.5 text-center text-sm text-white">
       <span>You&apos;re viewing your live page.</span>
-      <a
+      <Link
         href="/dashboard"
         className="inline-flex items-center gap-1 font-semibold underline-offset-2 hover:underline"
       >
         Go to your dashboard →
-      </a>
+      </Link>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { captureLead } from "@/app/g/[clientSlug]/actions";
+import { captureLead } from "@/app/[clientSlug]/actions";
 import { readableTextOn, ensureContrast } from "@/lib/color";
 
 // South African cell numbers are typically entered locally ("082 123

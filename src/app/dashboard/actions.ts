@@ -356,7 +356,7 @@ export async function changeTemplate(_prevState: DashboardState, formData: FormD
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/dashboard");
-  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -400,7 +400,7 @@ export async function saveMetaIds(_prevState: DashboardState, formData: FormData
 // pixel linking, is it possible to build this in?" Google Search Console and
 // Meta Business domain verification both boil down to a single meta tag with
 // a client-provided code, injected into the public page's <head> — see
-// generateMetadata in /g/[clientSlug]/page.tsx for where these actually get
+// generateMetadata in /[clientSlug]/page.tsx for where these actually get
 // used. Both fields optional and independent, saving one doesn't require
 // the other.
 export async function saveDomainVerification(
@@ -432,7 +432,7 @@ export async function saveDomainVerification(
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/dashboard");
-  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -645,7 +645,7 @@ export async function setHeroPhoto(_prevState: DashboardState, formData: FormDat
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/preview");
-  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 

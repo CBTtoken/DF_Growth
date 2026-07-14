@@ -608,7 +608,7 @@ export async function advanceConversation(
         }
 
         return {
-          reply: `Your page is live! ${process.env.NEXT_PUBLIC_SITE_URL}/g/${growthClient.slug}\n\nYour free 7-day trial has started, no card needed. We've emailed you a link into your dashboard.`,
+          reply: `Your page is live! ${process.env.NEXT_PUBLIC_SITE_URL}/${growthClient.slug}\n\nYour free 7-day trial has started, no card needed. We've emailed you a link into your dashboard.`,
           nextStep: "done",
           stepData,
           growthClientId: conversation.growth_client_id,

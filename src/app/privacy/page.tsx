@@ -1,10 +1,19 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 
-// Sprint 1, Build Item 9. Content is final, provided by Dewald 2026-07-11 —
-// rendered verbatim, not edited. Only the two bracketed placeholders in the
-// original text ([Insert Date], and the Terms page's contact details) were
-// filled in with values Dewald confirmed, nothing else changed.
+// Sprint 1, Build Item 9. Base content is final, provided by Dewald
+// 2026-07-11 — rendered verbatim, not edited. Only the two bracketed
+// placeholders in the original text ([Insert Date], and the Terms page's
+// contact details) were filled in with values Dewald confirmed.
+//
+// Public Beta Polish Sprint Sec 13.13: added Sections 6a and 8a below —
+// retention period given directly by Dewald 2026-07-15, and a factual
+// description of the Pixel consent banner's real behaviour (verified
+// against src/components/landing/PixelConsentGate.tsx) and the weekly
+// backup workflow's real retention (verified against
+// .github/workflows/weekly-db-backup.yml). Both current good-faith
+// practice, pending the legal review Dewald has deferred until 100 paid
+// members.
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "How DigitalFlyer collects, uses, and protects your personal information under POPIA.",
@@ -114,6 +123,21 @@ export default function PrivacyPolicyPage() {
         </section>
 
         <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-bold tracking-tight text-ink">6a. Data Retention</h2>
+          <p className="text-sm leading-relaxed text-gray-700">
+            We keep your personal information for as long as you remain a DigitalFlyer member. If you
+            cancel your subscription, we retain your information for a further 12 months, after which it
+            is deleted, except where we are required by law to keep it longer.
+          </p>
+          <p className="text-sm leading-relaxed text-gray-700">
+            Deletion requests are actioned on our live systems as soon as we receive them. We also keep a
+            weekly encrypted backup of our database for disaster recovery, retained on a rolling 90-day
+            basis, after 90 days each backup is automatically deleted. Any personal information in a
+            backup made before your deletion request will age out of that backup within 90 days.
+          </p>
+        </section>
+
+        <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold tracking-tight text-ink">7. Direct Marketing &amp; Communication</h2>
           <p className="text-sm leading-relaxed text-gray-700">
             By signing up or using our service, you agree that we may contact you occasionally with
@@ -128,6 +152,17 @@ export default function PrivacyPolicyPage() {
             We prefer to use services based in South Africa where possible. However, some of our service
             providers (such as Vercel and certain Supabase infrastructure) may process data outside South
             Africa. Where this happens, we use appropriate safeguards to protect your information.
+          </p>
+        </section>
+
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-bold tracking-tight text-ink">8a. Cookies and Advertising Tracking</h2>
+          <p className="text-sm leading-relaxed text-gray-700">
+            Some client pages use a tracking cookie (Meta Pixel) to help measure advertising performance.
+            This cookie is never loaded automatically — it only loads after you actively choose
+            &ldquo;Accept&rdquo; on the cookie banner shown on that page. Choosing &ldquo;Reject&rdquo;, or
+            not choosing at all, means the cookie is never set, and the page works exactly the same either
+            way.
           </p>
         </section>
 

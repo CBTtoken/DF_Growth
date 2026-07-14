@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 
 // Combined spec Sec 10: this used to be the redirect target for a brand-new
@@ -16,12 +17,12 @@ export default function PricingSuccessPage() {
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>
         <h1 className="text-2xl font-bold tracking-tight text-ink">Payment received</h1>
         <p className="text-sm text-gray-500">You&apos;re all set up. Your page is live right now.</p>
-        <a
+        <Link
           href="/dashboard"
           className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
         >
           Go to your dashboard
-        </a>
+        </Link>
       </div>
     </main>
   );

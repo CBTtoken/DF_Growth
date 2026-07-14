@@ -58,7 +58,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
   });
 
   const packages = (client.packages as { name: string; price: string; description: string; type?: string }[] | null) ?? [];
-  const pageUrl = client.slug ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/g/${client.slug}` : null;
+  const pageUrl = client.slug ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${client.slug}` : null;
 
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">

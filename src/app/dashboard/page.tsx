@@ -103,7 +103,7 @@ export default async function DashboardPage() {
   // was captured, no way to self-serve if they later found the details.
   // Foundation clients still never see this; they never connect Meta at all.
   const showMetaSection = growthClient?.plan !== "foundation";
-  const pageUrl = growthClient?.slug ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/g/${growthClient.slug}` : null;
+  const pageUrl = growthClient?.slug ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${growthClient.slug}` : null;
 
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">

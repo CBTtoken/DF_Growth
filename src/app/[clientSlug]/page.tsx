@@ -60,7 +60,7 @@ export async function generateMetadata({
   const image = client.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
     : "/brand/logo-blue.png";
-  const url = `/g/${clientSlug}`;
+  const url = `/${clientSlug}`;
 
   return {
     title,

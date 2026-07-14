@@ -542,7 +542,7 @@ export default async function PricingPage() {
 
       {/* Public Beta Polish Sprint Sec 5: homepage-only "Get in Touch" —
           a question about DigitalFlyer itself, not any specific client, so
-          it's a distinct block from any /g/[slug] page's own lead form. */}
+          it's a distinct block from any /[slug] page's own lead form. */}
       <GetInTouchSection />
 
       <SiteFooter />

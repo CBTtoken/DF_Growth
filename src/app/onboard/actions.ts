@@ -68,7 +68,7 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
-  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -150,7 +150,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
   }
 
   revalidatePath("/onboard");
-  if (growthClient.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -204,7 +204,7 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
-  if (growthClient?.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -295,7 +295,7 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
   if (landingPageError) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
-  if (growthClient.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 
@@ -392,7 +392,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   }
 
   revalidatePath("/onboard");
-  if (growthClient.slug) revalidatePath(`/g/${growthClient.slug}`);
+  if (growthClient.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
 

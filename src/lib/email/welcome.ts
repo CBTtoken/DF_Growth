@@ -27,7 +27,7 @@ export async function sendWelcomeEmail({
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
   const dashboardUrl = `${siteUrl}/dashboard`;
-  const pageUrl = `${siteUrl}/g/${slug}`;
+  const pageUrl = `${siteUrl}/${slug}`;
   const assetUrl = process.env.WELCOME_ASSET_URL;
 
   const result = await sendEmail({

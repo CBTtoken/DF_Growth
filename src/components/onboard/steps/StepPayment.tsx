@@ -33,6 +33,8 @@ export function StepPayment({ tier, billingCycle }: { tier: Tier; billingCycle: 
         <span className="text-sm text-gray-600">{priceLabel}</span>
       </div>
 
+      {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /api/checkout/finish is a
+          redirect-out-to-Paystack Route Handler, not a page; Link's client-side routing doesn't apply. */}
       <a
         href="/api/checkout/finish"
         className="mt-2 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"

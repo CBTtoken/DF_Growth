@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { OwnerBarGate } from "@/components/landing/OwnerBarGate";
 import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 import { LocalBusinessSchema } from "@/components/landing/LocalBusinessSchema";
@@ -59,10 +60,10 @@ type LandingPageData = {
 type Testimonial = { id: string; author_name: string; quote: string; rating: number | null };
 type Photo = { id: string; storage_path: string };
 
-// Combined spec Sec 6: shared between the real public page (/g/[clientSlug])
+// Combined spec Sec 6: shared between the real public page (/[clientSlug])
 // and the authenticated preview route (/dashboard/preview) so there is one
 // rendering path, not two copies that can silently drift apart. Extracted
-// unchanged from what was previously the whole of /g/[clientSlug]/page.tsx —
+// unchanged from what was previously the whole of /[clientSlug]/page.tsx —
 // same hero/section/eyebrow-numbering logic either way, mode only controls
 // whether owner/tracking-only pieces render.
 export async function ClientLandingPageView({
@@ -129,17 +130,17 @@ export async function ClientLandingPageView({
   const footer = (
     <footer className="bg-white py-6 text-center text-xs text-gray-400">
       © {new Date().getFullYear()} {client.business_name} ·{" "}
-      <a href="/dashboard" className="underline-offset-2 hover:text-gray-600 hover:underline">
+      <Link href="/dashboard" className="underline-offset-2 hover:text-gray-600 hover:underline">
         Manage this page
-      </a>{" "}
+      </Link>{" "}
       ·{" "}
-      <a href="/privacy" className="underline-offset-2 hover:text-gray-600 hover:underline">
+      <Link href="/privacy" className="underline-offset-2 hover:text-gray-600 hover:underline">
         Privacy Policy
-      </a>{" "}
+      </Link>{" "}
       ·{" "}
-      <a href="/terms" className="underline-offset-2 hover:text-gray-600 hover:underline">
+      <Link href="/terms" className="underline-offset-2 hover:text-gray-600 hover:underline">
         Terms &amp; Conditions
-      </a>
+      </Link>
     </footer>
   );
 
@@ -147,7 +148,7 @@ export async function ClientLandingPageView({
     <LocalBusinessSchema
       businessName={client.business_name}
       description={landingPage.about_text ?? client.tagline}
-      url={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
+      url={`${process.env.NEXT_PUBLIC_SITE_URL}/${clientSlug}`}
       logoUrl={logoUrl}
       telephone={client.call_phone}
       email={client.contact_email}
@@ -230,7 +231,7 @@ export async function ClientLandingPageView({
           <LeadForm
             growthClientId={client.id}
             landingPageId={landingPage.id}
-            pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
+            pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/${clientSlug}`}
             primaryColor={primaryColor}
             contactEmail={client.contact_email}
             callPhone={client.call_phone}
@@ -350,7 +351,7 @@ export async function ClientLandingPageView({
         <LeadForm
           growthClientId={client.id}
           landingPageId={landingPage.id}
-          pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/g/${clientSlug}`}
+          pageUrl={`${process.env.NEXT_PUBLIC_SITE_URL}/${clientSlug}`}
           primaryColor={primaryColor}
           contactEmail={client.contact_email}
           callPhone={client.call_phone}

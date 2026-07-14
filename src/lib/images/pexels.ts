@@ -16,7 +16,7 @@ export async function getIndustryPhoto(industry: string): Promise<string | null>
       `https://api.pexels.com/v1/search?query=${encodeURIComponent(industry)}&orientation=portrait&per_page=1`,
       {
         headers: { Authorization: apiKey },
-        // Matches the page's own revalidate window (src/app/g/[clientSlug]/page.tsx)
+        // Matches the page's own revalidate window (src/app/[clientSlug]/page.tsx)
         // — a client's industry practically never changes between visits, so
         // there's no reason to re-search Pexels more often than the page
         // itself re-renders.

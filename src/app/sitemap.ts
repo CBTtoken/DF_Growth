@@ -21,7 +21,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .not("slug", "is", null);
 
   const clientEntries: MetadataRoute.Sitemap = (clients ?? []).map((c) => ({
-    url: `${siteUrl}/g/${c.slug}`,
+    url: `${siteUrl}/${c.slug}`,
     lastModified: c.created_at ?? undefined,
     changeFrequency: "weekly",
     priority: 0.8,
