@@ -261,7 +261,7 @@ export default async function DashboardPage() {
             ))}
             {(!assets || assets.length === 0) && (
               <p className="text-sm text-gray-400">
-                Assets generate automatically when you add a testimonial.
+                Assets appear here once you add a testimonial or generate one above.
               </p>
             )}
           </div>

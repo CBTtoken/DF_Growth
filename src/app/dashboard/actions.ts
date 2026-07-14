@@ -90,6 +90,38 @@ export async function addTestimonial(
 // image (no testimonials-style row to key off), same generated_assets
 // table and same "generate once on submit, not on every future view"
 // approach.
+//
+// Public Beta Polish Sprint Sec 9: root cause of the reported bug, found by
+// bisecting down to a minimal repro against next/og directly — two
+// independent, fully silent Satori rendering gaps (see the comment on
+// ImageBackground in lib/assets/styles.tsx for the full story: a plain
+// <img> element rendered nothing at all, and separately the `inset: 0` CSS
+// shorthand silently collapsed the element it was set on). Fixing those
+// two makes remote image URLs render correctly — but routing through
+// Next's own image-optimizer proxy (`/_next/image?url=...`) as originally
+// tried here turned out to have a *third* failure mode: on a cold cache
+// (the first time any given photo is used), Next's on-demand resize is
+// slow enough that Satori's own internal fetch of that proxy URL times out
+// and silently skips the image again — confirmed live, flaky pass/fail on
+// the exact same request depending on whether that URL had been requested
+// before. Fetching the source image once here and embedding it directly as
+// a data URI removes that dependency entirely: Satori never fetches
+// anything externally, so there's nothing left to race or time out on.
+async function validateAndInlineImage(url: string): Promise<{ url: string } | { error: string }> {
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch {
+    return { error: "Could not load that photo, please choose a different one." };
+  }
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!res.ok || !contentType.startsWith("image/")) {
+    return { error: "Could not load that photo, please choose a different one." };
+  }
+  const buffer = Buffer.from(await res.arrayBuffer());
+  return { url: `data:${contentType};base64,${buffer.toString("base64")}` };
+}
+
 export async function generateSocialAsset(_prevState: DashboardState, formData: FormData): Promise<DashboardState> {
   const parsed = socialAssetSchema.safeParse({
     contentType: formData.get("contentType"),
@@ -122,9 +154,32 @@ export async function generateSocialAsset(_prevState: DashboardState, formData: 
   const primaryColor = growthClient.brand_primary_color ?? "#1081b8";
   const secondaryColor = growthClient.brand_secondary_color ?? "#ffffff";
   const style = growthClient.asset_style ?? "clean";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL!;
+
+  // Public Beta Polish Sprint Sec 9: validate + inline every source image
+  // as a data URI before it ever reaches the generation route — see the
+  // comment on validateAndInlineImage above for why.
+  let inlineImageUrl: string | undefined;
+  let inlineBeforeUrl: string | undefined;
+  let inlineAfterUrl: string | undefined;
+
+  if (parsed.data.imageUrl) {
+    const result = await validateAndInlineImage(parsed.data.imageUrl);
+    if ("error" in result) return { error: { _form: [result.error] } };
+    inlineImageUrl = result.url;
+  }
+  if (parsed.data.contentType === "before-after") {
+    const [beforeResult, afterResult] = await Promise.all([
+      validateAndInlineImage(parsed.data.beforeImageUrl!),
+      validateAndInlineImage(parsed.data.afterImageUrl!),
+    ]);
+    if ("error" in beforeResult) return { error: { _form: [`Before photo: ${beforeResult.error}`] } };
+    if ("error" in afterResult) return { error: { _form: [`After photo: ${afterResult.error}`] } };
+    inlineBeforeUrl = beforeResult.url;
+    inlineAfterUrl = afterResult.url;
+  }
 
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
     const imageRes = await fetch(`${siteUrl}/api/og/asset`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -136,9 +191,9 @@ export async function generateSocialAsset(_prevState: DashboardState, formData: 
         businessName: growthClient.business_name,
         primaryColor,
         secondaryColor,
-        imageUrl: parsed.data.imageUrl || null,
-        beforeImageUrl: parsed.data.beforeImageUrl || undefined,
-        afterImageUrl: parsed.data.afterImageUrl || undefined,
+        imageUrl: inlineImageUrl ?? null,
+        beforeImageUrl: inlineBeforeUrl,
+        afterImageUrl: inlineAfterUrl,
       }),
     });
 
@@ -147,6 +202,15 @@ export async function generateSocialAsset(_prevState: DashboardState, formData: 
     }
 
     const imageBytes = await imageRes.arrayBuffer();
+    // Sanity floor: distinguishes a genuine render failure from a normal
+    // no-photo text-only asset (which is also a legitimately small PNG) —
+    // this only fires when a photo was actually requested but the bytes
+    // came back suspiciously tiny for a 1080x1080 image with a real photo
+    // behind it, closing the loop on any remaining silent-failure surface.
+    const expectedPhoto = Boolean(inlineImageUrl || inlineBeforeUrl);
+    if (expectedPhoto && imageBytes.byteLength < 50000) {
+      return { error: { _form: ["Could not generate that image, please try again."] } };
+    }
     const path = `${client.id}/${parsed.data.contentType}-${crypto.randomUUID()}.png`;
     const { error: uploadError } = await admin.storage
       .from("generated-assets")
@@ -156,12 +220,23 @@ export async function generateSocialAsset(_prevState: DashboardState, formData: 
       return { error: { _form: ["Could not save that image, please try again."] } };
     }
 
-    await admin.from("generated_assets").insert({
+    const { error: insertError } = await admin.from("generated_assets").insert({
       growth_client_id: client.id,
       testimonial_id: null,
       template: `${parsed.data.contentType}-square`,
       image_path: path,
     });
+
+    // Public Beta Polish Sprint Sec 9: found live while verifying this
+    // section — this error was never checked, so a failed insert (the
+    // image genuinely rendered and uploaded fine) still reported success,
+    // leaving a real file in Storage with no generated_assets row pointing
+    // at it — invisible in the dashboard gallery forever. Exactly the
+    // silent-failure shape this section exists to close off.
+    if (insertError) {
+      console.error("Failed to record generated asset", insertError);
+      return { error: { _form: ["Could not save that image, please try again."] } };
+    }
   } catch (err) {
     console.error("Failed to generate social asset", err);
     return { error: { _form: ["Could not generate that image, please try again."] } };

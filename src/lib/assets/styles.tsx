@@ -50,12 +50,47 @@ function Stars({ rating, color }: { rating: number; color: string }) {
 // absolutely-positioned pair (photo, then a tinted overlay in the
 // client's own primary color for text legibility) sitting behind the
 // style's normal content, only rendered when imageUrl is present.
+//
+// Public Beta Polish Sprint Sec 9: root cause of the reported bug, found by
+// bisecting down to a minimal repro — two independent, both fully silent
+// Satori (next/og) rendering gaps stacked on top of each other here:
+// (1) a plain <img src="..."> element never rendered anything at all in
+// this project's next/og setup, confirmed byte-for-byte identical output
+// whether or not a real image URL was supplied, even with a data URI in
+// place of a remote fetch — fixed by using a CSS backgroundImage on a div
+// instead, which does render correctly; (2) the `inset: 0` shorthand
+// doesn't work in Satori either — a `position: "absolute", inset: 0` div
+// silently collapses to zero effective size instead of erroring, hiding
+// anything inside it (including a working backgroundImage) — fixed by
+// spelling out top/left/right/bottom: 0 instead of the shorthand.
 function ImageBackground({ imageUrl, tint }: { imageUrl: string; tint: string }) {
   return (
-    <div style={{ position: "absolute", inset: 0, display: "flex" }}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- satori (next/og) renders its own image pipeline, not the browser's */}
-      <img src={imageUrl} alt="" width="1080" height="1080" style={{ objectFit: "cover", display: "flex" }} />
-      <div style={{ position: "absolute", inset: 0, display: "flex", backgroundColor: tint, opacity: 0.55 }} />
+    <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          backgroundImage: `url(${imageUrl})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: "flex",
+          backgroundColor: tint,
+          opacity: 0.55,
+        }}
+      />
     </div>
   );
 }
@@ -281,8 +316,17 @@ export function renderBeforeAfter({
     >
       <div style={{ display: "flex", flex: 1 }}>
         <div style={{ position: "relative", display: "flex", flex: 1 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={beforeImageUrl} alt="" width="540" height="864" style={{ objectFit: "cover", display: "flex" }} />
+          {/* Public Beta Polish Sprint Sec 9: <img> silently failed to
+              render here too — see ImageBackground's comment above. */}
+          <div
+            style={{
+              display: "flex",
+              flex: 1,
+              backgroundImage: `url(${beforeImageUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
           <span
             style={{
               position: "absolute",
@@ -301,8 +345,15 @@ export function renderBeforeAfter({
           </span>
         </div>
         <div style={{ position: "relative", display: "flex", flex: 1 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={afterImageUrl} alt="" width="540" height="864" style={{ objectFit: "cover", display: "flex" }} />
+          <div
+            style={{
+              display: "flex",
+              flex: 1,
+              backgroundImage: `url(${afterImageUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          />
           <span
             style={{
               position: "absolute",
