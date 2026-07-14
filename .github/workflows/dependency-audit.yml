@@ -1,0 +1,39 @@
+name: Dependency vulnerability audit
+
+# Public Beta Polish Sprint Sec 13.12. Runs on every push and pull request
+# against main, plus a weekly check so a newly-disclosed vulnerability in
+# an already-installed package gets caught even without a code change.
+# Fails the job (visible as a red check on the commit/PR, in front of
+# Vercel's own deploy) only on high or critical findings — moderate/low
+# findings are common in transitive dev-only dependencies and would make
+# this noisy enough to get ignored if it blocked on everything. Dewald, as
+# this project's sole maintainer, is the owner for reviewing anything this
+# flags — `npm audit fix` for anything auto-fixable, otherwise a judgment
+# call on upgrading, patching around it, or accepting the risk.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit (informational, all severities)
+        run: npm audit || true
+
+      - name: Audit (fails on high/critical)
+        run: npm audit --audit-level=high
