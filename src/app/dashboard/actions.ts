@@ -13,6 +13,7 @@ import { encrypt } from "@/lib/crypto";
 import { findActiveSubscription, disableSubscription } from "@/lib/paystack/subscriptions";
 import { templateSchema } from "@/lib/schemas/intake";
 import { socialAssetSchema } from "@/lib/schemas/social-asset";
+import { isRateLimited } from "@/lib/rate-limit";
 import crypto from "crypto";
 
 const PHOTO_CAP = 10;
@@ -137,6 +138,17 @@ export async function generateSocialAsset(_prevState: DashboardState, formData: 
 
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
+
+  // Public Beta Polish Sprint Sec 13.5: rendering + uploading an image is
+  // real, per-call cost — keyed by client id, not IP, since this requires
+  // an authenticated session (unlike the public forms elsewhere), and a
+  // legitimate business owner shouldn't get IP-blocked for generating a
+  // batch of assets from the same network as other users on shared wifi.
+  // 20/hour comfortably covers real use (several posts across a session)
+  // while stopping a scripted loop from running this expensive path.
+  if (isRateLimited(`generate-asset:${client.id}`, 20, 60 * 60 * 1000)) {
+    return { error: { _form: ["You've generated a lot of images recently — please wait a bit and try again."] } };
+  }
 
   if (parsed.data.contentType === "before-after" && (!parsed.data.beforeImageUrl || !parsed.data.afterImageUrl)) {
     return { error: { _form: ["Choose both a before and an after photo."] } };
