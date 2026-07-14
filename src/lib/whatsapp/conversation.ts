@@ -5,6 +5,7 @@ import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 import { fetchWhatsAppMedia } from "@/lib/whatsapp/graph-api";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { PROVINCES } from "@/lib/schemas/intake";
+import { INDUSTRY_TAXONOMY, OTHER_INDUSTRY } from "@/lib/industries";
 import type { IncomingWhatsAppMessage } from "@/lib/whatsapp/parse-webhook";
 import type { BillingInterval } from "@/lib/paystack/plans";
 
@@ -32,7 +33,9 @@ type StepId =
   | "tier"
   | "billing_cycle"
   | "province"
-  | "industry"
+  | "industry_category"
+  | "industry_subcategory"
+  | "industry_other"
   | "business_address"
   | "business_description"
   | "tagline"
@@ -87,6 +90,21 @@ const BRAND_COLORS: { label: string; hex: string }[] = [
 function brandColorPrompt(): string {
   const lines = BRAND_COLORS.map((c, i) => `${i + 1}) ${c.label}`).join("\n");
   return `Pick a brand color for your page, just reply with the number:\n${lines}`;
+}
+
+// Public Beta Polish Sprint Sec 6: same fixed taxonomy as the web wizard's
+// Step2BusinessProfile.tsx, adapted into WhatsApp's numbered-list pattern —
+// top-level category first, sub-category as a follow-up numbered message,
+// consistent with how brandColorPrompt already works.
+function industryCategoryPrompt(): string {
+  const lines = INDUSTRY_TAXONOMY.map((c, i) => `${i + 1}) ${c.name}`).join("\n");
+  return `What industry is your business in? Reply with the number:\n${lines}\n${INDUSTRY_TAXONOMY.length + 1}) ${OTHER_INDUSTRY}`;
+}
+
+function industrySubcategoryPrompt(categoryName: string): string {
+  const category = INDUSTRY_TAXONOMY.find((c) => c.name === categoryName);
+  const lines = (category?.subcategories ?? []).map((s, i) => `${i + 1}) ${s}`).join("\n");
+  return `Which is the closest match? Reply with the number:\n${lines}`;
 }
 
 export async function advanceConversation(
@@ -261,18 +279,64 @@ export async function advanceConversation(
         };
       }
       return {
-        reply: "What industry is your business in? (e.g. Plumbing, Hair Salon, Catering)",
-        nextStep: "industry",
+        reply: industryCategoryPrompt(),
+        nextStep: "industry_category",
         stepData: { ...stepData, province: match },
         growthClientId: conversation.growth_client_id,
       };
     }
 
-    case "industry": {
+    case "industry_category": {
+      const index = Number(text) - 1;
+      const isOtherChoice = index === INDUSTRY_TAXONOMY.length;
+      const category = INDUSTRY_TAXONOMY[index];
+
+      if (isOtherChoice) {
+        return {
+          reply: "No problem, tell us your specific industry:",
+          nextStep: "industry_other",
+          stepData,
+          growthClientId: conversation.growth_client_id,
+        };
+      }
+      if (!category) {
+        return { reply: industryCategoryPrompt(), nextStep: "industry_category", stepData, growthClientId: conversation.growth_client_id };
+      }
+      return {
+        reply: industrySubcategoryPrompt(category.name),
+        nextStep: "industry_subcategory",
+        stepData: { ...stepData, industryCategory: category.name },
+        growthClientId: conversation.growth_client_id,
+      };
+    }
+
+    case "industry_subcategory": {
+      const categoryName = String(stepData.industryCategory ?? "");
+      const category = INDUSTRY_TAXONOMY.find((c) => c.name === categoryName);
+      const index = Number(text) - 1;
+      const subcategory = category?.subcategories[index];
+
+      if (!subcategory) {
+        return {
+          reply: industrySubcategoryPrompt(categoryName),
+          nextStep: "industry_subcategory",
+          stepData,
+          growthClientId: conversation.growth_client_id,
+        };
+      }
+      return {
+        reply: "What's your business address?",
+        nextStep: "business_address",
+        stepData: { ...stepData, industry: subcategory },
+        growthClientId: conversation.growth_client_id,
+      };
+    }
+
+    case "industry_other": {
       if (text.length < 2) {
         return {
-          reply: "What industry is your business in?",
-          nextStep: "industry",
+          reply: "Tell us your specific industry:",
+          nextStep: "industry_other",
           stepData,
           growthClientId: conversation.growth_client_id,
         };

@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { saveStep2, type OnboardState } from "@/app/onboard/actions";
+import { INDUSTRY_TAXONOMY, OTHER_INDUSTRY, resolveIndustryValue } from "@/lib/industries";
 
 const PROVINCES = [
   "Eastern Cape",
@@ -49,6 +50,18 @@ export function Step2BusinessProfile({
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep2, null);
   const [isOnline, setIsOnline] = useState(initialBusinessAddress === "Online");
 
+  // Public Beta Polish Sprint Sec 6: a fixed category/subcategory picker
+  // instead of open text — resolveIndustryValue also covers existing
+  // clients whose stored value predates this taxonomy (falls back to
+  // "Other" with their original text preserved).
+  const resolvedIndustry = resolveIndustryValue(initialIndustry);
+  const [industryCategory, setIndustryCategory] = useState(resolvedIndustry.category);
+  const [industrySubcategory, setIndustrySubcategory] = useState(resolvedIndustry.subcategory);
+  const [industryOtherText, setIndustryOtherText] = useState(resolvedIndustry.otherText);
+  const isOtherIndustry = industryCategory === OTHER_INDUSTRY;
+  const selectedCategorySubcategories =
+    INDUSTRY_TAXONOMY.find((c) => c.name === industryCategory)?.subcategories ?? [];
+
   useEffect(() => {
     if (state?.success) onSuccess();
   }, [state, onSuccess]);
@@ -79,16 +92,65 @@ export function Step2BusinessProfile({
       {state?.error?.province && <p className="text-xs text-red-600">{state.error.province[0]}</p>}
 
       <label className={labelClass}>
-        Industry
-        <input
-          type="text"
-          name="industry"
-          defaultValue={initialIndustry}
+        Industry category
+        <select
+          value={industryCategory}
+          onChange={(e) => {
+            setIndustryCategory(e.target.value);
+            setIndustrySubcategory("");
+            setIndustryOtherText("");
+          }}
           required
-          placeholder="e.g. Hair salon, plumbing, boutique gym"
           className={inputClass}
-        />
+        >
+          <option value="" disabled>
+            Select a category
+          </option>
+          {INDUSTRY_TAXONOMY.map((c) => (
+            <option key={c.name} value={c.name}>
+              {c.name}
+            </option>
+          ))}
+          <option value={OTHER_INDUSTRY}>{OTHER_INDUSTRY}</option>
+        </select>
       </label>
+
+      {industryCategory && !isOtherIndustry && (
+        <label className={labelClass}>
+          Specific type
+          <select
+            value={industrySubcategory}
+            onChange={(e) => setIndustrySubcategory(e.target.value)}
+            required
+            className={inputClass}
+          >
+            <option value="" disabled>
+              Select the closest match
+            </option>
+            {selectedCategorySubcategories.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+
+      {isOtherIndustry && (
+        <label className={labelClass}>
+          Tell us your industry
+          <input
+            type="text"
+            value={industryOtherText}
+            onChange={(e) => setIndustryOtherText(e.target.value)}
+            required
+            placeholder="e.g. Boutique gym"
+            className={inputClass}
+          />
+        </label>
+      )}
+
+      <input type="hidden" name="industry" value={isOtherIndustry ? industryOtherText : industrySubcategory} />
       {state?.error?.industry && <p className="text-xs text-red-600">{state.error.industry[0]}</p>}
 
       <div className="flex flex-col gap-1.5 text-sm">
