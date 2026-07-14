@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { forbidden, notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { describeGrowthClientStatus } from "@/lib/growth-client/admin-status-label";
@@ -23,31 +24,14 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
   const { id } = await params;
   const adminUser = await requireAdminEmail();
 
-  if ("error" in adminUser) {
-    return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
-        <BrandHeader />
-        <div className="flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-bold tracking-tight text-ink">Not available</h1>
-          <p className="text-sm text-gray-500">Sign in with an admin account to view this page.</p>
-        </div>
-      </main>
-    );
-  }
+  // Public Beta Polish Sprint Sec 13.11: real 403 instead of a 200 "Not
+  // available" page — see admin/page.tsx's comment and admin/forbidden.tsx.
+  if ("error" in adminUser) forbidden();
 
   const admin = createAdminClient();
   const { data: client } = await admin.from("growth_clients").select("*").eq("id", id).single();
 
-  if (!client) {
-    return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
-        <BrandHeader />
-        <div className="rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-bold tracking-tight text-ink">Client not found</h1>
-        </div>
-      </main>
-    );
-  }
+  if (!client) notFound();
 
   const [{ data: landingPage }, { count: photoCount }, { count: testimonialCount }] = await Promise.all([
     admin
@@ -105,7 +89,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
         <section className="grid grid-cols-1 gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:grid-cols-2">
           <Field label="Plan" value={client.plan} />
           <Field label="Billing cycle" value={client.billing_cycle} />
-          <Field label="Founding member" value={client.is_founding_member ? `Yes, #${client.founding_signup_number}` : "No"} />
+          <Field label="Day One member" value={client.is_founding_member ? `Yes, #${client.founding_signup_number}` : "No"} />
           <Field label="Signed up" value={new Date(client.created_at).toLocaleString()} />
           <Field label="Trial ends" value={client.trial_ends_at ? new Date(client.trial_ends_at).toLocaleDateString() : null} />
           <Field label="Consented at" value={client.consented_at ? new Date(client.consented_at).toLocaleString() : null} />

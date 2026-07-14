@@ -1,3 +1,5 @@
+import { EMAIL_FOOTER_HTML } from "@/lib/email/footer";
+
 // Plain fetch against Resend's HTTP API, same minimal-dependency approach
 // used for Meta's Conversions API (lib/meta/capi.ts) — no SDK needed for a
 // single POST. RESEND_FROM_EMAIL is not yet a verified custom domain
@@ -19,6 +21,10 @@ export async function sendEmail({
   if (!apiKey) return { ok: false, error: "Missing RESEND_API_KEY" };
 
   const from = process.env.RESEND_FROM_EMAIL ?? "DigitalFlyer Growth <onboarding@resend.dev>";
+  // Public Beta Polish Sprint Sec 12: appended here, not at each call site
+  // — every email sent through this one function gets it automatically,
+  // including anything added later.
+  const htmlWithFooter = `${html}${EMAIL_FOOTER_HTML}`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -26,7 +32,7 @@ export async function sendEmail({
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({ from, to, subject, html: htmlWithFooter }),
   });
 
   if (!res.ok) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { slugify } from "@/lib/slugify";
+import { slugify, RESERVED_SLUGS } from "@/lib/slugify";
 
 // Found via a real stress test: two businesses picking the same name used
 // to silently strand the second one after payment (fixed server-side in the
@@ -18,6 +18,13 @@ export async function GET(request: Request) {
   const slug = slugify(businessName);
   if (!slug) {
     return NextResponse.json({ available: null });
+  }
+
+  // Public Beta Polish Sprint Sec 13.2: matches provisionGrowthClient's own
+  // reserved-word handling — a reserved slug will always get suffixed at
+  // signup, so showing it as "available" here would be misleading.
+  if (RESERVED_SLUGS.has(slug)) {
+    return NextResponse.json({ available: false, slug });
   }
 
   const admin = createAdminClient();

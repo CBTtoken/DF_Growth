@@ -66,7 +66,7 @@ export function TierCard({
 
   const qualifiesForFounding =
     tier === "growth_engine" && interval === "annual" && (foundingSlotsRemaining ?? 0) > 0;
-  const displayCtaLabel = qualifiesForFounding ? "Become a Founding Business" : ctaLabel;
+  const displayCtaLabel = qualifiesForFounding ? "Become a Day One Business" : ctaLabel;
 
   return (
     <div
@@ -135,7 +135,7 @@ export function TierCard({
               </div>
               {interval === "annual" && (foundingSlotsRemaining ?? 0) > 0 && (
                 <p className="text-xs font-semibold text-brand">
-                  Pay annually to become a Founding Business — {foundingSlotsRemaining} of 10 spots left
+                  Pay annually to become a Day One Business — {foundingSlotsRemaining} of 10 spots left
                 </p>
               )}
             </>

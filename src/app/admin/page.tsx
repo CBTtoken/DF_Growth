@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { forbidden } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { describeGrowthClientStatus } from "@/lib/growth-client/admin-status-label";
@@ -20,19 +21,12 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 export default async function AdminPage() {
   const admin_ = await requireAdminEmail();
 
-  if ("error" in admin_) {
-    return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
-        <BrandHeader />
-        <div className="flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-bold tracking-tight text-ink">Not available</h1>
-          <p className="text-sm text-gray-500">
-            Sign in with an admin account to view this page.
-          </p>
-        </div>
-      </main>
-    );
-  }
+  // Public Beta Polish Sprint Sec 13.11: this used to render a 200 "Not
+  // available" page for a non-admin request — harmless in a browser, but a
+  // scripted/unauthenticated request got the same 200 status as a real
+  // admin view, telling it the route exists and responds normally. forbidden()
+  // returns a real HTTP 403 instead (see admin/forbidden.tsx for the UI).
+  if ("error" in admin_) forbidden();
 
   const admin = createAdminClient();
   // Combined spec Sec 11: the wide select isn't shown in this table itself

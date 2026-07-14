@@ -156,9 +156,9 @@ const FAQS = [
     // mechanic is narrower (Growth annual only) and Dewald was explicit
     // this needs to be unambiguous, so the qualifying detail is spelled
     // out directly rather than left implicit.
-    question: "What is a Founding Business?",
+    question: "What is a Day One Business?",
     answer:
-      "The first 10 businesses to join Growth on the annual plan (R1,199/year) become Founding Businesses. You'll lock in that price for life, and once Enterprise launches, you get 2 years of Enterprise access while still paying the Growth price.",
+      "The first 10 businesses to join Growth on the annual plan (R1,199/year) become Day One Businesses. You'll lock in that price for life, and once Enterprise launches, you get Enterprise access permanently, for as long as you stay on the annual plan.",
   },
   {
     question: "Can I cancel at any time?",
@@ -185,7 +185,7 @@ const FAQS = [
   {
     question: "Why should I join now?",
     answer:
-      "Only 10 Founding Business spots are available on Growth's annual plan. Joining now means you'll help shape DigitalFlyer from the beginning while locking in Founding Member benefits for life.",
+      "Only 10 Day One Business spots are available on Growth's annual plan. Joining now means you'll help shape DigitalFlyer from the beginning while locking in Day One Member benefits for life.",
   },
 ];
 
@@ -256,7 +256,7 @@ export default async function PricingPage() {
           {foundingSlotsRemaining > 0 && (
             <span className="inline-flex items-center gap-2.5 rounded-full bg-spark px-5 py-2.5 font-display text-lg uppercase tracking-wide text-white shadow-lg sm:px-6 sm:py-3 sm:text-2xl">
               <Flame className="size-5 sm:size-7" aria-hidden />
-              Only {foundingSlotsRemaining} Founding Business {foundingSlotsRemaining === 1 ? "spot" : "spots"} left
+              Only {foundingSlotsRemaining} Day One Business {foundingSlotsRemaining === 1 ? "spot" : "spots"} left
             </span>
           )}
 
@@ -286,13 +286,13 @@ export default async function PricingPage() {
             href="#pricing"
             className="mt-3 rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
           >
-            Become a Founding Business
+            Become a Day One Business
           </a>
           {/* Combined spec Sec 15: confirmed replacement copy, slightly
               larger than before (text-sm to text-base). */}
           <p className="max-w-md text-base text-white/70">
             We built DigitalFlyer to help South African businesses get found, get trusted, and
-            grow. Join as a Founding Business and lock in your price, for good.
+            grow. Join as a Day One Business and lock in your price, for good.
           </p>
         </div>
       </section>
@@ -526,14 +526,14 @@ export default async function PricingPage() {
           </h2>
           <p className="text-lg text-white/85">Today could be the day more customers start finding yours.</p>
           <p className="text-lg text-white/85">
-            Become one of our first Founding Businesses and help us build the future of South African
+            Become one of our first Day One Businesses and help us build the future of South African
             business.
           </p>
           <a
             href="#pricing"
             className="mt-4 inline-block rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
           >
-            Become a Founding Business
+            Become a Day One Business
           </a>
           <p className="mt-1 text-sm text-white/70">Your DigitalFlyer journey starts in just a few minutes.</p>
         </div>

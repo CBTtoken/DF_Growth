@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { slugify } from "@/lib/slugify";
+import { slugify, RESERVED_SLUGS } from "@/lib/slugify";
 import type { Tier } from "@/lib/paystack/plans";
 
 type ProvisionResult = { id: string; slug: string } | { error: string };
@@ -49,11 +49,18 @@ export async function provisionGrowthClient({
 }): Promise<ProvisionResult> {
   const admin = createAdminClient();
   const baseSlug = slugify(businessName);
+  // Public Beta Polish Sprint Sec 13.2: a business genuinely named
+  // "Growth" or "Admin" isn't refused a page outright — this just forces
+  // the same random-suffix disambiguation every subsequent-attempt slug
+  // already gets, so the reserved word can never itself become a live,
+  // unsuffixed slug at /g/[slug].
+  const baseSlugReserved = RESERVED_SLUGS.has(baseSlug);
   let inserted: { id: string; slug: string } | null = null;
   let insertError: { message: string; code?: string } | null = null;
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const candidateSlug = attempt === 0 ? baseSlug : `${baseSlug}-${crypto.randomBytes(2).toString("hex")}`;
+    const candidateSlug =
+      attempt === 0 && !baseSlugReserved ? baseSlug : `${baseSlug}-${crypto.randomBytes(2).toString("hex")}`;
     const { data, error } = await admin
       .from("growth_clients")
       .insert({

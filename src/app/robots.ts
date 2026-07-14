@@ -1,10 +1,17 @@
 import type { MetadataRoute } from "next";
 
-// Next.js special file — serves this at /robots.txt automatically. Private,
-// signed-in-only routes are also excluded via a per-page noindex meta tag
-// (the reliable mechanism, since not every crawler respects robots.txt) —
-// this file is the crawl-budget hint on top of that, not the only line of
-// defense.
+// Next.js special file — serves this at /robots.txt automatically.
+//
+// Public Beta Polish Sprint Sec 13.11: previously listed /admin, /dashboard,
+// /onboard, and /api explicitly in disallow — a real problem, since
+// robots.txt is a plain, publicly-fetchable file, and a disallow rule
+// literally advertises "there's something at /admin worth hiding" to
+// anyone reading it, attacker or not. Real protection was never this file
+// anyway (per-page noindex meta tags are what actually keep these out of
+// search results, since not every crawler even respects robots.txt) — the
+// actual security boundary is server-side auth on each route, not
+// obscuring the path list here. /preview stays listed since it's just a
+// crawl-budget hint for low-value duplicate content, not a sensitive path.
 export default function robots(): MetadataRoute.Robots {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://df-growth.vercel.app";
 
@@ -12,7 +19,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/dashboard", "/onboard", "/admin", "/api", "/preview"],
+      disallow: ["/preview"],
     },
     sitemap: `${siteUrl}/sitemap.xml`,
   };

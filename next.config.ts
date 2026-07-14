@@ -12,6 +12,13 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
+    // Public Beta Polish Sprint Sec 13.11: lets the admin pages call
+    // forbidden() from next/navigation to return a real HTTP 403 for
+    // unauthenticated/non-allowlisted requests, instead of a 200 response
+    // with a "Not available" message body — the previous behavior looked
+    // fine in a browser but told any scripted request that /admin exists
+    // and is reachable, just gated, which a real 403 doesn't.
+    authInterrupts: true,
     serverActions: {
       // Default is 1MB, silently rejecting the whole request before it ever
       // reaches the Server Action — found live twice now: once for a single
