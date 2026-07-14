@@ -47,18 +47,38 @@ export default async function AdminPage() {
 
   const needsMetaHelp = (clients ?? []).filter((c) => c.plan !== "foundation" && !c.meta_pixel_id && c.meta_setup_requested_help);
 
+  // Public Beta Polish Sprint Sec 5: count only, the support page itself
+  // owns the actual list — keeps this page's own query lean.
+  const { count: unreadSupportCount } = await admin
+    .from("homepage_inquiries")
+    .select("id", { count: "exact", head: true })
+    .eq("read", false);
+
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
         <BrandHeader />
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-2xl font-bold tracking-tight text-ink">Admin</h1>
-          <a
-            href="/api/admin/export"
-            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-          >
-            Export all as CSV ↓
-          </a>
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/admin/support"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Support
+              {!!unreadSupportCount && (
+                <span className="rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {unreadSupportCount}
+                </span>
+              )}
+            </Link>
+            <a
+              href="/api/admin/export"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Export all as CSV ↓
+            </a>
+          </div>
         </div>
 
         {needsMetaHelp.length > 0 && (

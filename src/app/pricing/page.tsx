@@ -8,6 +8,7 @@ import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { SectionDivider } from "@/components/marketing/SectionDivider";
 import { SiteFooter } from "@/components/SiteFooter";
+import { GetInTouchSection } from "@/components/marketing/GetInTouchSection";
 import { SHOWCASE_SAMPLES } from "@/lib/templates/sample-showcase";
 
 // Combined spec Sec 14: was 5 chips, an odd number that left the grid
@@ -538,6 +539,11 @@ export default async function PricingPage() {
           <p className="mt-1 text-sm text-white/70">Your DigitalFlyer journey starts in just a few minutes.</p>
         </div>
       </section>
+
+      {/* Public Beta Polish Sprint Sec 5: homepage-only "Get in Touch" —
+          a question about DigitalFlyer itself, not any specific client, so
+          it's a distinct block from any /g/[slug] page's own lead form. */}
+      <GetInTouchSection />
 
       <SiteFooter />
     </main>

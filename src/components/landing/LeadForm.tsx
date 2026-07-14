@@ -167,6 +167,23 @@ export function LeadForm({
                   />
                 </div>
 
+                {/* Public Beta Polish Sprint Sec 5: extends this same form
+                    with a message field rather than deploying a second,
+                    near-identical "Get in Touch" block on top of it — this
+                    form is already titled "Get in touch". */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="message" className="text-sm font-medium text-gray-700">
+                    Message <span className="font-normal text-gray-400">(optional)</span>
+                  </label>
+                  <textarea
+                    id="message"
+                    name="message"
+                    rows={3}
+                    placeholder="Anything you'd like them to know"
+                    className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition-colors placeholder:text-gray-400"
+                  />
+                </div>
+
                 {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 
                 <button

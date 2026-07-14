@@ -83,7 +83,7 @@ export default async function DashboardPage() {
     // anywhere in the codebase.
     admin
       .from("leads")
-      .select("id, name, email, phone, created_at")
+      .select("id, name, email, phone, message, created_at")
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -171,25 +171,28 @@ export default async function DashboardPage() {
             {(leads ?? []).map((l) => (
               <li
                 key={l.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm"
+                className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm"
               >
-                <div>
-                  <p className="font-medium text-gray-900">{l.name}</p>
-                  <p className="flex flex-wrap items-center gap-x-2 text-gray-500">
-                    <a href={`mailto:${l.email}`} className="text-brand underline-offset-2 hover:underline">
-                      {l.email}
-                    </a>
-                    {l.phone && (
-                      <>
-                        <span aria-hidden>·</span>
-                        <a href={`tel:${l.phone.replace(/\s+/g, "")}`} className="text-brand underline-offset-2 hover:underline">
-                          {l.phone}
-                        </a>
-                      </>
-                    )}
-                  </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-medium text-gray-900">{l.name}</p>
+                    <p className="flex flex-wrap items-center gap-x-2 text-gray-500">
+                      <a href={`mailto:${l.email}`} className="text-brand underline-offset-2 hover:underline">
+                        {l.email}
+                      </a>
+                      {l.phone && (
+                        <>
+                          <span aria-hidden>·</span>
+                          <a href={`tel:${l.phone.replace(/\s+/g, "")}`} className="text-brand underline-offset-2 hover:underline">
+                            {l.phone}
+                          </a>
+                        </>
+                      )}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-400">{new Date(l.created_at).toLocaleString()}</span>
                 </div>
-                <span className="text-xs text-gray-400">{new Date(l.created_at).toLocaleString()}</span>
+                {l.message && <p className="whitespace-pre-wrap rounded-lg bg-white p-3 text-gray-600">{l.message}</p>}
               </li>
             ))}
             {(!leads || leads.length === 0) && (

@@ -32,6 +32,7 @@ export async function captureLead(
     name: formData.get("name"),
     email: formData.get("email"),
     phone: formData.get("phone") || undefined,
+    message: formData.get("message") || undefined,
   });
 
   if (!parsed.success) {
@@ -50,6 +51,7 @@ export async function captureLead(
     name: parsed.data.name,
     email: parsed.data.email,
     phone: parsed.data.phone ?? null,
+    message: parsed.data.message ?? null,
     fbclid,
     event_id: eventId,
   });
@@ -76,6 +78,7 @@ export async function captureLead(
             <strong>Email:</strong> ${parsed.data.email}<br>
             <strong>Phone:</strong> ${parsed.data.phone ?? "not given"}
           </p>
+          ${parsed.data.message ? `<p><strong>Message:</strong><br>${parsed.data.message.replace(/\n/g, "<br>")}</p>` : ""}
           <p>View all your leads in your <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard">dashboard</a>.</p>
         `,
       });
