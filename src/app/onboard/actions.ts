@@ -15,6 +15,7 @@ import {
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { isRateLimited } from "@/lib/rate-limit";
+import { trackBetaEvent } from "@/lib/metrics/track";
 
 type FieldErrors = Record<string, string[]> & { _form?: string[] };
 export type OnboardState = { error?: FieldErrors; success?: boolean } | null;
@@ -387,6 +388,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
       contactEmail: growthClient.contact_email,
       slug: growthClient.slug,
     });
+    void trackBetaEvent("onboarding_completed");
   }
 
   revalidatePath("/onboard");

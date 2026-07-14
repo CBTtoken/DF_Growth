@@ -4,6 +4,7 @@ import { generateLandingCopy } from "@/lib/ai/draft-copy";
 import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 import { fetchWhatsAppMedia } from "@/lib/whatsapp/graph-api";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
+import { trackBetaEvent } from "@/lib/metrics/track";
 import { PROVINCES } from "@/lib/schemas/intake";
 import { INDUSTRY_TAXONOMY, OTHER_INDUSTRY } from "@/lib/industries";
 import type { IncomingWhatsAppMessage } from "@/lib/whatsapp/parse-webhook";
@@ -603,6 +604,7 @@ export async function advanceConversation(
             contactEmail: growthClient.contact_email,
             slug: growthClient.slug,
           });
+          void trackBetaEvent("onboarding_completed");
         }
 
         return {

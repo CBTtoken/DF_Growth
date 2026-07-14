@@ -7,6 +7,7 @@ import { leadSchema } from "@/lib/schemas/lead";
 import { sendCapiEvent } from "@/lib/meta/capi";
 import { sendEmail } from "@/lib/email/resend";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
+import { trackBetaEvent } from "@/lib/metrics/track";
 
 type LeadState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -45,6 +46,14 @@ export async function captureLead(
   const fbclid = cookieStore.get("fbclid")?.value ?? null;
   const userAgent = (await headers()).get("user-agent") ?? "";
 
+  // Public Beta Polish Sprint Sec 13.6: checked before the insert below so
+  // this lead's own row can't count itself — a cheap head-only count,
+  // fine at this endpoint's already-rate-limited volume.
+  const { count: priorLeadCount } = await admin
+    .from("leads")
+    .select("id", { count: "exact", head: true })
+    .eq("growth_client_id", growthClientId);
+
   const { error } = await admin.from("leads").insert({
     growth_client_id: growthClientId,
     landing_page_id: landingPageId,
@@ -59,6 +68,8 @@ export async function captureLead(
   if (error) {
     return { error: { _form: ["Could not save your details, please try again."] } };
   }
+
+  if (priorLeadCount === 0) void trackBetaEvent("first_lead_received");
 
   // Found via real UAT: leads were being saved with no way for the business
   // owner to ever find out one came in — no dashboard view read them back

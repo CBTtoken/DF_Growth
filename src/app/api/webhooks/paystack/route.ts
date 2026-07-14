@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
+import { trackBetaEvent } from "@/lib/metrics/track";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -168,6 +169,12 @@ export async function POST(request: Request) {
         contactEmail: existingClient.contact_email,
         slug: existingClient.slug,
       });
+      // Public Beta Polish Sprint Sec 13.6: Foundation's first real payment
+      // is a genuine trial-to-paid conversion (they've been live on a free
+      // trial already); Growth/Enterprise never had a trial, so their
+      // first payment here is the same "onboarding just completed" moment
+      // Foundation gets for free at the end of its own wizard.
+      void trackBetaEvent(existingClient.plan === "foundation" ? "trial_converted" : "onboarding_completed");
     }
     return NextResponse.json({ received: true });
   }
