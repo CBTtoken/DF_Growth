@@ -48,18 +48,44 @@ export default function AuthCallbackPage() {
       return;
     }
 
+    // Public Beta Polish Sprint Sec 1: every email landing here now needs to
+    // branch before ever reaching a real account page. has_password takes
+    // priority over the link's own type — a "recovery" link is also what
+    // gets sent to a pre-migration account forced through /login (see
+    // login/actions.ts and provision.ts), and the spec is explicit that
+    // migration must land on /set-password, not /reset-password (its
+    // acceptance criteria: "route through a forced /set-password step
+    // rather than /forgot-password, since they don't know they never set
+    // one" — reset-password's own behavior signs the session back out and
+    // sends them to log in again, which would be a confusing double-step
+    // for someone who just proved ownership by clicking this exact link).
+    // Only an already-migrated account clicking a genuine forgot-password
+    // link reaches /reset-password.
+    const type = new URLSearchParams(hash.slice(1)).get("type");
+
     const supabase = createClient();
     supabase.auth.setSession({ access_token, refresh_token }).then(async ({ data }) => {
-      const userId = data.session?.user.id;
-      if (!userId) {
+      const user = data.session?.user;
+      if (!user) {
         window.location.replace("/login");
+        return;
+      }
+
+      const hasPassword = user.app_metadata?.has_password === true;
+      if (!hasPassword) {
+        window.location.replace("/set-password");
+        return;
+      }
+
+      if (type === "recovery") {
+        window.location.replace("/reset-password");
         return;
       }
 
       const { data: membership } = await supabase
         .from("growth_members")
         .select("growth_clients(status)")
-        .eq("user_id", userId)
+        .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();

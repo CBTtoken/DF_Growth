@@ -17,8 +17,8 @@ export default function TrialStartedPage() {
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>
         <h1 className="text-2xl font-bold tracking-tight text-ink">Your trial has started</h1>
         <p className="text-sm text-gray-500">
-          Check your email for a magic link to get started. It lands you straight in your
-          onboarding wizard, no password needed.
+          Check your email for a link to set up your account. You&apos;ll choose a password, then
+          go straight into your onboarding wizard.
         </p>
       </div>
     </main>

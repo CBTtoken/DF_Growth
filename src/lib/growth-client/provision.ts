@@ -1,5 +1,4 @@
 import crypto from "crypto";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { slugify, RESERVED_SLUGS } from "@/lib/slugify";
 import type { Tier } from "@/lib/paystack/plans";
@@ -128,9 +127,9 @@ export async function provisionGrowthClient({
       // A user can legitimately belong to more than one growth_client (see
       // the comment in onboard/page.tsx) — link their existing account to
       // this new client rather than reject the signup. inviteUserByEmail
-      // can't message an existing user, but signInWithOtp can.
-      // admin.listUsers() has no email filter in this SDK version, so hit
-      // the REST endpoint directly (it does support ?email=).
+      // can't message an existing user. admin.listUsers() has no email
+      // filter in this SDK version, so hit the REST endpoint directly (it
+      // does support ?email=).
       const lookupRes = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/admin/users?email=${encodeURIComponent(email)}`,
         {
@@ -141,23 +140,28 @@ export async function provisionGrowthClient({
         }
       );
       const lookupData = await lookupRes.json();
-      ownerUserId = lookupData?.users?.[0]?.id ?? null;
+      const existingUser = lookupData?.users?.[0] as
+        | { id: string; app_metadata?: { has_password?: boolean } }
+        | undefined;
+      ownerUserId = existingUser?.id ?? null;
 
-      if (ownerUserId) {
-        const anon = createSupabaseClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-        );
-        const { error: otpError } = await anon.auth.signInWithOtp({
-          email,
-          // Sprint 1 fix, Section 1 — this is the exact code path most
-          // likely to have caused the reported bug: an email that already
-          // has an account (and quite possibly an active browser session)
-          // being linked to a brand-new growth_client and re-invited.
-          options: { emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` },
+      // Public Beta Polish Sprint Sec 1: retires the signInWithOtp magic
+      // link this used to send here — the exact code path most likely to
+      // have caused a real, previously-reported account cross-contamination
+      // bug (see auth/callback/page.tsx's own comment). An account that's
+      // already set a password doesn't need any email at all: the new
+      // growth_member link below is enough, they'll see this business next
+      // time they log in normally. Only a still-unmigrated account (never
+      // set a password) gets a fresh set-password email — the same
+      // resetPasswordForEmail flow /forgot-password uses, landing on
+      // /set-password via auth/callback's has_password check rather than
+      // straight into a dashboard.
+      if (ownerUserId && existingUser?.app_metadata?.has_password !== true) {
+        const { error: resetError } = await admin.auth.resetPasswordForEmail(email, {
+          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`,
         });
-        if (otpError) {
-          console.error("Failed to send sign-in link to existing user", otpError);
+        if (resetError) {
+          console.error("Failed to send set-password email to existing user", resetError);
         }
       }
     } else {

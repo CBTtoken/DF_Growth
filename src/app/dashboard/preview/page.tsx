@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { ClientLandingPageView } from "@/components/landing/ClientLandingPageView";
@@ -29,10 +30,11 @@ export default async function DashboardPreviewPage({
       <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
         <BrandHeader />
         <div className="flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-bold tracking-tight text-ink">Check your email</h1>
-          <p className="text-sm text-gray-500">
-            Use the magic link we sent you to get here — this page needs you to be signed in.
-          </p>
+          <h1 className="text-xl font-bold tracking-tight text-ink">Please log in</h1>
+          <p className="text-sm text-gray-500">This page needs you to be signed in.</p>
+          <Link href="/login" className="text-sm font-semibold text-brand underline-offset-2 hover:underline">
+            Log in
+          </Link>
         </div>
       </main>
     );
