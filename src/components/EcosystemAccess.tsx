@@ -2,13 +2,23 @@
 // (dashboard, as an actionable next step) — same block works for both, the
 // surrounding heading/framing differs by page, not this component.
 //
-// Combined spec Sec 27: Marketplace listing is automatic for every paid
-// membership — there's no request step to chase Dewald for anymore.
-// websiteUrl is optional (only the dashboard, post-signup, has a real
-// client to read it from) — when set, it's shown as what the marketplace
-// listing will link out to; when not, this still just confirms inclusion.
-// Real Marketplace auto-provisioning (actually creating the listing) is
-// Core/Stoep-side work outside this repo, tracked separately.
+// Public Beta Polish Sprint Sec 11: marketplaceUrl replaces the old
+// websiteUrl-does-double-duty approach (see git history for the prior
+// version's own comment on this) — this is now an admin-only field
+// (growth_clients.marketplace_url, set from /admin/clients/[id]), never
+// auto-generated from a subdomain guess, never exposed to the client
+// anywhere. The client's own Website URL still exists, it's just shown
+// elsewhere now (LeadForm.tsx's success state, alongside their other
+// public contact details) since that's the client-facing use of it,
+// distinct from this admin-managed listing link.
+//
+// Sec 4: unlocked reflects whether this account has ever actually paid
+// (paystack_reference is non-null) — true immediately for Growth (which
+// only ever reaches "active" status via a real payment) and only once a
+// Foundation trial converts to paid. Computed live from current account
+// state rather than a stored flag, so it flips the moment a payment
+// succeeds with no separate "activate Marketplace" step needed anywhere.
+//
 // Combined spec Sec 33: audited — RE:Biz Nomads is a live Facebook group,
 // joining is literally just clicking through and requesting to join, with
 // no price, checkout, or payment reference anywhere in this flow. Business
@@ -17,31 +27,49 @@
 // nothing new to collect here, since this is just a link, not a form.
 const REBIZ_GROUP_URL = "https://www.facebook.com/groups/rebiznomadsdealroom";
 
-export function EcosystemAccess({ websiteUrl }: { websiteUrl?: string | null }) {
+export function EcosystemAccess({
+  marketplaceUrl,
+  unlocked = true,
+}: {
+  marketplaceUrl?: string | null;
+  // Only ever false for a Foundation client still on their free trial —
+  // defaults true so the pre-signup /pricing page usage (which has no
+  // real account to check) isn't accidentally gated.
+  unlocked?: boolean;
+}) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="text-base font-bold tracking-tight text-ink">DigitalFlyer SA Marketplace</h3>
-        <p className="text-sm text-gray-500">
-          Every paid membership gets a spot on our marketplace directory automatically —
-          there&apos;s nothing to request.
-        </p>
-        {websiteUrl ? (
-          <p className="mt-1 text-sm text-gray-500">
-            Your listing will link out to{" "}
-            <a
-              href={websiteUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="font-semibold text-brand hover:underline"
-            >
-              {websiteUrl}
-            </a>
-            .
-          </p>
+        {unlocked ? (
+          <>
+            <p className="text-sm text-gray-500">
+              Every paid membership gets a spot on our marketplace directory automatically —
+              there&apos;s nothing to request.
+            </p>
+            {marketplaceUrl ? (
+              <p className="mt-1 text-sm text-gray-500">
+                View your listing{" "}
+                <a
+                  href={marketplaceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-brand hover:underline"
+                >
+                  here
+                </a>
+                .
+              </p>
+            ) : (
+              <p className="mt-1 text-sm text-gray-500">
+                We&apos;re setting your listing up, check back soon.
+              </p>
+            )}
+          </>
         ) : (
-          <p className="mt-1 text-sm text-gray-500">
-            Add a website URL in Edit your page and your listing will link out to it.
+          <p className="text-sm text-gray-500">
+            Included once you continue past your trial — no action needed, it activates
+            automatically the moment you add payment.
           </p>
         )}
       </div>

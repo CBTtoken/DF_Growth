@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { describeGrowthClientStatus } from "@/lib/growth-client/admin-status-label";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+import { MarketplaceUrlForm } from "@/components/admin/MarketplaceUrlForm";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -159,6 +160,23 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             </ul>
           </section>
         )}
+
+        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-ink">Marketplace listing</h2>
+            {/* Public Beta Polish Sprint Sec 4: distinct from page-live
+                status — a Foundation client on their free trial has a live
+                page (client.status === "active") well before they've ever
+                paid, so this reads paystack_reference specifically rather
+                than reusing the same status badge shown up top. */}
+            <p className="mt-1 text-sm text-gray-500">
+              {client.paystack_reference
+                ? "Unlocked — this account has paid at least once."
+                : "Locked — this account hasn't paid yet (still on a free trial)."}
+            </p>
+          </div>
+          <MarketplaceUrlForm clientId={client.id} initialUrl={client.marketplace_url} />
+        </section>
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Meta ad connection</h2>
