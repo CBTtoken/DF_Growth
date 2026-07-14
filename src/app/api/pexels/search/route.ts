@@ -20,6 +20,10 @@ export async function GET(request: Request) {
   if (!query) {
     return NextResponse.json({ error: "Missing search query" }, { status: 400 });
   }
+  // Public Beta Polish Sprint Sec 8: "Show More" pages through additional
+  // Pexels results instead of the gallery being capped at the first 15.
+  const pageParam = Number(searchParams.get("page") ?? "1");
+  const page = Number.isFinite(pageParam) && pageParam >= 1 ? Math.floor(pageParam) : 1;
 
   const apiKey = process.env.PEXELS_API_KEY;
   if (!apiKey) {
@@ -27,7 +31,7 @@ export async function GET(request: Request) {
   }
 
   const res = await fetch(
-    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15`,
+    `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=15&page=${page}`,
     { headers: { Authorization: apiKey } }
   );
 
@@ -37,6 +41,7 @@ export async function GET(request: Request) {
 
   const data = (await res.json()) as {
     photos?: { id: number; src?: { medium?: string; large2x?: string; large?: string }; photographer?: string }[];
+    next_page?: string;
   };
 
   const results = (data.photos ?? [])
@@ -48,5 +53,5 @@ export async function GET(request: Request) {
       photographer: p.photographer ?? null,
     }));
 
-  return NextResponse.json({ results });
+  return NextResponse.json({ results, hasMore: Boolean(data.next_page) });
 }

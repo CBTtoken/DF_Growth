@@ -14,8 +14,12 @@ type Result = { id: number; thumbnailUrl: string; fullUrl: string; photographer:
 export function PexelsPicker({ industryHint, disabled }: { industryHint?: string; disabled?: boolean }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState(industryHint ?? "");
+  const [activeQuery, setActiveQuery] = useState(industryHint ?? "");
   const [results, setResults] = useState<Result[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [searching, setSearching] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [state, formAction, pending] = useActionState(addPhotoFromPexels, null);
@@ -24,19 +28,45 @@ export function PexelsPicker({ industryHint, disabled }: { industryHint?: string
     if (!q.trim()) return;
     setSearching(true);
     setSearchError(null);
+    setActiveQuery(q);
     try {
-      const res = await fetch(`/api/pexels/search?q=${encodeURIComponent(q)}`);
+      const res = await fetch(`/api/pexels/search?q=${encodeURIComponent(q)}&page=1`);
       const data = await res.json();
       if (!res.ok) {
         setSearchError(data.error ?? "Search failed, please try again");
         setResults([]);
+        setHasMore(false);
       } else {
         setResults(data.results ?? []);
+        setPage(1);
+        setHasMore(Boolean(data.hasMore));
       }
     } catch {
       setSearchError("Search failed, please try again");
     } finally {
       setSearching(false);
+    }
+  };
+
+  // Public Beta Polish Sprint Sec 8: appends the next page below the
+  // existing grid rather than replacing it — no page reload, nothing
+  // already-viewed disappears.
+  const loadMore = async () => {
+    if (!activeQuery.trim()) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const res = await fetch(`/api/pexels/search?q=${encodeURIComponent(activeQuery)}&page=${nextPage}`);
+      const data = await res.json();
+      if (res.ok) {
+        setResults((prev) => [...prev, ...(data.results ?? [])]);
+        setPage(nextPage);
+        setHasMore(Boolean(data.hasMore));
+      }
+    } catch {
+      // Silently leave the existing grid as-is — "Show More" stays clickable to retry.
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -122,6 +152,17 @@ export function PexelsPicker({ industryHint, disabled }: { industryHint?: string
             </form>
           ))}
         </div>
+      )}
+
+      {hasMore && (
+        <button
+          type="button"
+          onClick={loadMore}
+          disabled={loadingMore}
+          className="w-fit self-center rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition hover:border-gray-300 disabled:opacity-50"
+        >
+          {loadingMore ? "Loading..." : "Show more"}
+        </button>
       )}
     </div>
   );
