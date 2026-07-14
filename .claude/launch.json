@@ -6,6 +6,12 @@
       "runtimeExecutable": "cmd.exe",
       "runtimeArgs": ["/c", "set PATH=C:\\Program Files\\nodejs;%PATH% && npm run dev -- --port 3002"],
       "port": 3002
+    },
+    {
+      "name": "digitalflyer-growth-prod",
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/c", "set PATH=C:\\Program Files\\nodejs;%PATH% && npx next start --port 3003"],
+      "port": 3003
     }
   ]
 }

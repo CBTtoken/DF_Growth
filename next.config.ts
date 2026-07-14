@@ -34,6 +34,49 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "8mb",
     },
   },
+  // Public Beta Polish Sprint Sec 13.9. Confirmed the actual external
+  // surface before writing this, rather than guessing: Paystack checkout
+  // is a full-page redirect to its own hosted domain (initializePaystackCheckout
+  // -> NextResponse.redirect), never embedded here, so it needs zero CSP
+  // allowances on this site. Meta Pixel (MetaPixelScript.tsx) is an inline
+  // bootstrap script with the pixel ID interpolated directly into its
+  // source, which rules out a hash-based script-src (the hash would differ
+  // per client) — a nonce-based CSP would need middleware.ts, which this
+  // project doesn't have and isn't worth introducing this late just for
+  // one inline snippet, so script-src allows 'unsafe-inline' as the
+  // pragmatic tradeoff; every other directive still meaningfully narrows
+  // the attack surface. style-src needs 'unsafe-inline' too — this app
+  // uses inline style={{}} extensively (brand colors, generated social
+  // asset rendering) for genuinely dynamic per-client values that can't be
+  // known at build time for a static stylesheet. Verified live against
+  // Meta Pixel firing, Pexels images loading, and Paystack's redirect
+  // completing before this shipped.
+  async headers() {
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: https://images.pexels.com https://*.supabase.co https://www.facebook.com",
+      "font-src 'self' data:",
+      "connect-src 'self' https://*.supabase.co https://www.facebook.com https://connect.facebook.net",
+      "frame-ancestors 'none'",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join("; ");
+
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: csp },
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
