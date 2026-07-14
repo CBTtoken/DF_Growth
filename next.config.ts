@@ -52,28 +52,44 @@ const nextConfig: NextConfig = {
   // Meta Pixel firing, Pexels images loading, and Paystack's redirect
   // completing before this shipped.
   async headers() {
-    const csp = [
+    const cspDirectives = (frameAncestors: string) => [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://images.pexels.com https://*.supabase.co https://www.facebook.com",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co https://www.facebook.com https://connect.facebook.net",
-      "frame-ancestors 'none'",
+      `frame-ancestors ${frameAncestors}`,
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join("; ");
 
+    const sharedHeaders = (csp: string, frameOptions: string) => [
+      { key: "Content-Security-Policy", value: csp },
+      { key: "X-Frame-Options", value: frameOptions },
+      { key: "X-Content-Type-Options", value: "nosniff" },
+      { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+    ];
+
     return [
       {
         source: "/:path*",
-        headers: [
-          { key: "Content-Security-Policy", value: csp },
-          { key: "X-Frame-Options", value: "DENY" },
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-        ],
+        headers: sharedHeaders(cspDirectives("'none'"), "DENY"),
+      },
+      // Real bug found live: the pricing page's "See It In Action" section
+      // embeds /sample/[slug] in same-origin <iframe>s (Sec 36) — the
+      // blanket frame-ancestors 'none' / X-Frame-Options: DENY above
+      // blocks a page from framing itself just as much as it blocks any
+      // other site, so every one of those previews failed to load
+      // (confirmed live: net::ERR_BLOCKED_BY_RESPONSE on each). Next.js
+      // applies the last matching header for a given key when multiple
+      // entries match the same path, so this narrower, later rule only
+      // loosens framing for the sample pages specifically — every other
+      // route keeps the strict 'none'/DENY clickjacking protection above.
+      {
+        source: "/sample/:path*",
+        headers: sharedHeaders(cspDirectives("'self'"), "SAMEORIGIN"),
       },
     ];
   },
