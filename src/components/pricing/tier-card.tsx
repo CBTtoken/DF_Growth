@@ -173,16 +173,26 @@ export function TierCard({
           {state?.error?.email && <p className="text-xs text-red-600">{state.error.email[0]}</p>}
           {/* Combined spec Sec 12: a typo here is unrecoverable — there's no
               other way to reach someone who mistypes the one address their
-              account and magic links go to. Paste/drop/autofill all bypass
-              retyping the address, defeating the point of a confirmation
-              field, so all three are blocked here; onChange still fires
-              normally for a real second keystroke-by-keystroke entry. */}
+              account and magic links go to. Paste/drop are blocked so a
+              typo can't be copy-pasted straight through, but the real bug
+              found in live testing was the browser itself, not this code:
+              Chrome/Edge/Firefox all silently autofill a second adjacent
+              type="email" field with the first field's value regardless of
+              autoComplete="off" (a long-documented Chromium behavior —
+              autocomplete="off" has been ignored for autofillable fields
+              since ~2014), defeating the confirmation entirely without any
+              onChange in this file ever firing. readOnly until focus is the
+              standard workaround: autofill engines skip readonly fields, and
+              removing it on focus (a real user action, not a background
+              script) restores normal typing immediately. */}
           <input
             type="email"
             name="confirmEmail"
             placeholder="Confirm your email"
             required
             autoComplete="off"
+            readOnly
+            onFocus={(e) => e.currentTarget.removeAttribute("readonly")}
             value={confirmEmail}
             onChange={(e) => setConfirmEmail(e.target.value)}
             onPaste={(e) => e.preventDefault()}
