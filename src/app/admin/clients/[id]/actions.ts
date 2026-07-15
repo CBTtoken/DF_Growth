@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 
@@ -45,4 +46,54 @@ export async function setMarketplaceUrl(
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/dashboard");
   return { success: true };
+}
+
+// Real gap found live: admin had no way to take a live page down (a test
+// signup was showing up on /marketplace with no way to hide or remove it)
+// short of a direct database query. Reuses the "cancelled" status value
+// self-serve cancel (dashboard/actions.ts) already writes — [clientSlug]/
+// page.tsx and every public listing already gate on status === "active",
+// so this hides the page the same way a real cancellation does, without
+// inventing a second status value nothing else checks. Reversible: calling
+// it again on a cancelled account reactivates it.
+export async function toggleClientVisibility(clientId: string) {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const admin = createAdminClient();
+  const { data: client } = await admin.from("growth_clients").select("status").eq("id", clientId).single();
+  if (!client) return { error: "Client not found." };
+
+  const nextStatus = client.status === "active" ? "cancelled" : "active";
+  const { error } = await admin.from("growth_clients").update({ status: nextStatus }).eq("id", clientId);
+  if (error) return { error: "Could not update, please try again." };
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin");
+  revalidatePath("/marketplace");
+  return { success: true };
+}
+
+// Real delete, not a soft-hide — for genuine test/junk accounts (the
+// original real case: two throwaway "ABC Group" signups cluttering
+// /marketplace). Every child table cascades on growth_client_id except
+// whatsapp_conversations (see supabase/migrations/20260712180000_add_
+// whatsapp_onboarding.sql — no ON DELETE CASCADE there), so that one needs
+// an explicit delete first or the growth_clients delete itself would fail
+// on the foreign key. Does not touch Storage objects (logo/photos/
+// generated assets) or the linked auth user — a known gap, not silently
+// pretended away; a user can own more than one growth_client (see the
+// account switcher), so deleting their login here would be wrong.
+export async function deleteClient(clientId: string) {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const admin = createAdminClient();
+  await admin.from("whatsapp_conversations").delete().eq("growth_client_id", clientId);
+  const { error } = await admin.from("growth_clients").delete().eq("id", clientId);
+  if (error) return { error: "Could not delete, please try again." };
+
+  revalidatePath("/admin");
+  revalidatePath("/marketplace");
+  redirect("/admin");
 }

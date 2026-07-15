@@ -6,6 +6,7 @@ import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { describeGrowthClientStatus } from "@/lib/growth-client/admin-status-label";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { MarketplaceUrlForm } from "@/components/admin/MarketplaceUrlForm";
+import { DangerZone } from "@/components/admin/DangerZone";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -174,6 +175,8 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             </div>
           )}
         </section>
+
+        <DangerZone clientId={client.id} isActive={client.status === "active"} />
       </div>
     </main>
   );

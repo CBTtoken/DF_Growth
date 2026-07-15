@@ -169,7 +169,15 @@ export default async function ClientLandingPage({
        apart from a capitalised variable assigned from a function call. */
     const CustomPage = getCustomPage(landingPage.custom_page_key);
     if (!CustomPage) return notFound();
-    return <CustomPage clientId={client.id} businessName={client.business_name} metaPixelId={client.meta_pixel_id} />;
+    return (
+      <CustomPage
+        clientId={client.id}
+        businessName={client.business_name}
+        metaPixelId={client.meta_pixel_id}
+        landingPageId={landingPage.id}
+        contactEmail={client.contact_email}
+      />
+    );
     /* eslint-enable react-hooks/static-components */
   }
 

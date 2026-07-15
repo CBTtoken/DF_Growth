@@ -12,6 +12,12 @@ export type CustomPageProps = {
   clientId: string;
   businessName: string;
   metaPixelId: string | null;
+  // Added for RE:Biz Nomads' real contact form (LeadForm.tsx, the same
+  // component every templated page already uses) — Standing 365 has no
+  // form and doesn't read this, but it's on every custom page's props now
+  // rather than adding a second, page-type-specific prop shape.
+  landingPageId: string;
+  contactEmail: string | null;
 };
 
 export const customPages: Record<string, ComponentType<CustomPageProps>> = {
