@@ -20,6 +20,8 @@ export const standardOrderSchema = z.object(baseOrderFields);
 export const personalisedOrderSchema = z.object({
   ...baseOrderFields,
   recipientName: z.string().min(2, "Enter the recipient's name"),
-  // Sec 5: "reasonable character limit... suggest 300 characters".
-  giftMessage: z.string().min(1, "Write a short message").max(300, "Keep it under 300 characters"),
+  // Sec 5 suggested 300 as a starting point; bumped to 500 per real
+  // feedback that 300 felt too tight for a message someone actually cares
+  // about getting right (matches OrderForm.tsx's GIFT_MESSAGE_LIMIT).
+  giftMessage: z.string().min(1, "Write a short message").max(500, "Keep it under 500 characters"),
 });

@@ -4,7 +4,10 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { submitBookOrder } from "@/components/custom-pages/standing365/actions";
 
-const GIFT_MESSAGE_LIMIT = 300;
+// Real feedback: 300 read as too tight for a real personal message, and a
+// gift message someone actually cares about getting right deserves the
+// room. 500 still comfortably fits inside a printed front-cover page.
+const GIFT_MESSAGE_LIMIT = 500;
 
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 5/10: opens inline below the
 // chosen card rather than a separate page/modal — keeps the visitor in the
@@ -29,8 +32,16 @@ export function OrderForm({
         <h4 className="text-sm font-semibold uppercase tracking-wide text-[#16213E]">
           {edition === "personalised" ? "Personalised Paperback — your details" : "Standard Paperback — your details"}
         </h4>
-        <button type="button" onClick={onClose} className="text-xs text-[#2E2A22]/50 hover:text-[#2E2A22]">
-          Cancel
+        {/* Real feedback: this used to be faint, low-contrast text easy to
+            miss entirely, reading as "there's no way back" once the form
+            was open. A real bordered button with an explicit arrow reads
+            unambiguously as a way out. */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex items-center gap-1 rounded-full border border-[#16213E]/20 px-3 py-1.5 text-xs font-semibold text-[#16213E] transition hover:border-[#16213E]/40 hover:bg-[#16213E]/5"
+        >
+          ← Back
         </button>
       </div>
 

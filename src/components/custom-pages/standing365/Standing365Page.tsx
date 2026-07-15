@@ -1,6 +1,7 @@
 import { Source_Serif_4 } from "next/font/google";
 import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 import { FbclidCapture } from "@/components/landing/FbclidCapture";
+import { OwnerBarGate } from "@/components/landing/OwnerBarGate";
 import { Hero } from "@/components/custom-pages/standing365/Hero";
 import { About } from "@/components/custom-pages/standing365/About";
 import { TwelveMonths } from "@/components/custom-pages/standing365/TwelveMonths";
@@ -50,6 +51,13 @@ export function Standing365Page({ clientId, metaPixelId }: CustomPageProps) {
       <OwnACopy clientId={clientId} />
       <Closing />
       <PixelConsentGate pixelId={metaPixelId} />
+      {/* Real feedback: no way back to the dashboard from this page at
+          all — every other Growth page gets this "you're viewing your
+          live page" bar for free via ClientLandingPageView, but a custom
+          page builds its own component tree from scratch and needs it
+          added explicitly. Renders nothing for anyone but the real
+          authenticated owner (client-side membership check). */}
+      <OwnerBarGate growthClientId={clientId} />
     </main>
   );
 }

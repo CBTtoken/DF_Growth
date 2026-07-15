@@ -38,15 +38,31 @@ export function OrderReturnBanner() {
 
   if (!state) return null;
 
+  // Real feedback: success used to be the same slim top strip as failure,
+  // and it didn't feel like enough for someone who just bought the book —
+  // "make them feel special". Failure stays a slim, actionable strip since
+  // it needs a quick nudge to retry, not fanfare; success gets a full,
+  // prominent section instead, matching the weight of the Hero it sits
+  // above.
+  if (state === "failed") {
+    return (
+      <div className="sticky top-0 z-50 bg-red-800 px-4 py-3 text-center text-sm font-semibold text-white">
+        That payment didn&apos;t go through. Please try ordering again below.
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={`sticky top-0 z-50 px-4 py-3 text-center text-sm font-semibold text-white ${
-        state === "success" ? "bg-[#16213E]" : "bg-red-800"
-      }`}
-    >
-      {state === "success"
-        ? "Thank you — your order is confirmed! You'll get an email shortly with your batch details."
-        : "That payment didn't go through. Please try ordering again below."}
-    </div>
+    <section className="flex flex-col items-center gap-4 bg-[#B8832A] px-6 py-14 text-center text-[#16213E]">
+      <span className="grid size-14 place-items-center rounded-full bg-[#16213E] text-2xl text-[#D6A857]">✓</span>
+      <h2 className="font-[family-name:var(--font-s365-serif)] text-2xl sm:text-3xl">
+        Thank you — you&apos;re part of the Standing 365 family
+      </h2>
+      <p className="max-w-xl text-sm leading-relaxed sm:text-base">
+        We&apos;ll confirm your expected delivery date by email shortly. If this copy is for you, we hope every
+        page meets you exactly where you are. If it&apos;s for someone you love, get ready — they&apos;re about to
+        have 365 days that could change everything.
+      </p>
+    </section>
   );
 }
