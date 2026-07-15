@@ -446,3 +446,31 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
   revalidatePath("/onboard");
   return { success: true };
 }
+
+// Found via real feedback during onboarding testing: a Growth client who
+// picked monthly earlier never sees a second chance to compare against
+// annual before actually paying — worth surfacing right here, since
+// /api/checkout/finish already reads billing_cycle fresh from the row at
+// charge time, so updating it here is enough to change what they're
+// actually charged, no separate wiring needed. Scoped to pending_intake
+// growth_engine specifically — this switch only makes sense before the
+// first payment; an already-active subscription's billing cycle change is
+// a different, bigger operation (cancel + resubscribe on Paystack's side)
+// this isn't meant to cover.
+export async function switchToAnnual(): Promise<{ error?: string; success?: boolean }> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: client.error };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("growth_clients")
+    .update({ billing_cycle: "annual" })
+    .eq("id", client.id)
+    .eq("status", "pending_intake")
+    .eq("plan", "growth_engine");
+
+  if (error) return { error: "Could not switch, please try again." };
+
+  revalidatePath("/onboard");
+  return { success: true };
+}
