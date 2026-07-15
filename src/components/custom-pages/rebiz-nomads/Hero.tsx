@@ -1,15 +1,12 @@
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
+import Link from "next/link";
 
-// Pasted content's own CTA copy is "MESSAGE US ON WHATSAPP TO JOIN" — kept
-// verbatim as the button label rather than softened, matching the direct
-// tone of the rest of the source material.
+// Consolidated Sprint Sec 3.1: a WhatsApp CTA was never the right fit here
+// — WhatsApp is reserved as a Growth onboarding entry channel, and RE:Biz
+// Nomads isn't joined independently, it's a bundled benefit of Growth
+// membership. Replaced with a CTA that sends visitors to actually become a
+// member, framed around what that unlocks (the Deal Room, the community),
+// not a generic "join Growth" pitch.
 export function Hero() {
-  const whatsappHref = WHATSAPP_NUMBER
-    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-        "Hi, I'd like to hear more about RE:Biz Nomads."
-      )}`
-    : null;
-
   return (
     // Real feedback: the first version of this page was plain white
     // top-to-bottom, no color or feeling anywhere. A full-bleed brand-blue
@@ -34,16 +31,12 @@ export function Hero() {
           page. You also get access to a serious, private business community built for real
           growth.
         </p>
-        {whatsappHref && (
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-brand-dark shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-gray-100"
-          >
-            Message Us on WhatsApp to Join →
-          </a>
-        )}
+        <Link
+          href="/pricing"
+          className="mt-2 inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-brand-dark shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-gray-100"
+        >
+          Join DigitalFlyer Growth to Unlock This →
+        </Link>
       </div>
     </section>
   );

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   images: {
@@ -127,4 +128,20 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Consolidated Sprint Sec 3.3: wraps every build with Sentry's Next.js
+// plugin — safe to ship even before Dewald has created a Sentry account,
+// since org/project/authToken are only used for uploading source maps
+// (skipped, not a build failure, when unset) and error *reporting* itself
+// is controlled purely by the DSN in sentry.server.config.ts /
+// instrumentation-client.ts. Once real values exist, add SENTRY_ORG,
+// SENTRY_PROJECT, and SENTRY_AUTH_TOKEN in Vercel for readable
+// (un-minified) stack traces in the dashboard.
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  disableLogger: true,
+  automaticVercelMonitors: true,
+});

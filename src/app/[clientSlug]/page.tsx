@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ClientLandingPageView } from "@/components/landing/ClientLandingPageView";
+import { PageViewTracker } from "@/components/landing/PageViewTracker";
 import { getCustomPage, getCustomPageMeta } from "@/lib/custom-pages/registry";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
@@ -170,25 +171,31 @@ export default async function ClientLandingPage({
     const CustomPage = getCustomPage(landingPage.custom_page_key);
     if (!CustomPage) return notFound();
     return (
-      <CustomPage
-        clientId={client.id}
-        businessName={client.business_name}
-        metaPixelId={client.meta_pixel_id}
-        landingPageId={landingPage.id}
-        contactEmail={client.contact_email}
-      />
+      <>
+        <PageViewTracker slug={clientSlug} />
+        <CustomPage
+          clientId={client.id}
+          businessName={client.business_name}
+          metaPixelId={client.meta_pixel_id}
+          landingPageId={landingPage.id}
+          contactEmail={client.contact_email}
+        />
+      </>
     );
     /* eslint-enable react-hooks/static-components */
   }
 
   return (
-    <ClientLandingPageView
-      client={client}
-      landingPage={landingPage}
-      testimonials={testimonials ?? []}
-      photos={photos ?? []}
-      clientSlug={clientSlug}
-      mode="live"
-    />
+    <>
+      <PageViewTracker slug={clientSlug} />
+      <ClientLandingPageView
+        client={client}
+        landingPage={landingPage}
+        testimonials={testimonials ?? []}
+        photos={photos ?? []}
+        clientSlug={clientSlug}
+        mode="live"
+      />
+    </>
   );
 }

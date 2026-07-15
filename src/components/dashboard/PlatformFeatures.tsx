@@ -3,16 +3,20 @@
 // dashboards use, rather than only ever showing what a client already has.
 // Currently just one locked feature since Enterprise is the only tier with
 // something Growth doesn't include; add more cards here as that grows.
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
-
+//
+// Consolidated Sprint Sec 3.2: this CTA used to depend on
+// NEXT_PUBLIC_WHATSAPP_NUMBER, which is genuinely blocked — the WhatsApp
+// Business number itself is still pending Meta approval, not just a missing
+// env var. Rather than a real prospect hitting a "Coming soon" dead end (or
+// a silently broken link once the number's set but the var isn't), this
+// always points at a working fallback — swap back to WhatsApp once the
+// number is actually approved and live.
 export function PlatformFeatures({ plan }: { plan: string | null }) {
   if (plan === "enterprise") return null;
 
-  const whatsappHref = WHATSAPP_NUMBER
-    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-        "Hi, I'd like to hear more about Enterprise's ad management package."
-      )}`
-    : null;
+  const emailHref = `mailto:dewald@digitalflyer.co.za?subject=${encodeURIComponent(
+    "Enterprise ad management"
+  )}&body=${encodeURIComponent("Hi, I'd like to hear more about Enterprise's ad management package.")}`;
 
   return (
     <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6">
@@ -32,20 +36,12 @@ export function PlatformFeatures({ plan }: { plan: string | null }) {
             We run and optimize your ad campaigns for you, across both platforms.
           </p>
         </div>
-        {whatsappHref ? (
-          <a
-            href={whatsappHref}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
-          >
-            Ask about Enterprise
-          </a>
-        ) : (
-          <span className="inline-flex items-center rounded-full bg-gray-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-            Coming soon
-          </span>
-        )}
+        <a
+          href={emailHref}
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
+        >
+          Ask about Enterprise
+        </a>
       </div>
     </section>
   );

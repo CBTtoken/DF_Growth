@@ -18,6 +18,7 @@ import { SocialAssetGenerator } from "@/components/dashboard/SocialAssetGenerato
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
 import { OrdersSection } from "@/components/dashboard/OrdersSection";
+import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
 import { SiteFooter } from "@/components/SiteFooter";
 import { logOut } from "@/app/dashboard/actions";
 
@@ -44,6 +45,16 @@ export default async function DashboardPage() {
   }
 
   const admin = createAdminClient();
+  // Consolidated Sprint Sec 3.4: last 7 days' raw timestamps, bucketed by
+  // day client-side below rather than a date_trunc RPC — simple enough at
+  // this data volume, and avoids a second round-trip to define a function.
+  // react-hooks/purity flags Date.now() as an impure render call, a rule
+  // aimed at client components that may re-render from cached props with
+  // no new data — this is an async Server Component that re-executes
+  // fully per request by definition, so there's no stale-render risk here.
+  // eslint-disable-next-line react-hooks/purity
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
   const [
     { data: growthClient },
     { data: testimonials },
@@ -54,6 +65,8 @@ export default async function DashboardPage() {
     { data: photos },
     { data: landingPageType },
     { data: bookOrders },
+    { count: totalPageViews },
+    { data: recentPageViews },
   ] = await Promise.all([
     admin
       .from("growth_clients")
@@ -110,6 +123,16 @@ export default async function DashboardPage() {
       )
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false }),
+    admin
+      .from("page_views")
+      .select("id", { count: "exact", head: true })
+      .eq("growth_client_id", client.id),
+    admin
+      .from("page_views")
+      .select("viewed_at")
+      .eq("growth_client_id", client.id)
+      .gte("viewed_at", sevenDaysAgo)
+      .order("viewed_at", { ascending: true }),
   ]);
 
   // Separate from the admin-client Promise.all above — this one needs the
@@ -191,6 +214,8 @@ export default async function DashboardPage() {
           heroPhotoId={growthClient?.hero_photo_id ?? null}
           industryHint={growthClient?.industry ?? undefined}
         />
+
+        <PageViewsCard totalViews={totalPageViews ?? 0} recentViews={recentPageViews ?? []} />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Leads ({leads?.length ?? 0})</h2>

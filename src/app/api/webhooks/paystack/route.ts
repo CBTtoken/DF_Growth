@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import * as Sentry from "@sentry/nextjs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
 
     if (error || !order) {
       console.error("Failed to write book_order from webhook", error);
+      Sentry.captureMessage("Failed to write book_order from webhook", { extra: { error, reference } });
     } else {
       try {
         await sendBookOrderConfirmationEmail({
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
         });
       } catch (err) {
         console.error("Book order confirmation email failed", err);
+        Sentry.captureException(err, { extra: { orderId: order.id } });
       }
     }
 
@@ -106,6 +109,9 @@ export async function POST(request: Request) {
 
   if (!reference || (!trialClientId && (!email || !businessName || !tier))) {
     console.error("charge.success missing expected metadata", { email, businessName, tier, reference, trialClientId });
+    Sentry.captureMessage("charge.success missing expected metadata", {
+      extra: { email, businessName, tier, reference, trialClientId },
+    });
     return NextResponse.json({ received: true });
   }
 
@@ -216,6 +222,9 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Failed to convert trial/upgrade/pending signup to paid", error);
+      Sentry.captureMessage("Failed to convert trial/upgrade/pending signup to paid", {
+        extra: { error, trialClientId, reference },
+      });
     } else if (isFirstPaymentForPendingSignup && existingClient) {
       // Mirrors exactly what saveStep7 (Meta Connect) used to do
       // unconditionally at the old finish line, before Sec 10 moved
@@ -294,6 +303,9 @@ export async function POST(request: Request) {
 
   if (result && "error" in result) {
     console.error("Failed to provision growth_client from webhook", result.error);
+    Sentry.captureMessage("Failed to provision growth_client from webhook", {
+      extra: { error: result.error, reference, email, businessName, tier },
+    });
   }
 
   return NextResponse.json({ received: true });

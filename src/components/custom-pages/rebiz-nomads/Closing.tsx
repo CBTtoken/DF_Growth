@@ -1,14 +1,9 @@
 import Link from "next/link";
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
-
+// Consolidated Sprint Sec 3.1: same fix as Hero.tsx — this page had two
+// separate "Message Us on WhatsApp to Join" CTAs, both replaced with a
+// real path to actually becoming a member.
 export function Closing() {
-  const whatsappHref = WHATSAPP_NUMBER
-    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-        "Hi, I'd like to hear more about RE:Biz Nomads."
-      )}`
-    : null;
-
   return (
     <footer className="flex flex-col items-center gap-8 bg-brand-dark px-6 py-24 text-center text-white">
       <p className="max-w-xl text-2xl font-bold tracking-tight">
@@ -17,16 +12,12 @@ export function Closing() {
         One membership.
       </p>
 
-      {whatsappHref && (
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-brand-dark shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-gray-100"
-        >
-          Message Us on WhatsApp to Join →
-        </a>
-      )}
+      <Link
+        href="/pricing"
+        className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-brand-dark shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-gray-100"
+      >
+        Join DigitalFlyer Growth to Unlock This →
+      </Link>
 
       <div className="mt-6 flex flex-col items-center gap-1 border-t border-white/15 pt-8 text-xs text-white/60">
         <p className="text-base font-bold text-white/90">RE:Biz Nomads</p>

@@ -1,4 +1,5 @@
 import { NextResponse, after } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { isValidWhatsAppSignature } from "@/lib/whatsapp/signature";
 import { parseWhatsAppWebhook } from "@/lib/whatsapp/parse-webhook";
 import { handleIncomingWhatsAppMessage } from "@/lib/whatsapp/handle-message";
@@ -49,6 +50,12 @@ export async function POST(request: Request) {
         await handleIncomingWhatsAppMessage(message);
       } catch (err) {
         console.error("WhatsApp message handling failed", message.bsuid, err);
+        // Errors thrown inside after() run after the response is already
+        // sent, so Next's automatic onRequestError instrumentation never
+        // sees them — explicit capture is the only way this reaches
+        // Sentry, which is exactly why the sprint spec calls this handler
+        // out by name.
+        Sentry.captureException(err, { extra: { bsuid: message.bsuid } });
       }
     }
   });
