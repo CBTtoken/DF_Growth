@@ -52,6 +52,15 @@ const nextConfig: NextConfig = {
   // Meta Pixel firing, Pexels images loading, and Paystack's redirect
   // completing before this shipped.
   async headers() {
+    // Real bug found live, second time: this CSP set no frame-src at all,
+    // which falls back to default-src 'self' — silently blocking every
+    // client page's LocationMap Google Maps embed (components/landing/
+    // LocationMap.tsx) sitewide since this shipped. Confirmed live: zero
+    // network activity toward google.com when a client page with a real
+    // address loads, not even a blocked-request entry, just nothing.
+    // frame-ancestors (who can frame US) and frame-src (what WE can frame)
+    // are different directions entirely — the earlier /sample fix only
+    // ever touched the former, so it couldn't have caught this.
     const cspDirectives = (frameAncestors: string) => [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
@@ -59,6 +68,7 @@ const nextConfig: NextConfig = {
       "img-src 'self' data: https://images.pexels.com https://*.supabase.co https://www.facebook.com",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co https://www.facebook.com https://connect.facebook.net",
+      "frame-src 'self' https://www.google.com",
       `frame-ancestors ${frameAncestors}`,
       "object-src 'none'",
       "base-uri 'self'",
@@ -89,6 +99,21 @@ const nextConfig: NextConfig = {
       // route keeps the strict 'none'/DENY clickjacking protection above.
       {
         source: "/sample/:path*",
+        headers: sharedHeaders(cspDirectives("'self'"), "SAMEORIGIN"),
+      },
+      // Same exact issue, a second place: the onboarding wizard's template
+      // picker (components/templates/TemplateGallery.tsx, used by both
+      // Step4TemplatePicker and the dashboard's "Change template") embeds
+      // /preview/[templateId] in a same-origin <iframe> the identical way
+      // — confirmed live via the CSP headers on that route directly. Missed
+      // the first time because the fix only covered the one place it was
+      // reported (/sample), not every same-origin <iframe> in the app —
+      // grepped for every <iframe> usage this time before considering it
+      // done (three total: this one, /sample, and LocationMap's Google Maps
+      // embed, fixed above via frame-src instead since that one frames an
+      // external site, not itself).
+      {
+        source: "/preview/:path*",
         headers: sharedHeaders(cspDirectives("'self'"), "SAMEORIGIN"),
       },
     ];
