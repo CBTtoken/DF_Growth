@@ -1,10 +1,11 @@
-// STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sprint 1: static content only,
-// "no order logic yet" — Standard and Personalised are honest placeholders
-// until Sprint 2 wires up the real order form + Paystack flow. Kindle is a
-// pure external link, live from day one, no data capture needed.
+"use client";
+
+import { useState } from "react";
+import { OrderForm } from "@/components/custom-pages/standing365/OrderForm";
+
 const OPTIONS = [
   {
-    key: "standard",
+    key: "standard" as const,
     name: "Standard Paperback",
     price: "R299",
     delivery: "+ R75 delivery nationwide",
@@ -12,22 +13,26 @@ const OPTIONS = [
     highlight: false,
   },
   {
-    key: "personalised",
+    key: "personalised" as const,
     name: "Personalised Paperback",
     price: "R385",
     delivery: "+ R75 delivery nationwide",
     description: "Your recipient's name on the cover and a personal message printed inside the front cover.",
     highlight: true,
   },
-] as const;
+];
 
-export function OwnACopy() {
+export function OwnACopy({ clientId }: { clientId: string }) {
+  const [openEdition, setOpenEdition] = useState<"standard" | "personalised" | null>(null);
+
   return (
     <section id="own-a-copy" className="bg-[#FBF8F3] px-6 py-24">
       <div className="mx-auto flex max-w-5xl flex-col gap-10">
         <div className="flex flex-col items-center gap-3 text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#B8832A]">Own a copy</p>
-          <h2 className="font-[family-name:var(--font-s365-serif)] text-3xl text-[#16213E] sm:text-4xl">Get your copy of Standing 365</h2>
+          <h2 className="font-[family-name:var(--font-s365-serif)] text-3xl text-[#16213E] sm:text-4xl">
+            Get your copy of Standing 365
+          </h2>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-3">
@@ -36,7 +41,7 @@ export function OwnACopy() {
               key={opt.key}
               className={`relative flex flex-col gap-4 rounded-2xl border bg-white p-8 ${
                 opt.highlight ? "border-[#B8832A] shadow-lg shadow-[#B8832A]/10" : "border-[#16213E]/10"
-              }`}
+              } ${openEdition === opt.key ? "sm:col-span-3" : ""}`}
             >
               {opt.highlight && (
                 <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#B8832A] px-4 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
@@ -45,18 +50,24 @@ export function OwnACopy() {
               )}
               <h3 className="font-[family-name:var(--font-s365-serif)] text-xl text-[#16213E]">{opt.name}</h3>
               <div>
-                <span className="font-[family-name:var(--font-s365-serif)] text-3xl text-[#16213E]">{opt.price}</span>
+                <span className="font-[family-name:var(--font-s365-serif)] text-3xl text-[#16213E]">
+                  {opt.price}
+                </span>
                 <span className="ml-1 text-xs text-[#2E2A22]/60">{opt.delivery}</span>
               </div>
               <p className="flex-1 text-sm leading-relaxed text-[#2E2A22]/80">{opt.description}</p>
-              <button
-                type="button"
-                disabled
-                title="Order form opens soon"
-                className="cursor-not-allowed rounded-full border border-[#16213E]/15 bg-[#16213E]/5 px-6 py-3 text-sm font-semibold text-[#16213E]/50"
-              >
-                Order form opens soon
-              </button>
+
+              {openEdition === opt.key ? (
+                <OrderForm edition={opt.key} growthClientId={clientId} onClose={() => setOpenEdition(null)} />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setOpenEdition(opt.key)}
+                  className="rounded-full bg-[#16213E] px-6 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#233158]"
+                >
+                  Order this edition
+                </button>
+              )}
             </div>
           ))}
 

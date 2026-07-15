@@ -7,6 +7,7 @@ import { TwelveMonths } from "@/components/custom-pages/standing365/TwelveMonths
 import { OwnACopy } from "@/components/custom-pages/standing365/OwnACopy";
 import { Closing } from "@/components/custom-pages/standing365/Closing";
 import { BookSchema } from "@/components/custom-pages/standing365/BookSchema";
+import { OrderReturnBanner } from "@/components/custom-pages/standing365/OrderReturnBanner";
 import type { CustomPageProps } from "@/lib/custom-pages/registry";
 
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 4: full custom code, hand
@@ -35,17 +36,18 @@ const sourceSerif = Source_Serif_4({
   variable: "--font-s365-serif",
 });
 
-export function Standing365Page({ metaPixelId }: CustomPageProps) {
+export function Standing365Page({ clientId, metaPixelId }: CustomPageProps) {
   const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/standing-365`;
 
   return (
     <main className={`${sourceSerif.variable} flex flex-1 flex-col`}>
       <BookSchema url={url} />
       <FbclidCapture />
+      <OrderReturnBanner />
       <Hero />
       <About />
       <TwelveMonths />
-      <OwnACopy />
+      <OwnACopy clientId={clientId} />
       <Closing />
       <PixelConsentGate pixelId={metaPixelId} />
     </main>

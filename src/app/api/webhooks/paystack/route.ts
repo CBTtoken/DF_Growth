@@ -3,6 +3,7 @@ import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
+import { sendBookOrderConfirmationEmail } from "@/lib/email/book-order";
 import { trackBetaEvent } from "@/lib/metrics/track";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
@@ -34,7 +35,62 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   }
 
-  const { customer, metadata, reference } = event.data;
+  const { customer, metadata, reference, amount } = event.data;
+
+  // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 5/6: handled first and
+  // returns immediately — a book order shares this one webhook endpoint
+  // (Paystack accounts only support a single registered webhook URL, so
+  // there's nowhere else for it to arrive) but is otherwise a fully
+  // separate flow from everything below, which is all growth_client
+  // signup/billing logic that book orders have nothing to do with.
+  if (metadata?.order_type === "book_order") {
+    const admin = createAdminClient();
+
+    const { data: existingOrder } = await admin
+      .from("book_orders")
+      .select("id")
+      .eq("paystack_reference", reference)
+      .maybeSingle();
+    if (existingOrder) {
+      return NextResponse.json({ received: true });
+    }
+
+    const { data: order, error } = await admin
+      .from("book_orders")
+      .insert({
+        growth_client_id: metadata.growth_client_id,
+        edition: metadata.edition,
+        buyer_name: metadata.buyer_name,
+        email: customer?.email,
+        phone: metadata.phone,
+        delivery_address: JSON.parse(metadata.delivery_address ?? "{}"),
+        recipient_name: metadata.recipient_name ?? null,
+        gift_message: metadata.gift_message ?? null,
+        amount,
+        payment_status: "paid",
+        paystack_reference: reference,
+        marketing_consent: metadata.marketing_consent === "true",
+      })
+      .select("id, buyer_name, email, edition")
+      .single();
+
+    if (error || !order) {
+      console.error("Failed to write book_order from webhook", error);
+    } else {
+      try {
+        await sendBookOrderConfirmationEmail({
+          buyerName: order.buyer_name,
+          email: order.email,
+          edition: order.edition,
+        });
+      } catch (err) {
+        console.error("Book order confirmation email failed", err);
+      }
+    }
+
+    return NextResponse.json({ received: true });
+  }
+
   const email: string | undefined = customer?.email;
   const businessName: string | undefined = metadata?.business_name;
   const tier: string | undefined = metadata?.tier;

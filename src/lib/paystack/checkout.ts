@@ -48,3 +48,43 @@ export async function initializePaystackCheckout({
 
   return { authorizationUrl: data.data.authorization_url };
 }
+
+// STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 5: a book order is a single
+// one-time charge, not a subscription — no plan code, amount passed
+// directly (Paystack's smallest-currency-unit convention, so cents for
+// ZAR, matching amountForTier's own unmodified pass-through above).
+export async function initializeOneTimeCheckout({
+  email,
+  amount,
+  callbackUrl,
+  metadata,
+}: {
+  email: string;
+  amount: number;
+  callbackUrl: string;
+  metadata: Record<string, string>;
+}): Promise<{ authorizationUrl: string } | { error: string }> {
+  const res = await fetch("https://api.paystack.co/transaction/initialize", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      amount,
+      currency: "ZAR",
+      callback_url: callbackUrl,
+      metadata,
+    }),
+  });
+
+  const data = await res.json();
+
+  if (!data.status || !data.data?.authorization_url) {
+    console.error("Failed to initialize one-time Paystack checkout", data);
+    return { error: "initialize_failed" };
+  }
+
+  return { authorizationUrl: data.data.authorization_url };
+}
