@@ -15,7 +15,14 @@ const baseOrderFields = {
   marketingConsent: z.boolean().default(false),
 };
 
-export const standardOrderSchema = z.object(baseOrderFields);
+// Standard-only: Personalised stays 1-per-order (Dewald's own call — each
+// copy needs its own unique cover name and message, so a real bulk request
+// goes through email instead, see OwnACopy.tsx's hint text). z.coerce
+// since this arrives as a FormData string, not a real number.
+export const standardOrderSchema = z.object({
+  ...baseOrderFields,
+  quantity: z.coerce.number().int().min(1, "Enter at least 1").max(20, "For more than 20, please email us"),
+});
 
 export const personalisedOrderSchema = z.object({
   ...baseOrderFields,

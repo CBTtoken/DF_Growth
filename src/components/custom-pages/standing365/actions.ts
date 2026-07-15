@@ -12,8 +12,12 @@ type OrderState = { error?: Record<string, string[]> & { _form?: string[] } } | 
 // (standard) and R385 + R75 delivery (personalised), in cents — Paystack's
 // transaction/initialize takes the smallest currency unit, same convention
 // initializePaystackCheckout already relies on for subscription amounts.
-const STANDARD_AMOUNT = (299 + 75) * 100;
-const PERSONALISED_AMOUNT = (385 + 75) * 100;
+// STANDARD_UNIT_PRICE scales with quantity below; delivery is charged once
+// per order regardless of quantity — multiple copies to one address is
+// genuinely one parcel, not N shipments.
+const STANDARD_UNIT_PRICE = 299 * 100;
+const DELIVERY_FEE = 75 * 100;
+const PERSONALISED_AMOUNT = 385 * 100 + DELIVERY_FEE;
 
 // Data isn't written to book_orders here — mirrors how a brand-new Growth
 // signup's upfront payment works (src/app/api/webhooks/paystack/route.ts):
@@ -43,6 +47,7 @@ export async function submitBookOrder(
     marketingConsent: formData.get("marketingConsent") === "on",
     recipientName: formData.get("recipientName") || undefined,
     giftMessage: formData.get("giftMessage") || undefined,
+    quantity: formData.get("quantity") || 1,
   };
 
   if (formData.get("legalConsent") !== "on") {
@@ -79,7 +84,7 @@ export async function submitBookOrder(
     const parsed = standardOrderSchema.safeParse(raw);
     if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
     email = parsed.data.email;
-    amount = STANDARD_AMOUNT;
+    amount = STANDARD_UNIT_PRICE * parsed.data.quantity + DELIVERY_FEE;
     Object.assign(metadata, {
       buyer_name: parsed.data.buyerName,
       phone: parsed.data.phone,
@@ -90,6 +95,7 @@ export async function submitBookOrder(
         postalCode: parsed.data.postalCode,
       }),
       marketing_consent: String(parsed.data.marketingConsent),
+      quantity: String(parsed.data.quantity),
     });
   }
 

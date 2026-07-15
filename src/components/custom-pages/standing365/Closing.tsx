@@ -1,3 +1,11 @@
+import Link from "next/link";
+
+// Real feedback: this footer had no Privacy Policy / Terms links at all,
+// unlike every standard Growth page's footer (see
+// ClientLandingPageView.tsx's own "Manage this page · Privacy Policy ·
+// Terms & Conditions" pattern) — a real gap given this page collects a home
+// address and a personal gift message, per the spec's own Sec 9 data
+// privacy note.
 export function Closing() {
   return (
     <footer className="flex flex-col items-center gap-8 bg-[#16213E] px-6 py-24 text-center text-white">
@@ -36,6 +44,15 @@ export function Closing() {
           >
             WhatsApp +27 72 311 0570
           </a>
+        </p>
+        <p className="mt-2 flex items-center justify-center gap-3">
+          <Link href="/privacy" className="underline-offset-2 hover:text-white hover:underline">
+            Privacy Policy
+          </Link>
+          <span aria-hidden>&middot;</span>
+          <Link href="/terms" className="underline-offset-2 hover:text-white hover:underline">
+            Terms &amp; Conditions
+          </Link>
         </p>
       </div>
     </footer>

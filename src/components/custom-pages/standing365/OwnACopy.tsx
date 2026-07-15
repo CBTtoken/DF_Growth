@@ -57,6 +57,23 @@ export function OwnACopy({ clientId }: { clientId: string }) {
               </div>
               <p className="flex-1 text-sm leading-relaxed text-[#2E2A22]/80">{opt.description}</p>
 
+              {/* Real question raised: what if someone wants more than one
+                  personalised copy? Dewald's own call — keep it 1-per-order
+                  since each one needs its own unique cover name and message
+                  (Standard gets a real quantity selector instead, in
+                  OrderForm.tsx), a genuine bulk personalised request goes
+                  through email so batching and pricing can be worked out
+                  by hand rather than guessed at in a form. */}
+              {opt.key === "personalised" && openEdition !== "personalised" && (
+                <p className="text-xs text-[#2E2A22]/50">
+                  Need more than one personalised copy?{" "}
+                  <a href="mailto:dewald@digitalflyer.co.za" className="underline underline-offset-2">
+                    Email us
+                  </a>
+                  .
+                </p>
+              )}
+
               {openEdition === opt.key ? (
                 <OrderForm edition={opt.key} growthClientId={clientId} onClose={() => setOpenEdition(null)} />
               ) : (

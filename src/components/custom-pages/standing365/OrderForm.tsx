@@ -25,6 +25,13 @@ export function OrderForm({
   const boundAction = submitBookOrder.bind(null, growthClientId, edition);
   const [state, formAction, pending] = useActionState(boundAction, null);
   const [giftMessage, setGiftMessage] = useState("");
+  // Standard only, per Dewald's own call — Personalised stays 1-per-order
+  // since each copy needs its own unique cover name and message, a real
+  // bulk request goes through email instead (hint shown on that card in
+  // OwnACopy.tsx). Delivery is charged once per order, not once per copy —
+  // multiple books to one address is genuinely one parcel, not N shipments.
+  const [quantity, setQuantity] = useState(1);
+  const total = 299 * quantity + 75;
 
   return (
     <div className="mt-4 rounded-2xl border border-[#B8832A]/30 bg-[#FBF8F3] p-6 text-left">
@@ -78,6 +85,47 @@ export function OrderForm({
             {state?.error?.phone && <p className="text-xs text-red-600">{state.error.phone[0]}</p>}
           </div>
         </div>
+
+        {edition === "standard" && (
+          <div className="flex items-center justify-between rounded-lg border border-[#16213E]/15 bg-white px-3 py-2.5">
+            <label htmlFor="quantity" className="text-sm text-[#2E2A22]">
+              How many copies?
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                aria-label="Decrease quantity"
+                className="grid size-7 place-items-center rounded-full border border-[#16213E]/20 text-[#16213E] hover:border-[#16213E]/40"
+              >
+                −
+              </button>
+              <input
+                id="quantity"
+                name="quantity"
+                type="number"
+                min={1}
+                max={20}
+                value={quantity}
+                onChange={(e) => setQuantity(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
+                className="w-10 border-0 text-center text-sm text-[#2E2A22] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => setQuantity((q) => Math.min(20, q + 1))}
+                aria-label="Increase quantity"
+                className="grid size-7 place-items-center rounded-full border border-[#16213E]/20 text-[#16213E] hover:border-[#16213E]/40"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        )}
+        {edition === "standard" && (
+          <p className="text-right text-xs text-[#2E2A22]/60">
+            {quantity} × R299 + R75 delivery = <span className="font-semibold text-[#16213E]">R{total}</span>
+          </p>
+        )}
 
         <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[#2E2A22]/50">Delivery address</p>
         <div className="flex flex-col gap-1">

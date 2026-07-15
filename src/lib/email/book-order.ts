@@ -34,3 +34,53 @@ export async function sendBookOrderConfirmationEmail({
     console.error("Book order confirmation email failed", email, result.error);
   }
 }
+
+// STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sprint 3: "Batch notification
+// email when a customer's order is assigned or reassigned a batch number."
+// Fired from OrdersSection's assignBatch action, not the webhook — batch
+// assignment is a manual, later step (Dewald in the dashboard), unrelated
+// to payment succeeding.
+export async function sendBatchAssignedEmail({
+  buyerName,
+  email,
+  batchNumber,
+}: {
+  buyerName: string;
+  email: string;
+  batchNumber: number;
+}): Promise<void> {
+  const result = await sendEmail({
+    to: email,
+    subject: "Your Standing 365 order has a batch number",
+    html: `
+      <p>Good day ${buyerName},</p>
+      <p>Your Standing 365 order has been assigned to <strong>batch ${batchNumber}</strong> — printed and
+      shipped together in batches of 50. We'll email you again the moment it ships.</p>
+      <p>Questions in the meantime? Reach us at
+      <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a> or WhatsApp
+      <a href="https://wa.me/27723110570">+27 72 311 0570</a>.</p>
+    `,
+  });
+
+  if (!result.ok) {
+    console.error("Batch assigned email failed", email, result.error);
+  }
+}
+
+// Sprint 3: "mark orders as shipped."
+export async function sendShippedEmail({ buyerName, email }: { buyerName: string; email: string }): Promise<void> {
+  const result = await sendEmail({
+    to: email,
+    subject: "Your Standing 365 order has shipped",
+    html: `
+      <p>Good day ${buyerName},</p>
+      <p>Good news — your Standing 365 order is on its way.</p>
+      <p>Questions? Reach us at <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a> or
+      WhatsApp <a href="https://wa.me/27723110570">+27 72 311 0570</a>.</p>
+    `,
+  });
+
+  if (!result.ok) {
+    console.error("Shipped email failed", email, result.error);
+  }
+}

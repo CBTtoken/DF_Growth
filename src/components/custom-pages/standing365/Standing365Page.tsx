@@ -44,6 +44,15 @@ export function Standing365Page({ clientId, metaPixelId }: CustomPageProps) {
     <main className={`${sourceSerif.variable} flex flex-1 flex-col`}>
       <BookSchema url={url} />
       <FbclidCapture />
+      {/* Real feedback, round two: this rendered correctly but sat after
+          Closing (the footer) in the previous version, meaning it rendered
+          at the very bottom of the page — effectively invisible without
+          scrolling all the way down. OwnerBar has no fixed/sticky
+          positioning of its own; it only ever reads as a real top bar
+          because of where it sits in the DOM, exactly like it does on
+          every other Growth page via ClientLandingPageView. Moved first,
+          matching that placement precisely, not just present somewhere. */}
+      <OwnerBarGate growthClientId={clientId} />
       <OrderReturnBanner />
       <Hero />
       <About />
@@ -51,13 +60,6 @@ export function Standing365Page({ clientId, metaPixelId }: CustomPageProps) {
       <OwnACopy clientId={clientId} />
       <Closing />
       <PixelConsentGate pixelId={metaPixelId} />
-      {/* Real feedback: no way back to the dashboard from this page at
-          all — every other Growth page gets this "you're viewing your
-          live page" bar for free via ClientLandingPageView, but a custom
-          page builds its own component tree from scratch and needs it
-          added explicitly. Renders nothing for anyone but the real
-          authenticated owner (client-side membership check). */}
-      <OwnerBarGate growthClientId={clientId} />
     </main>
   );
 }

@@ -16,6 +16,7 @@ import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 import { SocialAssetGenerator } from "@/components/dashboard/SocialAssetGenerator";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
+import { OrdersSection } from "@/components/dashboard/OrdersSection";
 import { SiteFooter } from "@/components/SiteFooter";
 import { logOut } from "@/app/dashboard/actions";
 
@@ -50,6 +51,8 @@ export default async function DashboardPage() {
     { data: capiEvents },
     { data: leads },
     { data: photos },
+    { data: landingPageType },
+    { data: bookOrders },
   ] = await Promise.all([
     admin
       .from("growth_clients")
@@ -93,6 +96,19 @@ export default async function DashboardPage() {
       .select("id, storage_path")
       .eq("growth_client_id", client.id)
       .order("position", { ascending: true }),
+    // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sprint 3: the Orders section
+    // only makes sense for a client whose page can actually take orders —
+    // checked here rather than assuming, so this automatically applies to
+    // any future member with their own custom order-taking page too, not
+    // just Standing 365 specifically.
+    admin.from("landing_pages").select("page_type").eq("growth_client_id", client.id).maybeSingle(),
+    admin
+      .from("book_orders")
+      .select(
+        "id, created_at, edition, quantity, buyer_name, email, phone, delivery_address, recipient_name, gift_message, amount, payment_status, batch_number, fulfilment_status"
+      )
+      .eq("growth_client_id", client.id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
@@ -203,6 +219,14 @@ export default async function DashboardPage() {
             )}
           </ul>
         </section>
+
+        {/* STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sprint 3: only shown
+            for a client whose page can actually take orders — a critical
+            gap found live: orders were being paid for and written to
+            book_orders with no way to ever see them, including the
+            personalisation details (recipient name, gift message) needed
+            to print a cover. */}
+        {landingPageType?.page_type === "custom" && <OrdersSection orders={bookOrders ?? []} />}
 
         {/* Combined spec Sec 23: moved down from right after the header —
             plan/billing is real but not what a client opens the dashboard

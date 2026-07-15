@@ -66,6 +66,7 @@ export async function POST(request: Request) {
         delivery_address: JSON.parse(metadata.delivery_address ?? "{}"),
         recipient_name: metadata.recipient_name ?? null,
         gift_message: metadata.gift_message ?? null,
+        quantity: metadata.quantity ? Number(metadata.quantity) : 1,
         amount,
         payment_status: "paid",
         paystack_reference: reference,
