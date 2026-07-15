@@ -38,7 +38,7 @@ export default async function MarketplacePage({
   let query = admin
     .from("growth_clients")
     .select(
-      "slug, business_name, tagline, business_description, industry, city, logo_path, brand_primary_color, landing_pages!inner(published)"
+      "id, slug, business_name, tagline, business_description, industry, city, logo_path, hero_photo_id, brand_primary_color, landing_pages!inner(published)"
     )
     .eq("status", "active")
     .eq("landing_pages.published", true)
@@ -64,6 +64,33 @@ export default async function MarketplacePage({
   }
 
   const { data: clients } = await query;
+
+  // Real feedback: text-only cards had "no context or colour" — a real
+  // photo thumbnail per card, same idea as the homepage's "See It In
+  // Action" previews but without embedding a live iframe (that technique
+  // only works there because /sample/* has a deliberately loosened
+  // clickjacking header; widening that to every real client page for a
+  // directory that could grow to hundreds of listings isn't a good trade,
+  // see the earlier conversation). One batched query for every client's
+  // photos rather than one query per card.
+  const clientIds = (clients ?? []).map((c) => c.id);
+  const { data: allPhotos } = clientIds.length
+    ? await admin
+        .from("client_photos")
+        .select("id, growth_client_id, storage_path")
+        .in("growth_client_id", clientIds)
+        .order("position", { ascending: true })
+    : { data: [] as { id: string; growth_client_id: string; storage_path: string }[] };
+
+  const photosByClient = new Map<string, { id: string; storage_path: string }[]>();
+  for (const photo of allPhotos ?? []) {
+    const list = photosByClient.get(photo.growth_client_id) ?? [];
+    list.push(photo);
+    photosByClient.set(photo.growth_client_id, list);
+  }
+
+  const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
+  const logosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos`;
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -150,39 +177,79 @@ export default async function MarketplacePage({
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {clients.map((client) => {
-              const logoUrl = client.logo_path
-                ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
-                : null;
+              const logoUrl = client.logo_path ? `${logosStorageBase}/${client.logo_path}` : null;
+              const brandColor = client.brand_primary_color || "#1081b8";
+
+              // Same resolution order as a real client page's hero photo
+              // (ClientLandingPageView.tsx): an explicit hero_photo_id
+              // selection wins, otherwise the first uploaded gallery photo
+              // — never a stock photo standing in for a business that
+              // hasn't uploaded anything, that would misrepresent them.
+              const clientPhotos = photosByClient.get(client.id) ?? [];
+              const heroPhoto = client.hero_photo_id
+                ? clientPhotos.find((p) => p.id === client.hero_photo_id)
+                : clientPhotos[0];
+              const thumbnailUrl = heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : null;
+
               return (
                 <Link
                   key={client.slug}
                   href={`/${client.slug}`}
-                  className="group flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-bold text-white"
-                      style={{ backgroundColor: client.brand_primary_color || "#1081b8" }}
-                    >
-                      {logoUrl ? (
-                        <Image src={logoUrl} alt={client.business_name} width={44} height={44} className="size-full object-cover" />
-                      ) : (
-                        client.business_name.slice(0, 2).toUpperCase()
-                      )}
-                    </div>
-                    <div className="min-w-0">
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
+                    {thumbnailUrl ? (
+                      <Image
+                        src={thumbnailUrl}
+                        alt={client.business_name}
+                        fill
+                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                        className="object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    ) : (
+                      // No uploaded photo — the brand color itself carries
+                      // the "colour and context" instead, with the logo (or
+                      // initials as a last resort) centered on it.
+                      <div
+                        className="flex size-full items-center justify-center"
+                        style={{ backgroundColor: brandColor }}
+                      >
+                        {logoUrl ? (
+                          <Image
+                            src={logoUrl}
+                            alt={client.business_name}
+                            width={72}
+                            height={72}
+                            className="size-16 rounded-full bg-white/90 object-cover p-1.5 shadow-sm"
+                          />
+                        ) : (
+                          <span className="text-3xl font-bold text-white/90">
+                            {client.business_name.slice(0, 2).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 p-4">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: brandColor }}
+                        aria-hidden
+                      />
                       <h2 className="truncate text-sm font-bold tracking-tight text-ink group-hover:text-brand">
                         {client.business_name}
                       </h2>
-                      <p className="truncate text-xs text-gray-400">
-                        {client.industry}
-                        {client.city ? ` · ${client.city}` : ""}
-                      </p>
                     </div>
+                    <p className="truncate text-xs text-gray-400">
+                      {client.industry}
+                      {client.city ? ` · ${client.city}` : ""}
+                    </p>
+                    <p className="line-clamp-2 text-sm text-gray-500">
+                      {client.tagline || client.business_description}
+                    </p>
                   </div>
-                  <p className="line-clamp-2 text-sm text-gray-500">
-                    {client.tagline || client.business_description}
-                  </p>
                 </Link>
               );
             })}
