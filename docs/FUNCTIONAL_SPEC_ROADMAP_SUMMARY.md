@@ -27,7 +27,7 @@ Everything below is built, deployed, and verified against the live production si
 
 | Area | What's there |
 |---|---|
-| **Pricing & tiers** | Foundation (free trial), Growth (monthly/annual), Founding Business slots — Enterprise priced but not yet purchasable |
+| **Pricing & tiers** | Foundation (free trial), Growth (monthly/annual), Day One Business slots (permanent Enterprise access once it launches, while on annual) — Enterprise priced but not yet purchasable |
 | **Web onboarding** | 7–9 step guided wizard, autosave/resume, AI-drafted landing copy, 10 real templates, now including an optional city field |
 | **WhatsApp onboarding** | Full signup-to-payment conversation, resumable, same data model as web |
 | **Email + password login** | Real password auth, magic-link fallback for pre-existing accounts, forgot/reset flow |

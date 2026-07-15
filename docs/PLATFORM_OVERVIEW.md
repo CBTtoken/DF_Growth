@@ -21,7 +21,7 @@ DigitalFlyer Growth is a growth-as-a-service platform for South African small bu
 | **Growth** | R180/month or R1,199/year | Everything in Foundation, plus campaign landing pages, performance tracking, marketing assets, monthly optimisation, growth reporting | Paystack, collected at the end of onboarding — **live mode, real transactions** |
 | **Enterprise** | Coming soon | Full Meta + Google ad management | No live checkout yet |
 
-**Founding Business:** the first 10 signups on Growth's *annual* plan lock in that price for life, plus 2 years of Enterprise access once it launches. Monthly Growth and Foundation are never eligible. A live counter on `/pricing` shows slots remaining.
+**Day One Business:** the first 10 signups on Growth's *annual* plan lock in that price for life, plus permanent Enterprise access once it launches (for as long as they stay on the annual plan — not a time-limited window). Monthly Growth and Foundation are never eligible. A live counter on `/pricing` shows slots remaining. *(Corrected — an earlier version of this doc said "Founding Business" and "2 years of Enterprise access." Confirmed against the actual live pricing page copy: it already said "Day One Business" and "permanently" everywhere, this doc just hadn't caught up.)*
 
 ---
 
@@ -263,7 +263,7 @@ Small, near-zero-effort item worth closing out regardless of sprint priority: ad
 
 - [ ] Web signup, Foundation (no card, 7-day trial)
 - [ ] Web signup, Growth monthly — **real live payment**
-- [ ] Web signup, Growth annual (check Founding Business banner if slots remain)
+- [ ] Web signup, Growth annual (check Day One Business banner if slots remain)
 - [ ] Full onboarding wizard, every step, including skipping every optional field, including city
 - [ ] Template switch, before and after publishing
 - [ ] WhatsApp signup, full conversation, real message
