@@ -36,6 +36,11 @@ export const step2Schema = z.object({
   province: z.enum(PROVINCES),
   industry: z.string().min(2).max(100),
   businessAddress: z.string().min(2).max(200),
+  // Marketplace directory: optional, unlike province — an online-only
+  // business (see the businessAddress "Online" sentinel above it in the
+  // form) genuinely has no city, and forcing a value here would mean
+  // picking a fake one just to get past the form.
+  city: z.string().max(100).optional().or(z.literal("")),
   // Public Beta Polish Sprint Sec 7: uncapped — was max(600), a real
   // business description shouldn't be truncated. The DB column itself is
   // already `text` (unbounded), no migration needed.

@@ -20,6 +20,10 @@ export function SiteFooter() {
         <span>Secure payment via Paystack</span>
       </div>
       <div>
+        <Link href="/marketplace" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          Marketplace
+        </Link>
+        <span aria-hidden> · </span>
         <Link href="/privacy" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Privacy Policy
         </Link>

@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { saveStep2, type OnboardState } from "@/app/onboard/actions";
 import { INDUSTRY_TAXONOMY, OTHER_INDUSTRY, resolveIndustryValue } from "@/lib/industries";
+import { CITIES, OTHER_CITY } from "@/lib/cities";
 
 const PROVINCES = [
   "Eastern Cape",
@@ -24,6 +25,7 @@ export function Step2BusinessProfile({
   initialProvince,
   initialIndustry,
   initialBusinessAddress,
+  initialCity,
   initialBusinessDescription,
   initialTagline,
   initialProductsServices,
@@ -37,6 +39,7 @@ export function Step2BusinessProfile({
   initialProvince: string;
   initialIndustry: string;
   initialBusinessAddress: string;
+  initialCity: string;
   initialBusinessDescription: string;
   initialTagline: string;
   initialProductsServices: string;
@@ -49,6 +52,15 @@ export function Step2BusinessProfile({
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep2, null);
   const [isOnline, setIsOnline] = useState(initialBusinessAddress === "Online");
+
+  // Same resolve pattern as industry below: an existing value that matches
+  // the curated list is selected directly, anything else (including a
+  // pre-city-filter empty value) falls into "Other" with the raw text
+  // preserved rather than silently dropped.
+  const isKnownCity = initialCity !== "" && (CITIES as string[]).includes(initialCity);
+  const [city, setCity] = useState(isKnownCity ? initialCity : initialCity ? OTHER_CITY : "");
+  const [cityOtherText, setCityOtherText] = useState(isKnownCity ? "" : initialCity);
+  const isOtherCity = city === OTHER_CITY;
 
   // Public Beta Polish Sprint Sec 6: a fixed category/subcategory picker
   // instead of open text — resolveIndustryValue also covers existing
@@ -180,6 +192,43 @@ export function Step2BusinessProfile({
       {state?.error?.businessAddress && (
         <p className="text-xs text-red-600">{state.error.businessAddress[0]}</p>
       )}
+
+      {!isOnline && (
+        <>
+          <label className={labelClass}>
+            City / Town <span className="font-normal text-gray-400">(optional — helps customers find you nearby)</span>
+            <select
+              value={city}
+              onChange={(e) => {
+                setCity(e.target.value);
+                if (e.target.value !== OTHER_CITY) setCityOtherText("");
+              }}
+              className={inputClass}
+            >
+              <option value="">Not specified</option>
+              {CITIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+          {isOtherCity && (
+            <label className={labelClass}>
+              Your city or town
+              <input
+                type="text"
+                value={cityOtherText}
+                onChange={(e) => setCityOtherText(e.target.value)}
+                placeholder="e.g. Ballito"
+                className={inputClass}
+              />
+            </label>
+          )}
+        </>
+      )}
+      <input type="hidden" name="city" value={isOnline ? "" : isOtherCity ? cityOtherText : city} />
+      {state?.error?.city && <p className="text-xs text-red-600">{state.error.city[0]}</p>}
 
       <label className={labelClass}>
         What does your business do?

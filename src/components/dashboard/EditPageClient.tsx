@@ -27,6 +27,7 @@ export function EditPageClient({
     province: string;
     industry: string;
     businessAddress: string;
+    city: string;
     businessDescription: string;
     tagline: string;
     productsServices: string;
@@ -85,6 +86,7 @@ export function EditPageClient({
           initialProvince={initialData.province}
           initialIndustry={initialData.industry}
           initialBusinessAddress={initialData.businessAddress}
+          initialCity={initialData.city}
           initialBusinessDescription={initialData.businessDescription}
           initialTagline={initialData.tagline}
           initialProductsServices={initialData.productsServices}

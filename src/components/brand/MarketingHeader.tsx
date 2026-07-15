@@ -36,6 +36,17 @@ export function MarketingHeader() {
         <span className="font-badge text-base uppercase tracking-widest text-brand sm:text-lg">Growth</span>
       </Link>
       <div className="flex shrink-0 items-center gap-2 sm:gap-4">
+        {/* Hidden below sm: the mobile header was already tight enough to
+            cause a real wrap bug once this sprint (see the comment above) —
+            a third nav item on the smallest viewports risks the same thing.
+            Marketplace is still reachable from the footer and dashboard on
+            mobile, just not this header. */}
+        <Link
+          href="/marketplace"
+          className="hidden whitespace-nowrap text-sm font-medium text-gray-600 transition hover:text-ink sm:inline-flex"
+        >
+          Marketplace
+        </Link>
         <MarketingHeaderAuthLink />
         <a
           href="#pricing"
