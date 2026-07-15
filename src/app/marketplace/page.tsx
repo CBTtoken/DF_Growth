@@ -8,7 +8,9 @@ import { INDUSTRY_TAXONOMY } from "@/lib/industries";
 import { CITIES } from "@/lib/cities";
 
 export const metadata: Metadata = {
-  title: "Marketplace | DigitalFlyer Growth",
+  // Root layout already applies "%s | DigitalFlyer Growth" as a title
+  // template — including the suffix here too produced a doubled title.
+  title: "Marketplace",
   description:
     "Find real South African small businesses on DigitalFlyer Growth — search by name, industry, or city.",
 };
@@ -79,30 +81,26 @@ export default async function MarketplacePage({
             Real South African small businesses, built and hosted on DigitalFlyer Growth.
           </p>
 
-          <form method="GET" className="mt-4 flex w-full max-w-xl flex-col gap-3 sm:flex-row">
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Search by business name or what they do"
-              className="w-full rounded-full border border-gray-200 bg-white px-5 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-            <button
-              type="submit"
-              className="inline-flex shrink-0 items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
-            >
-              Search
-            </button>
-          </form>
-
-          <div className="mt-2 flex w-full max-w-xl flex-col gap-3 sm:flex-row">
-            <form method="GET" className="w-full">
-              <input type="hidden" name="q" value={q} />
-              <input type="hidden" name="city" value={city} />
+          {/* One plain form, GET method, no client-side JS at all — this is
+              a Server Component, and an onChange auto-submit handler on the
+              selects (tried first) can't cross the server/client boundary
+              here, which produced a real 500 on every load. A single
+              "Apply" button for all three filters is simpler and avoids
+              needing to split this into a client component just for that. */}
+          <form method="GET" className="mt-4 flex w-full max-w-xl flex-col gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <input
+                type="text"
+                name="q"
+                defaultValue={q}
+                placeholder="Search by business name or what they do"
+                className="w-full rounded-full border border-gray-200 bg-white px-5 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+              />
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
               <select
                 name="industry"
                 defaultValue={industry}
-                onChange={(e) => e.currentTarget.form?.submit()}
                 className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
               >
                 <option value="">All industries</option>
@@ -112,14 +110,9 @@ export default async function MarketplacePage({
                   </option>
                 ))}
               </select>
-            </form>
-            <form method="GET" className="w-full">
-              <input type="hidden" name="q" value={q} />
-              <input type="hidden" name="industry" value={industry} />
               <select
                 name="city"
                 defaultValue={city}
-                onChange={(e) => e.currentTarget.form?.submit()}
                 className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
               >
                 <option value="">All cities</option>
@@ -129,8 +122,14 @@ export default async function MarketplacePage({
                   </option>
                 ))}
               </select>
-            </form>
-          </div>
+            </div>
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark sm:w-auto sm:self-center"
+            >
+              Search
+            </button>
+          </form>
 
           {(q || industry || city) && (
             <Link href="/marketplace" className="text-xs font-medium text-gray-400 hover:text-brand">
