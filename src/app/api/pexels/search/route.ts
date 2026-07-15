@@ -9,6 +9,14 @@ import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 // only, the browser can't call Pexels directly. Auth-gated (not just
 // public) so it isn't usable as a free, unmetered Pexels proxy by anyone
 // who finds the URL.
+// Same fix as src/app/api/checkout/finish/route.ts — this route's only auth
+// check reads the session via requireGrowthClientId(), which calls cookies()
+// indirectly through @supabase/ssr, not detected reliably by Next's automatic
+// dynamic-rendering detection for Route Handlers. force-dynamic removes the
+// ambiguity rather than risk this route serving a stale "not authorized" (or
+// worse, a stale authorized) response.
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   const client = await requireGrowthClientId();
   if (client.error) {

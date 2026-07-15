@@ -13,6 +13,19 @@ import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 // inside the wizard, where the visitor is already signed in — so it reads
 // the plan/billing_cycle to charge from their own already-provisioned row
 // via the session, not from anything the request could tamper with.
+// Real bug found live: this route's only auth check is requireGrowthClientId(),
+// which reads the session via cookies() several calls deep inside
+// @supabase/ssr's createServerClient — Next.js's automatic dynamic-rendering
+// detection for Route Handlers doesn't reliably pick up a dynamic API used
+// indirectly through a library call like this one, so the route was getting
+// treated as a static/cacheable GET and returning a stale "no session" result
+// (silently redirecting every real paying signup back to /login instead of
+// Paystack) regardless of the browser's actual, valid session. Confirmed live
+// via a real authenticated session that still bounced to /login every time.
+// force-dynamic is the standard fix: it removes any ambiguity about whether
+// this route's dynamic API usage was detected.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL!;
   const client = await requireGrowthClientId();
