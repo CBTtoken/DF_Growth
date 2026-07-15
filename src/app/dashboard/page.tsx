@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
+import { requireGrowthClientId, listMyGrowthClients } from "@/lib/auth/require-growth-client";
+import { AccountSwitcher } from "@/components/dashboard/AccountSwitcher";
 import { AddTestimonialForm } from "@/components/dashboard/AddTestimonialForm";
 import { MetaTokenForm } from "@/components/dashboard/MetaTokenForm";
 import { MetaIdsForm } from "@/components/dashboard/MetaIdsForm";
@@ -111,6 +112,13 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false }),
   ]);
 
+  // Separate from the admin-client Promise.all above — this one needs the
+  // current session's own auth.getUser(), not just client.id, to look up
+  // every account this login owns. Only ever renders anything when that's
+  // more than one (AccountSwitcher's own guard), so this is a no-op extra
+  // query for the common single-account case.
+  const myAccounts = await listMyGrowthClients();
+
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
   // Found via real UAT: this used to also require meta_pixel_id to be set,
@@ -141,6 +149,8 @@ export default async function DashboardPage() {
               </button>
             </form>
           </div>
+          <AccountSwitcher accounts={myAccounts} currentId={client.id ?? ""} />
+
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-ink">Dashboard</h1>
