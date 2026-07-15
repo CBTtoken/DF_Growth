@@ -13,17 +13,33 @@ import { MarketingHeaderAuthLink } from "@/components/brand/MarketingHeaderAuthL
 // comment for why (Task #12 cold-start fix).
 export function MarketingHeader() {
   return (
-    <header className="sticky top-0 z-10 flex w-full items-center justify-between border-b border-gray-100 bg-white/90 px-6 py-4 backdrop-blur">
-      <Link href="/pricing" className="flex items-center gap-3">
-        <Image src="/brand/logo-blue.png" alt="DigitalFlyer" width={160} height={44} priority className="h-8 w-auto" />
+    <header className="sticky top-0 z-10 flex w-full items-center justify-between border-b border-gray-100 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
+      {/* Real bug found live (mobile screenshot): "Log in" was only getting
+          ~34px of available width on a 375px viewport, well under what the
+          text needs, so the browser wrapped it onto two lines ("Log" /
+          "in") right on top of the wordmark next to it. shrink-0 on both
+          groups stops the flex layout from squeezing either below its
+          natural content width; whitespace-nowrap on the auth link is a
+          second guard against the same wrap even if space ever gets tight
+          again. Tighter gaps/padding on mobile (sm: restores the original
+          spacing) free up the width that was missing in the first place. */}
+      <Link href="/pricing" className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <Image
+          src="/brand/logo-blue.png"
+          alt="DigitalFlyer"
+          width={160}
+          height={44}
+          priority
+          className="h-7 w-auto sm:h-8"
+        />
         <span className="h-6 w-px bg-gray-300" aria-hidden />
-        <span className="font-badge text-lg uppercase tracking-widest text-brand">Growth</span>
+        <span className="font-badge text-base uppercase tracking-widest text-brand sm:text-lg">Growth</span>
       </Link>
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <MarketingHeaderAuthLink />
         <a
           href="#pricing"
-          className="rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
+          className="whitespace-nowrap rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark sm:px-5"
         >
           See pricing
         </a>

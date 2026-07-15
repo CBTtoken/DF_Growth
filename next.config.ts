@@ -118,6 +118,13 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Standing 365's slug was renamed /standing-365 -> /standing365 (Dewald's
+  // own call, easier to type/share). Redirects the old URL rather than
+  // letting it 404 outright — it may already be bookmarked or shared
+  // somewhere before the rename.
+  async redirects() {
+    return [{ source: "/standing-365", destination: "/standing365", permanent: true }];
+  },
 };
 
 export default nextConfig;

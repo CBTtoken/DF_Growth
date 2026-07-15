@@ -104,7 +104,7 @@ export async function submitBookOrder(
   const result = await initializeOneTimeCheckout({
     email,
     amount,
-    callbackUrl: `${siteUrl}/standing-365`,
+    callbackUrl: `${siteUrl}/standing365`,
     metadata,
   });
 

@@ -38,7 +38,7 @@ const sourceSerif = Source_Serif_4({
 });
 
 export function Standing365Page({ clientId, metaPixelId }: CustomPageProps) {
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/standing-365`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/standing365`;
 
   return (
     <main className={`${sourceSerif.variable} flex flex-1 flex-col`}>
