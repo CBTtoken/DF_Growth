@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ClientLandingPageView } from "@/components/landing/ClientLandingPageView";
+import { getCustomPage, getCustomPageMeta } from "@/lib/custom-pages/registry";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
 // through this one route by slug, never a hardcoded page. params is a
@@ -46,13 +47,38 @@ export async function generateMetadata({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification"
+      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
     .single();
 
   if (!client) return {};
+
+  // A custom page (STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2/4) needs
+  // its own metadata shape — the generic business-listing fields below
+  // (business_description, logo_path as a business logo) don't apply to a
+  // book. Its title/description live in the custom-pages registry
+  // alongside its component, so a future custom page's metadata stays
+  // defined in one place rather than branched here per page.
+  const { data: customCheck } = await admin
+    .from("landing_pages")
+    .select("page_type, custom_page_key")
+    .eq("growth_client_id", client.id)
+    .eq("published", true)
+    .single();
+  if (customCheck?.page_type === "custom") {
+    const meta = getCustomPageMeta(customCheck.custom_page_key);
+    if (!meta) return {};
+    const url = `/${clientSlug}`;
+    return {
+      title: meta.title,
+      description: meta.description,
+      alternates: { canonical: url },
+      openGraph: { title: meta.title, description: meta.description, url },
+      twitter: { card: "summary_large_image", title: meta.title, description: meta.description },
+    };
+  }
 
   const title = client.business_name;
   const description =
@@ -112,7 +138,7 @@ export default async function ClientLandingPage({
   const [{ data: landingPage }, { data: testimonials }, { data: photos }] = await Promise.all([
     admin
       .from("landing_pages")
-      .select("id, headline, subheadline, about_text, services_text, cta_label")
+      .select("id, headline, subheadline, about_text, services_text, cta_label, page_type, custom_page_key")
       .eq("growth_client_id", client.id)
       .eq("published", true)
       .single(),
@@ -128,6 +154,24 @@ export default async function ClientLandingPage({
   ]);
 
   if (!landingPage) return notFound();
+
+  // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2/4: testimonials and
+  // photos above were fetched in parallel regardless (Promise.all doesn't
+  // know in advance which branch this takes), so branching here costs
+  // nothing extra in latency, just discards two small results a custom
+  // page has no use for — its own component tree fetches whatever data it
+  // actually needs, the same way ClientLandingPageView owns its own shape.
+  if (landingPage.page_type === "custom") {
+    /* eslint-disable react-hooks/static-components -- this looks up an
+       existing component from a stable module-level registry (the same
+       shape as lib/templates/registry.ts selecting a template renderer), it
+       doesn't define a new one on every render; the rule can't tell the two
+       apart from a capitalised variable assigned from a function call. */
+    const CustomPage = getCustomPage(landingPage.custom_page_key);
+    if (!CustomPage) return notFound();
+    return <CustomPage clientId={client.id} businessName={client.business_name} metaPixelId={client.meta_pixel_id} />;
+    /* eslint-enable react-hooks/static-components */
+  }
 
   return (
     <ClientLandingPageView
