@@ -65,8 +65,6 @@ export default async function MarketplacePage({
 
   const { data: clients } = await query;
 
-  const citiesInUse = new Set((clients ?? []).map((c) => c.city).filter(Boolean));
-
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <MarketingHeader />
@@ -116,7 +114,7 @@ export default async function MarketplacePage({
                 className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
               >
                 <option value="">All cities</option>
-                {CITIES.filter((c) => citiesInUse.has(c) || c === city).map((c) => (
+                {CITIES.map((c) => (
                   <option key={c} value={c}>
                     {c}
                   </option>
