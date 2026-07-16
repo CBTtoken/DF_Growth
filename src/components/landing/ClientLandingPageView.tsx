@@ -15,6 +15,7 @@ import { PhotoGallerySection } from "@/components/landing/PhotoGallerySection";
 import { StorySection } from "@/components/landing/StorySection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { EarlyContactCta } from "@/components/landing/EarlyContactCta";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
 import { SplitHero } from "@/components/landing/heroes/SplitHero";
 import { EditorialHero } from "@/components/landing/heroes/EditorialHero";
@@ -228,6 +229,9 @@ export async function ClientLandingPageView({
           />
         </ScrollReveal>
         <ScrollReveal>
+          <ReviewsSection businessId={client.id} accentColor={accentColor} />
+        </ScrollReveal>
+        <ScrollReveal>
           <LeadForm
             growthClientId={client.id}
             landingPageId={landingPage.id}
@@ -346,6 +350,10 @@ export async function ClientLandingPageView({
       {template.sections.map((key) => (
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>
       ))}
+
+      <ScrollReveal>
+        <ReviewsSection businessId={client.id} accentColor={accentColor} />
+      </ScrollReveal>
 
       <ScrollReveal>
         <LeadForm
