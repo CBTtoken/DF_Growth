@@ -12,9 +12,15 @@ import { BrandHeader } from "@/components/brand/BrandHeader";
 // session cookie, not a stale one from before the navigation.
 export default function ReviewConfirmedFinishPage() {
   const [status, setStatus] = useState<"working" | "done" | "error">("working");
+  const [debugReason, setDebugReason] = useState<string | null>(null);
 
   useEffect(() => {
-    confirmReviewerEmail().then((result) => setStatus(result.ok ? "done" : "error"));
+    confirmReviewerEmail().then((result) => {
+      setStatus(result.ok ? "done" : "error");
+      // TEMPORARY diagnostic, not sensitive (just which branch failed) —
+      // remove once the underlying session-timing bug is confirmed fixed.
+      if (!result.ok) setDebugReason(result.reason ?? "unknown");
+    });
   }, []);
 
   return (
@@ -50,6 +56,7 @@ export default function ReviewConfirmedFinishPage() {
               We couldn&apos;t confirm your account just now. Try leaving your review again if it didn&apos;t go
               through.
             </p>
+            {debugReason && <p className="mt-2 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-400">{debugReason}</p>}
           </>
         )}
       </div>

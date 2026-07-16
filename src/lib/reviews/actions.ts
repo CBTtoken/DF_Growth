@@ -70,20 +70,21 @@ export async function signUpReviewer(_prevState: ReviewerSignupState, formData: 
 // a no-op for a brand-new account with no reviews yet. Uses the admin
 // client for the actual write, matching this project's established
 // pattern of server-side writes rather than client-permitted RLS updates.
-export async function confirmReviewerEmail(): Promise<{ ok: boolean }> {
+export async function confirmReviewerEmail(): Promise<{ ok: boolean; reason?: string }> {
   const supabase = await createClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false };
+  if (!user) return { ok: false, reason: `no-session${userError ? `: ${userError.message}` : ""}` };
 
   const admin = createAdminClient();
-  const { data: account } = await admin
+  const { data: account, error: accountError } = await admin
     .from("reviewer_accounts")
     .select("id")
     .eq("user_id", user.id)
     .maybeSingle();
-  if (!account) return { ok: false };
+  if (!account) return { ok: false, reason: `no-account${accountError ? `: ${accountError.message}` : ""}` };
 
   await admin
     .from("reviews")
