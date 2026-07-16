@@ -45,6 +45,7 @@ type ClientData = {
   website_url: string | null;
   template: string | null;
   industry: string | null;
+  city: string | null;
   meta_pixel_id: string | null;
   hero_photo_id: string | null;
 };
@@ -154,6 +155,8 @@ export async function ClientLandingPageView({
       telephone={client.call_phone}
       email={client.contact_email}
       address={client.business_address}
+      industry={client.industry}
+      city={client.city}
     />
   );
 

@@ -49,7 +49,7 @@ export async function generateMetadata({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification"
+      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification, industry, city"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -82,7 +82,16 @@ export async function generateMetadata({
     };
   }
 
-  const title = client.business_name;
+  // SEO fix: title used to be just the bare business name, relying
+  // entirely on the root layout's "%s | DigitalFlyer Growth" template for
+  // any context at all — no industry or city, so Google had nothing to
+  // match against an unbranded local search ("plumber in Boksburg"). The
+  // layout template still adds the brand suffix automatically, this just
+  // adds the middle segment. Falls back gracefully — a business missing
+  // industry or city keeps a shorter title rather than a broken one with
+  // stray "in undefined" text.
+  const locationSegment = [client.industry, client.city].filter(Boolean).join(" in ");
+  const title = locationSegment ? `${client.business_name} | ${locationSegment}` : client.business_name;
   const description =
     client.tagline || client.business_description?.slice(0, 160) || `${client.business_name} on DigitalFlyer.`;
   const image = client.logo_path
@@ -116,7 +125,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, meta_pixel_id, hero_photo_id"
+      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
