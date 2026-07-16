@@ -112,6 +112,12 @@ export default async function SamplePage({ params }: { params: Params }) {
         <Link href="/pricing" className="underline underline-offset-2 hover:no-underline">
           See pricing
         </Link>
+        <span aria-hidden className="text-white/40">
+          |
+        </span>
+        <Link href="/marketplace" className="underline underline-offset-2 hover:no-underline">
+          Browse real listings
+        </Link>
       </div>
 
       {template.hero === "dark" && <DarkHero {...heroProps} />}

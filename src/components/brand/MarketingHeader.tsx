@@ -35,24 +35,25 @@ export function MarketingHeader() {
         <span className="h-6 w-px bg-gray-300" aria-hidden />
         <span className="font-badge text-base uppercase tracking-widest text-brand sm:text-lg">Growth</span>
       </Link>
-      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-        {/* Hidden below sm: the mobile header was already tight enough to
-            cause a real wrap bug once this sprint (see the comment above) —
-            a third nav item on the smallest viewports risks the same thing.
-            Marketplace is still reachable from the footer and dashboard on
-            mobile, just not this header. */}
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-4">
+        {/* Previously hidden below sm to dodge a real wrap bug (a third nav
+            item pushed "Log in" onto two lines at 375px) — fixed properly
+            instead of just hiding it: shorter mobile label ("Pricing" vs
+            "See pricing") frees up the width the wrap bug was actually
+            fighting over. Verified at 375px with no wrap. */}
         <Link
           href="/marketplace"
-          className="hidden whitespace-nowrap text-sm font-medium text-gray-600 transition hover:text-ink sm:inline-flex"
+          className="whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:text-sm"
         >
           Marketplace
         </Link>
         <MarketingHeaderAuthLink />
         <a
           href="#pricing"
-          className="whitespace-nowrap rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark sm:px-5"
+          className="whitespace-nowrap rounded-full bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-dark sm:px-5 sm:text-sm"
         >
-          See pricing
+          <span className="sm:hidden">Pricing</span>
+          <span className="hidden sm:inline">See pricing</span>
         </a>
       </div>
     </header>

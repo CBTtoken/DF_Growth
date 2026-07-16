@@ -30,7 +30,7 @@ export function MarketingHeaderAuthLink() {
   return (
     <Link
       href={isLoggedIn ? "/dashboard" : "/login"}
-      className="whitespace-nowrap text-sm font-medium text-gray-600 transition hover:text-ink"
+      className="whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:text-sm"
     >
       {isLoggedIn ? "Dashboard" : "Log in"}
     </Link>

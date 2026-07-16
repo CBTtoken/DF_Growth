@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ClientLandingPageView } from "@/components/landing/ClientLandingPageView";
 import { PageViewTracker } from "@/components/landing/PageViewTracker";
+import { ClientPageNavBar } from "@/components/landing/ClientPageNavBar";
 import { getCustomPage, getCustomPageMeta } from "@/lib/custom-pages/registry";
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
@@ -173,6 +174,7 @@ export default async function ClientLandingPage({
     return (
       <>
         <PageViewTracker slug={clientSlug} />
+        <ClientPageNavBar />
         <CustomPage
           clientId={client.id}
           businessName={client.business_name}
@@ -188,6 +190,7 @@ export default async function ClientLandingPage({
   return (
     <>
       <PageViewTracker slug={clientSlug} />
+      <ClientPageNavBar />
       <ClientLandingPageView
         client={client}
         landingPage={landingPage}
