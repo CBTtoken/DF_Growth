@@ -27,12 +27,37 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // List Your Event Sec 5: "built to be found on Google the same way every
+  // other part of Growth is" — every published, still-upcoming event gets
+  // listed the same way an active client page does, since an individual
+  // event page has no other in-app link a crawler would discover it
+  // through besides /events itself.
+  const nowIso = new Date().toISOString();
+  const { data: events } = await admin
+    .from("events")
+    .select("id, created_at")
+    .eq("status", "published")
+    .or(`end_datetime.gte.${nowIso},and(end_datetime.is.null,start_datetime.gte.${nowIso})`);
+
+  const eventEntries: MetadataRoute.Sitemap = (events ?? []).map((e) => ({
+    url: `${siteUrl}/events/${e.id}`,
+    lastModified: e.created_at ?? undefined,
+    changeFrequency: "daily",
+    priority: 0.7,
+  }));
+
   return [
     {
       url: `${siteUrl}/pricing`,
       changeFrequency: "weekly",
       priority: 1,
     },
+    {
+      url: `${siteUrl}/events`,
+      changeFrequency: "daily",
+      priority: 0.8,
+    },
     ...clientEntries,
+    ...eventEntries,
   ];
 }

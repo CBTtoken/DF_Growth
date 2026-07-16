@@ -161,6 +161,12 @@ export default async function MarketplacePage({
               Clear filters
             </Link>
           )}
+          {/* Cross-link for mobile, where the header nav hides the Events
+              link to avoid a previously-fixed wrap bug (MarketingHeader.tsx)
+              — same reasoning as other cross-references in this codebase. */}
+          <Link href="/events" className="text-xs font-medium text-gray-400 hover:text-brand">
+            Looking for events instead? Browse Events →
+          </Link>
         </div>
       </section>
 

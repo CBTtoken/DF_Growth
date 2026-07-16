@@ -47,6 +47,19 @@ export function MarketingHeader() {
         >
           Marketplace
         </Link>
+        {/* List Your Event Sec 4/5 — needs to be discoverable via normal
+            navigation, not just SEO indexing. Hidden below sm rather than
+            risking the exact wrap bug documented above this block (a third
+            nav item already broke at 375px once) — a fourth item is a
+            bigger risk than a third was. Reachable on mobile via the
+            Marketplace page's own cross-link and the /events URL itself,
+            same tradeoff already accepted for other secondary nav. */}
+        <Link
+          href="/events"
+          className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
+        >
+          Events
+        </Link>
         <MarketingHeaderAuthLink />
         <a
           href="#pricing"

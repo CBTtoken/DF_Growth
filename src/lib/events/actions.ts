@@ -6,7 +6,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { organizerSignupSchema, eventSubmissionSchema } from "@/lib/schemas/events";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 
-type EventFormState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
+type EventFormState =
+  | { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean; eventId?: string }
+  | null;
+
+const MAX_IMAGES = 5;
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 
 function parseEventFields(formData: FormData) {
   return eventSubmissionSchema.safeParse({
@@ -27,42 +33,78 @@ function parseEventFields(formData: FormData) {
   });
 }
 
+// Sec 3: "a few images, reusing Growth's existing photo upload... pattern."
+// Unlike client_photos' upload-on-select flow (which needs an
+// already-valid session per request), files here are deferred until the
+// whole form submits — by then the organizer_account_id this function
+// receives is already resolved, so there's exactly one write path instead
+// of a pre-auth upload step. A bad individual photo (wrong type, too big)
+// is silently skipped rather than failing the whole submission over it —
+// the event itself is what the visitor came here for.
+async function uploadEventImages(organizerAccountId: string, formData: FormData): Promise<string[]> {
+  const admin = createAdminClient();
+  const files = formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0);
+  const paths: string[] = [];
+
+  for (const file of files.slice(0, MAX_IMAGES)) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type) || file.size > MAX_IMAGE_BYTES) continue;
+
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `${organizerAccountId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await admin.storage.from("event-photos").upload(path, file, { contentType: file.type });
+    if (!error) paths.push(path);
+  }
+
+  return paths;
+}
+
 // Sec 6's Turnstile/spam gate is Sprint 2 — every Sprint 1 submission
 // publishes immediately (see the migration's status default), so this is
 // the one write path every submit action below funnels through once it
 // has a resolved organizer_account_id.
-async function insertEvent(organizerAccountId: string, data: ReturnType<typeof parseEventFields>["data"]) {
+async function insertEvent(
+  organizerAccountId: string,
+  data: ReturnType<typeof parseEventFields>["data"],
+  formData: FormData
+): Promise<EventFormState> {
   if (!data) return { error: { _form: ["Something went wrong — please try again."] } };
 
-  const admin = createAdminClient();
-  const { error } = await admin.from("events").insert({
-    organizer_account_id: organizerAccountId,
-    event_name: data.eventName,
-    description: data.description || null,
-    start_datetime: data.startDatetime.toISOString(),
-    end_datetime: data.endDatetime ? data.endDatetime.toISOString() : null,
-    location_address: data.locationAddress || null,
-    city: data.city,
-    event_type: data.eventType,
-    social_links: {
-      facebook: data.facebookUrl || null,
-      instagram: data.instagramUrl || null,
-      website: data.websiteUrl || null,
-    },
-    contact_details: {
-      email: data.contactEmail,
-      phone: data.contactPhone || null,
-      whatsapp: data.contactWhatsapp || null,
-    },
-    ticket_info_text: data.ticketInfoText || null,
-  });
+  const images = await uploadEventImages(organizerAccountId, formData);
 
-  if (error) {
+  const admin = createAdminClient();
+  const { data: inserted, error } = await admin
+    .from("events")
+    .insert({
+      organizer_account_id: organizerAccountId,
+      event_name: data.eventName,
+      description: data.description || null,
+      start_datetime: data.startDatetime.toISOString(),
+      end_datetime: data.endDatetime ? data.endDatetime.toISOString() : null,
+      location_address: data.locationAddress || null,
+      city: data.city,
+      event_type: data.eventType,
+      social_links: {
+        facebook: data.facebookUrl || null,
+        instagram: data.instagramUrl || null,
+        website: data.websiteUrl || null,
+      },
+      contact_details: {
+        email: data.contactEmail,
+        phone: data.contactPhone || null,
+        whatsapp: data.contactWhatsapp || null,
+      },
+      images,
+      ticket_info_text: data.ticketInfoText || null,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) {
     console.error("Failed to create event", error);
     return { error: { _form: ["Something went wrong saving your event — please try again."] } };
   }
 
-  return { success: true };
+  return { success: true, eventId: inserted.id };
 }
 
 // Sec 2: "no need to create a second account if they're already a member"
@@ -147,7 +189,7 @@ export async function submitEventNewOrganizer(_prevState: EventFormState, formDa
     return { error: { _form: ["Something went wrong — please try again."] } };
   }
 
-  return insertEvent(account.id, eventParsed.data);
+  return insertEvent(account.id, eventParsed.data, formData);
 }
 
 // Returning organiser with an existing, already-confirmed login (either a
@@ -184,7 +226,7 @@ export async function submitEventExistingOrganizer(
     return { error: { _form: ["Something went wrong — please try again."] } };
   }
 
-  return insertEvent(organizerAccountId, eventParsed.data);
+  return insertEvent(organizerAccountId, eventParsed.data, formData);
 }
 
 // Already-signed-in visitor (typically a Growth business owner browsing
@@ -214,7 +256,7 @@ export async function submitEventAsLoggedInUser(_prevState: EventFormState, form
     return { error: { _form: ["Something went wrong — please try again."] } };
   }
 
-  return insertEvent(organizerAccountId, eventParsed.data);
+  return insertEvent(organizerAccountId, eventParsed.data, formData);
 }
 
 type VerifyOtpState = { error?: string; success?: boolean } | null;
