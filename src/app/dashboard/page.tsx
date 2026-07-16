@@ -19,6 +19,7 @@ import { DomainVerificationForm } from "@/components/dashboard/DomainVerificatio
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
 import { OrdersSection } from "@/components/dashboard/OrdersSection";
 import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
+import { ReviewsManagement, type DashboardReview } from "@/components/dashboard/ReviewsManagement";
 import { SiteFooter } from "@/components/SiteFooter";
 import { logOut } from "@/app/dashboard/actions";
 
@@ -67,6 +68,7 @@ export default async function DashboardPage() {
     { data: bookOrders },
     { count: totalPageViews },
     { data: recentPageViews },
+    { data: reviews },
   ] = await Promise.all([
     admin
       .from("growth_clients")
@@ -133,6 +135,15 @@ export default async function DashboardPage() {
       .eq("growth_client_id", client.id)
       .gte("viewed_at", sevenDaysAgo)
       .order("viewed_at", { ascending: true }),
+    // Rate & Review Sprint 2, Sec 6: excludes admin-removed reviews — a
+    // business can't act on one either way once an admin has removed it,
+    // so there's nothing useful this list would show them by keeping it.
+    admin
+      .from("reviews")
+      .select("id, rating, review_text, business_reply, flagged_by, flagged_reason, created_at, reviewer_accounts(display_name)")
+      .eq("business_id", client.id)
+      .neq("status", "removed")
+      .order("created_at", { ascending: false }),
   ]);
 
   // Separate from the admin-client Promise.all above — this one needs the
@@ -290,6 +301,8 @@ export default async function DashboardPage() {
             )}
           </ul>
         </section>
+
+        <ReviewsManagement reviews={(reviews ?? []) as unknown as DashboardReview[]} />
 
         <AssetStyleSection currentStyle={growthClient?.asset_style ?? "clean"} />
 

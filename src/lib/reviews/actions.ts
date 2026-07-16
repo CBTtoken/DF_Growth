@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { reviewerSignupSchema, reviewSubmissionSchema } from "@/lib/schemas/reviews";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { evaluateFraudSignals, hashIp } from "@/lib/reviews/fraud-signals";
 
 type ReviewFormState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -88,12 +89,30 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
     return { error: { _form: ["Something went wrong — please try again."] } };
   }
 
+  // Sec 3: fraud signals are checked at submission time regardless of
+  // whether the review is published immediately or still pending email
+  // confirmation — the flag rides along through that status transition
+  // (verifyReviewerSignupOtp below only ever touches status/verified_at),
+  // so it's already in place by the time the review can be seen at all.
+  const ipFingerprint = hashIp(ip);
+  const fraudFlag = await evaluateFraudSignals({
+    businessId,
+    reviewerEmail: signupParsed.data.email,
+    ipFingerprint,
+  });
+
   const { error: reviewError } = await admin.from("reviews").insert({
     business_id: businessId,
     reviewer_account_id: account.id,
     rating: reviewParsed.data.rating,
     review_text: reviewParsed.data.reviewText,
     status: "pending_verification",
+    ip_fingerprint: ipFingerprint,
+    ...(fraudFlag && {
+      flagged_by: fraudFlag.flaggedBy,
+      flagged_reason: fraudFlag.flaggedReason,
+      flagged_at: new Date().toISOString(),
+    }),
   });
 
   if (reviewError) {
@@ -150,6 +169,9 @@ export async function submitReviewExistingReviewer(_prevState: ReviewFormState, 
     return { error: { _form: ["No reviewer account found for this login."] } };
   }
 
+  const ipFingerprint = hashIp(ip);
+  const fraudFlag = await evaluateFraudSignals({ businessId, reviewerEmail: email, ipFingerprint });
+
   const { error: reviewError } = await admin.from("reviews").insert({
     business_id: businessId,
     reviewer_account_id: account.id,
@@ -157,6 +179,12 @@ export async function submitReviewExistingReviewer(_prevState: ReviewFormState, 
     review_text: reviewParsed.data.reviewText,
     status: "published",
     verified_at: new Date().toISOString(),
+    ip_fingerprint: ipFingerprint,
+    ...(fraudFlag && {
+      flagged_by: fraudFlag.flaggedBy,
+      flagged_reason: fraudFlag.flaggedReason,
+      flagged_at: new Date().toISOString(),
+    }),
   });
 
   if (reviewError) {

@@ -14,6 +14,7 @@ export function LocalBusinessSchema({
   address,
   industry,
   city,
+  aggregateRating,
 }: {
   businessName: string;
   description: string | null;
@@ -24,6 +25,12 @@ export function LocalBusinessSchema({
   address: string | null;
   industry: string | null;
   city: string | null;
+  // Rate & Review Sprint 2, Sec 7: "lets Google show star ratings directly
+  // in search results." null when there are zero published reviews yet —
+  // omitted from the schema entirely rather than sent as a zero rating,
+  // matching Sec 5's own "no rating shown at all... avoid implying a bad
+  // score where there's simply no data" for the on-page display.
+  aggregateRating: { ratingValue: number; reviewCount: number } | null;
 }) {
   // SEO fix: @type was always the generic "LocalBusiness", telling search
   // engines nothing about what kind of business this actually is — a real
@@ -51,6 +58,15 @@ export function LocalBusinessSchema({
       : city
         ? { address: { "@type": "PostalAddress", addressLocality: city, addressCountry: "ZA" } }
         : {}),
+    ...(aggregateRating
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: aggregateRating.ratingValue.toFixed(1),
+            reviewCount: aggregateRating.reviewCount,
+          },
+        }
+      : {}),
   };
 
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />;

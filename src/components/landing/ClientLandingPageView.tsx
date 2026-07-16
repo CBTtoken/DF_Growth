@@ -16,6 +16,7 @@ import { StorySection } from "@/components/landing/StorySection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { EarlyContactCta } from "@/components/landing/EarlyContactCta";
 import { ReviewsSection } from "@/components/reviews/ReviewsSection";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
 import { SplitHero } from "@/components/landing/heroes/SplitHero";
 import { EditorialHero } from "@/components/landing/heroes/EditorialHero";
@@ -102,6 +103,25 @@ export async function ClientLandingPageView({
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
     : null;
 
+  // Rate & Review Sprint 2, Sec 7: a small, isolated query just for the
+  // aggregate numbers the schema needs — same reasoning Sprint 1 used for
+  // ReviewsSection's own separate query (docs/GROWTH_RATE_REVIEW_BUILD_
+  // SPEC_CLAUDE.md), rather than threading the full review list up here
+  // just to compute two numbers this component doesn't otherwise need.
+  const { data: publishedRatings } = await createAdminClient()
+    .from("reviews")
+    .select("rating")
+    .eq("business_id", client.id)
+    .eq("status", "published");
+  const reviewCount = publishedRatings?.length ?? 0;
+  const aggregateRating =
+    reviewCount > 0
+      ? {
+          ratingValue: publishedRatings!.reduce((sum, r) => sum + r.rating, 0) / reviewCount,
+          reviewCount,
+        }
+      : null;
+
   const hasContent: Record<SectionKey, boolean> = {
     about: Boolean(landingPage.about_text),
     story: Boolean(client.additional_notes),
@@ -157,6 +177,7 @@ export async function ClientLandingPageView({
       address={client.business_address}
       industry={client.industry}
       city={client.city}
+      aggregateRating={aggregateRating}
     />
   );
 
