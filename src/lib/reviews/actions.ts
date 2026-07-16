@@ -28,12 +28,21 @@ export async function signUpReviewer(_prevState: ReviewerSignupState, formData: 
     return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
   }
 
+  // Hardcoded rather than derived from a request header (Host/
+  // X-Forwarded-Host are attacker-controllable — a spoofed value here
+  // could redirect a real confirmation link, carrying real session tokens,
+  // to an attacker's domain) or trusted from NEXT_PUBLIC_SITE_URL, which
+  // is baked in at Vercel build time and has been unreliable this session
+  // (it's flat-out localhost in local dev). This is the one real
+  // production origin this app is ever meant to run on.
+  const TRUSTED_SITE_URL = "https://growth.digitalflyersa.co.za";
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/review-confirmed`,
+      emailRedirectTo: `${TRUSTED_SITE_URL}/review-confirmed`,
     },
   });
 
