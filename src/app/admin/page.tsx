@@ -62,6 +62,12 @@ export default async function AdminPage() {
           <h1 className="text-2xl font-bold tracking-tight text-ink">Admin</h1>
           <div className="flex flex-wrap items-center gap-3">
             <Link
+              href="/admin/reactivation"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Reactivation Batch
+            </Link>
+            <Link
               href="/admin/support"
               className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
             >
