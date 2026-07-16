@@ -9,7 +9,7 @@ export const EMAIL_FOOTER_HTML = `
     Your DigitalFlyer SA Team<br />
     Visibility and Accessibility<br />
     WhatsApp: +27(0)72 311 0570<br />
-    Our Marketplace: <a href="https://www.digitalflyer.co.za" style="color:#4b5563;">www.digitalflyer.co.za</a>
+    Our Marketplace: <a href="https://growth.digitalflyersa.co.za/marketplace" style="color:#4b5563;">growth.digitalflyersa.co.za/marketplace</a>
   </p>
   <p style="font-size:11px;line-height:1.5;color:#9ca3af;margin:0;">
     This email is confidential and may also be privileged. The recipient is responsible for virus
