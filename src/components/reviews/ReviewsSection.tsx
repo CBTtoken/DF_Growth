@@ -17,13 +17,20 @@ type Review = {
 // parent page's existing Promise.all — reviews start empty for every
 // business today, so this doesn't add meaningful cold-start risk the way
 // a populated query would; simpler to wire in cleanly as its own unit.
-// Deliberately not participating in the per-template dynamic eyebrow-
-// numbering system yet (Sec 8 build order lists this as Sprint 1 scope on
-// its own) — always renders in the same place, right before the lead
-// form, across every template. Folding it into the numbered-section
-// system is a reasonable fast-follow, not done here to keep this change
-// isolated and easy to verify.
-export async function ReviewsSection({ businessId, accentColor }: { businessId: string; accentColor: string }) {
+// Sprint 2 fast-follow: now participates in the per-template dynamic
+// eyebrow-numbering system like every other section (src/lib/templates/
+// registry.ts) — always present in every template's `sections` list,
+// matching the fixed "right before the lead form" position it already had
+// before this, just with a real number now instead of none.
+export async function ReviewsSection({
+  businessId,
+  accentColor,
+  eyebrowNumber,
+}: {
+  businessId: string;
+  accentColor: string;
+  eyebrowNumber: string;
+}) {
   const admin = createAdminClient();
   const { data: reviews } = await admin
     .from("reviews")
@@ -43,7 +50,7 @@ export async function ReviewsSection({ businessId, accentColor }: { businessId: 
           className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base"
           style={{ color: accentColor }}
         >
-          Reviews
+          {eyebrowNumber} — Reviews
         </p>
 
         <div className="mt-4 flex flex-wrap items-center gap-6">

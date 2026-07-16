@@ -131,6 +131,11 @@ export async function ClientLandingPageView({
     gallery: photos.length >= 2,
     location: Boolean(client.business_address) && client.business_address !== "Online",
     howItWorks: true,
+    // Always present — ReviewsSection itself never returns null (Sec 5:
+    // the section is the call-to-action to leave the first review when
+    // there are none yet), so it always gets a real number, matching every
+    // other section whose hasContent mirrors whether it actually renders.
+    reviews: true,
   };
 
   const template = getTemplate(templateOverride !== undefined ? templateOverride : client.template);
@@ -192,6 +197,7 @@ export async function ClientLandingPageView({
     const trustNumber = nextNumber(hasContent.trust);
     const galleryNumber = nextNumber(hasContent.gallery);
     const locationNumber = nextNumber(hasContent.location);
+    const reviewsNumber = nextNumber(hasContent.reviews);
 
     return (
       <main>
@@ -253,7 +259,7 @@ export async function ClientLandingPageView({
           />
         </ScrollReveal>
         <ScrollReveal>
-          <ReviewsSection businessId={client.id} accentColor={accentColor} />
+          <ReviewsSection businessId={client.id} accentColor={accentColor} eyebrowNumber={reviewsNumber} />
         </ScrollReveal>
         <ScrollReveal>
           <LeadForm
@@ -348,6 +354,8 @@ export async function ClientLandingPageView({
         );
       case "howItWorks":
         return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} />;
+      case "reviews":
+        return <ReviewsSection businessId={client.id} accentColor={accentColor} eyebrowNumber={number} />;
     }
   };
 
@@ -374,10 +382,6 @@ export async function ClientLandingPageView({
       {template.sections.map((key) => (
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>
       ))}
-
-      <ScrollReveal>
-        <ReviewsSection businessId={client.id} accentColor={accentColor} />
-      </ScrollReveal>
 
       <ScrollReveal>
         <LeadForm
