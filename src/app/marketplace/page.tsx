@@ -191,14 +191,23 @@ export default async function MarketplacePage({
                 : clientPhotos[0];
               const thumbnailUrl = heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : null;
 
-              return (
-                <Link
-                  key={client.slug}
-                  href={`/${client.slug}`}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-                    {thumbnailUrl ? (
+              // A real photo genuinely helps and keeps its own card shape.
+              // No-photo cards used to be a big flat colour rectangle with
+              // just 2 initials — with most listings still photo-less
+              // (every one of the first 31 reactivated businesses has zero
+              // gallery photos), a wall of those reads as dull, repetitive
+              // colour blocks rather than a real directory. Redesigned as a
+              // text-forward card instead — a Google Business Profile-style
+              // icon + name + category, name and industry doing the actual
+              // work rather than a colour standing in for content.
+              if (thumbnailUrl) {
+                return (
+                  <Link
+                    key={client.slug}
+                    href={`/${client.slug}`}
+                    className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
                       <Image
                         src={thumbnailUrl}
                         alt={client.business_name}
@@ -206,50 +215,74 @@ export default async function MarketplacePage({
                         sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                         className="object-cover transition duration-300 group-hover:scale-105"
                       />
-                    ) : (
-                      // No uploaded photo — the brand color itself carries
-                      // the "colour and context" instead, with the logo (or
-                      // initials as a last resort) centered on it.
-                      <div
-                        className="flex size-full items-center justify-center"
-                        style={{ backgroundColor: brandColor }}
-                      >
-                        {logoUrl ? (
-                          <Image
-                            src={logoUrl}
-                            alt={client.business_name}
-                            width={72}
-                            height={72}
-                            className="size-16 rounded-full bg-white/90 object-cover p-1.5 shadow-sm"
-                          />
-                        ) : (
-                          <span className="text-3xl font-bold text-white/90">
-                            {client.business_name.slice(0, 2).toUpperCase()}
-                          </span>
-                        )}
+                    </div>
+                    <div className="flex flex-col gap-1.5 p-4">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="size-2 shrink-0 rounded-full"
+                          style={{ backgroundColor: brandColor }}
+                          aria-hidden
+                        />
+                        <h2 className="truncate text-sm font-bold tracking-tight text-ink group-hover:text-brand">
+                          {client.business_name}
+                        </h2>
                       </div>
-                    )}
-                  </div>
+                      <p className="truncate text-xs text-gray-400">
+                        {client.industry}
+                        {client.city ? ` · ${client.city}` : ""}
+                      </p>
+                      <p className="line-clamp-2 text-sm text-gray-500">
+                        {client.tagline || client.business_description}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              }
 
-                  <div className="flex flex-col gap-1.5 p-4">
-                    <div className="flex items-center gap-2">
+              return (
+                <Link
+                  key={client.slug}
+                  href={`/${client.slug}`}
+                  className="group flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
+                >
+                  <div className="flex items-start gap-3">
+                    {logoUrl ? (
+                      <Image
+                        src={logoUrl}
+                        alt={client.business_name}
+                        width={44}
+                        height={44}
+                        className="size-11 shrink-0 rounded-full border border-gray-100 bg-white object-cover p-1"
+                      />
+                    ) : (
                       <span
-                        className="size-2 shrink-0 rounded-full"
+                        className="grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
                         style={{ backgroundColor: brandColor }}
                         aria-hidden
-                      />
-                      <h2 className="truncate text-sm font-bold tracking-tight text-ink group-hover:text-brand">
+                      >
+                        {client.business_name.slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                    <div className="flex min-w-0 flex-col gap-1 pt-0.5">
+                      <h2 className="truncate text-base font-bold tracking-tight text-ink group-hover:text-brand">
                         {client.business_name}
                       </h2>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {client.industry && (
+                          <span
+                            className="truncate rounded-full px-2 py-0.5 text-xs font-semibold"
+                            style={{ backgroundColor: `${brandColor}1a`, color: brandColor }}
+                          >
+                            {client.industry}
+                          </span>
+                        )}
+                        {client.city && <span className="text-xs text-gray-400">{client.city}</span>}
+                      </div>
                     </div>
-                    <p className="truncate text-xs text-gray-400">
-                      {client.industry}
-                      {client.city ? ` · ${client.city}` : ""}
-                    </p>
-                    <p className="line-clamp-2 text-sm text-gray-500">
-                      {client.tagline || client.business_description}
-                    </p>
                   </div>
+                  <p className="line-clamp-2 text-sm text-gray-500">
+                    {client.tagline || client.business_description}
+                  </p>
                 </Link>
               );
             })}
