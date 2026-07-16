@@ -62,8 +62,9 @@ export default async function UnsubscribePage({
             <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>
             <h1 className="text-2xl font-bold tracking-tight text-ink">You&apos;re unsubscribed</h1>
             <p className="text-sm text-gray-500">
-              {businessName ? `${businessName} won't` : "You won't"} receive any further emails from this campaign.
-              Your live page and account, if you choose to use them, aren&apos;t affected.
+              {businessName ? `${businessName} won't` : "You won't"}{" "}
+              receive any further emails from this campaign. Your live page and account, if you choose to use them,
+              aren&apos;t affected.
             </p>
           </>
         )}
