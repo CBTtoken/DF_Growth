@@ -71,11 +71,15 @@ const nextConfig: NextConfig = {
       // even attempted — the browser drops a CSP-blocked script load
       // before it ever reaches the network layer, no console error either
       // in this case).
-      "script-src 'self' 'unsafe-inline' https://connect.facebook.net https://challenges.cloudflare.com",
+      // Google Analytics (gtag.js) — added proactively alongside Turnstile
+      // above, same silent-CSP-block risk: gtag.js loads from
+      // googletagmanager.com and sends hits to google-analytics.com, both
+      // need explicit allow-listing here or the tag silently never fires.
+      "script-src 'self' 'unsafe-inline' https://connect.facebook.net https://challenges.cloudflare.com https://www.googletagmanager.com",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https://images.pexels.com https://*.supabase.co https://www.facebook.com",
+      "img-src 'self' data: https://images.pexels.com https://*.supabase.co https://www.facebook.com https://www.googletagmanager.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co https://www.facebook.com https://connect.facebook.net https://challenges.cloudflare.com",
+      "connect-src 'self' https://*.supabase.co https://www.facebook.com https://connect.facebook.net https://challenges.cloudflare.com https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
       "frame-src 'self' https://www.google.com https://challenges.cloudflare.com",
       `frame-ancestors ${frameAncestors}`,
       "object-src 'none'",

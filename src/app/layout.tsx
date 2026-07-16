@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Geist, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
 
@@ -57,6 +58,30 @@ export default function RootLayout({
       className={`${geistSans.variable} ${barlowCondensed.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-white text-foreground">
+        {/* Google Analytics (gtag.js), site-wide. next/script with
+            afterInteractive is the officially recommended way to load GA4
+            in Next.js — a plain <script> tag pasted into <head> the way
+            Google's own instructions show works too, but fights Next's own
+            script-loading/hydration ordering and isn't how anything else
+            third-party is loaded in this codebase (Sentry, Meta Pixel).
+            Renders nothing if the env var isn't set, so this is safe to
+            ship even before it's configured anywhere but here. */}
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}`}
+              strategy="afterInteractive"
+            />
+            <Script id="google-analytics" strategy="afterInteractive">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID}');
+              `}
+            </Script>
+          </>
+        )}
         {children}
       </body>
     </html>
