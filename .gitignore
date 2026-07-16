@@ -46,3 +46,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# real customer PII source data - not for git history
+docs/DigitalFlyer_Legacy_Reactivation_Candidates_1.xlsx

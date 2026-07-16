@@ -25,6 +25,7 @@ export async function GET(request: Request) {
     .from("growth_clients")
     .select("id, business_name, contact_email, business_description")
     .in("status", ["pending_intake", "active"])
+    .neq("signup_channel", "legacy_reactivation")
     .is("onboarding_nudge_sent_at", null)
     .gte("created_at", fourDaysAgo.toISOString())
     .lte("created_at", threeDaysAgo.toISOString());
