@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { describeReactivationStatus } from "@/lib/growth-client/reactivation-status-label";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+import { VerifyAddressesButton } from "@/components/admin/VerifyAddressesButton";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -32,7 +33,9 @@ export default async function ReactivationBatchPage() {
   const admin = createAdminClient();
   const { data: clients } = await admin
     .from("growth_clients")
-    .select("id, business_name, contact_email, industry, city, trial_starts_at, trial_ends_at, paystack_reference, created_at, slug")
+    .select(
+      "id, business_name, contact_email, industry, city, trial_starts_at, trial_ends_at, paystack_reference, created_at, slug, email_verification_status, email_unsubscribed_at, email_bounced_at, email_complained_at"
+    )
     .eq("signup_channel", "legacy_reactivation")
     .order("business_name", { ascending: true });
 
@@ -54,13 +57,16 @@ export default async function ReactivationBatchPage() {
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-ink">Reactivation Batch</h1>
           </div>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- file-download route, not a page */}
-          <a
-            href="/api/admin/reactivation-export"
-            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-          >
-            Export as CSV ↓
-          </a>
+          <div className="flex flex-wrap items-center gap-3">
+            <VerifyAddressesButton />
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- file-download route, not a page */}
+            <a
+              href="/api/admin/reactivation-export"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Export as CSV ↓
+            </a>
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -85,13 +91,30 @@ export default async function ReactivationBatchPage() {
                   <th className="py-2 pr-4">City</th>
                   <th className="py-2 pr-4">Account status</th>
                   <th className="py-2 pr-4">Trial started</th>
-                  <th className="py-2 pr-4">Email delivery</th>
+                  <th className="py-2 pr-4">Email status</th>
                   <th className="py-2 pr-4" />
                 </tr>
               </thead>
               <tbody>
                 {rows.map((c) => {
                   const statusLabel = describeReactivationStatus(c);
+                  const emailStatus = c.email_unsubscribed_at
+                    ? "Unsubscribed"
+                    : c.email_bounced_at
+                      ? "Bounced"
+                      : c.email_complained_at
+                        ? "Complained"
+                        : c.email_verification_status === "valid"
+                          ? "Verified"
+                          : c.email_verification_status === "invalid"
+                            ? "Invalid address"
+                            : "Not yet checked";
+                  const emailStatusStyle =
+                    c.email_unsubscribed_at || c.email_bounced_at || c.email_complained_at || c.email_verification_status === "invalid"
+                      ? "bg-red-50 text-red-700"
+                      : c.email_verification_status === "valid"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500";
                   return (
                     <tr key={c.id} className="border-b border-gray-50">
                       <td className="py-2.5 pr-4 font-medium text-gray-900">{c.business_name}</td>
@@ -105,7 +128,9 @@ export default async function ReactivationBatchPage() {
                       <td className="py-2.5 pr-4 text-gray-400">
                         {c.trial_starts_at ? new Date(c.trial_starts_at).toLocaleDateString() : "—"}
                       </td>
-                      <td className="py-2.5 pr-4 text-gray-400">Not sent yet</td>
+                      <td className="py-2.5 pr-4">
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${emailStatusStyle}`}>{emailStatus}</span>
+                      </td>
                       <td className="py-2.5 pr-4 text-right">
                         <Link href={`/admin/clients/${c.id}`} className="text-xs font-semibold text-brand hover:underline">
                           View

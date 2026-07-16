@@ -18,6 +18,7 @@ const COLUMNS = [
   "status_label",
   "trial_starts_at",
   "trial_ends_at",
+  "email_verification_status",
   "email_delivery_status",
   "created_at",
 ] as const;
@@ -37,7 +38,9 @@ export async function GET() {
   const admin = createAdminClient();
   const { data: clients } = await admin
     .from("growth_clients")
-    .select("business_name, slug, contact_email, industry, city, province, call_phone, trial_starts_at, trial_ends_at, paystack_reference, created_at")
+    .select(
+      "business_name, slug, contact_email, industry, city, province, call_phone, trial_starts_at, trial_ends_at, paystack_reference, created_at, email_verification_status, email_unsubscribed_at, email_bounced_at, email_complained_at"
+    )
     .eq("signup_channel", "legacy_reactivation")
     .order("business_name", { ascending: true });
 
@@ -46,10 +49,19 @@ export async function GET() {
   }
 
   const rows = clients.map((c) => {
+    const deliveryStatus = c.email_unsubscribed_at
+      ? "Unsubscribed"
+      : c.email_bounced_at
+        ? "Bounced"
+        : c.email_complained_at
+          ? "Complained"
+          : c.trial_starts_at
+            ? "Sent"
+            : "Not sent yet";
     const record: Record<string, unknown> = {
       ...c,
       status_label: describeReactivationStatus(c),
-      email_delivery_status: "Not sent yet",
+      email_delivery_status: deliveryStatus,
     };
     return COLUMNS.map((col) => csvField(record[col])).join(",");
   });
