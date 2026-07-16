@@ -133,7 +133,13 @@ batch:
    land, auto-stops if the batch bounce/complaint rate crosses 5%. Requires
    `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `RESEND_API_KEY`,
    `APP_ENCRYPTION_KEY`, `NEXT_PUBLIC_SITE_URL` sourced into the
-   environment first.
+   environment first. **`.env.local`'s `NEXT_PUBLIC_SITE_URL` is
+   `http://localhost:3002` (correct for local dev, wrong for a real send)**
+   — found the hard way when a first test send went out with dead
+   `localhost` links for the public page and unsubscribe link. Always
+   override it explicitly for any real or preview send:
+   `export NEXT_PUBLIC_SITE_URL="https://growth.digitalflyersa.co.za"`
+   after sourcing `.env.local`, before running the script.
 4. **This still requires Dewald's explicit manual trigger every time** —
    the script deliberately isn't wired to any button, cron, or UI, per the
    build spec's "no automatic sending, ever" rule. Re-running the script
