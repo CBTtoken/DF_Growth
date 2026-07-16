@@ -64,12 +64,19 @@ const nextConfig: NextConfig = {
     // ever touched the former, so it couldn't have caught this.
     const cspDirectives = (frameAncestors: string) => [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
+      // Rate & Review Sprint 1, Sec 3: Cloudflare Turnstile — real bug
+      // found live, the widget script/iframe/verify-callback were all
+      // silently blocked by this CSP (confirmed: script tag present in the
+      // DOM, but window.turnstile never populated, zero network requests
+      // even attempted — the browser drops a CSP-blocked script load
+      // before it ever reaches the network layer, no console error either
+      // in this case).
+      "script-src 'self' 'unsafe-inline' https://connect.facebook.net https://challenges.cloudflare.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://images.pexels.com https://*.supabase.co https://www.facebook.com",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co https://www.facebook.com https://connect.facebook.net",
-      "frame-src 'self' https://www.google.com",
+      "connect-src 'self' https://*.supabase.co https://www.facebook.com https://connect.facebook.net https://challenges.cloudflare.com",
+      "frame-src 'self' https://www.google.com https://challenges.cloudflare.com",
       `frame-ancestors ${frameAncestors}`,
       "object-src 'none'",
       "base-uri 'self'",
