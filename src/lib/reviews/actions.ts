@@ -9,10 +9,19 @@ import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 type ReviewerSignupState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
 // Rate & Review Sprint 1, Sec 2/3: "anyone can leave a review, but only
-// through a verified account." Plain supabase.auth.signUp() (not
-// admin.createUser, which never sends mail) — this is exactly what that
-// method is for, dispatched through the same Resend/custom-SMTP relay
-// already configured for every other Supabase Auth email in this project.
+// through a verified account." Real bug found via live testing: a
+// clickable-link confirmation email is a single-use token, and several
+// email providers (Zoho's link-scanning included — confirmed live,
+// error_code=otp_expired) automatically open links in incoming mail to
+// scan them for safety, consuming the token before the real recipient
+// ever clicks it. The email itself confirms correctly (Supabase's own
+// scanner-triggered request completes it) but the human is then locked
+// out — every fix short of removing the clickable link entirely just
+// treated a symptom. Supabase generates the same 6-digit OTP code
+// alongside the link for every signup regardless — switching the email
+// template to show only the code (Dewald, dashboard-side) and verifying
+// it via verifyOtp() below removes the vulnerable link from the email
+// altogether, not just from this app's own handling of it.
 export async function signUpReviewer(_prevState: ReviewerSignupState, formData: FormData): Promise<ReviewerSignupState> {
   const parsed = reviewerSignupSchema.safeParse({
     displayName: formData.get("displayName"),
@@ -28,22 +37,10 @@ export async function signUpReviewer(_prevState: ReviewerSignupState, formData: 
     return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
   }
 
-  // Hardcoded rather than derived from a request header (Host/
-  // X-Forwarded-Host are attacker-controllable — a spoofed value here
-  // could redirect a real confirmation link, carrying real session tokens,
-  // to an attacker's domain) or trusted from NEXT_PUBLIC_SITE_URL, which
-  // is baked in at Vercel build time and has been unreliable this session
-  // (it's flat-out localhost in local dev). This is the one real
-  // production origin this app is ever meant to run on.
-  const TRUSTED_SITE_URL = "https://growth.digitalflyersa.co.za";
-
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: {
-      emailRedirectTo: `${TRUSTED_SITE_URL}/review-confirmed`,
-    },
   });
 
   if (error) {
@@ -72,34 +69,53 @@ export async function signUpReviewer(_prevState: ReviewerSignupState, formData: 
   return { success: true };
 }
 
-// Called from /review-confirmed right after the client establishes the
-// session from the email link's tokens. Publishes any of this reviewer's
-// reviews that were waiting on this exact confirmation (Sec 3:
-// "unverified submissions sit pending, not visible, until confirmed") —
-// a no-op for a brand-new account with no reviews yet. Uses the admin
-// client for the actual write, matching this project's established
-// pattern of server-side writes rather than client-permitted RLS updates.
-export async function confirmReviewerEmail(): Promise<{ ok: boolean; reason?: string }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-  if (!user) return { ok: false, reason: `no-session${userError ? `: ${userError.message}` : ""}` };
+type VerifyOtpState = { error?: string; success?: boolean } | null;
 
+// Verifies the 6-digit code from the "Confirm signup" email. Runs entirely
+// server-side against the cookie-backed SSR client — verifyOtp() both
+// confirms the account AND establishes the session in one call, writing
+// the session cookie directly as part of this request. No hash-fragment
+// parsing, no redirect URL, no separate "finish" page needed at all — the
+// whole class of bug that came from splitting those steps across a
+// client-side token exchange and a follow-up server read doesn't exist
+// when it's one atomic server call.
+export async function verifyReviewerSignupOtp(_prevState: VerifyOtpState, formData: FormData): Promise<VerifyOtpState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const token = String(formData.get("token") ?? "").trim();
+  if (!email || !token) {
+    return { error: "Enter the code from your email." };
+  }
+
+  const ip = clientIpFromHeaders(await headers());
+  if (isRateLimited(`reviewer-otp:${ip}`, 10, 10 * 60 * 1000)) {
+    return { error: "Too many attempts — please wait a few minutes and try again." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "signup" });
+
+  if (error || !data.user) {
+    return { error: "That code is incorrect or has expired — check your email for the latest one." };
+  }
+
+  // Publishes any of this reviewer's reviews that were waiting on this
+  // exact confirmation (Sec 3: "unverified submissions sit pending, not
+  // visible, until confirmed") — a no-op for a brand-new account with no
+  // reviews yet.
   const admin = createAdminClient();
-  const { data: account, error: accountError } = await admin
+  const { data: account } = await admin
     .from("reviewer_accounts")
     .select("id")
-    .eq("user_id", user.id)
+    .eq("user_id", data.user.id)
     .maybeSingle();
-  if (!account) return { ok: false, reason: `no-account${accountError ? `: ${accountError.message}` : ""}` };
 
-  await admin
-    .from("reviews")
-    .update({ status: "published", verified_at: new Date().toISOString() })
-    .eq("reviewer_account_id", account.id)
-    .eq("status", "pending_verification");
+  if (account) {
+    await admin
+      .from("reviews")
+      .update({ status: "published", verified_at: new Date().toISOString() })
+      .eq("reviewer_account_id", account.id)
+      .eq("status", "pending_verification");
+  }
 
-  return { ok: true };
+  return { success: true };
 }
