@@ -13,13 +13,14 @@ An existing Growth business member can also list an event through this same flow
 ## 3. Event Listing Fields
 
 - Event name
-- Date and time (start required, end optional)
+- Date and time (start required, end optional). A single event can span multiple days (e.g. a Friday evening into Saturday morning) by setting the end date on a later day than the start — this already works, confirmed via real UAT. What's not supported is multiple separate sessions/times for one listing (e.g. a workshop repeating at different times across several days); that would need a real recurring-event model, out of scope for now, worth scoping separately if it comes up.
 - Location: address plus city, matched against Growth's existing city taxonomy for consistency with Marketplace
 - Description
-- Organiser contact details (email, phone, WhatsApp)
+- Organiser contact details: contact person's name, email, phone, WhatsApp (added after real UAT — the original field list had no way to address the organiser by name, only channels to reach them)
 - Social links (Facebook, Instagram, website)
 - A few images, reusing Growth's existing photo upload and Pexels-fallback pattern
 - Ticket info, a plain descriptive text field ("Free entry," "R50 at the door," "Book via the organiser"), informational only, no payment or checkout wired to it, Phase 1
+- Booking link, an optional URL shown as a "Book now" button on the event page (added after real UAT — for a paid event, descriptive ticket-info text alone gave a visitor nowhere to actually act on it). Still no payment or checkout on Growth's own side, this only links out to wherever the organiser is actually taking bookings.
 
 ## 4. Public Events Section
 
@@ -40,7 +41,11 @@ Since this is open to literally anyone with an email address, quality control ma
 
 ## 7. Data Model
 
-New table, `events`: `id`, `organizer_account_id`, `event_name`, `description`, `start_datetime`, `end_datetime` (nullable), `location_address`, `city`, `event_type`, `social_links` (jsonb), `contact_details` (jsonb), `images`, `ticket_info_text`, `status` (`published`, `pending_review`, `flagged`, `removed`, `expired`), `created_at`.
+New table, `events`: `id`, `organizer_account_id`, `event_name`, `description`, `start_datetime`, `end_datetime` (nullable), `location_address`, `city`, `event_type`, `social_links` (jsonb), `contact_details` (jsonb — now includes `name`, the organiser's contact person, alongside `email`/`phone`/`whatsapp`), `images`, `ticket_info_text`, `booking_url` (nullable, added after real UAT — see Sec 3), `status` (`published`, `pending_review`, `flagged`, `removed`, `expired`), `flagged_by`/`flagged_reason`/`flagged_at` (added in the Sprint 1 migration so Sprint 2's moderation queue only needs to add behavior, not new columns — same pattern as `reviews`), `created_at`.
+
+New table, `event_organizers`: `id`, `user_id` (references `auth.users`, unique), `created_at`. Mirrors `reviewer_accounts`' shape — a lightweight identity table, no business-membership concept.
+
+Sprint 1 note: every submission publishes immediately (`status` defaults to `published`) — there's no `pending_verification` state the way `reviews` has, since Sec 6's auto-publish/manual-review split is explicitly tied to the Turnstile/spam checks Sprint 2 hasn't built yet, never to email confirmation.
 
 ## 8. Build Order
 
@@ -56,12 +61,22 @@ New table, `events`: `id`, `organizer_account_id`, `event_name`, `description`, 
 
 ## 10. Acceptance Checklist
 
-- [ ] Free event organiser signup live, no payment step anywhere in the flow
-- [ ] Existing Growth members can list an event with their existing login
-- [ ] All listed fields captured, ticket info stored as descriptive text only, no payment logic attached
-- [ ] Public Events section live, searchable by city and event type, sorted soonest first
-- [ ] Past events auto-drop from public browse, retained in the database
-- [ ] Individual event pages live with Event JSON-LD structured data
+Sprint 1 (shipped, verified live end-to-end including a real UAT pass):
+
+- [x] Free event organiser signup live, no payment step anywhere in the flow
+- [x] Existing Growth members can list an event with their existing login
+- [x] All listed fields captured (Sec 3, including the post-UAT additions), ticket info stored as descriptive text only, no payment logic attached
+- [x] Public Events section live, searchable by city and event type, sorted soonest first
+- [x] Past events auto-drop from public browse, retained in the database
+- [x] Individual event pages live with Event JSON-LD structured data
+
+Sprint 2 (not started):
+
 - [ ] Turnstile and spam checks gate auto-publish vs manual review correctly
 - [ ] Admin moderation queue live for flagged and pending-review events
 - [ ] "Report this event" flag live on every public event page
+
+## 11. Known Follow-Ups (Not Blocking, Not Forgotten)
+
+- **Event page banner.** The individual event page currently uses a safe text-only header (event name, type, location — no photo) rather than a cropped hero image. An earlier attempt to stretch an arbitrary uploaded photo into a full-width banner looked broken for anything that wasn't a wide landscape photo (a real UAT test used a promotional graphic and the crop mangled it). A proper solution — smart cropping, a dedicated banner-specific upload separate from the gallery — is real design/product work, not a quick fix, and hasn't been scoped yet.
+- **Recurring / multi-session events.** See Sec 3 — a single multi-day event already works, but a listing with several distinct sessions (different times across different days) isn't supported and would need a real recurring-event model if it's ever wanted.
