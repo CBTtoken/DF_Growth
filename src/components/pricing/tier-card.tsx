@@ -233,26 +233,20 @@ export function TierCard({
           ) : (
             state?.error?.confirmEmail && <p className="text-xs text-red-600">{state.error.confirmEmail[0]}</p>
           )}
-          {/* Hybrid fallback field, real agent feedback follow-up: a
-              confident one-line confirmation when the referral cookie
-              already resolved to a real agent, or — only when there's
-              genuinely nothing to confirm — a minimal, easy-to-ignore
-              optional line so a visitor who clicked an agent's link on a
-              different device isn't lost to attribution entirely. Never
-              both, and never shown to a direct/organic visitor as a
-              prominent field. */}
+          {/* Dewald's call, 2026-07-17: the open free-text fallback (visible
+              to any direct/organic visitor with no referral cookie at all)
+              got real spam — junk names, nonsense — with no validation
+              beyond a max length. Removed entirely; admin can now assign a
+              referring agent after the fact from the client's own admin
+              page (AssignAgentForm), which the commission webhook picks up
+              correctly at payment time either way. The confident banner
+              stays — that one only ever shows a real approved agent's name
+              already resolved from an actual referral-link cookie, never
+              user-typed, so it was never the source of the spam risk. */}
           {hasReferralCookie && referredAgentName && (
             <p className="rounded-lg bg-brand/5 px-3 py-2 text-xs font-medium text-brand">
               You were referred by {referredAgentName} ✓
             </p>
-          )}
-          {!hasReferralCookie && (
-            <input
-              type="text"
-              name="referredAgentName"
-              placeholder="Referred by a DigitalFlyer agent? (optional)"
-              className="rounded border border-gray-200 px-3 py-2 text-xs text-gray-500 placeholder:text-gray-400"
-            />
           )}
           {/* Combined spec Sec 17: split from one bundled required checkbox
               into a required legal agreement and a separate, optional,

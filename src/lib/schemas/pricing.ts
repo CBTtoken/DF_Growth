@@ -24,11 +24,6 @@ export const startCheckoutSchema = z
     // Combined spec Sec 17: separate, optional, unticked by default —
     // signup completes fine whether or not this is checked.
     marketingConsent: z.literal("on").optional(),
-    // Hybrid fallback field, real agent feedback follow-up: only ever
-    // rendered when the referral cookie *didn't* already resolve an
-    // agent — a visitor self-reporting who referred them, for the
-    // cross-device case a cookie alone can't catch.
-    referredAgentName: z.string().trim().max(150).optional(),
   })
   .refine((data) => data.email.trim().toLowerCase() === data.confirmEmail.trim().toLowerCase(), {
     message: "Emails don't match",
