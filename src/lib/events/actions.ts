@@ -5,9 +5,16 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { organizerSignupSchema, eventSubmissionSchema } from "@/lib/schemas/events";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { detectSpamSignal, detectThinListing } from "@/lib/events/spam-check";
 
 type EventFormState =
-  | { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean; eventId?: string }
+  | {
+      error?: Record<string, string[]> & { _form?: string[] };
+      success?: boolean;
+      eventId?: string;
+      needsReview?: boolean;
+    }
   | null;
 
 const MAX_IMAGES = 5;
@@ -70,10 +77,12 @@ async function uploadEventImages(organizerAccountId: string, formData: FormData)
   return paths;
 }
 
-// Sec 6's Turnstile/spam gate is Sprint 2 — every Sprint 1 submission
-// publishes immediately (see the migration's status default), so this is
-// the one write path every submit action below funnels through once it
-// has a resolved organizer_account_id.
+// Sec 6: Turnstile is checked by each submit action before this ever runs
+// (a missing/invalid token rejects outright, no row ever created — see
+// each submit* function below). This is the one write path every submit
+// action funnels through once it has a resolved organizer_account_id and
+// a passing Turnstile check; the basic completeness/spam-pattern check
+// happens here, deciding auto-publish vs. manual review.
 async function insertEvent(
   organizerAccountId: string,
   data: ReturnType<typeof parseEventFields>["data"],
@@ -91,6 +100,17 @@ async function insertEvent(
   // given — a lone date or lone time (the other left blank) is treated as
   // "no end time provided" rather than guessing the missing half.
   const endDatetime = data.endDate && data.endTime ? combineDateTime(data.endDate, data.endTime) : null;
+
+  // Sec 6: "clean submissions... auto-publish immediately... anything that
+  // fails those checks... routes to a manual admin review queue before it
+  // goes live." Unlike Rate & Review's flags (orthogonal to an
+  // already-published review, deliberately never hiding one a business
+  // didn't like), this gates publication itself — the submitter's own
+  // brand-new event has never been visible to anyone yet, so holding it
+  // for a quick human check costs nothing a real organiser would notice.
+  const needsReview =
+    detectSpamSignal({ eventName: data.eventName, description: data.description ?? "" }) ??
+    detectThinListing({ description: data.description ?? "", imageCount: images.length });
 
   const admin = createAdminClient();
   const { data: inserted, error } = await admin
@@ -118,6 +138,12 @@ async function insertEvent(
       images,
       ticket_info_text: data.ticketInfoText || null,
       booking_url: data.bookingUrl || null,
+      status: needsReview ? "pending_review" : "published",
+      ...(needsReview && {
+        flagged_by: "system",
+        flagged_reason: needsReview,
+        flagged_at: new Date().toISOString(),
+      }),
     })
     .select("id")
     .single();
@@ -127,7 +153,7 @@ async function insertEvent(
     return { error: { _form: ["Something went wrong saving your event — please try again."] } };
   }
 
-  return { success: true, eventId: inserted.id };
+  return { success: true, eventId: inserted.id, needsReview: !!needsReview };
 }
 
 // Sec 2: "no need to create a second account if they're already a member"
@@ -184,6 +210,11 @@ export async function submitEventNewOrganizer(_prevState: EventFormState, formDa
     return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
   }
 
+  const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  if (!turnstileOk) {
+    return { error: { _form: ["Verification failed — please try again."] } };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: signupParsed.data.email,
@@ -238,6 +269,11 @@ export async function submitEventExistingOrganizer(
     return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
   }
 
+  const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  if (!turnstileOk) {
+    return { error: { _form: ["Verification failed — please try again."] } };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.user) {
@@ -264,6 +300,11 @@ export async function submitEventAsLoggedInUser(_prevState: EventFormState, form
   const ip = clientIpFromHeaders(h);
   if (isRateLimited(`event-submit:${ip}`, 10, 10 * 60 * 1000)) {
     return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+  }
+
+  const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  if (!turnstileOk) {
+    return { error: { _form: ["Verification failed — please try again."] } };
   }
 
   const supabase = await createClient();
@@ -305,6 +346,46 @@ export async function verifyEventOrganizerSignupOtp(_prevState: VerifyOtpState, 
 
   if (error || !data.user) {
     return { error: "That code is incorrect or has expired — check your email for the latest one." };
+  }
+
+  return { success: true };
+}
+
+type ReportEventState = { error?: string; success?: boolean } | null;
+
+// Sec 6: "a 'report this event' flag, visible on every public event page,
+// routes to the same admin queue" — no login required, matches the spec's
+// "visible on every public event page" framing rather than gating it
+// behind an account. `.is("flagged_by", null)` guards against a report
+// piling on top of one already in the queue, same pattern as reviews'
+// business-flag action.
+export async function reportEvent(eventId: string, _prevState: ReportEventState, formData: FormData): Promise<ReportEventState> {
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!reason) {
+    return { error: "Tell us briefly why you're reporting this event." };
+  }
+
+  const h = await headers();
+  const ip = clientIpFromHeaders(h);
+  if (isRateLimited(`event-report:${ip}`, 5, 10 * 60 * 1000)) {
+    return { error: "Too many reports — please wait a few minutes and try again." };
+  }
+
+  const admin = createAdminClient();
+  const { data: updated } = await admin
+    .from("events")
+    .update({ flagged_by: "public", flagged_reason: reason, flagged_at: new Date().toISOString() })
+    .eq("id", eventId)
+    .eq("status", "published")
+    .is("flagged_by", null)
+    .select("id")
+    .maybeSingle();
+
+  if (!updated) {
+    // Already flagged, already removed, or a stale/bad id — same
+    // reassuring response either way, rather than leaking which case it
+    // was to an anonymous reporter.
+    return { success: true };
   }
 
   return { success: true };

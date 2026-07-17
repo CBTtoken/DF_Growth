@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { EventSchema } from "@/components/events/EventSchema";
+import { ReportEventButton } from "@/components/events/ReportEventButton";
 import { EVENT_TYPES } from "@/lib/event-types";
 
 type EventDetail = {
@@ -234,10 +235,11 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 flex flex-col items-center gap-4">
           <Link href="/events" className="text-sm font-semibold text-gray-500 hover:text-brand">
             ← Back to all events
           </Link>
+          <ReportEventButton eventId={event.id} />
         </div>
       </section>
 

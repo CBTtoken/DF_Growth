@@ -1,0 +1,25 @@
+name: Expire past events
+
+# List Your Event Sprint 2, Sec 6 — formally transitions any published
+# event whose date has passed to status='expired'. Purely a data-tidiness
+# job: the public browse page already hides past events via its own query
+# regardless of this running, so a missed or delayed run never shows a
+# stale event to a visitor. Runs daily at 02:00 UTC (04:00 SAST), and can
+# be triggered manually from the Actions tab. Same secrets as
+# onboarding-nudge.yml / trial-reminders.yml.
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  expire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call expire-events endpoint
+        env:
+          SITE_URL: ${{ secrets.SITE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          curl -sf -X GET "$SITE_URL/api/cron/expire-events" \
+            -H "Authorization: Bearer $CRON_SECRET"

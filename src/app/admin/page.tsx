@@ -61,6 +61,13 @@ export default async function AdminPage() {
     .select("id", { count: "exact", head: true })
     .not("flagged_by", "is", null);
 
+  // List Your Event Sprint 2, Sec 6: count only, covers both queues on
+  // /admin/events (pending-review and flagged) in one badge number.
+  const { count: eventsQueueCount } = await admin
+    .from("events")
+    .select("id", { count: "exact", head: true })
+    .or("status.eq.pending_review,flagged_by.not.is.null");
+
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
@@ -93,6 +100,17 @@ export default async function AdminPage() {
               {!!flaggedReviewCount && (
                 <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {flaggedReviewCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/admin/events"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Events Queue
+              {!!eventsQueueCount && (
+                <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {eventsQueueCount}
                 </span>
               )}
             </Link>

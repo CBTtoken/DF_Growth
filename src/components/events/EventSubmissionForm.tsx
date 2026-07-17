@@ -9,6 +9,7 @@ import {
   verifyEventOrganizerSignupOtp,
 } from "@/lib/events/actions";
 import { EventPhotoUpload } from "@/components/events/EventPhotoUpload";
+import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 import { CITIES } from "@/lib/cities";
 import { EVENT_TYPES } from "@/lib/event-types";
 
@@ -31,12 +32,14 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [step, setStep] = useState<"form" | "otp" | "done">("form");
   const [pendingEmail, setPendingEmail] = useState("");
   const [eventId, setEventId] = useState<string | null>(null);
+  const [needsReview, setNeedsReview] = useState(false);
 
   const [newState, newAction, newPending] = useActionState(async (_prev: SubmitResult, formData: FormData) => {
     const result = await submitEventNewOrganizer(_prev, formData);
     if (result?.success) {
       setPendingEmail(String(formData.get("email")));
       setEventId(result.eventId ?? null);
+      setNeedsReview(!!result.needsReview);
       setStep("otp");
     }
     return result;
@@ -46,6 +49,7 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
     const result = await submitEventExistingOrganizer(_prev, formData);
     if (result?.success) {
       setEventId(result.eventId ?? null);
+      setNeedsReview(!!result.needsReview);
       setStep("done");
     }
     return result;
@@ -55,6 +59,7 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
     const result = await submitEventAsLoggedInUser(_prev, formData);
     if (result?.success) {
       setEventId(result.eventId ?? null);
+      setNeedsReview(!!result.needsReview);
       setStep("done");
     }
     return result;
@@ -73,12 +78,16 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
     return (
       <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-10 text-center shadow-sm">
         <span className="grid size-14 place-items-center rounded-full bg-brand text-2xl text-white">✓</span>
-        <h2 className="text-xl font-bold tracking-tight text-ink">Your event is live</h2>
+        <h2 className="text-xl font-bold tracking-tight text-ink">
+          {needsReview ? "Your event is submitted" : "Your event is live"}
+        </h2>
         <p className="max-w-sm text-sm text-gray-500">
-          It&apos;s already visible in the Events section — anyone can find it right now, no waiting.
+          {needsReview
+            ? "It needs a quick check from our team before it goes public — usually within a day. You'll be able to see it here once it's live."
+            : "It's already visible in the Events section — anyone can find it right now, no waiting."}
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-3">
-          {eventId && (
+          {eventId && !needsReview && (
             <Link
               href={`/events/${eventId}`}
               className="rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-brand-dark"
@@ -101,10 +110,13 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
     return (
       <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm">
         <span className="grid size-12 place-items-center rounded-full bg-brand/10 text-xl text-brand">✓</span>
-        <h2 className="text-lg font-bold tracking-tight text-ink">Your event is live!</h2>
+        <h2 className="text-lg font-bold tracking-tight text-ink">
+          {needsReview ? "Your event is submitted!" : "Your event is live!"}
+        </h2>
         <p className="text-sm text-gray-500">
           One more thing — enter the 6-digit code we sent to <span className="font-medium text-ink">{pendingEmail}</span> to
           confirm your email, so you can log back in and manage future listings.
+          {needsReview && " Your event needs a quick check from our team before it goes public, usually within a day."}
         </p>
         <form action={otpAction} className="flex w-full flex-col gap-3">
           <input type="hidden" name="email" value={pendingEmail} />
@@ -126,7 +138,7 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
           </button>
         </form>
         <div className="flex justify-center gap-4 text-xs text-gray-400">
-          {eventId && (
+          {eventId && !needsReview && (
             <Link href={`/events/${eventId}`} className="hover:text-brand">
               View your event
             </Link>
@@ -296,6 +308,8 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
           now&rdquo; button. Growth itself doesn&apos;t take payment or bookings for events yet.
         </p>
       </section>
+
+      <TurnstileWidget />
     </>
   );
 
