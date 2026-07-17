@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { generateUniqueReferralCode } from "@/lib/agents/referral-code";
-import { sendAgentApprovedEmail, sendAgentRejectedEmail } from "@/lib/email/agents";
+import { sendAgentApprovedEmail, sendAgentRejectedEmail, sendAgentCommissionPaidEmail } from "@/lib/email/agents";
 
 // Sec 3: approving generates the referral code and sends the invite email
 // in one step — an approved agent with no code yet, or a code nobody was
@@ -77,7 +77,7 @@ export async function markCommissionPaid(ledgerId: string, agentId: string, refe
   if ("error" in admin_) return;
 
   const admin = createAdminClient();
-  await admin
+  const { data: updated } = await admin
     .from("commission_ledger")
     .update({
       status: "paid",
@@ -85,7 +85,25 @@ export async function markCommissionPaid(ledgerId: string, agentId: string, refe
       paid_at: new Date().toISOString(),
     })
     .eq("id", ledgerId)
-    .neq("status", "paid");
+    .neq("status", "paid")
+    .select("amount_due")
+    .maybeSingle();
+
+  // Sec 10: "Commission marked paid: notify the agent with the amount and
+  // reference." Only fires on a real update (updated is null if this row
+  // was already paid, matching the neq guard above) — never re-notifies
+  // on a stale/duplicate click.
+  if (updated) {
+    const { data: agent } = await admin.from("agents").select("full_name, email").eq("id", agentId).single();
+    if (agent) {
+      await sendAgentCommissionPaidEmail({
+        fullName: agent.full_name,
+        email: agent.email,
+        amount: Number(updated.amount_due),
+        reference: reference || null,
+      });
+    }
+  }
 
   revalidatePath(`/admin/agents/${agentId}`);
 }

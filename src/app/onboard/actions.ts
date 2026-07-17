@@ -360,7 +360,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
     .from("growth_clients")
     .update({ packages })
     .eq("id", client.id)
-    .select("plan, status, slug, business_name, contact_email")
+    .select("plan, status, slug, business_name, contact_email, is_agent_comped")
     .single();
 
   if (error || !growthClient) return { error: { _form: ["Could not save, please try again."] } };
@@ -378,8 +378,15 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   // indefinitely just by re-saving packages. This same guard is what keeps
   // the Sprint 1 Day 0 welcome email a true one-time send, not something
   // that fires again on a later "Edit your page" package update.
+  //
+  // Agent Referral Programme Sec 4: a comped account skips trial_ends_at
+  // entirely (stays null) — it's a genuinely permanent free page, not a
+  // 7-day trial, and the reminder/pause cron only ever looks at rows
+  // where trial_ends_at is set, so leaving it null is the whole fix.
   if (growthClient.plan === "foundation" && growthClient.status !== "active") {
-    const trialEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const trialEndsAt = growthClient.is_agent_comped
+      ? null
+      : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
     await admin
       .from("growth_clients")
       .update({ status: "active", trial_ends_at: trialEndsAt })

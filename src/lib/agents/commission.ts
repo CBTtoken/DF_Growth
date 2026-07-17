@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendAgentReferralConvertedEmail, sendAgentTierMilestoneEmail } from "@/lib/email/agents";
 
 // Sec 6: one ledger row per commission-earning payment. Called from the
 // Paystack webhook's first-payment branch (the point that already sends
@@ -44,8 +45,13 @@ export async function recordCommissionIfEligible({
 
   // Sec 6's tier count includes the referral converting right now, since
   // this payment is exactly what makes it "ever-converted" — not just the
-  // rows already on record before this one gets written.
+  // rows already on record before this one gets written. isNewConversion
+  // distinguishes this specific client's *first* qualifying payment (the
+  // real "referral converted" moment Sec 10's notification is about) from
+  // a later payment for a client already on record — the set's own
+  // membership check before adding clientId is exactly that signal.
   const distinctClients = new Set((existingRows ?? []).map((r) => r.referred_client_id));
+  const isNewConversion = !distinctClients.has(clientId);
   distinctClients.add(clientId);
   const rateApplied = distinctClients.size <= 10 ? 25 : 40;
 
@@ -62,5 +68,30 @@ export async function recordCommissionIfEligible({
 
   if (error) {
     console.error("Failed to record commission ledger row", error, { clientId, referredByAgentId });
+    return;
+  }
+
+  if (!isNewConversion) return;
+
+  const [{ data: agent }, { data: client }] = await Promise.all([
+    admin.from("agents").select("full_name, email").eq("id", referredByAgentId).single(),
+    admin.from("growth_clients").select("business_name").eq("id", clientId).single(),
+  ]);
+
+  if (agent && client) {
+    await sendAgentReferralConvertedEmail({
+      fullName: agent.full_name,
+      email: agent.email,
+      referredBusinessName: client.business_name,
+      ratePercent: rateApplied,
+    });
+
+    // Sec 10: fires exactly once, at the moment the 11th distinct
+    // conversion crosses the threshold — every conversion after this one
+    // is already at 40%, so this exact size===11 check only ever matches
+    // the single crossing event, never re-fires on #12, #13, etc.
+    if (distinctClients.size === 11) {
+      await sendAgentTierMilestoneEmail({ fullName: agent.full_name, email: agent.email });
+    }
   }
 }

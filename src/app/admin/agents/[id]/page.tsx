@@ -23,11 +23,21 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
 
   const { data: agent } = await admin
     .from("agents")
-    .select("id, full_name, email, whatsapp_number, status, referral_code, created_at, approved_at")
+    .select("id, full_name, email, whatsapp_number, status, referral_code, created_at, approved_at, comped_client_id")
     .eq("id", id)
     .maybeSingle();
 
   if (!agent) notFound();
+
+  let compedPageSlug: string | null = null;
+  if (agent.comped_client_id) {
+    const { data: compedClient } = await admin
+      .from("growth_clients")
+      .select("slug")
+      .eq("id", agent.comped_client_id)
+      .maybeSingle();
+    compedPageSlug = compedClient?.slug ?? null;
+  }
 
   const { data: referredClients } = await admin
     .from("growth_clients")
@@ -66,6 +76,21 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
               Referral link: <span className="font-medium text-gray-700">{getAgentReferralLink(agent.referral_code)}</span>
             </p>
           )}
+          <p className="text-sm text-gray-500">
+            Comped page:{" "}
+            {compedPageSlug ? (
+              <a
+                href={`${process.env.NEXT_PUBLIC_SITE_URL}/${compedPageSlug}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-brand hover:underline"
+              >
+                View page ↗
+              </a>
+            ) : (
+              <span className="text-gray-400">Not set up yet</span>
+            )}
+          </p>
         </div>
 
         <section className="flex flex-wrap gap-4">

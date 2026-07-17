@@ -22,6 +22,7 @@ export async function provisionGrowthClient({
   billingCycle,
   foundingSignupNumber,
   referredByAgentId,
+  isAgentComped,
 }: {
   businessName: string;
   email: string;
@@ -51,6 +52,11 @@ export async function provisionGrowthClient({
   // the webhook's own call for enterprise's upfront-pay path has none)
   // before this insert, not looked up in here.
   referredByAgentId?: string | null;
+  // Agent Referral Programme Sec 4: a comped account is otherwise a normal
+  // Foundation signup — same wizard, same lack of a payment step — the
+  // only special handling is onboard/actions.ts leaving trial_ends_at
+  // null for one of these, so the 7-day trial clock never starts.
+  isAgentComped?: boolean;
 }): Promise<ProvisionResult> {
   const admin = createAdminClient();
   const baseSlug = slugify(businessName);
@@ -81,6 +87,7 @@ export async function provisionGrowthClient({
         is_founding_member: foundingSignupNumber !== null,
         founding_signup_number: foundingSignupNumber,
         referred_by_agent_id: referredByAgentId ?? null,
+        is_agent_comped: isAgentComped ?? false,
       })
       .select("id, slug")
       .single();
