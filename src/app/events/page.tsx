@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { CalendarDays, MapPin } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -178,9 +179,16 @@ export default async function EventsPage({
                     <h2 className="truncate text-sm font-bold tracking-tight text-ink group-hover:text-brand">
                       {event.event_name}
                     </h2>
-                    <p className="text-xs text-gray-400">
-                      {formatEventDate(event.start_datetime)} · {event.city}
-                    </p>
+                    <div className="flex flex-col gap-0.5 text-xs text-gray-400">
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarDays className="size-3.5 flex-shrink-0" aria-hidden />
+                        {formatEventDate(event.start_datetime)}
+                      </span>
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="size-3.5 flex-shrink-0" aria-hidden />
+                        {event.city}
+                      </span>
+                    </div>
                     {event.description && <p className="line-clamp-2 text-sm text-gray-500">{event.description}</p>}
                   </div>
                 </Link>

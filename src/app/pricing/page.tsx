@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Flame, Search, PuzzleIcon, Wallet, ShieldCheck, Star, Globe, BarChart3, Radar, CalendarDays, Users } from "lucide-react";
+import { MapPin, Receipt, Sprout, Network, Flame, Star, Globe, BarChart3, Radar, CalendarDays, Users } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -29,56 +29,18 @@ const ECOSYSTEM_QUICK_REFERENCE = [
   },
 ];
 
-// Merges the original "Why DigitalFlyer" narrative with the separate "why
-// this makes sense" pain-points ask into one section instead of two, since
-// stacking both back to back said the same thing twice.
-const PAIN_POINTS = [
-  {
-    icon: Search,
-    title: "Customers can't find you online",
-    description:
-      "Most small businesses rely on word of mouth and posts that disappear in a day, with no real place a new customer can find them.",
-  },
-  {
-    icon: PuzzleIcon,
-    title: "Marketing feels too complicated",
-    description: "Ad platforms, websites, social media. Most business owners simply do not have time to learn it all.",
-  },
-  {
-    icon: Wallet,
-    title: "Agencies cost too much, too soon",
-    description: "Big agencies want a big budget before they will even take your call.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "No way to prove you're legit",
-    description: "Without a real online presence, a new customer has no way to trust you before they call.",
-  },
-];
-
-const STARTER_FEATURES = [
-  {
-    icon: Layout,
-    title: "Professional Business Page",
-    description: "Your own modern online business profile that's easy to share with customers.",
-  },
-  {
-    icon: Store,
-    title: "DigitalFlyer Marketplace",
-    description:
-      "Every member is automatically included in the DigitalFlyer Marketplace, making it easier for customers to discover your business.",
-  },
-  {
-    icon: Target,
-    title: "Lead Generation Page",
-    description: "A dedicated landing page designed to turn visitors into real enquiries.",
-  },
-  {
-    icon: TrendingUp,
-    title: "Built To Grow",
-    description:
-      "As your business grows, DigitalFlyer grows with you through marketing tools, networking opportunities and future business features.",
-  },
+// UI/UX pass, 2026-07-17: rewritten from a 4-card pain-point grid (which
+// read as generic marketing copy, and duplicated a headline pattern also
+// used by the pricing section and the now-removed "Everything Starts
+// Here") into an actual narrative — short, scannable "sound familiar?"
+// beats a reader recognises themselves in, not abstract categories.
+// Deliberately short lines (this isn't prose to read start-to-finish,
+// it's a list to nod along to).
+const SOUND_FAMILIAR = [
+  "It's 9pm and you're still replying to WhatsApp messages about tomorrow's booking.",
+  "Your best post is three scrolls down a Facebook feed by the time anyone new sees it.",
+  "A competitor with a worse product wins the sale, only because they had somewhere to send people.",
+  "Someone asks \"do you have a website?\" and you don't know what to say.",
 ];
 
 // Three real, live-rendered templates (same /preview/[templateId] route the
@@ -223,11 +185,52 @@ async function getFeaturedTestimonials() {
   return data ?? [];
 }
 
+type RealClientPage = { slug: string; businessName: string };
+
+// UI/UX pass, 2026-07-17: "See It In Action" used to show three fictional
+// sample businesses (src/lib/templates/sample-showcase.ts) — Dewald asked
+// to replace them with real, actually-visited client pages once there are
+// enough of them. No SQL aggregate/RPC exists for "most-viewed client" yet,
+// and page_views volume at this stage of a public beta is small enough
+// that counting client-side over the most recent rows is cheap and
+// accurate — revisit with a real aggregate query if that stops being true.
+// Falls back to the fictional samples (getTopVisitedClientPages returning
+// too few) rather than ever rendering an empty or half-populated section.
+async function getTopVisitedClientPages(limit = 3): Promise<RealClientPage[]> {
+  const admin = createAdminClient();
+  const { data: views } = await admin.from("page_views").select("growth_client_id").limit(5000);
+  if (!views || views.length === 0) return [];
+
+  const counts = new Map<string, number>();
+  for (const v of views) {
+    counts.set(v.growth_client_id, (counts.get(v.growth_client_id) ?? 0) + 1);
+  }
+  const rankedIds = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
+  if (rankedIds.length === 0) return [];
+
+  const { data: clients } = await admin
+    .from("growth_clients")
+    .select("id, business_name, slug")
+    .in("id", rankedIds.slice(0, limit * 3))
+    .eq("status", "active")
+    .not("slug", "is", null);
+  if (!clients) return [];
+
+  const rank = new Map(rankedIds.map((id, i) => [id, i]));
+  return clients
+    .filter((c): c is typeof c & { slug: string } => !!c.slug)
+    .sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999))
+    .slice(0, limit)
+    .map((c) => ({ slug: c.slug, businessName: c.business_name }));
+}
+
 export default async function PricingPage() {
-  const [foundingSlotsRemaining, featuredTestimonials] = await Promise.all([
+  const [foundingSlotsRemaining, featuredTestimonials, topVisitedPages] = await Promise.all([
     getFoundingSlotsRemaining(),
     getFeaturedTestimonials(),
+    getTopVisitedClientPages(),
   ]);
+  const showRealPages = topVisitedPages.length >= 2;
   return (
     <main className="flex flex-1 flex-col">
       <MarketingHeader />
@@ -386,94 +389,82 @@ export default async function PricingPage() {
 
       <SectionDivider />
 
-      {/* Why DigitalFlyer — the narrative plus the "why this makes sense"
-          pain points in one structured section instead of two separate
-          ones saying the same thing twice. */}
+      {/* Sound Familiar — UI/UX pass 2026-07-17: rewritten per Dewald's
+          note that the old pain-points grid "didn't read" — this is a
+          narrative a reader recognises themselves in, not a feature-style
+          card grid (deliberately the one section on this page that isn't
+          an icon grid, for real visual variety too). Two-column on desktop:
+          the story on the left, a short "sound familiar?" checklist on the
+          right that stays scannable for anyone skimming past the prose.
+          "Everything Starts Here" (the section that used to sit here) is
+          gone entirely — its content just repeated what "Why Businesses
+          Choose DigitalFlyer" and the Foundation pricing card already say. */}
       <section className="bg-white px-6 py-16">
-        <div className="mx-auto max-w-5xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl uppercase tracking-wide text-ink">Why DigitalFlyer?</h2>
+        <div className="mx-auto grid max-w-5xl gap-10 sm:grid-cols-2 sm:items-center sm:gap-14">
+          <div>
+            <span className="font-badge text-xs uppercase tracking-widest text-brand">Sound Familiar?</span>
+            <h2 className="mt-2 font-display text-3xl uppercase tracking-wide text-ink">
+              You&apos;re Great At What You Do
+            </h2>
             <p className="mt-4 text-lg leading-relaxed text-gray-600">
-              Running a small business isn&apos;t easy. Every day thousands of business owners post in
-              Facebook groups, reply in WhatsApp chats and rely on word of mouth, hoping the next
-              customer finds them. We believe there should be a better way.
+              You didn&apos;t start your business to become a marketer. You started it because you&apos;re
+              good at what you do, not because you wanted a second job replying to messages at midnight
+              and hoping the right people see your next post before it disappears.
+            </p>
+            <p className="mt-4 text-lg leading-relaxed text-gray-600">
+              DigitalFlyer gives your business the one thing every one of those moments was missing: a
+              real place customers can find you, trust you, and reach you, whether you&apos;re online to
+              answer or not.
             </p>
           </div>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-2">
-            {PAIN_POINTS.map((p) => (
-              <div key={p.title} className="flex gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <span className="grid size-11 flex-shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
-                  <p.icon className="size-5" aria-hidden />
+          <ul className="flex flex-col gap-4">
+            {SOUND_FAMILIAR.map((line) => (
+              <li key={line} className="flex items-start gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                <span className="mt-0.5 flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-brand/10 text-sm font-bold text-brand" aria-hidden>
+                  ✓
                 </span>
-                <div>
-                  <h3 className="text-base font-bold tracking-tight text-ink">{p.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-gray-600">{p.description}</p>
-                </div>
-              </div>
+                <p className="text-sm leading-relaxed text-gray-700">{line}</p>
+              </li>
             ))}
-          </div>
-
-          <p className="mx-auto mt-10 max-w-2xl text-center text-lg leading-relaxed text-gray-600">
-            DigitalFlyer was built to <strong className="text-ink">Enable &amp; Connect</strong> South
-            African Business. Not by replacing the tools you already use, but by giving every business
-            one professional online home where customers can find you, trust you and connect with you.
-          </p>
+          </ul>
         </div>
       </section>
 
-      {/* Everything Starts Here — light blue tint (5% brand) rather than the
-          usual gray-50, so the palette carries through even in a "neutral"
-          section instead of defaulting to a generic gray. */}
-      <section className="bg-brand/5 px-6 py-16">
-        <div className="mx-auto max-w-5xl">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl uppercase tracking-wide text-ink">Everything Starts Here</h2>
-            <p className="mt-3 text-gray-600">
-              Every DigitalFlyer member receives the foundations needed to build a stronger online
-              business.
-            </p>
-          </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-2">
-            {STARTER_FEATURES.map((f) => (
-              <div key={f.title} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-                <span className="grid size-11 place-items-center rounded-xl bg-brand/10 text-brand">
-                  <f.icon className="size-5" aria-hidden />
-                </span>
-                <h3 className="text-base font-bold tracking-tight text-ink">{f.title}</h3>
-                <p className="text-sm leading-relaxed text-gray-500">{f.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* See It In Action — real, live-rendered template previews (same
-          mechanism the onboarding picker uses) so a visitor sees an actual
-          page, not a mockup, before ever signing up. */}
+      {/* See It In Action — UI/UX pass 2026-07-17: shows real, actually-
+          visited member pages once there are enough of them (>=2), instead
+          of the fictional samples — a real business's real page is a far
+          stronger proof point than a mockup. Falls back to the sample
+          businesses below while the real pool is still too thin to be a
+          fair "most visited" list. */}
       <section className="bg-white px-6 py-16">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="font-display text-3xl uppercase tracking-wide text-ink">See It In Action</h2>
+            <h2 className="font-display text-3xl uppercase tracking-wide text-ink">
+              {showRealPages ? "Our Most Visited Pages" : "See It In Action"}
+            </h2>
             <p className="mt-3 text-gray-600">
-              Real layouts, not mockups, built with sample businesses so you can see a full page in action.
+              {showRealPages
+                ? "Real DigitalFlyer members, real pages, real customers finding them."
+                : "Real layouts, not mockups, built with sample businesses so you can see a full page in action."}
             </p>
           </div>
           <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {TEMPLATE_SHOWCASE.map((t) => (
+            {(showRealPages ? topVisitedPages : TEMPLATE_SHOWCASE).map((t) => (
               <a
                 key={t.slug}
-                href={`/sample/${t.slug}`}
+                href={showRealPages ? `/${t.slug}` : `/sample/${t.slug}`}
                 target="_blank"
                 rel="noreferrer"
                 className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="relative overflow-hidden bg-gray-50" style={{ height: 760 * 0.3 }}>
-                  <span className="absolute right-2 top-2 z-10 rounded-full bg-ink/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
-                    Sample
-                  </span>
+                  {!showRealPages && (
+                    <span className="absolute right-2 top-2 z-10 rounded-full bg-ink/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                      Sample
+                    </span>
+                  )}
                   <iframe
-                    src={`/sample/${t.slug}`}
+                    src={showRealPages ? `/${t.slug}` : `/sample/${t.slug}`}
                     title={t.businessName}
                     loading="lazy"
                     tabIndex={-1}
@@ -632,24 +623,27 @@ export default async function PricingPage() {
         </div>
       </section>
 
-      {/* Final CTA — bookends the hero with the same brand-blue treatment. */}
+      {/* Final CTA — UI/UX pass 2026-07-17: tightened from three lines of
+          restated "join us" copy (echoing the hero, both banner CTAs, and
+          the old "Everything/Every Business Starts" headings) to one clean
+          closing line, deliberately not using "start(s)" again — that word
+          was doing double, triple duty across the page's headings. Bookends
+          the hero with the same brand-blue treatment. */}
       <section className="bg-brand px-6 py-16 text-center">
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
           <h2 className="font-display text-3xl uppercase tracking-wide text-white sm:text-4xl">
-            Every Business Starts Somewhere.
+            This Could Be Your Business.
           </h2>
-          <p className="text-lg text-white/85">Today could be the day more customers start finding yours.</p>
           <p className="text-lg text-white/85">
-            Become one of our first Day One Businesses and help us build the future of South African
-            business.
+            Join today, lock in your Day One price for good, and get found by customers who are
+            already looking.
           </p>
           <a
             href="#pricing"
-            className="mt-4 inline-block rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
+            className="mt-2 inline-block rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
           >
             Become a Day One Business
           </a>
-          <p className="mt-1 text-sm text-white/70">Your DigitalFlyer journey starts in just a few minutes.</p>
         </div>
       </section>
 

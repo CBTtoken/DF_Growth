@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CalendarDays, MapPin } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -108,47 +109,49 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       />
       <MarketingHeader />
 
-      {/* Real UAT fix, round 2: forcing an arbitrary uploaded photo into a
-          full-width object-cover crop mangled anything that wasn't a wide
-          landscape photo (a promotional graphic lost its own text). The
-          letterbox technique — the actual image always shown in full via
-          object-contain, backed by a blurred/darkened copy of itself
-          filling the rest of the frame — is the same trick Spotify/YouTube
-          use for exactly this problem: an arbitrary user image that has to
-          become a banner. It can never crop content out, whatever the
-          image's own aspect ratio, so there's no gamble left to take. Falls
-          back to the safe text-only header (round 1's fix) when there's no
-          photo at all. */}
-      {heroUrl ? (
-        <div className="relative h-64 w-full overflow-hidden bg-ink sm:h-80">
-          <Image src={heroUrl} alt="" fill sizes="100vw" className="scale-110 object-cover opacity-60 blur-2xl" aria-hidden />
-          <div className="absolute inset-0 bg-ink/40" aria-hidden />
-          <Image src={heroUrl} alt={event.event_name} fill sizes="100vw" className="object-contain" priority />
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-6 pt-16 text-center text-white sm:px-6">
-            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide backdrop-blur-sm">
-              {typeLabel}
-            </span>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{event.event_name}</h1>
-            <p className="mt-2 text-sm text-white/80">
-              {event.location_address ? `${event.location_address}, ${event.city}` : event.city}
-            </p>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-ink px-4 py-10 text-center text-white sm:px-6 sm:py-14">
-          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
-            {typeLabel}
+      {/* Real UAT fix, round 3: rounds 1 and 2 both overlaid event-name text
+          on top of the uploaded photo — round 2's gradient-at-the-bottom
+          approach still collided with promotional flyers (the common case
+          for real community/small-business events) that already have their
+          own text baked into the image, right where this page's overlay
+          landed too. Fix: the two are never layered anymore. This solid
+          header always carries the name/date/location, on its own, exactly
+          the same whether or not a photo exists — so it's never at the
+          mercy of what an organiser happens to upload. Any photo is shown
+          separately below, in the content card, as a clean image with
+          nothing written on top of it. */}
+      <div className="bg-gradient-to-br from-ink to-brand-dark px-4 py-12 text-center text-white sm:px-6 sm:py-16">
+        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-semibold uppercase tracking-widest backdrop-blur-sm">
+          {typeLabel}
+        </span>
+        <h1 className="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight sm:text-4xl">{event.event_name}</h1>
+        <div className="mx-auto mt-5 flex max-w-xl flex-col items-center gap-2 text-sm text-white/85 sm:flex-row sm:justify-center sm:gap-6 sm:text-base">
+          <span className="inline-flex items-center gap-2">
+            <CalendarDays className="size-4 flex-shrink-0" aria-hidden />
+            {formatDateRange(event.start_datetime, event.end_datetime)}
           </span>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{event.event_name}</h1>
-          <p className="mt-2 text-sm text-white/70">
+          <span className="inline-flex items-center gap-2">
+            <MapPin className="size-4 flex-shrink-0" aria-hidden />
             {event.location_address ? `${event.location_address}, ${event.city}` : event.city}
-          </p>
+          </span>
         </div>
-      )}
+      </div>
 
       <section className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-10">
-          <p className="text-sm font-medium text-gray-700">{formatDateRange(event.start_datetime, event.end_datetime)}</p>
+          {heroUrl && (
+            <div className="relative flex max-h-[28rem] w-full items-center justify-center overflow-hidden rounded-xl bg-gray-50">
+              <Image
+                src={heroUrl}
+                alt={event.event_name}
+                width={1200}
+                height={900}
+                sizes="(min-width: 640px) 640px, 100vw"
+                className="max-h-[28rem] w-auto object-contain"
+                priority
+              />
+            </div>
+          )}
 
           {event.description && (
             <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-600">{event.description}</p>
