@@ -39,6 +39,31 @@ export async function POST(request: Request) {
 
   const { customer, metadata, reference, amount } = event.data;
 
+  const admin = createAdminClient();
+
+  // Found via a real stress test: the old idempotency check was keyed on
+  // slug (derived from business_name), which meant any two businesses that
+  // ever picked the same name — not just concurrent signups, any two, ever
+  // — would collide. Idempotency now keys on Paystack's own transaction
+  // reference, which is the actually-correct signal for "have I already
+  // processed this specific charge" (Paystack redelivers webhook events;
+  // this is the case that check is really for). Moved to run before every
+  // other branch below (2026-07-17, alongside the renewal fix) — it used
+  // to run only after the metadata-shape guard further down, which meant a
+  // redelivered renewal event (metadata-less, see below) could double-
+  // process instead of being caught here first.
+  if (reference) {
+    const { data: existing } = await admin
+      .from("growth_clients")
+      .select("id")
+      .eq("paystack_reference", reference)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json({ received: true });
+    }
+  }
+
   // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 5/6: handled first and
   // returns immediately — a book order shares this one webhook endpoint
   // (Paystack accounts only support a single registered webhook URL, so
@@ -46,8 +71,6 @@ export async function POST(request: Request) {
   // separate flow from everything below, which is all growth_client
   // signup/billing logic that book orders have nothing to do with.
   if (metadata?.order_type === "book_order") {
-    const admin = createAdminClient();
-
     const { data: existingOrder } = await admin
       .from("book_orders")
       .select("id")
@@ -108,34 +131,72 @@ export async function POST(request: Request) {
   const consentTimestamp: string | undefined = metadata?.consent_timestamp;
   const interval: string | undefined = metadata?.interval;
 
+  // Real gap confirmed via Paystack's own docs (2026-07-17): a genuine
+  // subscription renewal's charge.success carries data.metadata as a bare
+  // 0, not the custom metadata bag set at the original transaction/
+  // initialize call — trialClientId, businessName, and tier all come back
+  // undefined, which used to fall straight into the "missing expected
+  // metadata" guard below and silently drop the event (meaning no renewal,
+  // for any Growth annual client, was ever actually recorded — a real gap
+  // in the core product, not just referral commissions, which is what
+  // surfaced this in the first place). customer.email is the one field a
+  // renewal charge does reliably carry, so a renewal is now resolved by
+  // matching it against an existing, already-paying annual account
+  // instead of relying on metadata at all.
+  if (!trialClientId && email && (!businessName || !tier)) {
+    const { data: renewalCandidates } = await admin
+      .from("growth_clients")
+      .select("id, plan, billing_cycle, referred_by_agent_id")
+      .eq("contact_email", email)
+      .eq("status", "active")
+      .in("plan", ["growth_engine", "enterprise"])
+      .eq("billing_cycle", "annual")
+      .not("paystack_reference", "is", null);
+
+    if (renewalCandidates && renewalCandidates.length === 1) {
+      const client = renewalCandidates[0];
+      const { error: renewalError } = await admin
+        .from("growth_clients")
+        .update({ paystack_reference: reference })
+        .eq("id", client.id);
+
+      if (renewalError) {
+        console.error("Failed to record renewal payment", renewalError, { clientId: client.id, reference });
+        Sentry.captureMessage("Failed to record renewal payment", {
+          extra: { error: renewalError, clientId: client.id, reference },
+        });
+      } else {
+        await recordCommissionIfEligible({
+          clientId: client.id,
+          plan: client.plan,
+          billingCycle: client.billing_cycle,
+          referredByAgentId: client.referred_by_agent_id,
+          amountKobo: amount,
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
+
+    // Ambiguous only if the same email owns more than one active
+    // Growth/Enterprise-annual account — flagged via Sentry rather than
+    // guessed at, not a real risk at today's scale but worth surfacing
+    // for real rather than silently picking one.
+    if (renewalCandidates && renewalCandidates.length > 1) {
+      console.error("Ambiguous renewal charge — multiple active annual accounts share this email", { email, reference });
+      Sentry.captureMessage("Ambiguous renewal charge.success — multiple matches", { extra: { email, reference } });
+      return NextResponse.json({ received: true });
+    }
+
+    // Zero matches — not a renewal we can identify (e.g. a genuinely new
+    // signup whose metadata is legitimately incomplete). Falls through to
+    // the "missing expected metadata" guard below, unchanged.
+  }
+
   if (!reference || (!trialClientId && (!email || !businessName || !tier))) {
     console.error("charge.success missing expected metadata", { email, businessName, tier, reference, trialClientId });
     Sentry.captureMessage("charge.success missing expected metadata", {
       extra: { email, businessName, tier, reference, trialClientId },
     });
-    return NextResponse.json({ received: true });
-  }
-
-  const admin = createAdminClient();
-
-  // Found via a real stress test: the old idempotency check was keyed on
-  // slug (derived from business_name), which meant any two businesses that
-  // ever picked the same name — not just concurrent signups, any two, ever
-  // — would collide. The second one would already have been charged by
-  // Paystack, then silently fail to get a growth_clients row at all: no
-  // account, no email, no admin visibility, nothing. Idempotency now keys on
-  // Paystack's own transaction reference, which is the actually-correct
-  // signal for "have I already processed this specific charge" (Paystack
-  // redelivers webhook events; this is the case that check is really for).
-  // Slug collisions are a separate, expected case — handled by
-  // provisionGrowthClient disambiguating the slug, not rejecting the signup.
-  const { data: existing } = await admin
-    .from("growth_clients")
-    .select("id")
-    .eq("paystack_reference", reference)
-    .maybeSingle();
-
-  if (existing) {
     return NextResponse.json({ received: true });
   }
 
