@@ -152,9 +152,9 @@ A real, browsable, searchable directory of every published, active member page.
 - **Search box** — matches business name, tagline, and description.
 - **Industry filter** — reuses the same fixed taxonomy as onboarding.
 - **City filter** — the full curated city list.
-- **Sort** — most-recently-added first. Page-view data now exists (Section 9) but isn't wired into Marketplace sort yet — see Backlog for "most visited" as a genuinely buildable next step, not a blocked one.
-- **Cards** — redesigned from an earlier flat-colour-block layout to a text-forward, Google-Business-Profile-style card (icon/name/category doing the work, not a colour standing in for content) after real feedback that a wall of colour blocks read as dull and repetitive. Shows a real photo thumbnail when one exists (same resolution order as the real page: explicit hero selection, then first gallery photo), or the text-forward fallback otherwise.
-- **Cross-links to Events** (new) — a "Browse Events instead" link in the search hero, since the header nav hides the Events link on mobile (see Section 23, UI/UX recommendations).
+- **Sort** — "Recently added" (default) or "Most visited," the latter ranking by real `page_views` data (Section 9), batched per client rather than N+1 queried.
+- **Cards** — redesigned from an earlier flat-colour-block layout to a text-forward, Google-Business-Profile-style card (icon/name/category doing the work, not a colour standing in for content) after real feedback that a wall of colour blocks read as dull and repetitive. Shows a real photo thumbnail when one exists (same resolution order as the real page: explicit hero selection, then first gallery photo), or the text-forward fallback otherwise. A small `★ 4.5 (12)` ratings badge appears once a business has at least one published review (Section 14) — omitted entirely rather than showing a zero score.
+- **Cross-links to Events** — a "Browse Events instead" link in the search hero, now a cross-sell rather than a mobile-reachability workaround, since the real mobile nav menu (Section 23) covers that.
 - Linked from the main site header (desktop) and every page footer.
 
 **Real data bug found and fixed live this cycle:** a batch of industry-taxonomy corrections applied via manual REST calls accidentally left literal `%20`/`%26` URL-encoding in several businesses' `industry` values, silently breaking their Marketplace filter matching. Caught and corrected; worth remembering as a general lesson — any manual data-correction pass over this table needs to verify the actual stored bytes, not just that the request returned success.
@@ -170,8 +170,7 @@ Allowlisted by email (`ADMIN_EMAILS`), no separate role system. Lists every clie
 **New admin surfaces this cycle:**
 - **Reactivation Batch** (`/admin/reactivation`) — visibility into the Legacy Reactivation outreach campaign (Section 13): per-business address-verification status, send status, bounce/complaint flags.
 - **Flagged Reviews** (`/admin/reviews`) — the Rate & Review moderation queue (Section 14), with a flagged-count badge on the main admin nav matching the existing Support-inbox badge pattern.
-
-List Your Event's own moderation queue (flagged/pending-review events) is Sprint 2 scope, not built yet — see Section 15 and Backlog.
+- **Events Queue** (`/admin/events`) — List Your Event's own moderation queue (Section 15), same badge pattern.
 
 ---
 
@@ -231,13 +230,15 @@ A genuinely free, standalone Events section — anyone, not just existing Growth
 
 **Account model** — `event_organizers`, mirroring `reviewer_accounts`' shape: free signup (email + password + OTP), or an existing Growth business owner can list an event through their existing login with zero extra steps — an `event_organizers` row is created transparently on first use, keyed to their existing session.
 
-**Submission form** (`/events/new`) — event name, type (workshop/market/community/fundraiser/sports/arts & culture/other), description, start date+time (required) and end date+time (optional — a single event can span multiple days this way, confirmed working via real UAT), location (city + optional address), up to 5 photos, contact details (person's name, email, phone, WhatsApp), social links, a plain-text ticket-info field, and an optional booking-link URL shown as a "Book now" button. Every Sprint 1 submission publishes immediately — there's no email-confirmation gate on the listing itself, only on the organiser's ability to log back in later (Sprint 2's Turnstile/spam checks are what will eventually gate auto-publish vs. manual review, not email confirmation).
+**Submission form** (`/events/new`) — event name, type (workshop/market/community/fundraiser/sports/arts & culture/other), description, start date+time (required) and end date+time (optional — a single event can span multiple days this way, confirmed working via real UAT), location (city + optional address), up to 5 photos, contact details (person's name, email, phone, WhatsApp), social links, a plain-text ticket-info field, and an optional booking-link URL shown as a "Book now" button. Cloudflare Turnstile on every submission path (new organiser, returning organiser, logged-in Growth business owner), verified server-side.
 
-**Public Events section** (`/events`) — search, city filter, event-type filter, sorted soonest first. Past events automatically drop out of the browse view once their date (or end date, for multi-day events) passes, retained in the database rather than deleted.
+**Spam/quality gate (Sprint 2)** — a lightweight system check at submission time (URLs in the event name, 3+ URLs in the description, excessive repeated characters, a small keyword blocklist, or a thin listing with no description and no photos) routes a flagged submission to `status = 'pending_review'` instead of publishing immediately, with `flagged_by = 'system'` and a reason recorded. This is different from Rate & Review's flagging model on purpose: a review that's already been publicly visible must never be unilaterally hidden by the business it's about, so flagging there is orthogonal to publication status — but a brand-new event that's never been seen by anyone yet costs nothing to hold for a quick human check, so flagging it *does* gate publication here.
 
-**Individual event pages** (`/events/[id]`) — dedicated, shareable, with `Event` JSON-LD structured data (name, start/end date, location, description) so Google can render date and location directly in search results for queries like "markets this weekend in [city]." The header uses a letterbox banner treatment when a photo exists — the real image always shown in full via `object-contain`, backed by a blurred/darkened copy of itself filling the rest of the frame (the same technique Spotify/YouTube use for an arbitrary user image that has to become a banner) — and a safe text-only header when there isn't one. This replaced an earlier `object-cover` crop that mangled non-landscape images (a real UAT test using a promotional graphic lost its own text to the crop).
+**Public Events section** (`/events`) — search, city filter, event-type filter, sorted soonest first. Past events automatically drop out of the browse view once their date (or end date, for multi-day events) passes, retained in the database rather than deleted. A daily GitHub Actions cron job (`expire-events.yml`) formally transitions past published events to `status = 'expired'` — purely data tidiness, since the browse page's own query filter already hides them regardless.
 
-**Not built yet (Sprint 2):** Turnstile and spam-pattern checks on submission, an admin moderation queue for flagged/pending-review events, a public "report this event" flag, and formal auto-archiving of past events to `status = 'expired'` (today's past-event hiding is a query filter on the browse page, which already works — the formal status transition is a tidiness improvement, not new user-facing behavior). See Backlog.
+**Individual event pages** (`/events/[id]`) — dedicated, shareable, with `Event` JSON-LD structured data (name, start/end date, location, description) so Google can render date and location directly in search results for queries like "markets this weekend in [city]." The header uses a letterbox banner treatment when a photo exists — the real image always shown in full via `object-contain`, backed by a blurred/darkened copy of itself filling the rest of the frame (the same technique Spotify/YouTube use for an arbitrary user image that has to become a banner) — and a safe text-only header when there isn't one. This replaced an earlier `object-cover` crop that mangled non-landscape images (a real UAT test using a promotional graphic lost its own text to the crop). A collapsed "Report this event" link lets any visitor flag an already-published event (`flagged_by = 'public'`) without changing its status — the same orthogonal-flag pattern as Rate & Review, since this event has already been seen publicly.
+
+**Admin moderation queue** (`/admin/events`, Section 11) — two sections: pending-review submissions (publish or remove) and flagged-but-published events (keep/dismiss the flag, or remove), same pattern as Rate & Review's `/admin/reviews`.
 
 Full field-by-field spec: `docs/GROWTH_LIST_YOUR_EVENT_BUILD_SPEC_CLAUDE.md`.
 
@@ -301,7 +302,7 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 
 **Domain, resolved this cycle:** `growth.digitalflyersa.co.za` plus the root `digitalflyersa.co.za` and `www.digitalflyersa.co.za` (both redirecting to the `growth` subdomain) are all live, correctly configured in Vercel, and DNS-verified. This took real back-and-forth to land — old conflicting A/CNAME records at the DNS host, and Xneelo's own DNS servers requiring a trailing dot on CNAME target values that the earlier attempt omitted, were both found and corrected.
 
-**Known live gap, still not confirmed as resolved:** `NEXT_PUBLIC_WHATSAPP_NUMBER` is still missing from Vercel's production environment (confirmed empty in `.env.local` too, and confirmed the RE:Biz Nomads "Message us" link still doesn't render on the live site as of this update) — every WhatsApp CTA button that depends on it has been silently invisible in production since it was first found. Fix is the same as always: add the variable in Vercel, redeploy.
+**Correction to an earlier version of this doc:** `NEXT_PUBLIC_WHATSAPP_NUMBER` was previously logged here as a "missing env var, just needs Vercel + redeploy" gap. That was wrong on investigation. The real state: RE:Biz Nomads never should have had a WhatsApp "join" CTA at all — membership comes bundled with a paid Growth/Foundation plan, not a separate WhatsApp inquiry, and its signup page has now been fixed to match `Closing.tsx`'s existing `/pricing` link. Separately, `PlatformFeatures.tsx` already moved off this env var to a `mailto:` fallback, because the actual blocker there is that DigitalFlyer's own WhatsApp Business number is still pending Meta's approval — not a missing config step. No outstanding WhatsApp CTA gap remains.
 
 ---
 
@@ -325,14 +326,11 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 - Lighthouse LCP on throttled mobile still measures ~2.3s warm (target 1.5s) — root cause not found, parked.
 - **Uptime monitoring** (UptimeRobot) — still not confirmed as actually set up.
 - **Error monitoring** (Sentry or equivalent) — still not built. Vercel's own function logs are the only visibility today.
-- `NEXT_PUBLIC_WHATSAPP_NUMBER` missing from Vercel production — see Section 19, confirmed still broken.
 - Meta ad-asset size/spec compliance for generated social images not yet verified against real campaign requirements.
 - The 3 "See It In Action" pages on `/pricing` are honestly-labeled sample businesses, not real clients.
 - One member = one routable page today — Standing 365 and RE:Biz Nomads prove the custom-page mechanism, not dual-page-per-member support.
-- **List Your Event Sprint 2** — Turnstile, spam checks, admin moderation queue, "report this event," auto-archiving — see Section 15.
 - **Recurring / multi-session events** — a single multi-day event works today; multiple distinct sessions across different days/times for one listing would need a real recurring-event model, not scoped.
 - **BizUp ecosystem spec alignment** — a cross-project documentation-correction pass was scoped in an earlier planning session (correcting BizUp's own build spec to match the real federated Phase 1 architecture) but never started.
-- Marketplace's "most visited" sort — page-view data now exists (Section 9) but isn't wired into Marketplace sort yet.
 
 ---
 
@@ -340,17 +338,13 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 
 Re-ordered to reflect what's actually still open after this cycle's work.
 
-1. **List Your Event Sprint 2.** Turnstile/spam checks, admin moderation queue, "report this event" flag, auto-archiving. Meaningfully smaller than Sprint 1 — reuses the Turnstile widget/verification library and the admin-moderation-queue pattern, both already built for Rate & Review.
-2. **Uptime + error monitoring.** Confirm UptimeRobot is actually active; add a lightweight error monitor (Sentry or similar) — cheap insurance now that real customer money and two new public-facing account systems are live.
-3. **BizUp ecosystem spec alignment.** Correct BizUp's own build spec to match the real Phase 1 federated architecture and register it in the ecosystem's master doc — pure documentation/schema work, no live testing needed, already scoped in an earlier planning session.
-4. **Marketplace "most visited" sort.** The underlying page-view data already exists (Section 9) — this is now a genuinely small addition, not blocked on new tracking infrastructure the way it was in the 2026-07-15 version of this doc.
-5. **Main page + additional custom page architecture.** Today a member has exactly one routable page. Standing 365 and RE:Biz Nomads proved the custom-page mechanism works, but true dual-page support per member needs real routing-layer work, not yet designed.
-6. **Enterprise tier live checkout.** Pricing card already exists ("Coming soon"); needs the actual plan, checkout wiring, and feature scope defined.
-7. **Real "See It In Action" sample pages.** Swap the 3 honestly-labeled placeholder businesses on `/pricing` for real, permission-granted client pages.
-8. **Meta ad-asset spec compliance pass.** Verify generated social images actually meet Meta's real campaign size/format requirements.
-9. **Mobile performance root-cause.** The ~2.3s warm LCP on throttled mobile was parked without a root cause.
-
-Small, near-zero-effort item worth closing out regardless of sprint priority: add `NEXT_PUBLIC_WHATSAPP_NUMBER` to Vercel production and redeploy (Section 19) — confirmed still broken as of this update.
+1. **Uptime + error monitoring.** Confirm UptimeRobot is actually active; add a lightweight error monitor (Sentry or similar) — cheap insurance now that real customer money and multiple public-facing account systems are live.
+2. **BizUp ecosystem spec alignment.** Correct BizUp's own build spec to match the real Phase 1 federated architecture and register it in the ecosystem's master doc — pure documentation/schema work, no live testing needed, already scoped in an earlier planning session.
+3. **Main page + additional custom page architecture.** Today a member has exactly one routable page. Standing 365 and RE:Biz Nomads proved the custom-page mechanism works, but true dual-page support per member needs real routing-layer work, not yet designed.
+4. **Enterprise tier live checkout.** Pricing card already exists ("Coming soon"); needs the actual plan, checkout wiring, and feature scope defined.
+5. **Real "See It In Action" sample pages.** Swap the 3 honestly-labeled placeholder businesses on `/pricing` for real, permission-granted client pages.
+6. **Meta ad-asset spec compliance pass.** Verify generated social images actually meet Meta's real campaign size/format requirements.
+7. **Mobile performance root-cause.** The ~2.3s warm LCP on throttled mobile was parked without a root cause.
 
 ---
 
@@ -358,10 +352,10 @@ Small, near-zero-effort item worth closing out regardless of sprint priority: ad
 
 Grounded in real friction points and patterns actually observed while building this cycle, not a generic wishlist.
 
-1. **The mobile header nav is quietly dropping a whole section.** The Events link was added desktop-only in `MarketingHeader.tsx`, deliberately avoiding a previously-fixed wrap bug (a third nav item once broke at 375px). That was the safe short-term call, but the real fix is a proper mobile nav pattern (a hamburger/drawer menu) rather than permanently hiding content from mobile visitors — likely the majority of traffic for a WhatsApp-native South African small-business audience. Worth a dedicated pass rather than continuing to work around the same underlying header-width constraint every time a new section gets added.
+1. ~~The mobile header nav is quietly dropping a whole section.~~ **Done.** `MobileNavMenu.tsx` replaced the pattern of hiding each new nav item (first Marketplace, then Events) with a real hamburger menu — Marketplace, Events, and Log in/Dashboard all reachable on mobile now, with "See pricing" staying always-visible outside the menu as the one CTA worth never hiding.
 2. **Three near-identical OTP entry screens now exist** (reviewer signup, event-organiser signup, and the pattern is likely to repeat for any future account type), each hand-built inside its own form component with duplicated markup and copy. Worth factoring into one shared `OtpEntryForm` component before a fourth one gets built — guarantees consistent copy/behaviour and removes the duplication.
 3. **No cross-visibility between a person's different account types.** A visitor can now be a Growth business owner, a reviewer, and an event organiser, all under the same email, but each is a fully separate silo today (separate account tables, no shared "my activity" view). Not urgent, but worth a lightweight "you're also a reviewer/organiser" surface somewhere (e.g. the dashboard) as more of these account types accumulate, so the "one login system across the platform" pitch is actually visible to the person experiencing it, not just true in the schema.
-4. **Reviews and page-view analytics aren't surfaced anywhere outside the individual dashboard yet.** Once real review volume builds up, showing star ratings on Marketplace cards (not just the individual business page) would reinforce trust earlier in the funnel — the data already exists (Section 14), this is a display-layer addition, not new infrastructure.
+4. ~~Reviews and page-view analytics aren't surfaced anywhere outside the individual dashboard yet.~~ **Done.** Marketplace cards now show a ratings badge once a business has published reviews (Section 14), and a "Most visited" sort option uses real `page_views` data (Section 9/10).
 5. **The letterbox banner treatment built for List Your Event (Section 15) should be the house default, not a one-off.** Any future feature that needs to turn an arbitrary user-uploaded photo into a full-width banner will hit the exact same problem List Your Event's first version did (an `object-cover` crop mangling non-landscape images) unless it deliberately reaches for the same blurred-backdrop-plus-`object-contain` pattern. Worth extracting into a shared component the next time this need comes up, rather than re-solving it from scratch.
 6. **Loading states across the newer forms are text-only** ("Publishing…", "Submitting…" on the button itself) with no skeleton or spinner treatment. Fine at current scale and consistent with the rest of the platform, but worth a shared lightweight spinner component if the number of long-running form submissions keeps growing.
 

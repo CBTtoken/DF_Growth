@@ -70,11 +70,12 @@ Sprint 1 (shipped, verified live end-to-end including a real UAT pass):
 - [x] Past events auto-drop from public browse, retained in the database
 - [x] Individual event pages live with Event JSON-LD structured data
 
-Sprint 2 (not started):
+Sprint 2 (shipped, verified live):
 
-- [ ] Turnstile and spam checks gate auto-publish vs manual review correctly
-- [ ] Admin moderation queue live for flagged and pending-review events
-- [ ] "Report this event" flag live on every public event page
+- [x] Turnstile and spam checks gate auto-publish vs manual review correctly
+- [x] Admin moderation queue live for flagged and pending-review events (`/admin/events`)
+- [x] "Report this event" flag live on every public event page
+- [x] Daily cron job formally transitions past published events to `status = 'expired'`
 
 ## 11. Known Follow-Ups (Not Blocking, Not Forgotten)
 
