@@ -448,45 +448,82 @@ export default async function PricingPage() {
                 : "Real layouts, not mockups, built with sample businesses so you can see a full page in action."}
             </p>
           </div>
-          <div className="mt-10 grid gap-5 sm:grid-cols-3">
-            {(showRealPages ? topVisitedPages : TEMPLATE_SHOWCASE).map((t) => (
-              <a
-                key={t.slug}
-                href={showRealPages ? `/${t.slug}` : `/sample/${t.slug}`}
-                target="_blank"
-                rel="noreferrer"
-                className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div className="relative overflow-hidden bg-gray-50" style={{ height: 760 * 0.3 }}>
-                  {!showRealPages && (
+          {showRealPages ? (
+            // Real UAT fix, 2026-07-17: this used to iframe the real
+            // client page directly, the same trick the fictional sample
+            // cards below still use safely (/sample/[slug] has a
+            // dedicated CSP frame-ancestors exception in next.config.ts).
+            // Real client slugs never got that same exception — they're
+            // top-level dynamic routes indistinguishable, at the CSP
+            // config level, from every static top-level route (dashboard,
+            // login, admin...), so there's no safe narrow pattern to add
+            // without also loosening clickjacking protection somewhere it
+            // shouldn't be. This exact bug (a same-origin iframe silently
+            // blocked by the site's own default frame-ancestors 'none')
+            // has already hit two other routes before — rather than add a
+            // third one-off carve-out to maintain forever, real pages get
+            // a simple card instead: no iframe, no CSP dependency at all,
+            // can't break this way again.
+            <div className="mt-10 grid gap-5 sm:grid-cols-3">
+              {topVisitedPages.map((t) => (
+                <a
+                  key={t.slug}
+                  href={`/${t.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="flex h-32 items-center justify-center bg-brand/5 text-3xl font-display uppercase text-brand">
+                    {t.businessName.slice(0, 2)}
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-sm font-semibold text-gray-900">{t.businessName}</span>
+                    <span className="text-xs font-semibold text-brand opacity-0 transition group-hover:opacity-100">
+                      View full page ↗
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-10 grid gap-5 sm:grid-cols-3">
+              {TEMPLATE_SHOWCASE.map((t) => (
+                <a
+                  key={t.slug}
+                  href={`/sample/${t.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="relative overflow-hidden bg-gray-50" style={{ height: 760 * 0.3 }}>
                     <span className="absolute right-2 top-2 z-10 rounded-full bg-ink/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
                       Sample
                     </span>
-                  )}
-                  <iframe
-                    src={showRealPages ? `/${t.slug}` : `/sample/${t.slug}`}
-                    title={t.businessName}
-                    loading="lazy"
-                    tabIndex={-1}
-                    style={{
-                      width: 1200,
-                      height: 760,
-                      transform: "scale(0.3)",
-                      transformOrigin: "top left",
-                      pointerEvents: "none",
-                      border: 0,
-                    }}
-                  />
-                </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm font-semibold text-gray-900">{t.businessName}</span>
-                  <span className="text-xs font-semibold text-brand opacity-0 transition group-hover:opacity-100">
-                    View full page ↗
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
+                    <iframe
+                      src={`/sample/${t.slug}`}
+                      title={t.businessName}
+                      loading="lazy"
+                      tabIndex={-1}
+                      style={{
+                        width: 1200,
+                        height: 760,
+                        transform: "scale(0.3)",
+                        transformOrigin: "top left",
+                        pointerEvents: "none",
+                        border: 0,
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between px-4 py-3">
+                    <span className="text-sm font-semibold text-gray-900">{t.businessName}</span>
+                    <span className="text-xs font-semibold text-brand opacity-0 transition group-hover:opacity-100">
+                      View full page ↗
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          )}
           <p className="mt-6 text-center text-sm text-gray-500">
             10 styles available. Choose yours during signup, change any time.
           </p>
