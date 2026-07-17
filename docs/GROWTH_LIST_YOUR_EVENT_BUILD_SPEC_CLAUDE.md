@@ -78,5 +78,6 @@ Sprint 2 (not started):
 
 ## 11. Known Follow-Ups (Not Blocking, Not Forgotten)
 
-- **Event page banner.** The individual event page currently uses a safe text-only header (event name, type, location — no photo) rather than a cropped hero image. An earlier attempt to stretch an arbitrary uploaded photo into a full-width banner looked broken for anything that wasn't a wide landscape photo (a real UAT test used a promotional graphic and the crop mangled it). A proper solution — smart cropping, a dedicated banner-specific upload separate from the gallery — is real design/product work, not a quick fix, and hasn't been scoped yet.
 - **Recurring / multi-session events.** See Sec 3 — a single multi-day event already works, but a listing with several distinct sessions (different times across different days) isn't supported and would need a real recurring-event model if it's ever wanted.
+
+Resolved: the event page banner (originally logged here as a follow-up) is fixed — the letterbox technique (real image always shown in full via `object-contain`, backed by a blurred/darkened copy of itself filling the rest of the frame, same approach Spotify/YouTube use for an arbitrary user image that has to become a banner) replaced both the original broken crop and the safe-but-photo-less text-only stopgap. No image gamble left to take, whatever the uploaded photo's own aspect ratio.
