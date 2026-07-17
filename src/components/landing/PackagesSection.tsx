@@ -25,9 +25,15 @@ function sectionTitle(packages: Package[]): string {
 // the price looks like a bare number with no currency or percent sign
 // already present — leaves "R350/month", "From R200", or a future Discount
 // type's "15% off" (Sec 5) untouched, rather than risking "RR350" or "R15%".
+//
+// Real bug found live: the original /[R%]/i check matched any letter "r"
+// anywhere in the string, not just an actual currency prefix — a price of
+// "1,199/year" has an "r" in "year" and silently never got its R prepended.
+// /R\d/ specifically checks for R directly followed by a digit (the actual
+// currency-prefix shape), so "/year" and "/month" no longer false-trigger it.
 function formatPrice(price: string): string {
   const trimmed = price.trim();
-  if (/[R%]/i.test(trimmed) || !/^\d/.test(trimmed)) return trimmed;
+  if (/%/.test(trimmed) || /R\d/.test(trimmed) || !/^\d/.test(trimmed)) return trimmed;
   return `R${trimmed}`;
 }
 
