@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Check, Flame, Search, PuzzleIcon, Wallet, ShieldCheck } from "lucide-react";
+import { Layout, Store, Target, TrendingUp, MapPin, Receipt, Sprout, Network, Check, Flame, Search, PuzzleIcon, Wallet, ShieldCheck, Star, Globe, BarChart3, Radar } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -130,6 +130,40 @@ const DIFFERENTIATORS = [
     title: "More Than Software",
     description:
       "You're joining a growing business ecosystem built to enable and connect South African business owners.",
+  },
+];
+
+// UI/UX pass, 2026-07-17: "brag, don't sell" — real technical substance
+// already built and live (SEO structured data, page-view tracking, Meta's
+// server-side Conversions API), framed as outcomes a business owner
+// actually cares about rather than jargon, with no implementation detail
+// that would hand a competitor the how. Kept factual, not "unlock/
+// supercharge" sales language — every claim here is something this
+// platform genuinely does today, not aspirational.
+const ONLINE_POWER = [
+  {
+    icon: Star,
+    title: "Your Reviews, Right In Google Search",
+    description:
+      "Real reviews build real trust — and once you've got them, your page is built to hand Google exactly what it needs to show your star rating directly in search results, not buried on a review site nobody visits.",
+  },
+  {
+    icon: Globe,
+    title: "Built To Actually Get Found",
+    description:
+      "Every page is set up the way search engines expect from the moment it goes live — the technical groundwork is already done, not something you have to figure out or pay someone else for later.",
+  },
+  {
+    icon: BarChart3,
+    title: "See What's Actually Working",
+    description:
+      "Real visitor numbers, right in your own dashboard. No separate analytics account to create, no new dashboard to learn — just your numbers, whenever you want them.",
+  },
+  {
+    icon: Radar,
+    title: "Ads That Track Properly",
+    description:
+      "Run Meta ads and know they're actually being counted — tracking that holds up against today's privacy browsers and ad blockers, not just a pixel that quietly stops reporting half your results.",
   },
 ];
 
@@ -466,6 +500,40 @@ export default async function PricingPage() {
             {DIFFERENTIATORS.map((d) => (
               <div key={d.title} className="flex items-start gap-4">
                 <span className="grid size-11 flex-shrink-0 place-items-center rounded-xl bg-white text-brand shadow-sm">
+                  <d.icon className="size-5" aria-hidden />
+                </span>
+                <div>
+                  <h3 className="text-base font-bold tracking-tight text-ink">{d.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-600">{d.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Real Online Power — UI/UX pass 2026-07-17: distinct from "Why
+          Businesses Choose DigitalFlyer" above (soft brand values) — this
+          one leads with concrete technical substance already live, framed
+          as outcomes, since a page is only as good as whether anyone
+          actually finds it. gray-50 keeps the existing tint-alternation
+          rhythm intact (brand/5 above, white FAQ below). */}
+      <section className="bg-gray-50 px-6 py-16">
+        <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-2xl text-center">
+            <span className="font-badge text-xs uppercase tracking-widest text-brand">Real Online Power</span>
+            <h2 className="mt-2 font-display text-3xl uppercase tracking-wide text-ink">
+              This Isn&apos;t Just A Webpage
+            </h2>
+            <p className="mt-3 text-gray-600">
+              Every DigitalFlyer page comes with the real technical groundwork most small businesses never get
+              around to — built in from day one, not an upsell.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-8 sm:grid-cols-2 sm:gap-10">
+            {ONLINE_POWER.map((d) => (
+              <div key={d.title} className="flex items-start gap-4">
+                <span className="grid size-11 flex-shrink-0 place-items-center rounded-xl bg-brand/10 text-brand">
                   <d.icon className="size-5" aria-hidden />
                 </span>
                 <div>
