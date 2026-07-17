@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MarketingHeaderAuthLink } from "@/components/brand/MarketingHeaderAuthLink";
+import { MobileNavMenu } from "@/components/brand/MobileNavMenu";
 
 // Distinct from BrandHeader (used on the utility pages — dashboard, wizard):
 // this is a real header bar for the marketing page, not a logo floating in
@@ -36,31 +37,27 @@ export function MarketingHeader() {
         <span className="font-badge text-base uppercase tracking-widest text-brand sm:text-lg">Growth</span>
       </Link>
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-4">
-        {/* Previously hidden below sm to dodge a real wrap bug (a third nav
-            item pushed "Log in" onto two lines at 375px) — fixed properly
-            instead of just hiding it: shorter mobile label ("Pricing" vs
-            "See pricing") frees up the width the wrap bug was actually
-            fighting over. Verified at 375px with no wrap. */}
+        {/* Marketplace, Events, and the login link all live in the real
+            mobile nav menu below on narrow viewports now, instead of being
+            individually hidden to dodge a header-width wrap bug (the
+            previous fix for a third nav item breaking at 375px, then
+            repeated for Events as a fourth). Hiding content every time a
+            new section gets added doesn't scale — a proper menu does. */}
         <Link
           href="/marketplace"
-          className="whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:text-sm"
+          className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
         >
           Marketplace
         </Link>
-        {/* List Your Event Sec 4/5 — needs to be discoverable via normal
-            navigation, not just SEO indexing. Hidden below sm rather than
-            risking the exact wrap bug documented above this block (a third
-            nav item already broke at 375px once) — a fourth item is a
-            bigger risk than a third was. Reachable on mobile via the
-            Marketplace page's own cross-link and the /events URL itself,
-            same tradeoff already accepted for other secondary nav. */}
         <Link
           href="/events"
           className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
         >
           Events
         </Link>
-        <MarketingHeaderAuthLink />
+        <span className="hidden sm:inline">
+          <MarketingHeaderAuthLink />
+        </span>
         <a
           href="#pricing"
           className="whitespace-nowrap rounded-full bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-dark sm:px-5 sm:text-sm"
@@ -68,6 +65,7 @@ export function MarketingHeader() {
           <span className="sm:hidden">Pricing</span>
           <span className="hidden sm:inline">See pricing</span>
         </a>
+        <MobileNavMenu />
       </div>
     </header>
   );

@@ -12,7 +12,10 @@ import { createClient } from "@/lib/supabase/client";
 // correct default for the overwhelming majority of visitors, who aren't
 // logged in) and swaps to "Dashboard" after the client-side check
 // resolves, rather than blocking the page render on it.
-export function MarketingHeaderAuthLink() {
+// className is overridable so MobileNavMenu can render this as a full-width
+// row matching its other menu items, instead of the compact inline-nav
+// style this uses in the desktop header bar.
+export function MarketingHeaderAuthLink({ className }: { className?: string } = {}) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -30,7 +33,7 @@ export function MarketingHeaderAuthLink() {
   return (
     <Link
       href={isLoggedIn ? "/dashboard" : "/login"}
-      className="whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:text-sm"
+      className={className ?? "whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:text-sm"}
     >
       {isLoggedIn ? "Dashboard" : "Log in"}
     </Link>
