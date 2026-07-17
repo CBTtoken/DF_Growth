@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { renderCard, renderBeforeAfter, type AssetStyleId } from "@/lib/assets/styles";
 import type { AssetContentType } from "@/lib/assets/content-types";
+import { loadAssetFonts } from "@/lib/assets/fonts";
 
 // Combined spec Sec 25: the generic counterpart to
 // /api/og/testimonial/[id] — that route is keyed by a stored testimonial
@@ -31,6 +32,7 @@ type AssetRequestBody = {
 export async function POST(request: Request) {
   const body = (await request.json()) as AssetRequestBody;
   const { contentType, style, headline, subtext, businessName, primaryColor, secondaryColor, imageUrl } = body;
+  const fonts = await loadAssetFonts();
 
   if (contentType === "before-after") {
     if (!body.beforeImageUrl || !body.afterImageUrl) {
@@ -45,12 +47,12 @@ export async function POST(request: Request) {
         primaryColor,
         secondaryColor,
       }),
-      { width: 1080, height: 1080 }
+      { width: 1080, height: 1080, fonts }
     );
   }
 
   return new ImageResponse(
     renderCard(style, { headline, subtext, businessName, rating: null, primaryColor, secondaryColor, imageUrl }),
-    { width: 1080, height: 1080 }
+    { width: 1080, height: 1080, fonts }
   );
 }

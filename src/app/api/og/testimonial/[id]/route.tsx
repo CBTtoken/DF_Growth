@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { renderCard, type AssetStyleId } from "@/lib/assets/styles";
+import { loadAssetFonts } from "@/lib/assets/fonts";
 
 // CLAUDE.md Section 8. Edge runtime for fast cold starts — this route gets
 // called once per testimonial (cached in generated_assets afterwards), not
@@ -33,6 +34,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const secondaryColor = client?.brand_secondary_color ?? "#ffffff";
   const style = client?.asset_style ?? "clean";
 
+  const fonts = await loadAssetFonts();
+
   return new ImageResponse(
     renderCard(style, {
       headline: testimonial.quote,
@@ -42,6 +45,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       primaryColor,
       secondaryColor,
     }),
-    { width: 1080, height: 1080 }
+    { width: 1080, height: 1080, fonts }
   );
 }

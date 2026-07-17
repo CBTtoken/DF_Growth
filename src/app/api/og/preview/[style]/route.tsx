@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { renderCard, type AssetStyleId } from "@/lib/assets/styles";
+import { loadAssetFonts } from "@/lib/assets/fonts";
 
 export const runtime = "edge";
 
@@ -19,6 +20,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ styl
   const { style } = await params;
   const validStyles: AssetStyleId[] = ["clean", "bold-quote", "star-card", "mono-badge"];
   const resolvedStyle = validStyles.includes(style as AssetStyleId) ? (style as AssetStyleId) : "clean";
+  const fonts = await loadAssetFonts();
 
-  return new ImageResponse(renderCard(resolvedStyle, SAMPLE), { width: 1080, height: 1080 });
+  return new ImageResponse(renderCard(resolvedStyle, SAMPLE), { width: 1080, height: 1080, fonts });
 }
