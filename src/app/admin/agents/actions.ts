@@ -17,7 +17,7 @@ export async function approveAgent(agentId: string) {
   const { data: agent } = await admin.from("agents").select("full_name, email, status").eq("id", agentId).single();
   if (!agent || agent.status !== "pending") return;
 
-  const referralCode = await generateUniqueReferralCode();
+  const referralCode = await generateUniqueReferralCode(agent.full_name);
 
   const { error } = await admin
     .from("agents")

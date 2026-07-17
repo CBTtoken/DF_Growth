@@ -54,6 +54,7 @@ export async function startCheckout(
     interval: formData.get("interval") || undefined,
     consent: formData.get("consent"),
     marketingConsent: formData.get("marketingConsent") || undefined,
+    referredAgentName: formData.get("referredAgentName") || undefined,
   });
 
   if (!parsed.success) {
@@ -71,15 +72,21 @@ export async function startCheckout(
     };
   }
 
-  const { businessName, email, tier, interval, marketingConsent } = parsed.data;
+  const { businessName, email, tier, interval, marketingConsent, referredAgentName } = parsed.data;
   const consentedAt = new Date().toISOString();
 
   // Agent Referral Programme Sec 5: resolved once here, used by both
   // branches below — this Server Action (invoked from a real browser
   // submission) is the only point in the whole signup flow with cookie
   // access; the Paystack webhook that later activates payment has none.
+  // referredAgentName is the hybrid fallback field's value, only ever
+  // populated when the pricing page had no cookie to confirm against.
   const referralCookie = (await cookies()).get(REFERRAL_COOKIE_NAME)?.value;
-  const referredByAgentId = await resolveReferralAttribution({ cookieCode: referralCookie, signupEmail: email });
+  const referredByAgentId = await resolveReferralAttribution({
+    cookieCode: referralCookie,
+    typedAgentName: referredAgentName,
+    signupEmail: email,
+  });
 
   if (tier === "foundation") {
     const result = await provisionGrowthClient({

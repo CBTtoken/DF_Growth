@@ -3,6 +3,16 @@
 import { useActionState, useEffect, useState } from "react";
 import { startCheckout } from "@/app/pricing/actions";
 import type { Tier, BillingInterval } from "@/lib/paystack/plans";
+import { REFERRAL_COOKIE_NAME } from "@/lib/agents/referral-cookie";
+
+// /pricing is statically rendered (revalidate = 60), so the referral
+// cookie can't be read server-side without forcing the whole page dynamic
+// — same client-side pattern MarketingHeaderAuthLink already uses for its
+// own cookie-dependent state.
+function readReferralCookie(): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${REFERRAL_COOKIE_NAME}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export function TierCard({
   tier,
@@ -36,6 +46,25 @@ export function TierCard({
     checking: false,
     available: null,
   });
+  // Hybrid fallback field, real agent feedback follow-up: hasReferralCookie
+  // gates which UI shows at all — a cookie present but still resolving
+  // shows neither the banner nor the fallback input (avoids a flash of
+  // "not referred" that then flips to a confirmation a moment later);
+  // resolves to the banner once referredAgentName is a real string.
+  const [hasReferralCookie, setHasReferralCookie] = useState(false);
+  const [referredAgentName, setReferredAgentName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const code = readReferralCookie();
+    if (!code) return;
+    fetch(`/api/referral/agent-name?code=${encodeURIComponent(code)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setHasReferralCookie(true);
+        setReferredAgentName(data.name ?? null);
+      })
+      .catch(() => setHasReferralCookie(true));
+  }, []);
 
   // Found via a real stress test: two businesses picking the same name used
   // to silently strand the second one after payment. The backend now
@@ -203,6 +232,27 @@ export function TierCard({
             <p className="text-xs text-red-600">Emails don&apos;t match</p>
           ) : (
             state?.error?.confirmEmail && <p className="text-xs text-red-600">{state.error.confirmEmail[0]}</p>
+          )}
+          {/* Hybrid fallback field, real agent feedback follow-up: a
+              confident one-line confirmation when the referral cookie
+              already resolved to a real agent, or — only when there's
+              genuinely nothing to confirm — a minimal, easy-to-ignore
+              optional line so a visitor who clicked an agent's link on a
+              different device isn't lost to attribution entirely. Never
+              both, and never shown to a direct/organic visitor as a
+              prominent field. */}
+          {hasReferralCookie && referredAgentName && (
+            <p className="rounded-lg bg-brand/5 px-3 py-2 text-xs font-medium text-brand">
+              You were referred by {referredAgentName} ✓
+            </p>
+          )}
+          {!hasReferralCookie && (
+            <input
+              type="text"
+              name="referredAgentName"
+              placeholder="Referred by a DigitalFlyer agent? (optional)"
+              className="rounded border border-gray-200 px-3 py-2 text-xs text-gray-500 placeholder:text-gray-400"
+            />
           )}
           {/* Combined spec Sec 17: split from one bundled required checkbox
               into a required legal agreement and a separate, optional,
