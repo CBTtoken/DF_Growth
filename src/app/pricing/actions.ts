@@ -1,10 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { startCheckoutSchema } from "@/lib/schemas/pricing";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
+import { REFERRAL_COOKIE_NAME } from "@/lib/agents/referral-cookie";
+import { resolveReferralAttribution } from "@/lib/agents/attribution";
 
 type CheckoutState = {
   error?: {
@@ -72,6 +74,13 @@ export async function startCheckout(
   const { businessName, email, tier, interval, marketingConsent } = parsed.data;
   const consentedAt = new Date().toISOString();
 
+  // Agent Referral Programme Sec 5: resolved once here, used by both
+  // branches below — this Server Action (invoked from a real browser
+  // submission) is the only point in the whole signup flow with cookie
+  // access; the Paystack webhook that later activates payment has none.
+  const referralCookie = (await cookies()).get(REFERRAL_COOKIE_NAME)?.value;
+  const referredByAgentId = await resolveReferralAttribution({ cookieCode: referralCookie, signupEmail: email });
+
   if (tier === "foundation") {
     const result = await provisionGrowthClient({
       businessName,
@@ -92,6 +101,7 @@ export async function startCheckout(
       // plan qualifies.
       billingCycle: "monthly",
       foundingSignupNumber: null,
+      referredByAgentId,
     });
 
     if ("error" in result) {
@@ -124,6 +134,7 @@ export async function startCheckout(
     // of the 10 real founding slots before anyone's paid would defeat the
     // point of capping it.
     foundingSignupNumber: null,
+    referredByAgentId,
   });
 
   if ("error" in result) {

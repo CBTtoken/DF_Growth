@@ -21,6 +21,7 @@ export async function provisionGrowthClient({
   marketingConsent,
   billingCycle,
   foundingSignupNumber,
+  referredByAgentId,
 }: {
   businessName: string;
   email: string;
@@ -45,6 +46,11 @@ export async function provisionGrowthClient({
   // webhook) decides eligibility and the candidate number; this function
   // only needs to know whether to write it and detect a real collision.
   foundingSignupNumber: number | null;
+  // Agent Referral Programme Sec 5: resolved server-side by the caller
+  // (pricing/actions.ts, the only call site with request/cookie context —
+  // the webhook's own call for enterprise's upfront-pay path has none)
+  // before this insert, not looked up in here.
+  referredByAgentId?: string | null;
 }): Promise<ProvisionResult> {
   const admin = createAdminClient();
   const baseSlug = slugify(businessName);
@@ -74,6 +80,7 @@ export async function provisionGrowthClient({
         billing_cycle: billingCycle,
         is_founding_member: foundingSignupNumber !== null,
         founding_signup_number: foundingSignupNumber,
+        referred_by_agent_id: referredByAgentId ?? null,
       })
       .select("id, slug")
       .single();

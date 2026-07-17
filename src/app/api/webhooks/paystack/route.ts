@@ -6,6 +6,7 @@ import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { sendBookOrderConfirmationEmail } from "@/lib/email/book-order";
 import { trackBetaEvent } from "@/lib/metrics/track";
+import { recordCommissionIfEligible } from "@/lib/agents/commission";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -151,7 +152,7 @@ export async function POST(request: Request) {
   if (trialClientId) {
     const { data: existingClient } = await admin
       .from("growth_clients")
-      .select("plan, billing_cycle, status, is_founding_member, business_name, contact_email, slug")
+      .select("plan, billing_cycle, status, is_founding_member, business_name, contact_email, slug, referred_by_agent_id")
       .eq("id", trialClientId)
       .single();
 
@@ -242,6 +243,24 @@ export async function POST(request: Request) {
       // Foundation gets for free at the end of its own wizard.
       void trackBetaEvent(existingClient.plan === "foundation" ? "trial_converted" : "onboarding_completed");
     }
+
+    // Agent Referral Programme Sec 6: no-ops internally unless this client
+    // was actually referred and this exact payment is on a qualifying
+    // plan (Growth or Enterprise annual) — safe to call unconditionally on
+    // every successful update reaching here, whether it's a brand-new
+    // signup's first payment or a plan upgrade. upgradeTo reflects the
+    // plan this charge just switched them to; existingClient.plan is
+    // already correct as-is for a first payment (no upgrade happening).
+    if (!error && existingClient) {
+      await recordCommissionIfEligible({
+        clientId: trialClientId,
+        plan: upgradeTo ?? existingClient.plan,
+        billingCycle: existingClient.billing_cycle,
+        referredByAgentId: existingClient.referred_by_agent_id,
+        amountKobo: amount,
+      });
+    }
+
     return NextResponse.json({ received: true });
   }
 

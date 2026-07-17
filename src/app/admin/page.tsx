@@ -68,6 +68,13 @@ export default async function AdminPage() {
     .select("id", { count: "exact", head: true })
     .or("status.eq.pending_review,flagged_by.not.is.null");
 
+  // Agent Referral Programme Sprint 1, Sec 8: count only, same reasoning
+  // as the other queue badges — /admin/agents owns the actual list.
+  const { count: pendingAgentsCount } = await admin
+    .from("agents")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending");
+
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
@@ -111,6 +118,17 @@ export default async function AdminPage() {
               {!!eventsQueueCount && (
                 <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {eventsQueueCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/admin/agents"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Agents
+              {!!pendingAgentsCount && (
+                <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {pendingAgentsCount}
                 </span>
               )}
             </Link>
