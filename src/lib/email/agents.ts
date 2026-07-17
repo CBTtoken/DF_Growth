@@ -1,4 +1,5 @@
 import { sendEmail } from "@/lib/email/resend";
+import { getAgentReferralLink } from "@/lib/agents/referral-cookie";
 
 // Sec 10: "confirmation email, 'we've received your application.'"
 export async function sendAgentApplicationReceivedEmail({
@@ -37,8 +38,7 @@ export async function sendAgentApprovedEmail({
   email: string;
   referralCode: string;
 }): Promise<void> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-  const referralLink = `${siteUrl}/r/${referralCode}`;
+  const referralLink = getAgentReferralLink(referralCode);
 
   const result = await sendEmail({
     to: email,

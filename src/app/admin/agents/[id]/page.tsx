@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { markCommissionApprovedToPay, markCommissionPaid } from "@/app/admin/agents/actions";
+import { getAgentReferralLink } from "@/lib/agents/referral-cookie";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -41,7 +42,6 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
     .order("created_at", { ascending: false });
 
   const clientNameById = new Map((referredClients ?? []).map((c) => [c.id, c.business_name]));
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   const totalUnpaid = (ledger ?? [])
     .filter((l) => l.status !== "paid")
@@ -63,7 +63,7 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
           </p>
           {agent.referral_code && (
             <p className="text-sm text-gray-500">
-              Referral link: <span className="font-medium text-gray-700">{siteUrl}/r/{agent.referral_code}</span>
+              Referral link: <span className="font-medium text-gray-700">{getAgentReferralLink(agent.referral_code)}</span>
             </p>
           )}
         </div>

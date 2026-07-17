@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { approveAgent, rejectAgent } from "@/app/admin/agents/actions";
+import { getAgentReferralLink } from "@/lib/agents/referral-cookie";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -54,7 +55,6 @@ export default async function AdminAgentsPage() {
   const pending = (agents ?? []).filter((a) => a.status === "pending");
   const reviewed = (agents ?? []).filter((a) => a.status !== "pending");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
@@ -156,7 +156,7 @@ export default async function AdminAgentsPage() {
                         {stats && stats.paid > 0 ? `R${stats.paid.toFixed(2)}` : "—"}
                       </td>
                       <td className="py-2.5 pr-4 text-gray-500">
-                        {a.referral_code ? `${siteUrl}/r/${a.referral_code}` : "—"}
+                        {a.referral_code ? getAgentReferralLink(a.referral_code) : "—"}
                       </td>
                       <td className="py-2.5 pr-4 text-right">
                         <Link href={`/admin/agents/${a.id}`} className="text-xs font-semibold text-brand hover:underline">

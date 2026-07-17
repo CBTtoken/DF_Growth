@@ -10,6 +10,8 @@ import { MetaIdsForm } from "@/components/dashboard/MetaIdsForm";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { PlatformFeatures } from "@/components/dashboard/PlatformFeatures";
+import { AgentSection } from "@/components/dashboard/AgentSection";
+import { getMyAgentDashboardData } from "@/lib/agents/dashboard-data";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
@@ -153,6 +155,12 @@ export default async function DashboardPage() {
   // query for the common single-account case.
   const myAccounts = await listMyGrowthClients();
 
+  // Sec 9: same reasoning as myAccounts above — its own auth.getUser()
+  // call, a no-op extra query for the overwhelming majority of logins who
+  // aren't also an approved agent. Returns null (not an error) when this
+  // login has no linked, approved agents row.
+  const agentDashboardData = await getMyAgentDashboardData();
+
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
   // Found via real UAT: this used to also require meta_pixel_id to be set,
@@ -282,6 +290,7 @@ export default async function DashboardPage() {
           <AccountSection growthClientId={client.id} plan={growthClient.plan} status={growthClient.status} />
         )}
         <PlatformFeatures plan={growthClient?.plan ?? null} />
+        {agentDashboardData && <AgentSection data={agentDashboardData} />}
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Testimonials</h2>
