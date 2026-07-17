@@ -175,17 +175,27 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
 
       <section className={sectionClass}>
         <h2 className="text-lg font-bold tracking-tight text-ink">Date &amp; time</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className={labelClass}>
-            Starts
-            <input type="datetime-local" name="startDatetime" required className={inputClass} />
-          </label>
-          <label className={labelClass}>
-            Ends (optional)
-            <input type="datetime-local" name="endDatetime" className={inputClass} />
-          </label>
+        <p className="text-sm text-gray-500">
+          For an event spanning more than one day, set an end date on a later day — a single overnight or multi-day
+          event is fine, just enter each start and end once.
+        </p>
+        <div>
+          <span className="text-sm font-medium text-gray-700">Starts</span>
+          <div className="mt-1.5 grid gap-4 sm:grid-cols-2">
+            <input type="date" name="startDate" required className={inputClass} />
+            <input type="time" name="startTime" required className={inputClass} />
+          </div>
         </div>
-        {fieldError("startDatetime") && <p className={errorClass}>{fieldError("startDatetime")}</p>}
+        {(fieldError("startDate") || fieldError("startTime")) && (
+          <p className={errorClass}>{fieldError("startDate") || fieldError("startTime")}</p>
+        )}
+        <div>
+          <span className="text-sm font-medium text-gray-700">Ends (optional)</span>
+          <div className="mt-1.5 grid gap-4 sm:grid-cols-2">
+            <input type="date" name="endDate" className={inputClass} />
+            <input type="time" name="endTime" className={inputClass} />
+          </div>
+        </div>
       </section>
 
       <section className={sectionClass}>
@@ -219,6 +229,10 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
 
       <section className={sectionClass}>
         <h2 className="text-lg font-bold tracking-tight text-ink">Contact &amp; links</h2>
+        <label className={labelClass}>
+          Contact person (optional)
+          <input type="text" name="contactName" maxLength={100} placeholder="Full name" className={inputClass} />
+        </label>
         <div className="grid gap-4 sm:grid-cols-3">
           <label className={labelClass}>
             Contact email
@@ -267,8 +281,19 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
             className={inputClass}
           />
         </label>
+        <label className={labelClass}>
+          Booking link (optional)
+          <input
+            type="url"
+            name="bookingUrl"
+            placeholder="https://yourbookingpage.co.za"
+            className={inputClass}
+          />
+        </label>
+        {fieldError("bookingUrl") && <p className={errorClass}>{fieldError("bookingUrl")}</p>}
         <p className="text-xs text-gray-400">
-          Informational only — Growth doesn&apos;t take payment or bookings for events yet.
+          If this is a paid event, add a link where people can book or buy tickets — it&apos;ll show as a &ldquo;Book
+          now&rdquo; button. Growth itself doesn&apos;t take payment or bookings for events yet.
         </p>
       </section>
     </>

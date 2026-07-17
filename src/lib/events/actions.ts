@@ -18,11 +18,14 @@ function parseEventFields(formData: FormData) {
   return eventSubmissionSchema.safeParse({
     eventName: formData.get("eventName"),
     description: formData.get("description"),
-    startDatetime: formData.get("startDatetime"),
-    endDatetime: formData.get("endDatetime") || undefined,
+    startDate: formData.get("startDate"),
+    startTime: formData.get("startTime"),
+    endDate: formData.get("endDate"),
+    endTime: formData.get("endTime"),
     locationAddress: formData.get("locationAddress"),
     city: formData.get("city"),
     eventType: formData.get("eventType"),
+    contactName: formData.get("contactName"),
     contactEmail: formData.get("contactEmail"),
     contactPhone: formData.get("contactPhone"),
     contactWhatsapp: formData.get("contactWhatsapp"),
@@ -30,7 +33,16 @@ function parseEventFields(formData: FormData) {
     instagramUrl: formData.get("instagramUrl"),
     websiteUrl: formData.get("websiteUrl"),
     ticketInfoText: formData.get("ticketInfoText"),
+    bookingUrl: formData.get("bookingUrl"),
   });
+}
+
+// Combines the separate date + time inputs back into one Date — see the
+// schema comment for why they're separate fields in the first place. Only
+// ever called with a valid (non-empty) date/time pair; the caller decides
+// whether the end pair was actually provided at all.
+function combineDateTime(date: string, time: string): Date {
+  return new Date(`${date}T${time}`);
 }
 
 // Sec 3: "a few images, reusing Growth's existing photo upload... pattern."
@@ -71,6 +83,15 @@ async function insertEvent(
 
   const images = await uploadEventImages(organizerAccountId, formData);
 
+  const startDatetime = combineDateTime(data.startDate, data.startTime);
+  if (Number.isNaN(startDatetime.getTime())) {
+    return { error: { _form: ["Enter a valid start date and time."] } };
+  }
+  // Only combined into an end datetime when both halves were actually
+  // given — a lone date or lone time (the other left blank) is treated as
+  // "no end time provided" rather than guessing the missing half.
+  const endDatetime = data.endDate && data.endTime ? combineDateTime(data.endDate, data.endTime) : null;
+
   const admin = createAdminClient();
   const { data: inserted, error } = await admin
     .from("events")
@@ -78,8 +99,8 @@ async function insertEvent(
       organizer_account_id: organizerAccountId,
       event_name: data.eventName,
       description: data.description || null,
-      start_datetime: data.startDatetime.toISOString(),
-      end_datetime: data.endDatetime ? data.endDatetime.toISOString() : null,
+      start_datetime: startDatetime.toISOString(),
+      end_datetime: endDatetime ? endDatetime.toISOString() : null,
       location_address: data.locationAddress || null,
       city: data.city,
       event_type: data.eventType,
@@ -89,12 +110,14 @@ async function insertEvent(
         website: data.websiteUrl || null,
       },
       contact_details: {
+        name: data.contactName || null,
         email: data.contactEmail,
         phone: data.contactPhone || null,
         whatsapp: data.contactWhatsapp || null,
       },
       images,
       ticket_info_text: data.ticketInfoText || null,
+      booking_url: data.bookingUrl || null,
     })
     .select("id")
     .single();
