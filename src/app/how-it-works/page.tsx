@@ -68,13 +68,20 @@ const STEPS: Step[] = [
   },
   {
     number: "5",
-    title: "Confirm And You're Set",
-    body: "On Foundation, there's nothing to pay today, your page goes live straight away. On Growth, this is one quick, secure payment through Paystack, the same trusted system thousands of South African businesses already use.",
+    title: "Add Your Packages (Optional)",
+    body: "Have set prices, service packages, or a special offer running? Add up to three. Don't have a fixed price list? Skip this too, plenty of businesses do, and you can always add some later.",
     screenshotSrc: null,
-    screenshotAlt: "The final confirmation and payment step",
+    screenshotAlt: "The packages step showing three package slots",
   },
   {
     number: "6",
+    title: "Confirm And You're Set",
+    body: "On Foundation, there's nothing to pay today, your page goes live straight away. On Growth, this is one quick, secure payment through Paystack, the same trusted system thousands of South African businesses already use.",
+    screenshotSrc: null,
+    screenshotAlt: "The final confirmation screen showing your page is live",
+  },
+  {
+    number: "7",
     title: "You're Live — Here's Your Dashboard",
     body: "Your page is live and ready to share on WhatsApp, Facebook, anywhere. From your dashboard, you can edit anything, add customer reviews, download ready-made social media posts, and see who's been visiting your page.",
     screenshotSrc: null,
