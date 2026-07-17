@@ -7,6 +7,8 @@ import { describeGrowthClientStatus } from "@/lib/growth-client/admin-status-lab
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { MarketplaceUrlForm } from "@/components/admin/MarketplaceUrlForm";
 import { AdminPlanControls } from "@/components/admin/AdminPlanControls";
+import { SendPaymentLinkForm } from "@/components/admin/SendPaymentLinkForm";
+import { AdminClientBuilder } from "@/components/admin/AdminClientBuilder";
 import { DangerZone } from "@/components/admin/DangerZone";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -104,6 +106,49 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           isAdminComped={client.is_admin_comped}
           adminCompUntil={client.admin_comp_until}
           adminCompNote={client.admin_comp_note}
+        />
+
+        {/* "Register, we build it, they pay when ready" flow, Sec 3: for a
+            client who does need to pay (not comping them), this emails a
+            real Paystack checkout link instead of granting free access. */}
+        <section className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-ink">Send payment link</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Emails a real checkout link — same one the self-serve flow uses, so it activates the account
+              identically once they pay.
+            </p>
+          </div>
+          <SendPaymentLinkForm clientId={client.id} />
+        </section>
+
+        <AdminClientBuilder
+          clientId={client.id}
+          slug={client.slug ?? ""}
+          businessName={client.business_name ?? ""}
+          contactEmail={client.contact_email ?? ""}
+          callPhone={client.call_phone ?? ""}
+          whatsappPhone={client.whatsapp_phone ?? ""}
+          province={client.province ?? ""}
+          industry={client.industry ?? ""}
+          businessAddress={client.business_address ?? ""}
+          city={client.city ?? ""}
+          businessDescription={client.business_description ?? ""}
+          tagline={client.tagline ?? ""}
+          productsServices={client.products_services ?? ""}
+          additionalNotes={client.additional_notes ?? ""}
+          facebookUrl={client.facebook_url ?? ""}
+          instagramUrl={client.instagram_url ?? ""}
+          websiteUrl={client.website_url ?? ""}
+          brandPrimaryColor={client.brand_primary_color ?? ""}
+          brandSecondaryColor={client.brand_secondary_color ?? ""}
+          template={client.template}
+          headline={landingPage?.headline ?? ""}
+          subheadline={landingPage?.subheadline ?? ""}
+          aboutText={landingPage?.about_text ?? ""}
+          servicesText={landingPage?.services_text ?? ""}
+          ctaLabel={landingPage?.cta_label ?? ""}
+          packages={packages}
         />
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
