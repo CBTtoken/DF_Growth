@@ -55,6 +55,18 @@ export function MarketingHeader() {
         >
           Events
         </Link>
+        <Link
+          href="/agents/apply"
+          className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
+        >
+          Agents
+        </Link>
+        <Link
+          href="/faq"
+          className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
+        >
+          FAQ
+        </Link>
         <span className="hidden sm:inline">
           <MarketingHeaderAuthLink />
         </span>

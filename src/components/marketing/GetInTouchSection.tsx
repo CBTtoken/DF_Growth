@@ -11,7 +11,7 @@ export function GetInTouchSection() {
   const [state, formAction, pending] = useActionState(submitHomepageInquiry, null);
 
   return (
-    <section className="bg-white px-6 py-16">
+    <section id="get-in-touch" className="bg-white px-6 py-16">
       <div className="mx-auto max-w-xl">
         <div className="rounded-3xl border border-gray-100 bg-gray-50 p-6 shadow-sm sm:p-10">
           {state?.success ? (
