@@ -107,22 +107,43 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
       />
       <MarketingHeader />
 
-      {/* Real UAT feedback: stretching an arbitrary uploaded photo into a
-          full-width cropped banner looked broken for anything that wasn't a
-          wide landscape photo (a promotional graphic got mangled). A safe
-          text-only header for now — event name and location, no image
-          crop gamble — any uploaded photos live in the gallery below
-          instead. A proper banner treatment (smart cropping, a dedicated
-          banner upload) is a real follow-up, not solved here. */}
-      <div className="bg-ink px-4 py-10 text-center text-white sm:px-6 sm:py-14">
-        <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
-          {typeLabel}
-        </span>
-        <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{event.event_name}</h1>
-        <p className="mt-2 text-sm text-white/70">
-          {event.location_address ? `${event.location_address}, ${event.city}` : event.city}
-        </p>
-      </div>
+      {/* Real UAT fix, round 2: forcing an arbitrary uploaded photo into a
+          full-width object-cover crop mangled anything that wasn't a wide
+          landscape photo (a promotional graphic lost its own text). The
+          letterbox technique — the actual image always shown in full via
+          object-contain, backed by a blurred/darkened copy of itself
+          filling the rest of the frame — is the same trick Spotify/YouTube
+          use for exactly this problem: an arbitrary user image that has to
+          become a banner. It can never crop content out, whatever the
+          image's own aspect ratio, so there's no gamble left to take. Falls
+          back to the safe text-only header (round 1's fix) when there's no
+          photo at all. */}
+      {heroUrl ? (
+        <div className="relative h-64 w-full overflow-hidden bg-ink sm:h-80">
+          <Image src={heroUrl} alt="" fill sizes="100vw" className="scale-110 object-cover opacity-60 blur-2xl" aria-hidden />
+          <div className="absolute inset-0 bg-ink/40" aria-hidden />
+          <Image src={heroUrl} alt={event.event_name} fill sizes="100vw" className="object-contain" priority />
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-4 pb-6 pt-16 text-center text-white sm:px-6">
+            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide backdrop-blur-sm">
+              {typeLabel}
+            </span>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{event.event_name}</h1>
+            <p className="mt-2 text-sm text-white/80">
+              {event.location_address ? `${event.location_address}, ${event.city}` : event.city}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-ink px-4 py-10 text-center text-white sm:px-6 sm:py-14">
+          <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide">
+            {typeLabel}
+          </span>
+          <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">{event.event_name}</h1>
+          <p className="mt-2 text-sm text-white/70">
+            {event.location_address ? `${event.location_address}, ${event.city}` : event.city}
+          </p>
+        </div>
+      )}
 
       <section className="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:p-10">
@@ -153,9 +174,9 @@ export default async function EventDetailPage({ params }: { params: Promise<{ id
             </div>
           )}
 
-          {images.length > 0 && (
+          {images.length > 1 && (
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {images.map((path) => (
+              {images.slice(1).map((path) => (
                 <div key={path} className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
                   <Image src={`${photosBase}/${path}`} alt="" fill sizes="20vw" className="object-cover" />
                 </div>
