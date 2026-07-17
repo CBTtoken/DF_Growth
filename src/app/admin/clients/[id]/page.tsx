@@ -9,6 +9,8 @@ import { MarketplaceUrlForm } from "@/components/admin/MarketplaceUrlForm";
 import { AdminPlanControls } from "@/components/admin/AdminPlanControls";
 import { SendPaymentLinkForm } from "@/components/admin/SendPaymentLinkForm";
 import { AdminClientBuilder } from "@/components/admin/AdminClientBuilder";
+import { AdminMediaSection } from "@/components/admin/AdminMediaSection";
+import { AssignAgentForm } from "@/components/admin/AssignAgentForm";
 import { DangerZone } from "@/components/admin/DangerZone";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -37,15 +39,21 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
 
   if (!client) notFound();
 
-  const [{ data: landingPage }, { count: photoCount }, { count: testimonialCount }] = await Promise.all([
+  const [{ data: landingPage }, { data: photos }, { count: testimonialCount }, { data: approvedAgents }] = await Promise.all([
     admin
       .from("landing_pages")
       .select("headline, subheadline, about_text, services_text, cta_label, published")
       .eq("growth_client_id", id)
       .maybeSingle(),
-    admin.from("client_photos").select("id", { count: "exact", head: true }).eq("growth_client_id", id),
+    admin.from("client_photos").select("id, storage_path").eq("growth_client_id", id).order("position"),
     admin.from("testimonials").select("id", { count: "exact", head: true }).eq("growth_client_id", id),
+    admin.from("agents").select("id, full_name").eq("status", "approved").order("full_name"),
   ]);
+  const photoCount = photos?.length ?? 0;
+  const logoUrl = client.logo_path
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
+    : null;
+  const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
 
   const statusLabel = describeGrowthClientStatus({
     plan: client.plan,
@@ -121,6 +129,23 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           </div>
           <SendPaymentLinkForm clientId={client.id} />
         </section>
+
+        {/* Admin-created clients never clicked a referral link or typed an
+            agent's name at signup — this is how admin credits the agent
+            who actually brought them in, so commission still flows once
+            they pay. See adminAssignAgent's own comment for the mechanics. */}
+        <section className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-ink">Referring agent</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Credits an agent&apos;s commission on this client, whether or not they signed up through a
+              referral link.
+            </p>
+          </div>
+          <AssignAgentForm clientId={client.id} agents={approvedAgents ?? []} currentAgentId={client.referred_by_agent_id} />
+        </section>
+
+        <AdminMediaSection clientId={client.id} logoUrl={logoUrl} photosStorageBase={photosStorageBase} photos={photos ?? []} />
 
         <AdminClientBuilder
           clientId={client.id}

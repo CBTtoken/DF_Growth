@@ -63,9 +63,9 @@ export type AdminClientBuilderData = {
 // client-facing ones rather than reused directly. Sections, not a
 // multi-step wizard: admin already knows what they're entering and wants
 // to save each part independently, not be walked through it sequentially.
-// Logo and photo upload aren't covered here yet (Storage handling, out of
-// scope for this pass) — add photos from the client's own dashboard once
-// they're set up, or via a later follow-up build.
+// Logo and photo upload live in AdminMediaSection instead of here — real
+// Storage upload needs multipart form handling, a different shape from
+// every other section's plain-field save.
 export function AdminClientBuilder(data: AdminClientBuilderData) {
   const [infoState, infoAction, infoPending] = useActionState(adminSaveBusinessInfo, null);
   const [profileState, profileAction, profilePending] = useActionState(adminSaveBusinessProfile, null);
@@ -203,7 +203,7 @@ export function AdminClientBuilder(data: AdminClientBuilderData) {
             />
           </label>
         </div>
-        <p className="text-xs text-gray-400">Logo upload isn&apos;t available here yet — add it from the client&apos;s own dashboard once they have login access.</p>
+        <p className="text-xs text-gray-400">Upload the logo file itself in the Logo &amp; Photos section above.</p>
         <button type="submit" disabled={brandPending} className={saveBtnClass}>
           {brandPending ? "Saving..." : "Save Brand Kit"}
         </button>

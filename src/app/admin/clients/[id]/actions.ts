@@ -466,6 +466,143 @@ export async function endAdminComp(clientId: string) {
   return { success: true };
 }
 
+// Mirrors saveStep3's logo-upload branch (onboard/actions.ts) and
+// uploadClientPhoto/deleteClientPhoto (dashboard/actions.ts) exactly —
+// same Storage buckets, same path shape, same 10-photo cap — so a client
+// who later gets their own login sees exactly what admin already set up,
+// no format mismatch. "so once they take over they have access to it all"
+// was the explicit ask this closes.
+const PHOTO_CAP = 10;
+
+export async function adminUploadLogo(_prevState: BuilderState, formData: FormData): Promise<BuilderState> {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const clientId = fd(formData, "clientId");
+  if (!clientId) return { error: "Missing client." };
+
+  const logo = formData.get("logo");
+  if (!(logo instanceof File) || logo.size === 0) return { error: "Choose a logo file." };
+
+  const admin = createAdminClient();
+  const ext = logo.name.split(".").pop() || "png";
+  const path = `${clientId}/logo.${ext}`;
+  const { error: uploadError } = await admin.storage
+    .from("client-logos")
+    .upload(path, logo, { contentType: logo.type, upsert: true });
+  if (uploadError) return { error: "Could not upload logo — try a smaller file (under 2MB) or a different format." };
+
+  const { error } = await admin.from("growth_clients").update({ logo_path: path }).eq("id", clientId);
+  if (error) return { error: "Could not save, please try again." };
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { success: true };
+}
+
+export async function adminUploadPhoto(_prevState: BuilderState, formData: FormData): Promise<BuilderState> {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const clientId = fd(formData, "clientId");
+  if (!clientId) return { error: "Missing client." };
+
+  const files = formData.getAll("photo").filter((f): f is File => f instanceof File && f.size > 0);
+  if (files.length === 0) return { error: "Choose at least one photo." };
+
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("client_photos")
+    .select("id", { count: "exact", head: true })
+    .eq("growth_client_id", clientId);
+
+  let nextPosition = count ?? 0;
+  const room = PHOTO_CAP - nextPosition;
+  if (room <= 0) return { error: `Already at the ${PHOTO_CAP}-photo limit — delete one first.` };
+
+  let failed = 0;
+  for (const photo of files.slice(0, room)) {
+    const ext = photo.name.split(".").pop() || "jpg";
+    const path = `${clientId}/${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await admin.storage
+      .from("client-photos")
+      .upload(path, photo, { contentType: photo.type });
+    if (uploadError) {
+      failed++;
+      continue;
+    }
+    const { error: insertError } = await admin
+      .from("client_photos")
+      .insert({ growth_client_id: clientId, storage_path: path, position: nextPosition });
+    if (insertError) {
+      failed++;
+      continue;
+    }
+    nextPosition++;
+  }
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  if (failed > 0) return { error: `${failed} photo${failed > 1 ? "s" : ""} couldn't be uploaded.` };
+  return { success: true };
+}
+
+export async function adminDeletePhoto(clientId: string, photoId: string) {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const admin = createAdminClient();
+  const { data: photo } = await admin
+    .from("client_photos")
+    .select("storage_path")
+    .eq("id", photoId)
+    .eq("growth_client_id", clientId)
+    .single();
+  if (!photo) return { error: "Photo not found." };
+
+  await admin.storage.from("client-photos").remove([photo.storage_path]);
+  const { error } = await admin.from("client_photos").delete().eq("id", photoId);
+  if (error) return { error: "Could not delete, please try again." };
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { success: true };
+}
+
+// For an admin-created client (adminCreateClient, src/app/admin/clients/
+// new/actions.ts) — they never went through a referral link or typed an
+// agent's name at signup, so referred_by_agent_id would otherwise stay
+// null forever even when an agent genuinely brought this client in. The
+// webhook's own commission logic (recordCommissionIfEligible, called from
+// src/app/api/webhooks/paystack/route.ts) reads referred_by_agent_id fresh
+// off the growth_clients row at payment time, not from signup-time
+// metadata — so setting it here, any time before the client's first
+// qualifying payment, is enough for commission to flow correctly with no
+// other changes needed. Empty agentId clears the assignment.
+export async function adminAssignAgent(_prevState: BuilderState, formData: FormData): Promise<BuilderState> {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const clientId = fd(formData, "clientId");
+  const agentId = fd(formData, "agentId");
+  if (!clientId) return { error: "Missing client." };
+
+  const admin = createAdminClient();
+
+  if (!agentId) {
+    const { error } = await admin.from("growth_clients").update({ referred_by_agent_id: null }).eq("id", clientId);
+    if (error) return { error: "Could not save, please try again." };
+    revalidatePath(`/admin/clients/${clientId}`);
+    return { success: true };
+  }
+
+  const { data: agent } = await admin.from("agents").select("id").eq("id", agentId).eq("status", "approved").single();
+  if (!agent) return { error: "That agent isn't approved." };
+
+  const { error } = await admin.from("growth_clients").update({ referred_by_agent_id: agentId }).eq("id", clientId);
+  if (error) return { error: "Could not save, please try again." };
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { success: true };
+}
+
 // Real delete, not a soft-hide — for genuine test/junk accounts (the
 // original real case: two throwaway "ABC Group" signups cluttering
 // /marketplace). Every child table cascades on growth_client_id except
