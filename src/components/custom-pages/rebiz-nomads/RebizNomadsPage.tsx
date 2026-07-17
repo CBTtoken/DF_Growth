@@ -21,6 +21,14 @@ import type { CustomPageProps } from "@/lib/custom-pages/registry";
 // form every templated client page already has) rather than building a
 // second, custom-page-specific one — a WhatsApp-only CTA with no form was
 // a genuine gap, not a stylistic choice.
+//
+// whatsappPhone is deliberately null here, not
+// process.env.NEXT_PUBLIC_WHATSAPP_NUMBER — RE:Biz membership comes
+// bundled with paid Growth/Foundation membership, not a separate WhatsApp
+// inquiry. Closing.tsx already replaced this page's original "Message Us
+// on WhatsApp to Join" CTAs with a real path to /pricing for exactly that
+// reason; wiring a WhatsApp option back in through this form's post-submit
+// contact-details reveal would quietly reintroduce the same thing.
 export function RebizNomadsPage({ clientId, businessName, metaPixelId, landingPageId, contactEmail }: CustomPageProps) {
   const pageUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/rebiz`;
 
@@ -39,7 +47,7 @@ export function RebizNomadsPage({ clientId, businessName, metaPixelId, landingPa
         primaryColor="#1081b8"
         contactEmail={contactEmail}
         callPhone={null}
-        whatsappPhone={process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? null}
+        whatsappPhone={null}
         websiteUrl={null}
         businessName={businessName}
       />
