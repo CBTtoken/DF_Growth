@@ -16,10 +16,7 @@ export const metadata: Metadata = {
 };
 
 // Backlog Sec 1 (Marketplace directory + search), built this sprint: a
-// real browsable/searchable page for member businesses. Sorts by
-// recently-added rather than "most visited" — there's no page-view
-// tracking anywhere in the platform yet (separate backlog item), so
-// recency is the only honest signal available today.
+// real browsable/searchable page for member businesses.
 //
 // Reads searchParams, which makes this route dynamic by definition — no
 // force-static here, unlike the individual client pages, since the whole
@@ -27,9 +24,9 @@ export const metadata: Metadata = {
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; industry?: string; city?: string }>;
+  searchParams: Promise<{ q?: string; industry?: string; city?: string; sort?: string }>;
 }) {
-  const { q = "", industry = "", city = "" } = await searchParams;
+  const { q = "", industry = "", city = "", sort = "recent" } = await searchParams;
   const admin = createAdminClient();
 
   // published landing_pages rows only, and only active (paid/converted)
@@ -87,6 +84,44 @@ export default async function MarketplacePage({
     const list = photosByClient.get(photo.growth_client_id) ?? [];
     list.push(photo);
     photosByClient.set(photo.growth_client_id, list);
+  }
+
+  // Real feedback: ratings only ever showed on a business's own page, not
+  // here — a visitor browsing the directory had no trust signal to go on
+  // until they'd already clicked through. Same batched-query pattern as
+  // photos above, one round trip for every listed client rather than one
+  // per card. Only ever a positive signal shown when count > 0 — Rate &
+  // Review Sec 5's "no rating shown at all for zero reviews" rule applies
+  // here too, not just on the business's own page.
+  const { data: allRatings } = clientIds.length
+    ? await admin.from("reviews").select("business_id, rating").eq("status", "published").in("business_id", clientIds)
+    : { data: [] as { business_id: string; rating: number }[] };
+
+  const ratingsByClient = new Map<string, { average: number; count: number }>();
+  for (const clientId of clientIds) {
+    const ratings = (allRatings ?? []).filter((r) => r.business_id === clientId).map((r) => r.rating);
+    if (ratings.length > 0) {
+      ratingsByClient.set(clientId, {
+        average: ratings.reduce((sum, r) => sum + r, 0) / ratings.length,
+        count: ratings.length,
+      });
+    }
+  }
+
+  // "Most visited" sort — the underlying page-view data now exists
+  // (client dashboard analytics), this was previously blocked on that not
+  // existing at all, not on anything harder. Only fetched when actually
+  // sorting by it, no reason to pay this query's cost on every page load.
+  let sortedClients = clients ?? [];
+  if (sort === "popular" && clientIds.length) {
+    const { data: allViews } = await admin.from("page_views").select("growth_client_id").in("growth_client_id", clientIds);
+    const viewCountByClient = new Map<string, number>();
+    for (const view of allViews ?? []) {
+      viewCountByClient.set(view.growth_client_id, (viewCountByClient.get(view.growth_client_id) ?? 0) + 1);
+    }
+    sortedClients = [...sortedClients].sort(
+      (a, b) => (viewCountByClient.get(b.id) ?? 0) - (viewCountByClient.get(a.id) ?? 0)
+    );
   }
 
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
@@ -147,6 +182,14 @@ export default async function MarketplacePage({
                   </option>
                 ))}
               </select>
+              <select
+                name="sort"
+                defaultValue={sort}
+                className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+              >
+                <option value="recent">Recently added</option>
+                <option value="popular">Most visited</option>
+              </select>
             </div>
             <button
               type="submit"
@@ -161,9 +204,11 @@ export default async function MarketplacePage({
               Clear filters
             </Link>
           )}
-          {/* Cross-link for mobile, where the header nav hides the Events
-              link to avoid a previously-fixed wrap bug (MarketingHeader.tsx)
-              — same reasoning as other cross-references in this codebase. */}
+          {/* Cross-sell, not a mobile-reachability workaround — the header's
+              real mobile nav menu already covers that (MobileNavMenu.tsx).
+              Kept because someone here looking for a supplier and someone
+              looking for a market/workshop are genuinely different intents
+              worth pointing between either way. */}
           <Link href="/events" className="text-xs font-medium text-gray-400 hover:text-brand">
             Looking for events instead? Browse Events →
           </Link>
@@ -171,7 +216,7 @@ export default async function MarketplacePage({
       </section>
 
       <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6">
-        {!clients || clients.length === 0 ? (
+        {sortedClients.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-white p-16 text-center">
             <p className="text-base font-semibold text-ink">No businesses match yet</p>
             <p className="max-w-sm text-sm text-gray-500">
@@ -182,9 +227,17 @@ export default async function MarketplacePage({
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {clients.map((client) => {
+            {sortedClients.map((client) => {
               const logoUrl = client.logo_path ? `${logosStorageBase}/${client.logo_path}` : null;
               const brandColor = client.brand_primary_color || "#1081b8";
+              const rating = ratingsByClient.get(client.id);
+              const ratingBadge = rating ? (
+                <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
+                  <span aria-hidden style={{ color: brandColor }}>★</span>
+                  {rating.average.toFixed(1)}
+                  <span className="font-normal text-gray-400">({rating.count})</span>
+                </span>
+              ) : null;
 
               // Same resolution order as a real client page's hero photo
               // (ClientLandingPageView.tsx): an explicit hero_photo_id
@@ -237,6 +290,7 @@ export default async function MarketplacePage({
                         {client.industry}
                         {client.city ? ` · ${client.city}` : ""}
                       </p>
+                      {ratingBadge}
                       <p className="line-clamp-2 text-sm text-gray-500">
                         {client.tagline || client.business_description}
                       </p>
@@ -284,6 +338,7 @@ export default async function MarketplacePage({
                         )}
                         {client.city && <span className="text-xs text-gray-400">{client.city}</span>}
                       </div>
+                      {ratingBadge}
                     </div>
                   </div>
                   <p className="line-clamp-2 text-sm text-gray-500">
