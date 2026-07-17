@@ -75,7 +75,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped"
       )
       .eq("id", client.id)
       .single(),
@@ -458,7 +458,7 @@ export default async function DashboardPage() {
           </div>
           <EcosystemAccess
             marketplaceUrl={growthClient?.marketplace_url ?? null}
-            unlocked={!!growthClient?.paystack_reference}
+            unlocked={!!growthClient?.paystack_reference || !!growthClient?.is_agent_comped || !!growthClient?.is_admin_comped}
           />
         </section>
       </div>

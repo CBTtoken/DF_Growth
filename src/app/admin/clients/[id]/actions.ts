@@ -4,8 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
+import { sendWelcomeEmail } from "@/lib/email/welcome";
+import type { Tier } from "@/lib/paystack/plans";
 
 type MarketplaceUrlState = { error?: string; success?: boolean } | null;
+type PlanControlState = { error?: string; success?: boolean } | null;
+const VALID_TIERS: Tier[] = ["foundation", "growth_engine", "enterprise"];
 
 // Public Beta Polish Sprint Sec 11: the only writer of growth_clients.
 // marketplace_url anywhere in this codebase — deliberately admin-only,
@@ -70,6 +74,117 @@ export async function toggleClientVisibility(clientId: string) {
 
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/admin");
+  revalidatePath("/marketplace");
+  return { success: true };
+}
+
+// Direct admin override of the plan value — no Paystack involvement, no
+// billing change. Real use: fixing a comped or test account's plan, or
+// upgrading a client whose actual subscription is being handled outside
+// this flow. Deliberately does NOT touch a real paying client's Paystack
+// subscription — if this is used on a genuinely paying account, what they
+// see here and what Paystack actually charges them can drift apart, so
+// this is meant for admin-comped/test accounts, not as a payment-bypass
+// upgrade path for real subscribers.
+export async function adminChangePlan(_prevState: PlanControlState, formData: FormData): Promise<PlanControlState> {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const clientId = formData.get("clientId");
+  const plan = formData.get("plan");
+  if (typeof clientId !== "string" || !clientId) return { error: "Missing client." };
+  if (typeof plan !== "string" || !VALID_TIERS.includes(plan as Tier)) return { error: "Invalid plan." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("growth_clients").update({ plan }).eq("id", clientId);
+  if (error) return { error: "Could not save, please try again." };
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+// The "let us build their page, test it, then start paying" flow: grants
+// free access on any plan for a chosen window (blank = indefinite, admin
+// ends it manually), bypassing Paystack entirely. Reuses the exact
+// "finish onboarding" mechanics onboard/actions.ts's saveStep6 uses for a
+// real trial activation — publish the landing page, send the "your page
+// is live" email — but only the first time (a still-pending_intake
+// client), so re-granting or extending an already-active comp doesn't
+// resend it. trial_ends_at is explicitly cleared, matching is_agent_comped's
+// own precedent, so the Foundation trial-reminder cron (which only ever
+// looks at rows where trial_ends_at is set) leaves this account alone —
+// admin_comp_until is a separate clock, checked by its own cron pass.
+export async function grantAdminComp(_prevState: PlanControlState, formData: FormData): Promise<PlanControlState> {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const clientId = formData.get("clientId");
+  const plan = formData.get("plan");
+  const until = formData.get("until");
+  const note = formData.get("note");
+  if (typeof clientId !== "string" || !clientId) return { error: "Missing client." };
+  if (typeof plan !== "string" || !VALID_TIERS.includes(plan as Tier)) return { error: "Invalid plan." };
+  if (typeof until !== "string") return { error: "Invalid date." };
+
+  const admin = createAdminClient();
+  const { data: client } = await admin
+    .from("growth_clients")
+    .select("status, slug, business_name, contact_email")
+    .eq("id", clientId)
+    .single();
+  if (!client) return { error: "Client not found." };
+
+  const wasNotYetLive = client.status !== "active";
+  const untilIso = until ? new Date(`${until}T23:59:59`).toISOString() : null;
+  const noteText = typeof note === "string" && note.trim() ? note.trim() : null;
+
+  const { error } = await admin
+    .from("growth_clients")
+    .update({
+      plan,
+      status: "active",
+      is_admin_comped: true,
+      admin_comp_until: untilIso,
+      admin_comp_note: noteText,
+      trial_ends_at: null,
+    })
+    .eq("id", clientId);
+  if (error) return { error: "Could not save, please try again." };
+
+  if (wasNotYetLive) {
+    await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", clientId);
+    if (client.slug) {
+      await sendWelcomeEmail({ businessName: client.business_name, contactEmail: client.contact_email, slug: client.slug });
+    }
+  }
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
+  revalidatePath("/marketplace");
+  return { success: true };
+}
+
+// Ends an admin-granted comp early — pauses the account the same way a
+// trial's own expiry does (src/app/api/cron/trial-reminders), prompting
+// real payment. admin_comp_until/admin_comp_note are left as-is as a
+// record of what was granted; only is_admin_comped and status change.
+export async function endAdminComp(clientId: string) {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("growth_clients")
+    .update({ is_admin_comped: false, status: "paused" })
+    .eq("id", clientId);
+  if (error) return { error: "Could not update, please try again." };
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin");
+  revalidatePath("/dashboard");
   revalidatePath("/marketplace");
   return { success: true };
 }

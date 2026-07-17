@@ -6,6 +6,7 @@ import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { describeGrowthClientStatus } from "@/lib/growth-client/admin-status-label";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { MarketplaceUrlForm } from "@/components/admin/MarketplaceUrlForm";
+import { AdminPlanControls } from "@/components/admin/AdminPlanControls";
 import { DangerZone } from "@/components/admin/DangerZone";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -97,6 +98,14 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           <Field label="Marketing opt-in" value={client.marketing_consent ? "Yes" : "No"} />
         </section>
 
+        <AdminPlanControls
+          clientId={client.id}
+          currentPlan={client.plan}
+          isAdminComped={client.is_admin_comped}
+          adminCompUntil={client.admin_comp_until}
+          adminCompNote={client.admin_comp_note}
+        />
+
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Contact & business details</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -155,8 +164,8 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                 paid, so this reads paystack_reference specifically rather
                 than reusing the same status badge shown up top. */}
             <p className="mt-1 text-sm text-gray-500">
-              {client.paystack_reference
-                ? "Unlocked — this account has paid at least once."
+              {client.paystack_reference || client.is_agent_comped || client.is_admin_comped
+                ? "Unlocked — this account has paid at least once, or has comped access."
                 : "Locked — this account hasn't paid yet (still on a free trial)."}
             </p>
           </div>

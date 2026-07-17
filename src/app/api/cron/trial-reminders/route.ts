@@ -5,12 +5,15 @@ import { sendEmail } from "@/lib/email/resend";
 // Triggered daily by .github/workflows/trial-reminders.yml. Paystack has no
 // native trial-reminder feature (its start_date parameter only delays the
 // first charge — see src/app/api/trial/convert), so this is the one piece
-// of the trial flow that genuinely needs a scheduled job. Two passes, each
-// looked up fresh so one client's failure in the first pass can't skip the
-// second:
+// of the trial flow that genuinely needs a scheduled job. Three passes, each
+// looked up fresh so one client's failure in one pass can't skip another:
 //   1. Day-5 heads-up — 2 days before trial_ends_at, sent once.
 //   2. Trial actually ended with no payment — pauses the account and sends
 //      the "pay now to reactivate" email.
+//   3. Admin-granted free access (is_admin_comped, src/app/admin/clients/
+//      [id]/actions.ts's grantAdminComp) has reached its admin_comp_until
+//      date — pauses the account the same way, no email (this is a
+//      Dewald-managed relationship, not a self-serve trial).
 export async function GET(request: Request) {
   const auth = request.headers.get("authorization");
   if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -99,5 +102,27 @@ export async function GET(request: Request) {
     }
   }
 
-  return NextResponse.json({ remindersSent, trialsEnded });
+  // Pass 3: admin-granted free access has reached its end date.
+  const { data: compExpired } = await admin
+    .from("growth_clients")
+    .select("id")
+    .eq("is_admin_comped", true)
+    .eq("status", "active")
+    .not("admin_comp_until", "is", null)
+    .lte("admin_comp_until", now.toISOString());
+
+  let adminCompsEnded = 0;
+  for (const client of compExpired ?? []) {
+    const { error } = await admin
+      .from("growth_clients")
+      .update({ status: "paused", is_admin_comped: false })
+      .eq("id", client.id);
+    if (error) {
+      console.error("Failed to pause expired admin comp", client.id, error);
+      continue;
+    }
+    adminCompsEnded++;
+  }
+
+  return NextResponse.json({ remindersSent, trialsEnded, adminCompsEnded });
 }
