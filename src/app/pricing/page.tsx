@@ -334,6 +334,11 @@ export default async function PricingPage() {
               </div>
             ))}
           </div>
+          <div className="mt-8 flex justify-center">
+            <Link href="/how-it-works" className="text-sm font-semibold text-brand hover:underline">
+              See every real screen, step by step →
+            </Link>
+          </div>
         </div>
       </section>
 
