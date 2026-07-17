@@ -121,6 +121,33 @@ const DIFFERENTIATORS = [
   },
 ];
 
+// UI/UX pass, 2026-07-17: quick homepage-only step overview — Dewald wants
+// a full illustrated walkthrough (its own page, with real product
+// screenshots) as a later, separate build; this is deliberately just the
+// four-step shape, not that page.
+const HOW_IT_WORKS = [
+  {
+    step: "1",
+    title: "Select Your Membership",
+    description: "Choose Foundation or Growth, whichever fits your business today. Change any time.",
+  },
+  {
+    step: "2",
+    title: "Complete The Onboarding Prompts",
+    description: "A guided step-by-step wizard captures your business details, brand look and content in minutes.",
+  },
+  {
+    step: "3",
+    title: "Pay",
+    description: "Simple, secure checkout via Paystack. Foundation starts free for 7 days, no card required.",
+  },
+  {
+    step: "4",
+    title: "Review, Edit & Share",
+    description: "Preview your page, make any changes you like, then start sharing your link everywhere.",
+  },
+];
+
 // UI/UX pass, 2026-07-17: "brag, don't sell" — real technical substance
 // already built and live (SEO structured data, page-view tracking, Meta's
 // server-side Conversions API), framed as outcomes a business owner
@@ -271,6 +298,35 @@ export default async function PricingPage() {
                 <div>
                   <h3 className="text-base font-bold tracking-tight text-white">{d.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-white/70">{d.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works — UI/UX pass 2026-07-17: a clean white "beat" between
+          the two bold color sections, deliberately simple (no screenshots,
+          no illustration) per Dewald's ask — a full illustrated walkthrough
+          with real product screenshots is planned as its own separate page
+          later, linked from its own nav item once built. This is just
+          enough to answer "okay, so how does this actually work?" without
+          leaving the homepage. */}
+      <section className="bg-white px-6 py-16">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-center font-display text-3xl uppercase tracking-wide text-ink">How It Works</h2>
+          <p className="mx-auto mt-3 max-w-xl text-center text-gray-600">
+            From sign up to sharing your link, most businesses are live the same day.
+          </p>
+          <div className="mt-10 grid gap-8 sm:grid-cols-4 sm:gap-6">
+            {HOW_IT_WORKS.map((s) => (
+              <div key={s.step} className="flex flex-col items-center gap-3 text-center sm:items-start sm:text-left">
+                <span className="grid size-10 flex-shrink-0 place-items-center rounded-full bg-brand font-display text-base text-white">
+                  {s.step}
+                </span>
+                <div>
+                  <h3 className="text-base font-bold tracking-tight text-ink">{s.title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-gray-500">{s.description}</p>
                 </div>
               </div>
             ))}
