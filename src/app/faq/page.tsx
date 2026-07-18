@@ -115,6 +115,47 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
     ],
   },
   {
+    id: "booking-shop",
+    title: "Booking & Shop",
+    items: [
+      {
+        question: "What is Booking?",
+        answer:
+          "A real appointment, rental, or slot calendar built into your page, available on Growth and above. Visitors see live availability and book directly, no back-and-forth messaging needed.",
+      },
+      {
+        question: "What is Shop?",
+        answer:
+          "A product catalog and cart built into your page, available on Growth and above. Visitors browse, add to cart, and place an order directly, with real stock tracking behind it.",
+      },
+      {
+        question: "Can two people book the same slot by accident?",
+        answer:
+          "No. Availability is checked in real time and enforced at the database level, so a slot someone else just took is never bookable by a second person.",
+      },
+      {
+        question: "Can I oversell a product if two people buy at once?",
+        answer:
+          "No. Stock is decremented atomically at checkout, so two simultaneous orders for your last item can never both succeed.",
+      },
+      {
+        question: "How do I get paid for a booking or order?",
+        answer:
+          "Right now, a booking or order confirms immediately and you arrange payment directly with the customer. In-page payment collection is coming soon.",
+      },
+      {
+        question: "How do I add products to my Shop?",
+        answer:
+          "Add them one at a time from your dashboard, or upload many at once with a CSV file, with clear per-row errors if anything doesn't import.",
+      },
+      {
+        question: "Do you handle courier shipping for Shop orders?",
+        answer:
+          "Not yet, live courier rates and booking are coming soon. For now, you arrange delivery or collection directly with each customer.",
+      },
+    ],
+  },
+  {
     id: "getting-found",
     title: "Getting Found Online",
     items: [

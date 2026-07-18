@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MapPin, Receipt, Sprout, Network, Star, Globe, BarChart3, Radar, CalendarDays, Users } from "lucide-react";
+import { MapPin, Receipt, Sprout, Network, Star, Globe, BarChart3, Radar, CalendarDays, Users, ShoppingBag } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -565,6 +565,57 @@ export default async function PricingPage() {
                 highlighted={t.id === "growth_engine"}
               />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Do More With Your Page — introduces Booking and Shop (Growth tier
+          and above) right after the pricing cards, where a visitor
+          comparing tiers is already thinking about what's actually
+          included. Solid brand-colour cards (not the quieter outline style
+          below) since these are real product features worth a proper
+          moment, not a secondary "also check out" link. */}
+      <section className="bg-ink px-6 py-16">
+        <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-xl text-center">
+            <h2 className="font-display text-3xl uppercase tracking-wide text-white">Do More With Your Page</h2>
+            <p className="mt-3 text-gray-300">
+              Two extra tools built into Growth and above, no separate setup, no separate login.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2">
+            <div className="flex flex-col gap-3 rounded-2xl bg-white p-8">
+              <span className="grid size-11 place-items-center rounded-xl bg-brand/10 text-brand">
+                <CalendarDays className="size-5" aria-hidden />
+              </span>
+              <h3 className="font-display text-xl uppercase tracking-wide text-ink">Booking</h3>
+              <p className="text-sm leading-relaxed text-gray-600">
+                A real appointment, rental, or slot calendar built into your page. Visitors see live
+                availability and book directly, no double-bookings, no back-and-forth messaging.
+              </p>
+              <Link
+                href="/how-it-works#booking-shop"
+                className="mt-2 w-fit rounded-full border border-brand px-5 py-2 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white"
+              >
+                See How It Works
+              </Link>
+            </div>
+            <div className="flex flex-col gap-3 rounded-2xl bg-white p-8">
+              <span className="grid size-11 place-items-center rounded-xl bg-brand/10 text-brand">
+                <ShoppingBag className="size-5" aria-hidden />
+              </span>
+              <h3 className="font-display text-xl uppercase tracking-wide text-ink">Shop</h3>
+              <p className="text-sm leading-relaxed text-gray-600">
+                A product catalog and cart built into your page. Add products one at a time or upload
+                many at once, with real stock tracking so you never oversell.
+              </p>
+              <Link
+                href="/how-it-works#booking-shop"
+                className="mt-2 w-fit rounded-full border border-brand px-5 py-2 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white"
+              >
+                See How It Works
+              </Link>
+            </div>
           </div>
         </div>
       </section>

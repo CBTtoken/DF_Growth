@@ -183,6 +183,48 @@ export default function HowItWorksPage() {
         </div>
       </section>
 
+      {/* Not one of the numbered signup steps above (those are screenshot-
+          verified against the real product, these two features don't have
+          real screenshots supplied yet) — a plain-text introduction instead
+          of a fabricated "step" that overclaims what's been visually
+          confirmed. */}
+      <section id="booking-shop" className="scroll-mt-20 border-t border-gray-100 bg-gray-50 px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="text-center">
+            <span className="font-badge text-xs uppercase tracking-widest text-brand">Once You&apos;re In</span>
+            <h2 className="mt-2 font-display text-2xl uppercase tracking-wide text-ink sm:text-3xl">
+              Take Bookings Or Sell Products, Right From Your Page
+            </h2>
+            <p className="mx-auto mt-3 max-w-xl text-base text-gray-600">
+              Two extra tools available to Growth members from your dashboard, no separate setup, no
+              separate login.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-2xl border border-gray-200 bg-white p-6">
+              <h3 className="font-display text-lg uppercase tracking-wide text-ink">Booking</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                A real appointment, rental, or slot calendar built into your page. Visitors see live
+                availability and book directly, no double-bookings, no back-and-forth messaging.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-gray-200 bg-white p-6">
+              <h3 className="font-display text-lg uppercase tracking-wide text-ink">Shop</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+                A product catalog and cart built into your page. Add products one at a time or upload
+                many at once, with real stock tracking so you never oversell.
+              </p>
+            </div>
+          </div>
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Switch either one on any time from your dashboard.{" "}
+            <Link href="/faq#booking-shop" className="font-semibold text-brand underline-offset-2 hover:underline">
+              See the full FAQ →
+            </Link>
+          </p>
+        </div>
+      </section>
+
       <section className="bg-brand px-6 py-16 text-center">
         <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
           <h2 className="font-display text-3xl uppercase tracking-wide text-white sm:text-4xl">
