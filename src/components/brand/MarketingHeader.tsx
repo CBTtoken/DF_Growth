@@ -59,6 +59,12 @@ export function MarketingHeader() {
               repeated for Events as a fourth). Hiding content every time a
               new section gets added doesn't scale — a proper menu does. */}
           <Link
+            href="/how-it-works"
+            className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
+          >
+            How It Works
+          </Link>
+          <Link
             href="/marketplace"
             className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
           >

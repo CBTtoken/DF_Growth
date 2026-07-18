@@ -44,6 +44,9 @@ export function MobileNavMenu() {
               menu. */}
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} aria-hidden />
           <div className="absolute right-0 top-full z-20 mt-2 flex w-48 flex-col gap-0.5 rounded-2xl border border-gray-100 bg-white p-2 shadow-lg">
+            <Link href="/how-it-works" onClick={() => setOpen(false)} className={menuLinkClass}>
+              How It Works
+            </Link>
             <Link href="/marketplace" onClick={() => setOpen(false)} className={menuLinkClass}>
               Marketplace
             </Link>
