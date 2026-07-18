@@ -44,7 +44,7 @@ export default async function DashboardPreviewPage({
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, slug, booking_enabled"
+      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, slug, booking_enabled, shop_enabled"
     )
     .eq("id", client.id)
     .single();
@@ -60,7 +60,7 @@ export default async function DashboardPreviewPage({
     );
   }
 
-  const [{ data: landingPage }, { data: testimonials }, { data: photos }, { data: bookableUnits }, { data: bookingRules }] =
+  const [{ data: landingPage }, { data: testimonials }, { data: photos }, { data: bookableUnits }, { data: bookingRules }, { data: shopProducts }] =
     await Promise.all([
       // No .eq("published", true) here, unlike the real public page — a
       // client mid-onboarding, or one who's editing a draft, still gets a
@@ -87,6 +87,12 @@ export default async function DashboardPreviewPage({
         .select("operating_hours, buffer_minutes")
         .eq("growth_client_id", client.id)
         .maybeSingle(),
+      admin
+        .from("shop_products")
+        .select("id, title, description, base_price_cents, sale_count")
+        .eq("growth_client_id", client.id)
+        .eq("status", "active")
+        .order("position", { ascending: true }),
     ]);
 
   if (!landingPage) {
@@ -111,6 +117,7 @@ export default async function DashboardPreviewPage({
       photos={photos ?? []}
       bookableUnits={bookableUnits ?? []}
       bookingRules={bookingRules ?? null}
+      shopProducts={shopProducts ?? []}
       clientSlug={growthClient.slug}
       mode="preview"
       templateOverride={templateOverride}

@@ -125,7 +125,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, booking_enabled"
+      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, booking_enabled, shop_enabled"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -146,7 +146,7 @@ export default async function ClientLandingPage({
   // export below (confirmed live: Cache-Control was no-store/must-
   // revalidate and X-Vercel-Cache was MISS on every request, not
   // intermittently — this page was never actually eligible for caching).
-  const [{ data: landingPage }, { data: testimonials }, { data: photos }, { data: bookableUnits }, { data: bookingRules }] =
+  const [{ data: landingPage }, { data: testimonials }, { data: photos }, { data: bookableUnits }, { data: bookingRules }, { data: shopProducts }] =
     await Promise.all([
       admin
         .from("landing_pages")
@@ -178,6 +178,12 @@ export default async function ClientLandingPage({
         .select("operating_hours, buffer_minutes")
         .eq("growth_client_id", client.id)
         .maybeSingle(),
+      admin
+        .from("shop_products")
+        .select("id, title, description, base_price_cents, sale_count")
+        .eq("growth_client_id", client.id)
+        .eq("status", "active")
+        .order("position", { ascending: true }),
     ]);
 
   if (!landingPage) return notFound();
@@ -225,6 +231,7 @@ export default async function ClientLandingPage({
         photos={photos ?? []}
         bookableUnits={bookableUnits ?? []}
         bookingRules={bookingRules ?? null}
+        shopProducts={shopProducts ?? []}
         clientSlug={clientSlug}
         mode="live"
       />

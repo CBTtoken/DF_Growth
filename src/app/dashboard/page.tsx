@@ -23,6 +23,7 @@ import { OrdersSection } from "@/components/dashboard/OrdersSection";
 import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
 import { ReviewsManagement, type DashboardReview } from "@/components/dashboard/ReviewsManagement";
 import { BookingSection } from "@/components/dashboard/BookingSection";
+import { ShopSection } from "@/components/dashboard/ShopSection";
 import { SiteFooter } from "@/components/SiteFooter";
 import { logOut } from "@/app/dashboard/actions";
 
@@ -75,11 +76,14 @@ export default async function DashboardPage() {
     { data: bookableUnits },
     { data: bookingRules },
     { data: reservations },
+    { data: shopProducts },
+    { data: shopCoupons },
+    { data: shopOrders },
   ] = await Promise.all([
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address"
       )
       .eq("id", client.id)
       .single(),
@@ -169,7 +173,32 @@ export default async function DashboardPage() {
       .in("status", ["held", "confirmed"])
       .gte("starts_at", new Date().toISOString())
       .order("starts_at", { ascending: true }),
+    // Sec 3: "one variant per product" (Sprint 3 simplification, see
+    // shop-actions.ts) means the variant's stock_quantity is always this
+    // product's own real stock — flattened onto the product below rather
+    // than surfacing the join shape to the dashboard component.
+    admin
+      .from("shop_products")
+      .select("id, title, sku, description, base_price_cents, weight_kg, length_cm, width_cm, height_cm, status, shop_product_variants(stock_quantity)")
+      .eq("growth_client_id", client.id)
+      .order("position", { ascending: true }),
+    admin
+      .from("shop_coupons")
+      .select("id, code, discount_type, discount_value, max_uses, uses_count")
+      .eq("growth_client_id", client.id)
+      .order("created_at", { ascending: false }),
+    admin
+      .from("shop_orders")
+      .select("id, line_items, total_cents, customer_name, customer_email, payment_status, fulfilment_status, created_at")
+      .eq("growth_client_id", client.id)
+      .order("created_at", { ascending: false })
+      .limit(50),
   ]);
+
+  const shopProductsFlat = (shopProducts ?? []).map((p) => {
+    const variants = p.shop_product_variants as unknown as { stock_quantity: number }[] | null;
+    return { ...p, stock_quantity: variants?.[0]?.stock_quantity ?? 0 };
+  });
 
   // Separate from the admin-client Promise.all above — this one needs the
   // current session's own auth.getUser(), not just client.id, to look up
@@ -323,6 +352,16 @@ export default async function DashboardPage() {
             units={bookableUnits ?? []}
             rules={bookingRules ?? null}
             reservations={reservations ?? []}
+          />
+        )}
+
+        {showMetaSection && (
+          <ShopSection
+            shopEnabled={growthClient?.shop_enabled ?? false}
+            products={shopProductsFlat}
+            coupons={shopCoupons ?? []}
+            orders={shopOrders ?? []}
+            collectionAddress={(growthClient?.shop_collection_address as { line1: string; city: string; postalCode: string } | null) ?? null}
           />
         )}
 

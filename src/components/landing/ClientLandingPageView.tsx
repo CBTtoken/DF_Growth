@@ -17,6 +17,7 @@ import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { EarlyContactCta } from "@/components/landing/EarlyContactCta";
 import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import { BookingSection, type PublicBookableUnit } from "@/components/landing/BookingSection";
+import { ShopSection, type PublicShopProduct } from "@/components/landing/ShopSection";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
 import { SplitHero } from "@/components/landing/heroes/SplitHero";
@@ -53,6 +54,7 @@ type ClientData = {
   // Optional: marketplace/sample preview call sites don't fetch this, and a
   // client without Booking switched on simply never has it true.
   booking_enabled?: boolean;
+  shop_enabled?: boolean;
 };
 
 type LandingPageData = {
@@ -80,6 +82,7 @@ export async function ClientLandingPageView({
   photos,
   bookableUnits = [],
   bookingRules = null,
+  shopProducts = [],
   clientSlug,
   mode,
   templateOverride,
@@ -90,6 +93,7 @@ export async function ClientLandingPageView({
   photos: Photo[];
   bookableUnits?: PublicBookableUnit[];
   bookingRules?: { operating_hours: Record<string, { open: string; close: string }[]>; buffer_minutes: number } | null;
+  shopProducts?: PublicShopProduct[];
   clientSlug: string;
   mode: "live" | "preview";
   // Sec 6 / Sec 9: lets the template picker preview "what would my own page
@@ -172,6 +176,18 @@ export async function ClientLandingPageView({
         units={bookableUnits}
         operatingHours={bookingRules?.operating_hours ?? {}}
         bufferMinutes={bookingRules?.buffer_minutes ?? 0}
+      />
+    </ScrollReveal>
+  );
+
+  const shopSection = client.shop_enabled && shopProducts.length > 0 && (
+    <ScrollReveal>
+      <ShopSection
+        growthClientId={client.id}
+        ownerEmail={client.contact_email}
+        businessName={client.business_name}
+        primaryColor={primaryColor}
+        products={shopProducts}
       />
     </ScrollReveal>
   );
@@ -290,6 +306,7 @@ export async function ClientLandingPageView({
           <ReviewsSection businessId={client.id} accentColor={accentColor} eyebrowNumber={reviewsNumber} />
         </ScrollReveal>
         {bookingSection}
+        {shopSection}
         <ScrollReveal>
           <LeadForm
             growthClientId={client.id}
@@ -413,6 +430,7 @@ export async function ClientLandingPageView({
       ))}
 
       {bookingSection}
+      {shopSection}
       <ScrollReveal>
         <LeadForm
           growthClientId={client.id}
