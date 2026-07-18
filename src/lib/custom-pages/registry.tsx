@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { Standing365Page } from "@/components/custom-pages/standing365/Standing365Page";
 import { RebizNomadsPage } from "@/components/custom-pages/rebiz-nomads/RebizNomadsPage";
 import { BuffelskopPage } from "@/components/custom-pages/buffelskop/BuffelskopPage";
+import type { PublicBookableUnit } from "@/components/landing/BookingSection";
 
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2 and 4: a hand-coded page
 // is looked up here by landing_pages.custom_page_key, the same shape as
@@ -24,6 +25,18 @@ export type CustomPageProps = {
   // threaded through to CustomPage until a custom page actually needed them.
   callPhone: string | null;
   whatsappPhone: string | null;
+  // Dewald's ask, 2026-07-18: a custom page never received Booking data at
+  // all — it renders through this registry, not ClientLandingPageView.tsx,
+  // which is the only place BookingSection was ever wired in before now.
+  // Same "already fetched by the shared query in page.tsx, just not
+  // threaded through" story as callPhone/whatsappPhone above. Every custom
+  // page receives these; only ones that actually want to show booking
+  // (Standing 365 today) render BookingSection with them — the others are
+  // free to ignore the props, and BookingSection itself no-ops on zero units
+  // regardless.
+  bookingEnabled: boolean;
+  bookableUnits: PublicBookableUnit[];
+  bookingRules: { operating_hours: Record<string, { open: string; close: string }[]>; buffer_minutes: number } | null;
 };
 
 export const customPages: Record<string, ComponentType<CustomPageProps>> = {

@@ -2,6 +2,7 @@ import { Source_Serif_4 } from "next/font/google";
 import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 import { FbclidCapture } from "@/components/landing/FbclidCapture";
 import { OwnerBarGate } from "@/components/landing/OwnerBarGate";
+import { BookingSection } from "@/components/landing/BookingSection";
 import { Hero } from "@/components/custom-pages/standing365/Hero";
 import { About } from "@/components/custom-pages/standing365/About";
 import { TwelveMonths } from "@/components/custom-pages/standing365/TwelveMonths";
@@ -10,6 +11,12 @@ import { Closing } from "@/components/custom-pages/standing365/Closing";
 import { BookSchema } from "@/components/custom-pages/standing365/BookSchema";
 import { OrderReturnBanner } from "@/components/custom-pages/standing365/OrderReturnBanner";
 import type { CustomPageProps } from "@/lib/custom-pages/registry";
+
+// Standing 365's own fixed brand tokens (see the comment block below) —
+// reused here rather than the client's brand_primary_color, which isn't
+// even set for this page (custom pages don't use the generic per-client
+// colour system, each has its own hand-picked identity).
+const GOLD = "#B8832A";
 
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 4: full custom code, hand
 // built sections, freeform editorial layout — deliberately not composed
@@ -37,7 +44,15 @@ const sourceSerif = Source_Serif_4({
   variable: "--font-s365-serif",
 });
 
-export function Standing365Page({ clientId, metaPixelId }: CustomPageProps) {
+export function Standing365Page({
+  clientId,
+  businessName,
+  metaPixelId,
+  contactEmail,
+  bookingEnabled,
+  bookableUnits,
+  bookingRules,
+}: CustomPageProps) {
   const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/standing365`;
 
   return (
@@ -58,6 +73,22 @@ export function Standing365Page({ clientId, metaPixelId }: CustomPageProps) {
       <About />
       <TwelveMonths />
       <OwnACopy clientId={clientId} />
+      {/* Dewald's ask, 2026-07-18: Booking never rendered on any custom
+          page before this — it's only ever wired into the standard
+          template tree (ClientLandingPageView.tsx). Same no-op-until-
+          switched-on gate that component uses, so this is silent and
+          costs nothing until a real bookable unit exists. */}
+      {bookingEnabled && bookableUnits.length > 0 && (
+        <BookingSection
+          growthClientId={clientId}
+          ownerEmail={contactEmail}
+          businessName={businessName}
+          primaryColor={GOLD}
+          units={bookableUnits}
+          operatingHours={bookingRules?.operating_hours ?? {}}
+          bufferMinutes={bookingRules?.buffer_minutes ?? 0}
+        />
+      )}
       <Closing />
       <PixelConsentGate pixelId={metaPixelId} />
     </main>

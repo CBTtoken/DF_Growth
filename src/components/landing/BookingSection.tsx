@@ -17,6 +17,18 @@ export type PublicBookableUnit = {
 type OperatingHours = Record<string, { open: string; close: string }[]>;
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
+// Dewald's ask, 2026-07-18: "Book Now" / "Confirm Booking" read fine for an
+// appointment slot but not for a multi-night rental or a capacity-limited
+// event — copy now follows whichever unit is actually selected, since a
+// single client can mix unit types (e.g. a venue with both a bookable room
+// and a ticketed event) and the picker above already lets a visitor switch
+// between them live.
+const BOOKING_COPY: Record<PublicBookableUnit["unit_type"], { heading: string; cta: string; pendingCta: string }> = {
+  time_slot: { heading: "Book Now", cta: "Confirm Booking", pendingCta: "Booking…" },
+  day_night: { heading: "Check Availability", cta: "Reserve Your Stay", pendingCta: "Reserving…" },
+  capacity: { heading: "Reserve Your Spot", cta: "Reserve Now", pendingCta: "Reserving…" },
+};
+
 // Every business on this platform is South African (booking_operational_
 // rules.timezone is always Africa/Johannesburg, no DST) — operating_hours
 // and the picked date/time are always SAST wall-clock values, regardless of
@@ -133,6 +145,8 @@ export function BookingSection({
   if (units.length === 0) return null;
   if (!selectedUnit) return null;
 
+  const copy = BOOKING_COPY[selectedUnit.unit_type];
+
   const timeSlotStartsAt = selectedUnit.unit_type === "time_slot" && date && time ? sastToIso(date, time) : null;
   const timeSlotEndsAt =
     timeSlotStartsAt != null
@@ -164,7 +178,7 @@ export function BookingSection({
   return (
     <section id="booking" className="bg-white px-4 py-16 sm:px-8 sm:py-24">
       <div className="mx-auto max-w-xl">
-        <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Book Now</h2>
+        <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{copy.heading}</h2>
 
         {state?.success ? (
           <div className="mt-8 flex flex-col items-center gap-2 rounded-3xl bg-gray-50 p-8 text-center shadow-sm">
@@ -367,7 +381,7 @@ export function BookingSection({
                 className="mt-2 inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold shadow-lg transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                 style={{ backgroundColor: primaryColor, color: buttonTextColor }}
               >
-                {pending ? "Booking..." : "Confirm Booking"}
+                {pending ? copy.pendingCta : copy.cta}
               </button>
             </form>
           </div>

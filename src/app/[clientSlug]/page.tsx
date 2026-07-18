@@ -239,6 +239,9 @@ export default async function ClientLandingPage({
           contactEmail={client.contact_email}
           callPhone={client.call_phone}
           whatsappPhone={client.whatsapp_phone}
+          bookingEnabled={client.booking_enabled}
+          bookableUnits={bookableUnits}
+          bookingRules={bookingRules}
         />
       </>
     );
