@@ -190,6 +190,8 @@ export default async function ClientLandingPage({
           metaPixelId={client.meta_pixel_id}
           landingPageId={landingPage.id}
           contactEmail={client.contact_email}
+          callPhone={client.call_phone}
+          whatsappPhone={client.whatsapp_phone}
         />
       </>
     );
