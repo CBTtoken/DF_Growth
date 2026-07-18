@@ -24,6 +24,7 @@ import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
 import { ReviewsManagement, type DashboardReview } from "@/components/dashboard/ReviewsManagement";
 import { BookingSection } from "@/components/dashboard/BookingSection";
 import { ShopSection } from "@/components/dashboard/ShopSection";
+import { BookingShopUpsell } from "@/components/dashboard/BookingShopUpsell";
 import { DashboardTabs, type DashboardTab } from "@/components/dashboard/DashboardTabs";
 import { SiteFooter } from "@/components/SiteFooter";
 import { logOut } from "@/app/dashboard/actions";
@@ -49,6 +50,13 @@ export default async function DashboardPage() {
       </main>
     );
   }
+
+  // TS can't narrow `client.id` to `string` from `if (client.error)` above —
+  // `error` is a plain `string` in the error branch, and an empty string is
+  // falsy, so TS can't rule out that branch here even though
+  // requireGrowthClientId() never actually returns one. Asserted, not
+  // re-checked, since there's nothing to recover into if it somehow did.
+  const growthClientId = client.id!;
 
   const admin = createAdminClient();
   // Consolidated Sprint Sec 3.4: last 7 days' raw timestamps, bucketed by
@@ -510,33 +518,44 @@ export default async function DashboardPage() {
     },
   ];
 
-  // docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md Sec 1: Growth tier and above
-  // only, same gate showMetaSection already used inline — inserted as its
-  // own tab (not folded into "Your Page") since these are real, separate
-  // products a client switches on independently.
-  if (showMetaSection) {
-    dashboardTabs.splice(2, 0, {
-      id: "booking-shop",
-      label: "Booking & Shop",
-      content: (
-        <>
-          <BookingSection
-            bookingEnabled={growthClient?.booking_enabled ?? false}
-            units={bookableUnits ?? []}
-            rules={bookingRules ?? null}
-            reservations={reservations ?? []}
-          />
-          <ShopSection
-            shopEnabled={growthClient?.shop_enabled ?? false}
-            products={shopProductsFlat}
-            coupons={shopCoupons ?? []}
-            orders={shopOrders ?? []}
-            collectionAddress={(growthClient?.shop_collection_address as { line1: string; city: string; postalCode: string } | null) ?? null}
-          />
-        </>
-      ),
-    });
-  }
+  // docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md Sec 1: Growth tier and above.
+  // Dewald's ask, 2026-07-18: Foundation clients should still see this tab
+  // exists (not hidden entirely) but land on a locked upsell rather than the
+  // real BookingSection/ShopSection UI — same "see it, then upgrade" pattern
+  // as PlatformFeatures.tsx. Inserted as its own tab (not folded into "Your
+  // Page") since these are real, separate products a client switches on
+  // independently.
+  dashboardTabs.splice(
+    2,
+    0,
+    showMetaSection
+      ? {
+          id: "booking-shop",
+          label: "Booking & Shop",
+          content: (
+            <>
+              <BookingSection
+                bookingEnabled={growthClient?.booking_enabled ?? false}
+                units={bookableUnits ?? []}
+                rules={bookingRules ?? null}
+                reservations={reservations ?? []}
+              />
+              <ShopSection
+                shopEnabled={growthClient?.shop_enabled ?? false}
+                products={shopProductsFlat}
+                coupons={shopCoupons ?? []}
+                orders={shopOrders ?? []}
+                collectionAddress={(growthClient?.shop_collection_address as { line1: string; city: string; postalCode: string } | null) ?? null}
+              />
+            </>
+          ),
+        }
+      : {
+          id: "booking-shop",
+          label: "Booking & Shop",
+          content: <BookingShopUpsell growthClientId={growthClientId} />,
+        }
+  );
 
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">

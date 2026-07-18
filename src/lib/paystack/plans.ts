@@ -49,6 +49,12 @@ export const TIERS: {
       "Marketing Assets",
       "Monthly Optimisation",
       "Growth Reporting",
+      // Dewald's ask, 2026-07-18: Booking & Shop are real Growth-and-above
+      // features (docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md) but weren't
+      // named on the card itself, only in a separate section below the
+      // pricing cards — a prospect comparing tiers side by side never saw
+      // this as something Growth specifically unlocks over Foundation.
+      "Booking & Shop Tools",
       // Combined spec Sec 16: this card's own feature list didn't repeat
       // what "Everything in Foundation" already includes, so a prospect
       // comparing tiers side by side never saw these three on the Growth
