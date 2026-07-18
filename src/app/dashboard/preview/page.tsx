@@ -44,7 +44,7 @@ export default async function DashboardPreviewPage({
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, slug"
+      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, slug, booking_enabled"
     )
     .eq("id", client.id)
     .single();
@@ -60,22 +60,34 @@ export default async function DashboardPreviewPage({
     );
   }
 
-  const [{ data: landingPage }, { data: testimonials }, { data: photos }] = await Promise.all([
-    // No .eq("published", true) here, unlike the real public page — a
-    // client mid-onboarding, or one who's editing a draft, still gets a
-    // preview of what they've saved so far.
-    admin
-      .from("landing_pages")
-      .select("id, headline, subheadline, about_text, services_text, cta_label")
-      .eq("growth_client_id", client.id)
-      .maybeSingle(),
-    admin.from("testimonials").select("id, author_name, quote, rating").eq("growth_client_id", client.id).limit(5),
-    admin
-      .from("client_photos")
-      .select("id, storage_path")
-      .eq("growth_client_id", client.id)
-      .order("position", { ascending: true }),
-  ]);
+  const [{ data: landingPage }, { data: testimonials }, { data: photos }, { data: bookableUnits }, { data: bookingRules }] =
+    await Promise.all([
+      // No .eq("published", true) here, unlike the real public page — a
+      // client mid-onboarding, or one who's editing a draft, still gets a
+      // preview of what they've saved so far.
+      admin
+        .from("landing_pages")
+        .select("id, headline, subheadline, about_text, services_text, cta_label")
+        .eq("growth_client_id", client.id)
+        .maybeSingle(),
+      admin.from("testimonials").select("id, author_name, quote, rating").eq("growth_client_id", client.id).limit(5),
+      admin
+        .from("client_photos")
+        .select("id, storage_path")
+        .eq("growth_client_id", client.id)
+        .order("position", { ascending: true }),
+      admin
+        .from("bookable_units")
+        .select("id, name, unit_type, description, base_price_cents, capacity, duration_minutes")
+        .eq("growth_client_id", client.id)
+        .eq("is_active", true)
+        .order("position", { ascending: true }),
+      admin
+        .from("booking_operational_rules")
+        .select("operating_hours, buffer_minutes")
+        .eq("growth_client_id", client.id)
+        .maybeSingle(),
+    ]);
 
   if (!landingPage) {
     return (
@@ -97,6 +109,8 @@ export default async function DashboardPreviewPage({
       landingPage={landingPage}
       testimonials={testimonials ?? []}
       photos={photos ?? []}
+      bookableUnits={bookableUnits ?? []}
+      bookingRules={bookingRules ?? null}
       clientSlug={growthClient.slug}
       mode="preview"
       templateOverride={templateOverride}

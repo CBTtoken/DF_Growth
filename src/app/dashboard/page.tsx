@@ -22,6 +22,7 @@ import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileComplet
 import { OrdersSection } from "@/components/dashboard/OrdersSection";
 import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
 import { ReviewsManagement, type DashboardReview } from "@/components/dashboard/ReviewsManagement";
+import { BookingSection } from "@/components/dashboard/BookingSection";
 import { SiteFooter } from "@/components/SiteFooter";
 import { logOut } from "@/app/dashboard/actions";
 
@@ -71,11 +72,14 @@ export default async function DashboardPage() {
     { count: totalPageViews },
     { data: recentPageViews },
     { data: reviews },
+    { data: bookableUnits },
+    { data: bookingRules },
+    { data: reservations },
   ] = await Promise.all([
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled"
       )
       .eq("id", client.id)
       .single(),
@@ -146,6 +150,25 @@ export default async function DashboardPage() {
       .eq("business_id", client.id)
       .neq("status", "removed")
       .order("created_at", { ascending: false }),
+    admin
+      .from("bookable_units")
+      .select("id, name, unit_type, description, base_price_cents, capacity, duration_minutes, is_active")
+      .eq("growth_client_id", client.id)
+      .order("position", { ascending: true }),
+    admin
+      .from("booking_operational_rules")
+      .select("operating_hours, buffer_minutes, min_advance_hours, cancellation_policy_text, reminder_offsets_hours")
+      .eq("growth_client_id", client.id)
+      .maybeSingle(),
+    // Upcoming only — a past reservation isn't actionable from here, and
+    // cancelled/expired ones are just noise once they've already resolved.
+    admin
+      .from("reservations")
+      .select("id, bookable_unit_id, status, starts_at, ends_at, quantity, customer_name, customer_phone, price_cents, payment_status")
+      .eq("growth_client_id", client.id)
+      .in("status", ["held", "confirmed"])
+      .gte("starts_at", new Date().toISOString())
+      .order("starts_at", { ascending: true }),
   ]);
 
   // Separate from the admin-client Promise.all above — this one needs the
@@ -291,6 +314,17 @@ export default async function DashboardPage() {
         )}
         <PlatformFeatures plan={growthClient?.plan ?? null} />
         {agentDashboardData && <AgentSection data={agentDashboardData} />}
+
+        {/* docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md Sec 1: Growth tier and
+            above only, same gate as showMetaSection. */}
+        {showMetaSection && (
+          <BookingSection
+            bookingEnabled={growthClient?.booking_enabled ?? false}
+            units={bookableUnits ?? []}
+            rules={bookingRules ?? null}
+            reservations={reservations ?? []}
+          />
+        )}
 
         <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Testimonials</h2>

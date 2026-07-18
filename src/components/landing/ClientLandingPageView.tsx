@@ -16,6 +16,7 @@ import { StorySection } from "@/components/landing/StorySection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { EarlyContactCta } from "@/components/landing/EarlyContactCta";
 import { ReviewsSection } from "@/components/reviews/ReviewsSection";
+import { BookingSection, type PublicBookableUnit } from "@/components/landing/BookingSection";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
 import { SplitHero } from "@/components/landing/heroes/SplitHero";
@@ -49,6 +50,9 @@ type ClientData = {
   city: string | null;
   meta_pixel_id: string | null;
   hero_photo_id: string | null;
+  // Optional: marketplace/sample preview call sites don't fetch this, and a
+  // client without Booking switched on simply never has it true.
+  booking_enabled?: boolean;
 };
 
 type LandingPageData = {
@@ -74,6 +78,8 @@ export async function ClientLandingPageView({
   landingPage,
   testimonials,
   photos,
+  bookableUnits = [],
+  bookingRules = null,
   clientSlug,
   mode,
   templateOverride,
@@ -82,6 +88,8 @@ export async function ClientLandingPageView({
   landingPage: LandingPageData;
   testimonials: Testimonial[];
   photos: Photo[];
+  bookableUnits?: PublicBookableUnit[];
+  bookingRules?: { operating_hours: Record<string, { open: string; close: string }[]>; buffer_minutes: number } | null;
   clientSlug: string;
   mode: "live" | "preview";
   // Sec 6 / Sec 9: lets the template picker preview "what would my own page
@@ -146,6 +154,26 @@ export async function ClientLandingPageView({
       <FbclidCapture />
       <PixelConsentGate pixelId={client.meta_pixel_id} />
     </>
+  );
+
+  // docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md Sec 3.5: rendered
+  // unconditionally, like EarlyContactCta/ReviewsSection, rather than as a
+  // per-template SectionKey — every client with Booking switched on should
+  // see it regardless of which of the 10 templates they picked, and
+  // BookingSection itself already returns null when there are no active
+  // bookable units, so this is safe to place unconditionally too.
+  const bookingSection = client.booking_enabled && bookableUnits.length > 0 && (
+    <ScrollReveal>
+      <BookingSection
+        growthClientId={client.id}
+        ownerEmail={client.contact_email}
+        businessName={client.business_name}
+        primaryColor={primaryColor}
+        units={bookableUnits}
+        operatingHours={bookingRules?.operating_hours ?? {}}
+        bufferMinutes={bookingRules?.buffer_minutes ?? 0}
+      />
+    </ScrollReveal>
   );
 
   const previewBanner = mode === "preview" && (
@@ -261,6 +289,7 @@ export async function ClientLandingPageView({
         <ScrollReveal>
           <ReviewsSection businessId={client.id} accentColor={accentColor} eyebrowNumber={reviewsNumber} />
         </ScrollReveal>
+        {bookingSection}
         <ScrollReveal>
           <LeadForm
             growthClientId={client.id}
@@ -383,6 +412,7 @@ export async function ClientLandingPageView({
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>
       ))}
 
+      {bookingSection}
       <ScrollReveal>
         <LeadForm
           growthClientId={client.id}
