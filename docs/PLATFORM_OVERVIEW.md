@@ -1,7 +1,9 @@
 # DigitalFlyer Growth
 ## Functional Specification & Test Map
 
-Updated 2026-07-17. Supersedes the 2026-07-15 version — adds four full feature areas built and verified live since: Legacy Reactivation (a real outreach campaign, not just a build), Rate & Review, List Your Event, and a dedicated SEO/search infrastructure pass. Also corrects two stale claims from that version (page-view tracking is live, not "not built"; the root domain now redirects to the `growth` subdomain, not just the subdomain alone). Production is `https://growth.digitalflyersa.co.za`, with `https://digitalflyersa.co.za` and `https://www.digitalflyersa.co.za` both live and redirecting to it.
+Updated 2026-07-18. Supersedes the 2026-07-17 version — adds the first three sprints of the new Booking & Shop modules (Section 25): real-time appointment/rental booking and a product catalog + cart, both live on Growth-and-above pages today with core functionality working (double-booking prevention, atomic stock control), though payment collection is still a manual arrangement between business and customer until Sprint 4 (Paystack Subaccounts) ships. Also reflects two other changes this cycle: the client dashboard (Section 9) is now organized into navigable tabs instead of one long scrolling page, and the Founding Business / "Day One Business" annual-plan offer has been discontinued and removed from every user-facing surface (it's no longer running, not merely hidden).
+
+Prior update, 2026-07-17: adds four full feature areas built and verified live since 2026-07-15 — Legacy Reactivation (a real outreach campaign, not just a build), Rate & Review, List Your Event, and a dedicated SEO/search infrastructure pass. Also corrects two stale claims from that version (page-view tracking is live, not "not built"; the root domain now redirects to the `growth` subdomain, not just the subdomain alone). Production is `https://growth.digitalflyersa.co.za`, with `https://digitalflyersa.co.za` and `https://www.digitalflyersa.co.za` both live and redirecting to it.
 
 A reference for walking through the complete built product — organized by *who's doing what* (prospect, applicant, live client, admin, reviewer, event organiser), not by build order.
 
@@ -18,10 +20,10 @@ DigitalFlyer Growth is a growth-as-a-service platform for South African small bu
 | Tier | Price | What's included | Payment |
 |---|---|---|---|
 | **Foundation** | Free 7 days, then R100/month | Business page, Marketplace listing, lead page, business profile, 1 digital asset/month, RE:Biz Nomads, BizUp | No card at signup — trial starts when onboarding finishes, converts automatically after 7 days |
-| **Growth** | R180/month or R1,199/year | Everything in Foundation, plus campaign landing pages, performance tracking, marketing assets, monthly optimisation, growth reporting | Paystack, collected at the end of onboarding — **live mode, real transactions** |
+| **Growth** | R180/month or R1,199/year | Everything in Foundation, plus campaign landing pages, performance tracking, marketing assets, monthly optimisation, growth reporting, Booking & Shop (Section 25) | Paystack, collected at the end of onboarding — **live mode, real transactions** |
 | **Enterprise** | Coming soon | Full Meta + Google ad management | No live checkout yet |
 
-**Day One Business:** the first 10 signups on Growth's *annual* plan lock in that price for life, plus permanent Enterprise access once it launches (for as long as they stay on the annual plan — not a time-limited window). Monthly Growth and Foundation are never eligible. A live counter on `/pricing` shows slots remaining.
+**Founding Business / "Day One Business" offer has been discontinued.** It previously locked in the annual Growth price for life for the first 10 annual signups. Dewald made the call to end it now that the tier lineup and feature set are settled — removed from `/pricing`, the tier cards, the bottom CTA, and the WhatsApp onboarding copy. No live counter, no references anywhere a visitor can see.
 
 Rate & Review and List Your Event (Sections 14–15) sit outside this tier structure entirely — reviewer accounts and event-organiser accounts are free, standalone, and open to anyone, not comped Growth memberships.
 
@@ -99,6 +101,7 @@ What a visitor sees, varies by chosen template but always includes:
 - **Photo Gallery** — if 2+ photos exist
 - **Location** — address + embedded Google Map
 - **Reviews** (new, Section 14) — star rating and count, expandable full review list, "leave a review" CTA — folded into the same per-template dynamic section-numbering every other section uses
+- **Booking & Shop** (new, Section 25) — for Growth-and-above clients with either module switched on: a live availability calendar with a sticky checkout drawer, and/or a product grid with cart/checkout. Rendered unconditionally across every template (not template-curated content like Packages), gated purely on the client's own `booking_enabled`/`shop_enabled` flags.
 - **Lead Form** — name/email/phone; on success reveals the business's own contact details as a faster option; triggers an email to the business owner and a Meta CAPI "Lead" event
 - **Cookie consent banner** — equally-weighted Accept/Reject shown before the Meta Pixel fires; choice remembered 180 days
 - **Footer** — "Manage this page" link back to the owner's dashboard, Privacy Policy, Terms, "Secure payment via Paystack" trust badge (accurate site-wide since real subscription billing runs through Paystack)
@@ -123,23 +126,22 @@ Both prove the mechanism works for a real "member requests an additional custom 
 
 ## 9. The Client Dashboard (`/dashboard`)
 
+**Organized into navigable tabs, not one long scrolling page.** `DashboardTabs.tsx` is a lightweight client-side tab wrapper (local `useState`, no URL/hash routing) — every section below is the exact same component as before, just grouped into tabs instead of stacked sequentially. Built this cycle after the page had grown to ~15 sequential sections and become hard to navigate.
+
 - **Header** — View your page, Edit your page, Log out
 - **Account switcher** — only visible once a login owns 2+ `growth_client` accounts; see Section 6
-- **Profile completeness banner** — nudges toward missing description/address/photos
-- **Change template** — swap any time, live preview first
-- **Photo gallery** — upload or Pexels search, set hero photo
-- **Page-view analytics** — total views plus a 7-day daily breakdown, own dedicated card. (Corrects the 2026-07-15 version of this doc, which said this didn't exist yet — it's real and live.)
-- **Leads** — every form submission, name/email/phone/timestamp
-- **Reviews** (new, Section 14) — every review left on the member's page including flagged ones, reply publicly once (editable after), flag a review for admin review without being able to delete or edit it directly
-- **Orders** *(custom pages only, e.g. Standing 365, RE:Biz)* — buyer/delivery/personalisation detail, batch + fulfilment tracking
-- **Your Package** (account/plan) — current tier, features included, upgrade/cancel
-- **Platform Features** — shows what a higher tier unlocks, even if locked
-- **Testimonials** — add one, auto-generates a shareable social image
-- **Asset style** — pick the default visual style for generated social images
-- **Generate social assets** — pick a content type, pick a photo from the gallery, generates a downloadable branded image
-- **Meta ad tracking** *(Growth/Enterprise)* — paste Pixel/Ad Account IDs, encrypted token entry, recent CAPI delivery status
-- **Search & ad platform verification** — Google Search Console / Facebook domain verification meta tags
-- **Also available to you** — Marketplace, Events (list a free event with the same login, Section 15), and RE:Biz Nomads
+
+**Overview tab** — Profile completeness banner (nudges toward missing description/address/photos), Page-view analytics (total views plus a 7-day daily breakdown, own dedicated card).
+
+**Your Page tab** — Change template (swap any time, live preview first), Photo gallery (upload or Pexels search, set hero photo).
+
+**Booking & Shop tab** *(Growth-and-above, only shown once either module is switched on — Section 25)* — Booking setup (bookable units, operational rules, calendar view) and/or Shop inventory (product/coupon CRUD, single or CSV bulk upload), both surfaced here rather than as a 16th flat section.
+
+**Reviews & Testimonials tab** — Reviews (Section 14): every review left on the member's page including flagged ones, reply publicly once (editable after), flag a review for admin review without being able to delete or edit it directly. Testimonials: add one, auto-generates a shareable social image. Leads: every lead-form submission, name/email/phone/timestamp. Orders *(custom pages only, e.g. Standing 365, RE:Biz)*: buyer/delivery/personalisation detail, batch + fulfilment tracking.
+
+**Marketing tab** — Meta ad tracking *(Growth/Enterprise)*: paste Pixel/Ad Account IDs, encrypted token entry, recent CAPI delivery status. Search & ad platform verification: Google Search Console / Facebook domain verification meta tags. Asset style + Generate social assets: pick the default visual style, pick a content type and a gallery photo, generates a downloadable branded image.
+
+**Account tab** — Your Package (account/plan): current tier, features included, upgrade/cancel. Platform Features: shows what a higher tier unlocks, even if locked. Also available to you: Marketplace, Events (list a free event with the same login, Section 15), and RE:Biz Nomads.
 
 `/dashboard/edit` mirrors the core onboarding fields as standalone editable cards — every save is live immediately, no publish step.
 
@@ -331,6 +333,9 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 - One member = one routable page today — Standing 365 and RE:Biz Nomads prove the custom-page mechanism, not dual-page-per-member support.
 - **Recurring / multi-session events** — a single multi-day event works today; multiple distinct sessions across different days/times for one listing would need a real recurring-event model, not scoped.
 - **BizUp ecosystem spec alignment** — a cross-project documentation-correction pass was scoped in an earlier planning session (correcting BizUp's own build spec to match the real federated Phase 1 architecture) but never started.
+- **Booking & Shop payment collection is still manual** (Section 25) — a booking or order confirms immediately, but the business and customer arrange payment directly between themselves; in-page Paystack Subaccount checkout is Sprint 4, not yet built.
+- **Booking & Shop have no live courier shipping** (Section 25) — Shop orders are collection/self-arranged delivery only; real Bob Go rate quoting and waybill generation is Sprint 5, blocked on Dewald signing up for a real Bob Go account.
+- **Booking & Shop have no WhatsApp notifications yet** (Section 25) — booking reminders and CANCEL/RESCHEDULE-by-WhatsApp are Sprint 6, not yet built.
 
 ---
 
@@ -345,6 +350,7 @@ Re-ordered to reflect what's actually still open after this cycle's work.
 5. **Real "See It In Action" sample pages.** Swap the 3 honestly-labeled placeholder businesses on `/pricing` for real, permission-granted client pages.
 6. **Meta ad-asset spec compliance pass.** Verify generated social images actually meet Meta's real campaign size/format requirements.
 7. **Mobile performance root-cause.** The ~2.3s warm LCP on throttled mobile was parked without a root cause.
+8. **Booking & Shop, Sprints 4-7 (Section 25).** Paystack Subaccount payment integration, live Bob Go courier shipping (blocked on Dewald's own Bob Go account signup), WhatsApp notifications/reminders, and the full production-readiness checklist — the core booking/shop mechanics (double-booking prevention, atomic stock control) are already live; these sprints add real payment and shipping on top.
 
 ---
 
@@ -365,7 +371,7 @@ Grounded in real friction points and patterns actually observed while building t
 
 - [ ] Web signup, Foundation (no card, 7-day trial)
 - [ ] Web signup, Growth monthly — **real live payment**
-- [ ] Web signup, Growth annual (check Day One Business banner if slots remain)
+- [ ] Web signup, Growth annual
 - [ ] Full onboarding wizard, every step, including skipping every optional field, including city
 - [ ] Template switch, before and after publishing
 - [ ] WhatsApp signup, full conversation, real message
@@ -384,15 +390,36 @@ Grounded in real friction points and patterns actually observed while building t
 - [ ] Login: email+password, forgot-password reset, first-time set-password
 - [ ] **Rate & Review: leave a review as a new reviewer (real Turnstile solve, real OTP code), as a returning reviewer, as an already-logged-in business owner; business reply; business flag action; admin moderation queue keep/remove**
 - [ ] **List Your Event: submit an event as a new organiser, existing organiser, and already-logged-in business owner; browse/search/filter; individual event page with photos (confirm letterbox banner, not a crop); event with no photos (confirm text-only header)**
+- [ ] **Booking: book a slot on a client page, confirm it disappears from availability immediately, confirm two simultaneous attempts on the same slot can't both succeed; dashboard calendar/setup; SAST time display correct regardless of visitor's own timezone**
+- [ ] **Shop: add to cart, checkout, confirm stock decrements and can't go negative under a simulated concurrent purchase; CSV bulk upload with a deliberately malformed row (confirm per-row error, valid rows still import); coupon apply**
+- [ ] **Dashboard tabs: every tab loads its existing content correctly, Booking & Shop tab only appears once a module is enabled for that client**
 - [ ] Mobile pass on every screen above, including the header on narrow viewports
 
 ---
 
-## 25. Technical Foundation (brief, for context)
+## 25. Booking & Shop Modules
+
+Two optional, revenue-bearing capabilities for Growth-tier-and-above clients, scoped to a single client's own page (not a cross-client marketplace — that's a separate future product, Stoep Marketplace, untouched here). Full build spec: `docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md`.
+
+**Booking** — a real-time appointment/rental/capacity-slot calendar. A business owner defines bookable units (e.g. a chair, a room, a rental item) and operational rules (hours, price overrides) from the dashboard; visitors see live availability on the public page and place a hold directly, no back-and-forth messaging. Double-booking on a mutually-exclusive resource is blocked at the database level with a Postgres exclusion constraint (`btree_gist` on the reservation's time range) — a slot someone else just took can never be booked by a second person, verified live under a real concurrent-hold race test. Capacity-type units (allowed to overlap up to a set number of simultaneous bookings) are checked in application code instead, a deliberate, lower-severity exception. Hold expiry (10 minutes) is enforced actively at both the availability-read and hold-creation steps, not just by a cron sweep, so correctness never depends on cron timing landing on schedule.
+
+**Shop** — a product catalog and cart. Products are added one at a time or via CSV bulk upload (with per-row error reporting so one bad row doesn't block the rest), each with a single default variant for now — full size/colour variant-picker UI was a deliberate scope reduction, flagged rather than silently dropped. Stock is decremented atomically via a dedicated Postgres RPC function (`decrement_variant_stock`) rather than a read-then-write pair, so two simultaneous purchases of the last unit can never both succeed — this is the codebase's first-ever use of a real Postgres function, needed because supabase-js's plain `.update()` can't reference a column's own current value in its SET clause.
+
+**What's shipped (Sprints 1-3):** schema + RLS, the core booking flow (availability, holds, dashboard setup/calendar), and the core shop flow (CSV upload, product/coupon CRUD, cart/checkout, atomic stock). Both render on the public client page (Section 7) and have their own dashboard tab (Section 9), gated on the client's own `booking_enabled`/`shop_enabled` flags — Growth tier and above only.
+
+**What's not yet built (Sprints 4-7, see Backlog):**
+- **Payment** — a booking or order confirms immediately as `unpaid`; the business and customer arrange payment directly today. Real in-page Paystack Subaccount checkout (so funds route to the client's own bank account, not DigitalFlyer's) is Sprint 4.
+- **Live courier shipping** — Shop orders are collection/self-arranged delivery only. Real Bob Go rate quoting, order sync, and waybill generation is Sprint 5, blocked on Dewald signing up for a real Bob Go account to get API keys (no public pricing exists to plan against without one).
+- **WhatsApp notifications** — booking reminders and CANCEL/RESCHEDULE handled by WhatsApp reply are Sprint 6.
+- **Production readiness pass** — Sprint 7: liability/cancellation disclosures before payment collection begins, full test-mode walkthrough against a real Paystack Subaccount and Bob Go sandbox account before either module goes live to a real paying client.
+
+---
+
+## 26. Technical Foundation (brief, for context)
 
 - **Frontend/backend:** Next.js (App Router), deployed on Vercel
 - **Database/auth/storage:** Supabase (Postgres, email+password + magic-link + OTP auth, file storage for logos/photos/generated assets/event photos)
-- **Payments:** Paystack — **live mode** — subscriptions (self-serve cancel/upgrade) and one-time checkout (custom-page orders), both webhook-driven
+- **Payments:** Paystack — **live mode** — subscriptions (self-serve cancel/upgrade) and one-time checkout (custom-page orders), both webhook-driven. Booking/Shop payment collection is still manual pending Sprint 4 (Section 25).
 - **AI:** Anthropic Claude, drafts landing page copy during onboarding (web and WhatsApp)
 - **Ad tracking:** Meta Conversions API (server-side, encrypted token) plus a consent-gated client-side Meta Pixel
 - **Bot protection:** Cloudflare Turnstile (Rate & Review and, from Sprint 2, List Your Event)
@@ -400,3 +427,4 @@ Grounded in real friction points and patterns actually observed while building t
 - **Images:** Pexels API as an industry-matched stock photo fallback when a client hasn't uploaded their own
 - **Analytics:** Google Analytics (GA4), plus first-party page-view tracking in `page_views`
 - **Automation:** GitHub Actions for trial-expiry reminders, onboarding nudges, weekly automated database backup, and the Legacy Reactivation staged batch-send
+- **CSV parsing:** `papaparse`, client-side, for Shop's bulk product upload (Section 25)

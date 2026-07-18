@@ -1,6 +1,6 @@
 # DigitalFlyer Growth — Functional Spec & Roadmap Review
 
-**Updated 17 July 2026 (post-launch build)**
+**Updated 18 July 2026 (post-launch build)**
 
 A working summary for business review — what's live in production today, what's deliberately parked, and a ranked starting point for the next build cycle.
 
@@ -8,32 +8,33 @@ For the full detailed technical spec (every field, every step, every edge case),
 
 ---
 
-## ✅ Three full features shipped since the last review, all live and verified
+## ✅ New this week: Booking & Shop (core flow), a navigable dashboard, and the Founding Business offer retired
 
-Since the 15 July version of this doc: a real outreach campaign (Legacy Reactivation), a public Rate & Review system, and a genuinely free Events section (List Your Event) — plus a dedicated SEO push and a real domain fix (the root `digitalflyersa.co.za` and `www` now both correctly redirect to `growth.digitalflyersa.co.za`, not just the subdomain alone).
+The first three sprints of two new revenue-bearing modules are live for Growth-tier-and-above clients: **Booking** (a real appointment/rental calendar with database-enforced double-booking prevention) and **Shop** (a product catalog and cart with atomic stock control, no overselling). Payment for a booking or order is still arranged directly between business and customer for now — real in-page Paystack checkout and live courier shipping are the next two build sprints, not yet started. The client dashboard has also been reorganized into navigable tabs instead of one long scrolling page, and — per Dewald's own call — the Founding Business / "Day One Business" annual-signup offer has been discontinued and removed everywhere a visitor could see it.
 
 | | |
 |---|---|
 | **Status** | Live |
-| **Functional areas shipped** | 29 |
-| **Backlog candidates** | 6 |
+| **Functional areas shipped** | 30 |
+| **Backlog candidates** | 7 |
 | **Pricing** | Foundation R100/mo · Growth R180/mo or R1,199/yr |
 
 ---
 
-## What's 100% in place (27 areas)
+## What's 100% in place (28 areas)
 
 Everything below is built, deployed, and verified against the live production site.
 
 | Area | What's there |
 |---|---|
-| **Pricing & tiers** | Foundation (free trial), Growth (monthly/annual), Day One Business slots — Enterprise priced but not yet purchasable |
+| **Pricing & tiers** | Foundation (free trial), Growth (monthly/annual) — Enterprise priced but not yet purchasable. Founding Business / Day One offer has been discontinued and removed. |
 | **Web onboarding** | 7–9 step guided wizard, autosave/resume, AI-drafted landing copy, 10 real templates, optional city field |
 | **WhatsApp onboarding** | Full signup-to-payment conversation, resumable, same data model as web |
 | **Email + password login** | Real password auth, magic-link fallback, forgot/reset flow |
 | **Public client pages** | Hero, about, services, packages, testimonials, gallery, map, reviews, lead form, cookie-gated Meta Pixel |
 | **Custom pages (x2)** | Standing 365 (order flow, live payment, seller-side order dashboard) and RE:Biz Nomads |
-| **Client dashboard** | Template switching, photo/testimonial management, page-view analytics, social asset generator, leads, reviews management, orders, plan management |
+| **Client dashboard** | Reorganized into navigable tabs (Overview, Your Page, Booking & Shop, Reviews & Testimonials, Marketing, Account) instead of one long scrolling page — template switching, photo/testimonial management, page-view analytics, social asset generator, leads, reviews management, orders, plan management |
+| **Booking & Shop (core flow)** | Real-time appointment/rental booking with database-enforced double-booking prevention, and a product catalog + cart with atomic stock control (no overselling) — both live on Growth-and-above client pages. Payment is still arranged directly between business and customer for now; real in-page checkout and live courier shipping are the next two build sprints. |
 | **Multi-account switcher** | One login owning more than one member account can switch between them from the dashboard |
 | **Marketplace directory** | Redesigned text-forward cards (Google-Business-Profile style), search, industry filter, city filter, ratings badge on cards, "most visited" sort |
 | **Admin panel** | Full client list, CSV export, Meta-help queue, signup channel visibility, Reactivation Batch view, Flagged Reviews queue, Events Queue |
@@ -57,16 +58,17 @@ Everything below is built, deployed, and verified against the live production si
 
 ---
 
-## Backlog — next build candidates (6 items)
+## Backlog — next build candidates (7 items)
 
-Re-ordered now that List Your Event Sprint 2, Marketplace ratings/sort, and the real mobile nav menu are all live.
+Re-ordered now that List Your Event Sprint 2, Marketplace ratings/sort, the real mobile nav menu, and Booking/Shop's core flow are all live.
 
-1. **Uptime + error monitoring** — confirm UptimeRobot is actually active; add a lightweight error monitor (Sentry or similar). Still open.
-2. **BizUp ecosystem spec alignment** — correct BizUp's own build spec to match the real federated architecture and register it in the ecosystem's master doc. Pure documentation/schema work, already scoped, not started.
-3. **Main page + additional custom page architecture** — true dual-page-per-member support still needs real routing-layer design.
-4. **Enterprise live checkout** — pricing card exists as "Coming soon"; needs the real plan, checkout wiring, and feature scope defined.
-5. **Real client showcase** — swap the 3 placeholder "See It In Action" sample pages for real, permission-granted member pages.
-6. **Meta ad-asset compliance pass** — verify generated social images actually meet Meta's real campaign size/format requirements.
+1. **Booking & Shop, Sprints 4-7** — real in-page Paystack payment collection, live Bob Go courier shipping (blocked on Dewald signing up for a real Bob Go account), WhatsApp booking reminders and cancel/reschedule handling, and a final production-readiness pass before either module goes live to a real paying client.
+2. **Uptime + error monitoring** — confirm UptimeRobot is actually active; add a lightweight error monitor (Sentry or similar). Still open.
+3. **BizUp ecosystem spec alignment** — correct BizUp's own build spec to match the real federated architecture and register it in the ecosystem's master doc. Pure documentation/schema work, already scoped, not started.
+4. **Main page + additional custom page architecture** — true dual-page-per-member support still needs real routing-layer design.
+5. **Enterprise live checkout** — pricing card exists as "Coming soon"; needs the real plan, checkout wiring, and feature scope defined.
+6. **Real client showcase** — swap the 3 placeholder "See It In Action" sample pages for real, permission-granted member pages.
+7. **Meta ad-asset compliance pass** — verify generated social images actually meet Meta's real campaign size/format requirements.
 
 **Correction to an earlier version of this doc:** the `NEXT_PUBLIC_WHATSAPP_NUMBER` item logged here previously was a wrong root cause. RE:Biz Nomads never should have had a WhatsApp CTA at all (membership is bundled with a paid plan, not a WhatsApp inquiry) and has been fixed to link to `/pricing` instead; the one remaining WhatsApp-dependent surface already uses a `mailto:` fallback because DigitalFlyer's own WhatsApp Business number is pending Meta's approval, not a missing env var. Nothing outstanding here.
 
@@ -91,6 +93,7 @@ Grounded in real friction points from this cycle's build, not a generic wishlist
 - Uptime monitoring status unconfirmed; error monitoring not built.
 - Bolt's newer composable template library — reviewed, deliberately parked.
 - Recurring/multi-session events — a single multi-day event works; several distinct sessions per listing does not, not scoped.
+- Booking & Shop payment collection is manual (business and customer arrange it directly) and there's no live courier shipping yet — both are upcoming build sprints, not scoped out permanently.
 
 ---
 
