@@ -64,7 +64,7 @@ Everything below is built, deployed, and verified against the live production si
 Re-ordered now that List Your Event Sprint 2, Marketplace ratings/sort, the real mobile nav menu, and Booking/Shop's core flow are all live.
 
 1. **Booking & Shop, Sprints 4-7** — real in-page Paystack payment collection, live Bob Go courier shipping (blocked on Dewald signing up for a real Bob Go account), WhatsApp booking reminders and cancel/reschedule handling, and a final production-readiness pass before either module goes live to a real paying client.
-2. **Uptime + error monitoring** — confirm UptimeRobot is actually active; add a lightweight error monitor (Sentry or similar). Still open.
+2. **Activate Sentry.** Uptime monitoring is confirmed live (UptimeRobot) — no action needed there. Error monitoring's code is already fully wired and shipping dark (safe no-op, same pattern GA4 uses); it just needs a real DSN from a Sentry account.
 3. **BizUp ecosystem spec alignment** — correct BizUp's own build spec to match the real federated architecture and register it in the ecosystem's master doc. Pure documentation/schema work, already scoped, not started.
 4. **Main page + additional custom page architecture** — true dual-page-per-member support still needs real routing-layer design.
 5. **Enterprise live checkout** — pricing card exists as "Coming soon"; needs the real plan, checkout wiring, and feature scope defined.
@@ -91,7 +91,7 @@ Grounded in real friction points from this cycle's build, not a generic wishlist
 
 - Full Facebook Page OAuth — blocked on Meta App Review, not buildable yet.
 - Google Ads management — entirely unscoped; everything built so far is Meta-only.
-- Uptime monitoring status unconfirmed; error monitoring not built.
+- Uptime monitoring confirmed live (UptimeRobot). Error monitoring is fully wired in code but not yet activated (no Sentry DSN configured).
 - Bolt's newer composable template library — reviewed, deliberately parked.
 - Recurring/multi-session events — a single multi-day event works; several distinct sessions per listing does not, not scoped.
 - Booking & Shop payment collection is manual (business and customer arrange it directly) and there's no live courier shipping yet — both are upcoming build sprints, not scoped out permanently.

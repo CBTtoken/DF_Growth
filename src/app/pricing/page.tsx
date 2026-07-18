@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Receipt, Sprout, Network, Star, Globe, BarChart3, Radar, CalendarDays, Users, ShoppingBag } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
@@ -176,7 +177,7 @@ async function getFeaturedTestimonials() {
   return data ?? [];
 }
 
-type RealClientPage = { slug: string; businessName: string };
+type RealClientPage = { slug: string; businessName: string; thumbnailUrl: string | null };
 
 // UI/UX pass, 2026-07-17: "See It In Action" used to show three fictional
 // sample businesses (src/lib/templates/sample-showcase.ts) — Dewald asked
@@ -187,6 +188,13 @@ type RealClientPage = { slug: string; businessName: string };
 // accurate — revisit with a real aggregate query if that stops being true.
 // Falls back to the fictional samples (getTopVisitedClientPages returning
 // too few) rather than ever rendering an empty or half-populated section.
+//
+// Dewald's feedback, 2026-07-18: the card image was "just a colour blob" —
+// fixed by resolving each business's real hero/gallery photo, same
+// resolution order and batched-query shape as /marketplace/page.tsx (an
+// explicit hero_photo_id selection wins, otherwise the first gallery
+// photo). No iframe here on purpose — see the comment at this section's
+// render site for why that was already tried and reverted twice.
 async function getTopVisitedClientPages(limit = 3): Promise<RealClientPage[]> {
   const admin = createAdminClient();
   const { data: views } = await admin.from("page_views").select("growth_client_id").limit(5000);
@@ -201,18 +209,45 @@ async function getTopVisitedClientPages(limit = 3): Promise<RealClientPage[]> {
 
   const { data: clients } = await admin
     .from("growth_clients")
-    .select("id, business_name, slug")
+    .select("id, business_name, slug, hero_photo_id")
     .in("id", rankedIds.slice(0, limit * 3))
     .eq("status", "active")
     .not("slug", "is", null);
   if (!clients) return [];
 
   const rank = new Map(rankedIds.map((id, i) => [id, i]));
-  return clients
+  const topClients = clients
     .filter((c): c is typeof c & { slug: string } => !!c.slug)
     .sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999))
-    .slice(0, limit)
-    .map((c) => ({ slug: c.slug, businessName: c.business_name }));
+    .slice(0, limit);
+
+  const clientIds = topClients.map((c) => c.id);
+  const { data: allPhotos } = clientIds.length
+    ? await admin
+        .from("client_photos")
+        .select("id, growth_client_id, storage_path")
+        .in("growth_client_id", clientIds)
+        .order("position", { ascending: true })
+    : { data: [] as { id: string; growth_client_id: string; storage_path: string }[] };
+
+  const photosByClient = new Map<string, { id: string; storage_path: string }[]>();
+  for (const photo of allPhotos ?? []) {
+    const list = photosByClient.get(photo.growth_client_id) ?? [];
+    list.push(photo);
+    photosByClient.set(photo.growth_client_id, list);
+  }
+
+  const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
+
+  return topClients.map((c) => {
+    const clientPhotos = photosByClient.get(c.id) ?? [];
+    const heroPhoto = c.hero_photo_id ? clientPhotos.find((p) => p.id === c.hero_photo_id) : clientPhotos[0];
+    return {
+      slug: c.slug,
+      businessName: c.business_name,
+      thumbnailUrl: heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : null,
+    };
+  });
 }
 
 export default async function PricingPage() {
@@ -456,9 +491,21 @@ export default async function PricingPage() {
                   rel="noreferrer"
                   className="group flex flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <div className="flex h-32 items-center justify-center bg-brand/5 text-3xl font-display uppercase text-brand">
-                    {t.businessName.slice(0, 2)}
-                  </div>
+                  {t.thumbnailUrl ? (
+                    <div className="relative h-32 w-full overflow-hidden bg-gray-100">
+                      <Image
+                        src={t.thumbnailUrl}
+                        alt={t.businessName}
+                        fill
+                        sizes="(min-width: 640px) 33vw, 100vw"
+                        className="object-cover transition duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-32 items-center justify-center bg-brand/5 text-3xl font-display uppercase text-brand">
+                      {t.businessName.slice(0, 2)}
+                    </div>
+                  )}
                   <div className="flex items-center justify-between px-4 py-3">
                     <span className="text-sm font-semibold text-gray-900">{t.businessName}</span>
                     <span className="text-xs font-semibold text-brand opacity-0 transition group-hover:opacity-100">

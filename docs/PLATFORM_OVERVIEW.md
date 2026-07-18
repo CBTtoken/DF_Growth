@@ -326,8 +326,8 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 - Full Facebook Page OAuth connection — needs Meta App Review, not buildable yet.
 - Google Ads management — entirely unscoped, everything built so far is Meta-only.
 - Lighthouse LCP on throttled mobile still measures ~2.3s warm (target 1.5s) — root cause not found, parked.
-- **Uptime monitoring** (UptimeRobot) — still not confirmed as actually set up.
-- **Error monitoring** (Sentry or equivalent) — still not built. Vercel's own function logs are the only visibility today.
+- **Uptime monitoring** — confirmed live via UptimeRobot (corrects earlier versions of this doc, which said this was unconfirmed).
+- **Error monitoring** (Sentry) — the code is fully wired (`src/sentry.server.config.ts`, `src/sentry.edge.config.ts`, `src/instrumentation-client.ts`, `withSentryConfig` in `next.config.ts`) but was never activated — `NEXT_PUBLIC_SENTRY_DSN` has no real value set, so `Sentry.init()` safely no-ops on every request, same "ships dark, activates on a real credential" pattern GA4 already uses. Corrects earlier versions of this doc, which said this "still not built" — it's built, just not switched on.
 - Meta ad-asset size/spec compliance for generated social images not yet verified against real campaign requirements.
 - The 3 "See It In Action" pages on `/pricing` are honestly-labeled sample businesses, not real clients.
 - One member = one routable page today — Standing 365 and RE:Biz Nomads prove the custom-page mechanism, not dual-page-per-member support.
@@ -343,7 +343,7 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 
 Re-ordered to reflect what's actually still open after this cycle's work.
 
-1. **Uptime + error monitoring.** Confirm UptimeRobot is actually active; add a lightweight error monitor (Sentry or similar) — cheap insurance now that real customer money and multiple public-facing account systems are live.
+1. **Activate Sentry.** Uptime monitoring is confirmed live (UptimeRobot). Error monitoring's code is already fully wired and shipping dark — just needs a real `NEXT_PUBLIC_SENTRY_DSN` (and `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN` for readable stack traces) from a Sentry account Dewald creates.
 2. **BizUp ecosystem spec alignment.** Correct BizUp's own build spec to match the real Phase 1 federated architecture and register it in the ecosystem's master doc — pure documentation/schema work, no live testing needed, already scoped in an earlier planning session.
 3. **Main page + additional custom page architecture.** Today a member has exactly one routable page. Standing 365 and RE:Biz Nomads proved the custom-page mechanism works, but true dual-page support per member needs real routing-layer work, not yet designed.
 4. **Enterprise tier live checkout.** Pricing card already exists ("Coming soon"); needs the actual plan, checkout wiring, and feature scope defined.
