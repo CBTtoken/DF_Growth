@@ -194,7 +194,7 @@ export async function advanceConversation(
       if (text === "2") {
         return {
           reply:
-            "DigitalFlyer Growth is R180/month, or R1,199/year (locks in a lower price for life if you're one of our first 10 Day One Businesses).\n\nReply 1 for monthly or 2 for annual.",
+            "DigitalFlyer Growth is R180/month, or R1,199/year.\n\nReply 1 for monthly or 2 for annual.",
           nextStep: "billing_cycle",
           stepData: { ...stepData, tier: "growth_engine" },
           growthClientId: null,

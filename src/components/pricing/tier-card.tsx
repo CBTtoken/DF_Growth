@@ -22,7 +22,6 @@ export function TierCard({
   features,
   ctaLabel,
   highlighted,
-  foundingSlotsRemaining,
 }: {
   tier: Tier;
   name: string;
@@ -31,11 +30,6 @@ export function TierCard({
   features: string[];
   ctaLabel: string;
   highlighted?: boolean;
-  // Sprint 1, Build Item 1: only Growth's annual plan is ever eligible for
-  // founding status (confirmed 2026-07-11) — used here purely to show the
-  // real offer at the one moment it actually applies (annual selected, on
-  // this specific tier), not as a general badge on every card.
-  foundingSlotsRemaining?: number;
 }) {
   const [state, formAction, pending] = useActionState(startCheckout, null);
   const [businessName, setBusinessName] = useState("");
@@ -92,10 +86,6 @@ export function TierCard({
 
   const displayPrice =
     tier === "growth_engine" ? (interval === "annual" ? "R1,199/year" : "R180/month") : priceLabel;
-
-  const qualifiesForFounding =
-    tier === "growth_engine" && interval === "annual" && (foundingSlotsRemaining ?? 0) > 0;
-  const displayCtaLabel = qualifiesForFounding ? "Become a Day One Business" : ctaLabel;
 
   return (
     <div
@@ -162,11 +152,6 @@ export function TierCard({
                   Annual
                 </button>
               </div>
-              {interval === "annual" && (foundingSlotsRemaining ?? 0) > 0 && (
-                <p className="text-xs font-semibold text-brand">
-                  Pay annually to become a Day One Business — {foundingSlotsRemaining} of 10 spots left
-                </p>
-              )}
             </>
           )}
           <input
@@ -278,7 +263,7 @@ export function TierCard({
             disabled={pending}
             className="rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-50"
           >
-            {pending ? "Redirecting..." : displayCtaLabel}
+            {pending ? "Redirecting..." : ctaLabel}
           </button>
           <p className="text-xs text-gray-400 text-center">
             {tier === "foundation" ? "No card required" : "Secure payment via Paystack"}

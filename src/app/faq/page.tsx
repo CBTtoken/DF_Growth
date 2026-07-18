@@ -63,11 +63,6 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
           "If you haven't added payment, your page pauses until you do. Nothing is deleted, you can reactivate any time and pick up exactly where you left off.",
       },
       {
-        question: "What is a Day One Business?",
-        answer:
-          "The first 10 businesses to join Growth on the annual plan (R1,199/year) become Day One Businesses. You'll lock in that price for life, and once Enterprise launches, you get Enterprise access permanently, for as long as you stay on the annual plan.",
-      },
-      {
         question: "Can I upgrade or downgrade later?",
         answer: "Yes, any time, directly from your dashboard. Nothing about your existing page is lost when you switch.",
       },

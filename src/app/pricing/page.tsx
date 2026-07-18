@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { MapPin, Receipt, Sprout, Network, Flame, Star, Globe, BarChart3, Radar, CalendarDays, Users } from "lucide-react";
+import { MapPin, Receipt, Sprout, Network, Star, Globe, BarChart3, Radar, CalendarDays, Users } from "lucide-react";
 import { TIERS } from "@/lib/paystack/plans";
 import { TierCard } from "@/components/pricing/tier-card";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -161,15 +161,6 @@ export const metadata: Metadata = {
 // window used for client pages, rather than querying on every request.
 export const revalidate = 60;
 
-async function getFoundingSlotsRemaining(): Promise<number> {
-  const admin = createAdminClient();
-  const { count } = await admin
-    .from("growth_clients")
-    .select("id", { count: "exact", head: true })
-    .eq("is_founding_member", true);
-  return Math.max(0, 10 - (count ?? 0));
-}
-
 // Sprint 1, Build Item 3: real client testimonials Dewald has flagged as
 // homepage-worthy — see HomepageCredibilitySection for why this is
 // cross-tenant (unlike every other testimonials query in this codebase,
@@ -225,8 +216,7 @@ async function getTopVisitedClientPages(limit = 3): Promise<RealClientPage[]> {
 }
 
 export default async function PricingPage() {
-  const [foundingSlotsRemaining, featuredTestimonials, topVisitedPages] = await Promise.all([
-    getFoundingSlotsRemaining(),
+  const [featuredTestimonials, topVisitedPages] = await Promise.all([
     getFeaturedTestimonials(),
     getTopVisitedClientPages(),
   ]);
@@ -246,17 +236,6 @@ export default async function PricingPage() {
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-[26rem] rounded-full bg-white/10 blur-3xl" />
 
         <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-6">
-          {/* Combined spec Sec 13: was styled text in the brand-blue hero —
-              easy to miss against everything else competing for attention
-              there. A solid block makes it read as urgent at a glance
-              rather than as one more line of copy. */}
-          {foundingSlotsRemaining > 0 && (
-            <span className="inline-flex items-center gap-2.5 rounded-full bg-spark px-5 py-2.5 font-display text-lg uppercase tracking-wide text-white shadow-lg sm:px-6 sm:py-3 sm:text-2xl">
-              <Flame className="size-5 sm:size-7" aria-hidden />
-              Only {foundingSlotsRemaining} Day One Business {foundingSlotsRemaining === 1 ? "spot" : "spots"} left
-            </span>
-          )}
-
           <h1 className="font-display text-4xl uppercase leading-[1.05] tracking-tight text-white sm:text-6xl">
             Build Your Presence.
             <br />
@@ -271,13 +250,12 @@ export default async function PricingPage() {
             href="#pricing"
             className="mt-3 rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
           >
-            Become a Day One Business
+            See Pricing
           </a>
           {/* Combined spec Sec 15: confirmed replacement copy, slightly
               larger than before (text-sm to text-base). */}
           <p className="max-w-md text-base text-white/70">
-            We built DigitalFlyer to help South African businesses get found, get trusted, and
-            grow. Join as a Day One Business and lock in your price, for good.
+            We built DigitalFlyer to help South African businesses get found, get trusted, and grow.
           </p>
         </div>
       </section>
@@ -585,7 +563,6 @@ export default async function PricingPage() {
                 features={t.features}
                 ctaLabel={t.ctaLabel}
                 highlighted={t.id === "growth_engine"}
-                foundingSlotsRemaining={foundingSlotsRemaining}
               />
             ))}
           </div>
@@ -677,14 +654,13 @@ export default async function PricingPage() {
             This Could Be Your Business.
           </h2>
           <p className="text-lg text-white/85">
-            Join today, lock in your Day One price for good, and get found by customers who are
-            already looking.
+            Join today and get found by customers who are already looking.
           </p>
           <a
             href="#pricing"
             className="mt-2 inline-block rounded-full bg-spark px-8 py-3 text-base font-semibold text-ink transition hover:bg-spark-dark hover:text-white"
           >
-            Become a Day One Business
+            See Pricing
           </a>
         </div>
       </section>
