@@ -212,6 +212,9 @@ export default async function MarketplacePage({
           <Link href="/events" className="text-xs font-medium text-gray-400 hover:text-brand">
             Looking for events instead? Browse Events →
           </Link>
+          <Link href="/shop" className="text-xs font-medium text-gray-400 hover:text-brand">
+            Looking for products instead? Browse Shop →
+          </Link>
         </div>
       </section>
 

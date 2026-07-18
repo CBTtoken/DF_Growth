@@ -15,7 +15,7 @@ The first three sprints of two new revenue-bearing modules are live for Growth-t
 | | |
 |---|---|
 | **Status** | Live |
-| **Functional areas shipped** | 30 |
+| **Functional areas shipped** | 31 |
 | **Backlog candidates** | 7 |
 | **Pricing** | Foundation R100/mo · Growth R180/mo or R1,199/yr |
 
@@ -34,7 +34,8 @@ Everything below is built, deployed, and verified against the live production si
 | **Public client pages** | Hero, about, services, packages, testimonials, gallery, map, reviews, lead form, cookie-gated Meta Pixel |
 | **Custom pages (x2)** | Standing 365 (order flow, live payment, seller-side order dashboard) and RE:Biz Nomads |
 | **Client dashboard** | Reorganized into navigable tabs (Overview, Your Page, Booking & Shop, Reviews & Testimonials, Marketing, Account) instead of one long scrolling page — template switching, photo/testimonial management, page-view analytics, social asset generator, leads, reviews management, orders, plan management |
-| **Booking & Shop (core flow)** | Real-time appointment/rental booking with database-enforced double-booking prevention, and a product catalog + cart with atomic stock control (no overselling) — both live on Growth-and-above client pages. Payment is still arranged directly between business and customer for now; real in-page checkout and live courier shipping are the next two build sprints. |
+| **Booking & Shop (core flow)** | Real-time appointment/rental booking with database-enforced double-booking prevention, and a product catalog + cart with atomic stock control (no overselling) — both live on Growth-and-above client pages, and now named as a Growth-tier feature on the pricing card. Foundation clients see a locked "Upgrade to Growth" card instead of the real tool. Payment is still arranged directly between business and customer for now; real in-page checkout and live courier shipping are the next two build sprints. |
+| **Shop Now directory (`/shop`)** | A public, cross-client page listing real products from every Growth member with Shop switched on — search, card grid, each card links to that business's own page to complete checkout (discovery only, same relationship Marketplace has to individual pages). Linked from the header and footer next to Marketplace. Standing 365 appears as a featured listing pointing to its own real order flow, not migrated onto the generic Shop system. |
 | **Multi-account switcher** | One login owning more than one member account can switch between them from the dashboard |
 | **Marketplace directory** | Redesigned text-forward cards (Google-Business-Profile style), search, industry filter, city filter, ratings badge on cards, "most visited" sort |
 | **Admin panel** | Full client list, CSV export, Meta-help queue, signup channel visibility, Reactivation Batch view, Flagged Reviews queue, Events Queue |

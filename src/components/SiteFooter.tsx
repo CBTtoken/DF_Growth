@@ -24,6 +24,10 @@ export function SiteFooter() {
           Marketplace
         </Link>
         <span aria-hidden> · </span>
+        <Link href="/shop" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          Shop
+        </Link>
+        <span aria-hidden> · </span>
         <Link href="/agents/apply" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Become an Agent
         </Link>

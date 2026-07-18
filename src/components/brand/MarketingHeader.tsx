@@ -71,6 +71,12 @@ export function MarketingHeader() {
             Marketplace
           </Link>
           <Link
+            href="/shop"
+            className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
+          >
+            Shop
+          </Link>
+          <Link
             href="/events"
             className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
           >
