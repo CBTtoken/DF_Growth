@@ -5,6 +5,25 @@ import { ClientLandingPageView } from "@/components/landing/ClientLandingPageVie
 import { PageViewTracker } from "@/components/landing/PageViewTracker";
 import { ClientPageNavBar } from "@/components/landing/ClientPageNavBar";
 import { getCustomPage, getCustomPageMeta } from "@/lib/custom-pages/registry";
+import type { PublicBookableUnit } from "@/components/landing/BookingSection";
+import type { PublicShopProduct } from "@/components/landing/ShopSection";
+import type { PublicReview } from "@/components/reviews/ReviewsSection";
+
+type LandingPageRow = {
+  id: string;
+  headline: string;
+  subheadline: string | null;
+  about_text: string | null;
+  services_text: string | null;
+  cta_label: string;
+  page_type: string;
+  custom_page_key: string | null;
+};
+type TestimonialRow = { id: string; author_name: string; quote: string; rating: number | null };
+type PhotoRow = { id: string; storage_path: string };
+type BookableUnitRow = PublicBookableUnit;
+type BookingRulesRow = { operating_hours: Record<string, { open: string; close: string }[]>; buffer_minutes: number };
+type ShopProductRow = PublicShopProduct;
 
 // CLAUDE.md Section 7.1 — every client, including the pilot, is served
 // through this one route by slug, never a hardcoded page. params is a
@@ -46,13 +65,20 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { clientSlug } = await params;
   const admin = createAdminClient();
+  // Performance pass, 2026-07-18: this used to be two sequential round
+  // trips (client, then landing_pages) — the exact same class of "one extra
+  // serial Supabase round trip" latency the comment on `revalidate` below
+  // already measured at ~1.8s. Embedding landing_pages into the same query
+  // (same pattern as /marketplace and /shop's `!inner` + dot-filter) turns
+  // it into one Postgrest round trip instead of two.
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification, industry, city"
+      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification, industry, city, landing_pages!inner(page_type, custom_page_key)"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
+    .eq("landing_pages.published", true)
     .single();
 
   if (!client) return {};
@@ -63,12 +89,13 @@ export async function generateMetadata({
   // book. Its title/description live in the custom-pages registry
   // alongside its component, so a future custom page's metadata stays
   // defined in one place rather than branched here per page.
-  const { data: customCheck } = await admin
-    .from("landing_pages")
-    .select("page_type, custom_page_key")
-    .eq("growth_client_id", client.id)
-    .eq("published", true)
-    .single();
+  //
+  // Embedded via a to-many relationship (no unique constraint on
+  // landing_pages.growth_client_id alone — see init_schema.sql), so this
+  // comes back as an array even filtered down to one row by the query
+  // above; `!inner` + the dot-filter already guarantees at least one match.
+  const landingPages = client.landing_pages as unknown as { page_type: string; custom_page_key: string | null }[];
+  const customCheck = landingPages[0];
   if (customCheck?.page_type === "custom") {
     const meta = getCustomPageMeta(customCheck.custom_page_key);
     if (!meta) return {};
@@ -122,78 +149,76 @@ export default async function ClientLandingPage({
   const { clientSlug } = await params;
   const admin = createAdminClient();
 
+  // Performance pass, 2026-07-18: this used to be a client lookup followed
+  // by a 6-way Promise.all keyed on client.id — two sequential stages, plus
+  // ClientLandingPageView.tsx and ReviewsSection.tsx each ran their own
+  // additional reviews query on top of that (4 sequential round trips on
+  // the real critical path in total). The comment below already measured
+  // one extra serial round trip at ~1.8s of real LCP cost; four of them
+  // compounds badly, and matches the "~2.3s warm" Lighthouse number Dewald
+  // flagged as critical. Collapsed into a single embedded query — every
+  // child table's own rows come back nested under `client` in one Postgrest
+  // round trip, filtered/ordered per relation the same way /marketplace and
+  // /shop already do it (`!inner` + dot-notation `.eq()`, `.order()`'s
+  // `foreignTable` option for embedded resources). The visitor's own auth
+  // session used to be fetched here too, server-side — moved to
+  // OwnerBarGate (client-side) as part of Task #12's cold-start fix, since
+  // reading cookies() anywhere in this route's render path was forcing the
+  // entire page to bypass static rendering/ISR regardless of `revalidate`.
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, booking_enabled, shop_enabled"
+      `id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, booking_enabled, shop_enabled,
+      landing_pages!inner(id, headline, subheadline, about_text, services_text, cta_label, page_type, custom_page_key),
+      testimonials(id, author_name, quote, rating),
+      client_photos!client_photos_growth_client_id_fkey(id, storage_path),
+      bookable_units(id, name, unit_type, description, base_price_cents, capacity, duration_minutes),
+      booking_operational_rules(operating_hours, buffer_minutes),
+      shop_products(id, title, description, base_price_cents, sale_count),
+      reviews(id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name))`
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
+    .eq("landing_pages.published", true)
+    .eq("bookable_units.is_active", true)
+    .eq("shop_products.status", "active")
+    .eq("reviews.status", "published")
+    .order("position", { ascending: true, referencedTable: "client_photos" })
+    .order("position", { ascending: true, referencedTable: "bookable_units" })
+    .order("position", { ascending: true, referencedTable: "shop_products" })
+    .order("created_at", { ascending: false, referencedTable: "reviews" })
+    .limit(5, { referencedTable: "testimonials" })
     .single();
 
   if (!client) return notFound();
 
-  // landing_pages, testimonials, and photos don't depend on each other —
-  // running them sequentially was adding a full extra network round-trip
-  // to the time before the hero could render (confirmed via Lighthouse:
-  // this route's LCP element render delay was ~1.8s higher than a page
-  // with no DB calls at all, roughly what one extra serial Supabase
-  // round-trip costs). The visitor's own auth session used to be fetched
-  // here too, server-side — moved to OwnerBarGate (client-side) as part of
-  // Task #12's cold-start fix, since reading cookies() anywhere in this
-  // route's render path was forcing the entire page to bypass static
-  // rendering/ISR on every single request, regardless of the `revalidate`
-  // export below (confirmed live: Cache-Control was no-store/must-
-  // revalidate and X-Vercel-Cache was MISS on every request, not
-  // intermittently — this page was never actually eligible for caching).
-  const [{ data: landingPage }, { data: testimonials }, { data: photos }, { data: bookableUnits }, { data: bookingRules }, { data: shopProducts }] =
-    await Promise.all([
-      admin
-        .from("landing_pages")
-        .select("id, headline, subheadline, about_text, services_text, cta_label, page_type, custom_page_key")
-        .eq("growth_client_id", client.id)
-        .eq("published", true)
-        .single(),
-      admin.from("testimonials").select("id, author_name, quote, rating").eq("growth_client_id", client.id).limit(5),
-      // Sprint 1, Build Item 10: fetched unconditionally now (previously only
-      // queried, limited to 1, for the Left-Heavy Split hero) — the dedicated
-      // gallery section needs the full ordered list regardless of template.
-      admin
-        .from("client_photos")
-        .select("id, storage_path")
-        .eq("growth_client_id", client.id)
-        .order("position", { ascending: true }),
-      // Booking Sec 3.5: fetched unconditionally alongside everything else
-      // above (cheap, and this route already fetches sections that may not
-      // render) — BookingSection itself returns null when there's nothing
-      // to show, same as every other section here.
-      admin
-        .from("bookable_units")
-        .select("id, name, unit_type, description, base_price_cents, capacity, duration_minutes")
-        .eq("growth_client_id", client.id)
-        .eq("is_active", true)
-        .order("position", { ascending: true }),
-      admin
-        .from("booking_operational_rules")
-        .select("operating_hours, buffer_minutes")
-        .eq("growth_client_id", client.id)
-        .maybeSingle(),
-      admin
-        .from("shop_products")
-        .select("id, title, description, base_price_cents, sale_count")
-        .eq("growth_client_id", client.id)
-        .eq("status", "active")
-        .order("position", { ascending: true }),
-    ]);
+  // Every one of these is embedded as a to-many relationship (no unique
+  // constraint ties any of these child tables to exactly one
+  // growth_clients row at the DB level — see init_schema.sql), so each
+  // comes back as an array regardless of how many rows actually matched.
+  // `landing_pages` is guaranteed non-empty by `!inner` + the dot-filter
+  // above; everything else defaults to `[]` the same way the old
+  // `?? []` fallbacks did.
+  const landingPage = (client.landing_pages as unknown as LandingPageRow[])[0];
+  const testimonials = client.testimonials as unknown as TestimonialRow[];
+  const photos = client.client_photos as unknown as PhotoRow[];
+  const bookableUnits = client.bookable_units as unknown as BookableUnitRow[];
+  // booking_operational_rules.growth_client_id is its own primary key (a
+  // real one-to-one, not just an indexed FK) — Postgrest embeds this as a
+  // single object or null, unlike every other child table here which is a
+  // genuine to-many relationship and embeds as an array.
+  const bookingRules = client.booking_operational_rules as unknown as BookingRulesRow | null;
+  const shopProducts = client.shop_products as unknown as ShopProductRow[];
+  const reviews = client.reviews as unknown as PublicReview[];
 
   if (!landingPage) return notFound();
 
-  // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2/4: testimonials and
-  // photos above were fetched in parallel regardless (Promise.all doesn't
-  // know in advance which branch this takes), so branching here costs
-  // nothing extra in latency, just discards two small results a custom
-  // page has no use for — its own component tree fetches whatever data it
-  // actually needs, the same way ClientLandingPageView owns its own shape.
+  // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2/4: everything above came
+  // back in the same single embedded query regardless of which branch this
+  // takes (the query doesn't know in advance), so branching here costs
+  // nothing extra in latency, just discards the fields a custom page has no
+  // use for — its own component tree fetches whatever data it actually
+  // needs, the same way ClientLandingPageView owns its own shape.
   if (landingPage.page_type === "custom") {
     /* eslint-disable react-hooks/static-components -- this looks up an
        existing component from a stable module-level registry (the same
@@ -227,11 +252,12 @@ export default async function ClientLandingPage({
       <ClientLandingPageView
         client={client}
         landingPage={landingPage}
-        testimonials={testimonials ?? []}
-        photos={photos ?? []}
-        bookableUnits={bookableUnits ?? []}
-        bookingRules={bookingRules ?? null}
-        shopProducts={shopProducts ?? []}
+        testimonials={testimonials}
+        photos={photos}
+        bookableUnits={bookableUnits}
+        bookingRules={bookingRules}
+        shopProducts={shopProducts}
+        reviews={reviews}
         clientSlug={clientSlug}
         mode="live"
       />

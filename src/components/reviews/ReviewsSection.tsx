@@ -1,7 +1,6 @@
-import { createAdminClient } from "@/lib/supabase/admin";
 import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
 
-type Review = {
+export type PublicReview = {
   id: string;
   rating: number;
   review_text: string;
@@ -13,33 +12,32 @@ type Review = {
 // Rate & Review Sprint 1, Sec 5: "Star rating and total review count
 // visible immediately... no rating shown at all for a business with no
 // reviews yet, avoid implying a bad score where there's simply no data."
-// Server Component with its own query rather than threading through the
-// parent page's existing Promise.all — reviews start empty for every
-// business today, so this doesn't add meaningful cold-start risk the way
-// a populated query would; simpler to wire in cleanly as its own unit.
 // Sprint 2 fast-follow: now participates in the per-template dynamic
 // eyebrow-numbering system like every other section (src/lib/templates/
 // registry.ts) — always present in every template's `sections` list,
 // matching the fixed "right before the lead form" position it already had
 // before this, just with a real number now instead of none.
-export async function ReviewsSection({
+//
+// Performance pass, 2026-07-18: used to run its own query here, on top of
+// an identical (aggregate-only) query ClientLandingPageView.tsx already ran
+// for the same business's SEO structured data — two sequential Supabase
+// round trips for overlapping data on every single client-page render, a
+// real and measurable chunk of the ~1.8s cache-MISS TTFB Dewald flagged.
+// Now takes the already-fetched list as a prop instead — one fetch, folded
+// into the page's single combined query, serves both this display and that
+// aggregate.
+export function ReviewsSection({
   businessId,
+  reviews,
   accentColor,
   eyebrowNumber,
 }: {
   businessId: string;
+  reviews: PublicReview[];
   accentColor: string;
   eyebrowNumber: string;
 }) {
-  const admin = createAdminClient();
-  const { data: reviews } = await admin
-    .from("reviews")
-    .select("id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name)")
-    .eq("business_id", businessId)
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
-
-  const list = (reviews ?? []) as unknown as Review[];
+  const list = reviews;
   const count = list.length;
   const average = count > 0 ? list.reduce((sum, r) => sum + r.rating, 0) / count : 0;
 

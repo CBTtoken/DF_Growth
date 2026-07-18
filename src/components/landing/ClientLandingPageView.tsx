@@ -15,10 +15,9 @@ import { PhotoGallerySection } from "@/components/landing/PhotoGallerySection";
 import { StorySection } from "@/components/landing/StorySection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { EarlyContactCta } from "@/components/landing/EarlyContactCta";
-import { ReviewsSection } from "@/components/reviews/ReviewsSection";
+import { ReviewsSection, type PublicReview } from "@/components/reviews/ReviewsSection";
 import { BookingSection, type PublicBookableUnit } from "@/components/landing/BookingSection";
 import { ShopSection, type PublicShopProduct } from "@/components/landing/ShopSection";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
 import { SplitHero } from "@/components/landing/heroes/SplitHero";
 import { EditorialHero } from "@/components/landing/heroes/EditorialHero";
@@ -83,6 +82,7 @@ export async function ClientLandingPageView({
   bookableUnits = [],
   bookingRules = null,
   shopProducts = [],
+  reviews = [],
   clientSlug,
   mode,
   templateOverride,
@@ -94,6 +94,11 @@ export async function ClientLandingPageView({
   bookableUnits?: PublicBookableUnit[];
   bookingRules?: { operating_hours: Record<string, { open: string; close: string }[]>; buffer_minutes: number } | null;
   shopProducts?: PublicShopProduct[];
+  // Defaults to [] for /dashboard/preview, which doesn't fetch real reviews
+  // (a template preview, not the live page — accurate review content isn't
+  // the point there). The real public route always passes the client's
+  // actual published reviews.
+  reviews?: PublicReview[];
   clientSlug: string;
   mode: "live" | "preview";
   // Sec 6 / Sec 9: lets the template picker preview "what would my own page
@@ -115,21 +120,14 @@ export async function ClientLandingPageView({
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
     : null;
 
-  // Rate & Review Sprint 2, Sec 7: a small, isolated query just for the
-  // aggregate numbers the schema needs — same reasoning Sprint 1 used for
-  // ReviewsSection's own separate query (docs/GROWTH_RATE_REVIEW_BUILD_
-  // SPEC_CLAUDE.md), rather than threading the full review list up here
-  // just to compute two numbers this component doesn't otherwise need.
-  const { data: publishedRatings } = await createAdminClient()
-    .from("reviews")
-    .select("rating")
-    .eq("business_id", client.id)
-    .eq("status", "published");
-  const reviewCount = publishedRatings?.length ?? 0;
+  // Rate & Review Sprint 2, Sec 7: the SEO structured-data aggregate,
+  // derived from the already-fetched `reviews` prop rather than its own
+  // query — performance pass 2026-07-18, see ReviewsSection.tsx for why.
+  const reviewCount = reviews.length;
   const aggregateRating =
     reviewCount > 0
       ? {
-          ratingValue: publishedRatings!.reduce((sum, r) => sum + r.rating, 0) / reviewCount,
+          ratingValue: reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount,
           reviewCount,
         }
       : null;
@@ -303,7 +301,7 @@ export async function ClientLandingPageView({
           />
         </ScrollReveal>
         <ScrollReveal>
-          <ReviewsSection businessId={client.id} accentColor={accentColor} eyebrowNumber={reviewsNumber} />
+          <ReviewsSection businessId={client.id} reviews={reviews} accentColor={accentColor} eyebrowNumber={reviewsNumber} />
         </ScrollReveal>
         {bookingSection}
         {shopSection}
@@ -401,7 +399,7 @@ export async function ClientLandingPageView({
       case "howItWorks":
         return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} />;
       case "reviews":
-        return <ReviewsSection businessId={client.id} accentColor={accentColor} eyebrowNumber={number} />;
+        return <ReviewsSection businessId={client.id} reviews={reviews} accentColor={accentColor} eyebrowNumber={number} />;
     }
   };
 
