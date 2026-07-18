@@ -313,42 +313,6 @@ export default async function DashboardPage() {
             heroPhotoId={growthClient?.hero_photo_id ?? null}
             industryHint={growthClient?.industry ?? undefined}
           />
-
-          <AssetStyleSection currentStyle={growthClient?.asset_style ?? "clean"} />
-
-          <SocialAssetGenerator photos={photos ?? []} storageBase={photosStorageBase} />
-
-          <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold tracking-tight text-ink">Generated social assets</h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {(assets ?? []).map((a) => (
-                <a
-                  key={a.id}
-                  href={`${storageBase}/${a.image_path}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                  className="group flex flex-col gap-2"
-                >
-                  <Image
-                    src={`${storageBase}/${a.image_path}`}
-                    alt="Generated testimonial asset"
-                    width={300}
-                    height={300}
-                    className="aspect-square w-full rounded-xl border border-gray-100 object-cover transition-opacity group-hover:opacity-80"
-                  />
-                  <span className="text-xs font-medium text-brand underline-offset-2 group-hover:underline">
-                    Download
-                  </span>
-                </a>
-              ))}
-              {(!assets || assets.length === 0) && (
-                <p className="text-sm text-gray-400">
-                  Assets appear here once you add a testimonial or generate one above.
-                </p>
-              )}
-            </div>
-          </section>
         </>
       ),
     },
@@ -385,6 +349,46 @@ export default async function DashboardPage() {
       label: "Marketing",
       content: (
         <>
+          {/* Dewald's ask, 2026-07-18: social asset generation lived under
+              "Your Page" before this, alongside template/photo settings it
+              has nothing to do with — it's marketing content, so it belongs
+              here instead. Moved as a unit, unchanged otherwise. */}
+          <AssetStyleSection currentStyle={growthClient?.asset_style ?? "clean"} />
+
+          <SocialAssetGenerator photos={photos ?? []} storageBase={photosStorageBase} />
+
+          <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold tracking-tight text-ink">Generated social assets</h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {(assets ?? []).map((a) => (
+                <a
+                  key={a.id}
+                  href={`${storageBase}/${a.image_path}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  download
+                  className="group flex flex-col gap-2"
+                >
+                  <Image
+                    src={`${storageBase}/${a.image_path}`}
+                    alt="Generated testimonial asset"
+                    width={300}
+                    height={300}
+                    className="aspect-square w-full rounded-xl border border-gray-100 object-cover transition-opacity group-hover:opacity-80"
+                  />
+                  <span className="text-xs font-medium text-brand underline-offset-2 group-hover:underline">
+                    Download
+                  </span>
+                </a>
+              ))}
+              {(!assets || assets.length === 0) && (
+                <p className="text-sm text-gray-400">
+                  Assets appear here once you add a testimonial or generate one above.
+                </p>
+              )}
+            </div>
+          </section>
+
           {/* Public Beta Polish Sprint Sec 10: moved one section higher (was
               below Meta ad tracking) so it's more prominent post-onboarding —
               the two sections' cross-reference copy is flipped below to match
