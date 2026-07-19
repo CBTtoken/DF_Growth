@@ -83,6 +83,15 @@ export function StepPayment({ tier, billingCycle }: { tier: Tier; billingCycle: 
       >
         Pay and go live
       </a>
+      {/* Quick Sprint: Payment Channels Sec 1 — no checkout call site in this
+          codebase restricts which channels Paystack's hosted page shows, so
+          every channel active on the account (card, Instant EFT, Capitec
+          Pay, SnapScan) already surfaces automatically. This line is the
+          actual work that section needed: telling a visitor without a card
+          that before they even click through. */}
+      <p className="text-center text-xs text-gray-400">
+        Card, Instant EFT, Capitec Pay, or SnapScan — choose whichever works for you on the next screen.
+      </p>
     </div>
   );
 }
