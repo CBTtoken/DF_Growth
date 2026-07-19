@@ -1,11 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
+import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { SortSelect } from "@/components/marketplace/SortSelect";
 import { INDUSTRY_TAXONOMY } from "@/lib/industries";
 import { CITIES } from "@/lib/cities";
+
+function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters)} m away`;
+  return `${(meters / 1000).toFixed(1)} km away`;
+}
 
 export const metadata: Metadata = {
   // Root layout already applies "%s | DigitalFlyer Growth" as a title
@@ -24,9 +31,9 @@ export const metadata: Metadata = {
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; industry?: string; city?: string; sort?: string }>;
+  searchParams: Promise<{ q?: string; industry?: string; city?: string; sort?: string; lat?: string; lng?: string }>;
 }) {
-  const { q = "", industry = "", city = "", sort = "recent" } = await searchParams;
+  const { q = "", industry = "", city = "", sort = "recent", lat = "", lng = "" } = await searchParams;
   const admin = createAdminClient();
 
   // published landing_pages rows only, and only active (paid/converted)
@@ -124,6 +131,60 @@ export default async function MarketplacePage({
     );
   }
 
+  // Quick Sprint: Payments/Geo Sec 3.4 — "Near me", opt-in only (confirmed
+  // with Dewald). Origin coordinates come from either the browser's own GPS
+  // (SortSelect.tsx sent them as lat/lng query params after the visitor
+  // explicitly picked this sort) or, when that's unavailable/denied,
+  // Vercel Edge Network's own IP-geolocation request headers — no separate
+  // geolocation service needed for that fallback tier. If neither is
+  // available (e.g. local dev, or a visitor whose network doesn't resolve
+  // to a location), this silently no-ops and the listing stays in its
+  // existing order — the spec's own "final fallback: existing city filter
+  // stays exactly as it is, unaffected."
+  const distancesByClient = new Map<string, number>();
+  if (sort === "near" && clientIds.length) {
+    const latParam = parseFloat(lat);
+    const lngParam = parseFloat(lng);
+    let originLat = Number.isFinite(latParam) ? latParam : null;
+    let originLng = Number.isFinite(lngParam) ? lngParam : null;
+
+    if (originLat === null || originLng === null) {
+      const requestHeaders = await headers();
+      const ipLat = parseFloat(requestHeaders.get("x-vercel-ip-latitude") ?? "");
+      const ipLng = parseFloat(requestHeaders.get("x-vercel-ip-longitude") ?? "");
+      if (Number.isFinite(ipLat) && Number.isFinite(ipLng)) {
+        originLat = ipLat;
+        originLng = ipLng;
+      }
+    }
+
+    if (originLat !== null && originLng !== null) {
+      const { data: nearest } = await admin.rpc("nearest_active_clients", {
+        origin_lat: originLat,
+        origin_long: originLng,
+        result_limit: 200,
+      });
+      for (const row of nearest ?? []) {
+        distancesByClient.set(row.id, row.distance_meters);
+      }
+      if (distancesByClient.size) {
+        // Stable sort (guaranteed since ES2019): clients with a known
+        // distance come first, nearest to farthest; clients with no stored
+        // location (never geocoded, or a bad address that didn't resolve)
+        // keep their existing relative order at the end, rather than being
+        // dropped from the directory entirely.
+        sortedClients = [...sortedClients].sort((a, b) => {
+          const da = distancesByClient.get(a.id);
+          const db = distancesByClient.get(b.id);
+          if (da === undefined && db === undefined) return 0;
+          if (da === undefined) return 1;
+          if (db === undefined) return -1;
+          return da - db;
+        });
+      }
+    }
+  }
+
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
   const logosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos`;
 
@@ -182,14 +243,7 @@ export default async function MarketplacePage({
                   </option>
                 ))}
               </select>
-              <select
-                name="sort"
-                defaultValue={sort}
-                className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
-                <option value="recent">Recently added</option>
-                <option value="popular">Most visited</option>
-              </select>
+              <SortSelect defaultSort={sort} defaultLat={lat} defaultLng={lng} />
             </div>
             <button
               type="submit"
@@ -242,6 +296,12 @@ export default async function MarketplacePage({
                 </span>
               ) : null;
 
+              const distanceMeters = distancesByClient.get(client.id);
+              const distanceBadge =
+                distanceMeters !== undefined ? (
+                  <span className="text-xs font-semibold text-gray-500">{formatDistance(distanceMeters)}</span>
+                ) : null;
+
               // Same resolution order as a real client page's hero photo
               // (ClientLandingPageView.tsx): an explicit hero_photo_id
               // selection wins, otherwise the first uploaded gallery photo
@@ -293,7 +353,10 @@ export default async function MarketplacePage({
                         {client.industry}
                         {client.city ? ` · ${client.city}` : ""}
                       </p>
-                      {ratingBadge}
+                      <div className="flex items-center gap-2">
+                        {ratingBadge}
+                        {distanceBadge}
+                      </div>
                       <p className="line-clamp-2 text-sm text-gray-500">
                         {client.tagline || client.business_description}
                       </p>
@@ -341,7 +404,10 @@ export default async function MarketplacePage({
                         )}
                         {client.city && <span className="text-xs text-gray-400">{client.city}</span>}
                       </div>
-                      {ratingBadge}
+                      <div className="flex items-center gap-2">
+                        {ratingBadge}
+                        {distanceBadge}
+                      </div>
                     </div>
                   </div>
                   <p className="line-clamp-2 text-sm text-gray-500">

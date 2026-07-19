@@ -2,6 +2,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
 import { getIndustryPhoto } from "@/lib/images/pexels";
+import { geocodeAddress, toGeographyPoint } from "@/lib/geo/geocode";
 import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 import { fetchWhatsAppMedia } from "@/lib/whatsapp/graph-api";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
@@ -460,6 +461,11 @@ export async function advanceConversation(
       // that file's own comment for why this moved out of the render path).
       if (conversation.growth_client_id) {
         const fallbackPhotoUrl = await getIndustryPhoto(String(stepData.industry || "business"));
+        // Quick Sprint: Payments/Geo Sec 3.3 — same geocode-once-at-write-
+        // time as saveStep2's web equivalent (src/app/onboard/actions.ts).
+        // No separate "city" field in this flow, business_address alone
+        // (plus "South Africa", added inside geocodeAddress) is all there is.
+        const coords = await geocodeAddress(String(stepData.businessAddress || ""), null);
         await admin
           .from("growth_clients")
           .update({
@@ -473,6 +479,7 @@ export async function advanceConversation(
             brand_primary_color: stepData.brandPrimaryColor,
             brand_secondary_color: stepData.brandSecondaryColor,
             fallback_photo_url: fallbackPhotoUrl,
+            ...(coords ? { location: toGeographyPoint(coords) } : {}),
             ...(logoPath ? { logo_path: logoPath } : {}),
           })
           .eq("id", conversation.growth_client_id);

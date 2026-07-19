@@ -14,6 +14,7 @@ import {
 } from "@/lib/schemas/intake";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
 import { getIndustryPhoto } from "@/lib/images/pexels";
+import { geocodeAddress, toGeographyPoint } from "@/lib/geo/geocode";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { isRateLimited } from "@/lib/rate-limit";
 import { trackBetaEvent } from "@/lib/metrics/track";
@@ -113,6 +114,14 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
   // without its showcase image, same graceful degradation as before.
   const fallbackPhotoUrl = await getIndustryPhoto(parsed.data.industry || "business");
 
+  // Quick Sprint: Payments/Geo Sec 3.3 — geocoded once here, same
+  // write-time-not-render-time pattern as fallbackPhotoUrl just above.
+  // Best-effort: a failed/unmatched address just means no location gets
+  // written this save, and the Marketplace's "Near Me" sort silently
+  // excludes this client (falls back to the existing city filter, per
+  // spec's own acceptance criteria) until a later edit succeeds.
+  const coords = await geocodeAddress(parsed.data.businessAddress, parsed.data.city || null);
+
   const admin = createAdminClient();
   const { data: growthClient, error } = await admin
     .from("growth_clients")
@@ -129,6 +138,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
       instagram_url: parsed.data.instagramUrl || null,
       website_url: parsed.data.websiteUrl || null,
       fallback_photo_url: fallbackPhotoUrl,
+      ...(coords ? { location: toGeographyPoint(coords) } : {}),
     })
     .eq("id", client.id)
     .select("business_name, slug")
