@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
+import { getIndustryPhoto } from "@/lib/images/pexels";
 import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 import { fetchWhatsAppMedia } from "@/lib/whatsapp/graph-api";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
@@ -454,8 +455,11 @@ export async function advanceConversation(
       }
 
       // Flush the whole profile collected so far now that it's complete —
-      // matches saveStep2's own shape in src/app/onboard/actions.ts.
+      // matches saveStep2's own shape in src/app/onboard/actions.ts,
+      // including the same Quick Sprint Sec 2 fallback-photo fetch (see
+      // that file's own comment for why this moved out of the render path).
       if (conversation.growth_client_id) {
+        const fallbackPhotoUrl = await getIndustryPhoto(String(stepData.industry || "business"));
         await admin
           .from("growth_clients")
           .update({
@@ -468,6 +472,7 @@ export async function advanceConversation(
             additional_notes: stepData.additionalNotes || null,
             brand_primary_color: stepData.brandPrimaryColor,
             brand_secondary_color: stepData.brandSecondaryColor,
+            fallback_photo_url: fallbackPhotoUrl,
             ...(logoPath ? { logo_path: logoPath } : {}),
           })
           .eq("id", conversation.growth_client_id);
@@ -633,7 +638,7 @@ export async function advanceConversation(
       }
 
       return {
-        reply: `Almost there! Complete payment here to go live:\n${checkout.authorizationUrl}\n\nOnce that's done we'll email you a link straight into your dashboard.`,
+        reply: `Almost there! Complete payment here to go live:\n${checkout.authorizationUrl}\n\nCard, Instant EFT, Capitec Pay, or SnapScan — no card needed, pick whichever works for you on that page.\n\nOnce that's done we'll email you a link straight into your dashboard.`,
         nextStep: "done",
         stepData,
         growthClientId: conversation.growth_client_id,

@@ -44,7 +44,7 @@ export default async function DashboardPreviewPage({
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, slug, booking_enabled, shop_enabled"
+      "id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, slug, booking_enabled, shop_enabled, fallback_photo_url"
     )
     .eq("id", client.id)
     .single();

@@ -13,6 +13,7 @@ import {
   step7Schema,
 } from "@/lib/schemas/intake";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
+import { getIndustryPhoto } from "@/lib/images/pexels";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { isRateLimited } from "@/lib/rate-limit";
 import { trackBetaEvent } from "@/lib/metrics/track";
@@ -104,6 +105,14 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
     return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
   }
 
+  // Quick Sprint: Payments/Geo Sec 2 — fetched here, once, rather than live
+  // inside the render path (ClientLandingPageView.tsx used to call Pexels
+  // on every cache-miss regeneration for a client with no uploaded hero
+  // photo). Best-effort like every other Pexels call in this codebase:
+  // null on any failure, the affected template section just renders
+  // without its showcase image, same graceful degradation as before.
+  const fallbackPhotoUrl = await getIndustryPhoto(parsed.data.industry || "business");
+
   const admin = createAdminClient();
   const { data: growthClient, error } = await admin
     .from("growth_clients")
@@ -119,6 +128,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
       facebook_url: parsed.data.facebookUrl || null,
       instagram_url: parsed.data.instagramUrl || null,
       website_url: parsed.data.websiteUrl || null,
+      fallback_photo_url: fallbackPhotoUrl,
     })
     .eq("id", client.id)
     .select("business_name, slug")

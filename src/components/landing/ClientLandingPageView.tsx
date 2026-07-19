@@ -27,7 +27,6 @@ import { GeometricHero } from "@/components/landing/heroes/GeometricHero";
 import { ChecklistHero } from "@/components/landing/heroes/ChecklistHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
-import { getIndustryPhoto } from "@/lib/images/pexels";
 
 type ClientData = {
   id: string;
@@ -54,6 +53,12 @@ type ClientData = {
   // client without Booking switched on simply never has it true.
   booking_enabled?: boolean;
   shop_enabled?: boolean;
+  // Quick Sprint: Payments/Geo Sec 2 — fetched once at onboarding time
+  // (src/app/onboard/actions.ts, src/lib/whatsapp/conversation.ts), never
+  // live here. Optional/nullable for the same reason booking_enabled is:
+  // sample/preview call sites and pre-existing clients from before this
+  // column existed may not have a value.
+  fallback_photo_url?: string | null;
 };
 
 type LandingPageData = {
@@ -327,13 +332,15 @@ export async function ClientLandingPageView({
   if (template.hero === "split") {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
-    // does that. No selection falls back to the same Pexels stock photo
-    // used when there are zero gallery photos at all, never "whichever
-    // photo happened to be uploaded first."
+    // does that. No selection falls back to the client's stored fallback
+    // photo — Quick Sprint: Payments/Geo Sec 2, fetched once at onboarding
+    // time (or whenever industry is saved) and stored on the client record,
+    // never called live here anymore. A pre-existing client from before
+    // that column existed simply has `fallback_photo_url: null` until they
+    // touch their profile again — same graceful "no showcase image" fallback
+    // this section always had on a Pexels failure.
     const heroPhoto = client.hero_photo_id ? photos.find((p) => p.id === client.hero_photo_id) : undefined;
-    photoUrl = heroPhoto
-      ? `${photosStorageBase}/${heroPhoto.storage_path}`
-      : await getIndustryPhoto(client.industry || client.business_name);
+    photoUrl = heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : (client.fallback_photo_url ?? null);
   }
 
   const checklistItems = (landingPage.services_text ?? "")

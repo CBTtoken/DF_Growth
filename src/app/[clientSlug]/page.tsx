@@ -168,7 +168,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      `id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, booking_enabled, shop_enabled,
+      `id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, booking_enabled, shop_enabled, fallback_photo_url,
       landing_pages!inner(id, headline, subheadline, about_text, services_text, cta_label, page_type, custom_page_key),
       testimonials(id, author_name, quote, rating),
       client_photos!client_photos_growth_client_id_fkey(id, storage_path),
