@@ -98,11 +98,11 @@ export async function startCheckout(
       paystackReference: null,
       consentedAt,
       marketingConsent: marketingConsent === "on",
-      // Foundation has no annual option today — always "monthly" (matches
-      // the sprint doc's own note on this). Never eligible for founding
-      // status regardless: confirmed 2026-07-11 that only Growth's annual
-      // plan qualifies.
-      billingCycle: "monthly",
+      // Foundation gained a real annual option 2026-07-19 (R900/year,
+      // PLN_qf1kh46lwn5jxr1) — same interval choice Growth's card already
+      // captured. Still never eligible for founding-member status either
+      // way: confirmed 2026-07-11 that only Growth's annual plan qualifies.
+      billingCycle: interval === "annual" ? "annual" : "monthly",
       foundingSignupNumber: null,
       referredByAgentId,
     });

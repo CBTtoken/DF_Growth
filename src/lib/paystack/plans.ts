@@ -1,7 +1,7 @@
 export type Tier = "foundation" | "growth_engine" | "enterprise";
-// Only growth_engine offers a choice — Foundation's only plan is its
-// post-trial R100/month, Enterprise has no live checkout yet. Present for
-// every tier for a uniform call signature; ignored otherwise.
+// Foundation gained an annual option 2026-07-19 (PLN_qf1kh46lwn5jxr1,
+// R900/year) — Enterprise still has no live checkout, so this field is
+// ignored there. Present for every tier for a uniform call signature.
 export type BillingInterval = "monthly" | "annual";
 
 export const TIERS: {
@@ -20,7 +20,7 @@ export const TIERS: {
     // remove the false claim rather than leave it and rely on a disclaimer.
     id: "foundation",
     name: "Foundation",
-    priceLabel: "Free for 7 days, then R100/month",
+    priceLabel: "Free for 7 days, then R100/month or R900/year",
     description: "Perfect for businesses ready to build a professional online presence.",
     features: [
       "Professional Business Page",
@@ -76,8 +76,8 @@ export const TIERS: {
 ];
 
 function planCodeEnvVar(tier: Tier, interval: BillingInterval): string {
-  if (tier === "foundation") return "PAYSTACK_PLAN_FOUNDATION";
   if (tier === "enterprise") return "PAYSTACK_PLAN_ENTERPRISE";
+  if (tier === "foundation") return interval === "annual" ? "PAYSTACK_PLAN_FOUNDATION_ANNUAL" : "PAYSTACK_PLAN_FOUNDATION";
   return interval === "annual" ? "PAYSTACK_PLAN_GROWTH_ANNUAL" : "PAYSTACK_PLAN_GROWTH_MONTHLY";
 }
 

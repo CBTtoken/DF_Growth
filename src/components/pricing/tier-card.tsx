@@ -85,7 +85,15 @@ export function TierCard({
   }, [businessName]);
 
   const displayPrice =
-    tier === "growth_engine" ? (interval === "annual" ? "R1,199/year" : "R180/month") : priceLabel;
+    tier === "growth_engine"
+      ? interval === "annual"
+        ? "R1,199/year"
+        : "R180/month"
+      : tier === "foundation"
+        ? interval === "annual"
+          ? "Free for 7 days, then R900/year"
+          : "Free for 7 days, then R100/month"
+        : priceLabel;
 
   return (
     <div
@@ -129,7 +137,12 @@ export function TierCard({
       ) : (
         <form action={formAction} className="flex flex-col gap-2 mt-auto pt-4">
           <input type="hidden" name="tier" value={tier} />
-          {tier === "growth_engine" && (
+          {/* Foundation gained an annual option 2026-07-19 — same toggle
+              Growth already had, just no longer gated to growth_engine
+              only. Foundation's trial behaviour is unchanged either way:
+              free for 7 days regardless of which cycle is picked, only the
+              post-trial price differs. */}
+          {(tier === "growth_engine" || tier === "foundation") && (
             <>
               <input type="hidden" name="interval" value={interval} />
               <div className="flex gap-1.5 rounded-full bg-gray-100 p-1 text-xs font-semibold">

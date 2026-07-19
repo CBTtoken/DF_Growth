@@ -16,7 +16,6 @@ import { planCodeForTier, amountForTier, type BillingInterval, type Tier } from 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const clientId = searchParams.get("client");
-  const interval = (searchParams.get("interval") ?? "monthly") as BillingInterval;
 
   if (!clientId) {
     return NextResponse.json({ error: "Missing client" }, { status: 400 });
@@ -25,7 +24,7 @@ export async function GET(request: Request) {
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("growth_clients")
-    .select("id, contact_email, plan, status")
+    .select("id, contact_email, plan, status, billing_cycle")
     .eq("id", clientId)
     .in("status", ["pending_intake", "active"])
     .single();
@@ -33,6 +32,15 @@ export async function GET(request: Request) {
   if (!client || !client.contact_email) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  // Quick follow-up, 2026-07-19: the account's own stored billing_cycle
+  // (set once, at signup, per Sec "Foundation Annual") is now the source
+  // of truth for what this charge should be — this matters now that
+  // Foundation has two real prices, not one. Falls back to the URL param
+  // (any pre-existing caller still sending one) and then "monthly" only
+  // for the handful of pre-existing rows from before billing_cycle
+  // existed at all.
+  const interval = ((client.billing_cycle as BillingInterval | null) ?? (searchParams.get("interval") ?? "monthly")) as BillingInterval;
 
   const tier = client.plan as Tier;
   const planCode = planCodeForTier(tier, interval);
