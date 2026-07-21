@@ -14,16 +14,18 @@
 // this codebase (Pexels, Meta CAPI): a failed or unmatched address just
 // means that client has no stored coordinates yet, never blocks the save
 // it's attached to.
-export async function geocodeAddress(
-  address: string | null,
-  city: string | null
-): Promise<{ lat: number; lng: number } | null> {
-  const parts = [address, city, "South Africa"].filter((p) => p && p.trim().length > 0);
-  if (parts.length < 2) return null; // Just "South Africa" alone isn't a real query.
 
+// Learned from the real backfill over the live client base: "Online" is a
+// genuinely common thing to type into a business-address field, and
+// Nominatim happily matches it to an actual place called that — which
+// would show the client as "0.3 km away" from somewhere they aren't.
+// Same for digits-only entries like "9288". Treat these as "no address".
+const NON_PHYSICAL_ADDRESSES = new Set(["online", "n/a", "na", "none", "remote", "tbc", "tba", "-"]);
+
+async function queryNominatim(query: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=za&q=${encodeURIComponent(parts.join(", "))}`,
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=za&q=${encodeURIComponent(query)}`,
       {
         headers: {
           // Nominatim's usage policy requires a real identifying
@@ -48,6 +50,39 @@ export async function geocodeAddress(
     console.error("Geocoding failed", err);
     return null;
   }
+}
+
+// Two-tier match, shaped by what the live client base's addresses actually
+// look like (full addresses, street-only, unit/complex prefixes Nominatim
+// can't parse, placeholders): try the full address first, and when that
+// doesn't match, fall back to the city's own coordinates. A city-centroid
+// point is approximate, but for a directory's "Near me" ordering it puts
+// the business in the right part of the country rather than excluding it
+// from distance results entirely — the client can tighten it any time by
+// cleaning up their address in the dashboard.
+export async function geocodeAddress(
+  address: string | null,
+  city: string | null
+): Promise<{ lat: number; lng: number } | null> {
+  const trimmedAddress = (address ?? "").trim();
+  const usableAddress =
+    trimmedAddress.length > 0 &&
+    !NON_PHYSICAL_ADDRESSES.has(trimmedAddress.toLowerCase()) &&
+    /[a-z]/i.test(trimmedAddress)
+      ? trimmedAddress
+      : null;
+  const usableCity = (city ?? "").trim() || null;
+
+  if (usableAddress) {
+    const full = await queryNominatim([usableAddress, usableCity, "South Africa"].filter(Boolean).join(", "));
+    if (full) return full;
+  }
+
+  if (usableCity) {
+    return queryNominatim(`${usableCity}, South Africa`);
+  }
+
+  return null;
 }
 
 // Postgres's `geography` type accepts EWKT text directly via its own input
