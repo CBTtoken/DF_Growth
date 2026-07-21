@@ -17,7 +17,7 @@ The first three sprints of two new revenue-bearing modules are live for Growth-t
 | **Status** | Live |
 | **Functional areas shipped** | 32 |
 | **Backlog candidates** | 7 |
-| **Pricing** | Foundation R100/mo · Growth R180/mo or R1,199/yr |
+| **Pricing** | Foundation R100/mo or R900/yr · Growth R180/mo or R1,199/yr |
 
 ---
 
@@ -27,7 +27,7 @@ Everything below is built, deployed, and verified against the live production si
 
 | Area | What's there |
 |---|---|
-| **Pricing & tiers** | Foundation (free trial), Growth (monthly/annual) — Enterprise priced but not yet purchasable. Founding Business / Day One offer has been discontinued and removed. |
+| **Pricing & tiers** | Foundation (free trial, then monthly or annual), Growth (monthly/annual) — Enterprise priced but not yet purchasable. Founding Business / Day One offer has been discontinued and removed. Paystack checkout offers every channel enabled on the merchant account (card, Instant EFT, Capitec Pay, SnapScan) automatically, with the options now named in payment-step copy. |
 | **Web onboarding** | 7–9 step guided wizard, autosave/resume, AI-drafted landing copy, 10 real templates, optional city field |
 | **WhatsApp onboarding** | Full signup-to-payment conversation, resumable, same data model as web |
 | **Email + password login** | Real password auth, magic-link fallback, forgot/reset flow |
@@ -37,7 +37,7 @@ Everything below is built, deployed, and verified against the live production si
 | **Booking & Shop (core flow)** | Real-time appointment/rental booking with database-enforced double-booking prevention, and a product catalog + cart with atomic stock control (no overselling) — both live on Growth-and-above client pages, and now named as a Growth-tier feature on the pricing card. Foundation clients see a locked "Upgrade to Growth" card instead of the real tool. Payment is still arranged directly between business and customer for now; real in-page checkout and live courier shipping are the next two build sprints. |
 | **Shop Now directory (`/shop`)** | A public, cross-client page listing real products from every Growth member with Shop switched on — search, card grid, each card links to that business's own page to complete checkout (discovery only, same relationship Marketplace has to individual pages). Linked from the header and footer next to Marketplace. Standing 365 appears as a featured listing pointing to its own real order flow, not migrated onto the generic Shop system. |
 | **Multi-account switcher** | One login owning more than one member account can switch between them from the dashboard |
-| **Marketplace directory** | Redesigned text-forward cards (Google-Business-Profile style), search, industry filter, city filter, ratings badge on cards, "most visited" sort |
+| **Marketplace directory** | Redesigned text-forward cards (Google-Business-Profile style), search, industry filter, city filter, ratings badge on cards, "most visited" sort, and an opt-in "Near me" sort with real distance badges (PostGIS + address geocoding, browser GPS with IP-location fallback — never prompts for location unless picked) |
 | **Admin panel** | Full client list, CSV export, Meta-help queue, signup channel visibility, Reactivation Batch view, Flagged Reviews queue, Events Queue |
 | **Admin Danger Zone** | Deactivate/reactivate a page, or permanently delete an account |
 | **Automated lifecycle emails** | Invite, welcome, trial reminders, nudges, lead notifications, order/fulfilment emails, OTP verification codes — house style throughout |
