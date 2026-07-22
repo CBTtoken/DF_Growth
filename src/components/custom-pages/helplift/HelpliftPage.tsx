@@ -8,7 +8,6 @@ import { Hero } from "./Hero";
 import { ImpactSection } from "./ImpactSection";
 import { FourPillars } from "./FourPillars";
 import { Gallery } from "./Gallery";
-import { OurStory } from "./OurStory";
 import { GetInvolved } from "./GetInvolved";
 import { HELPLIFT_BLUE, HELPLIFT_CREAM } from "./brand";
 import type { CustomPageProps } from "@/lib/custom-pages/registry";
@@ -54,9 +53,6 @@ export function HelpliftPage({
       </ScrollReveal>
       <ScrollReveal>
         <Gallery />
-      </ScrollReveal>
-      <ScrollReveal>
-        <OurStory />
       </ScrollReveal>
       <ScrollReveal>
         <GetInvolved callPhone={callPhone} address={HELPLIFT_ADDRESS} />

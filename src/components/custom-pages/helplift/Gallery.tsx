@@ -41,20 +41,23 @@ export function Gallery() {
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        {/* These are self-contained designed graphics (text baked in), so
+            they render object-contain on a soft card — never cropped, so no
+            wording is cut off. The wide 2025/26 infographic spans the row. */}
+        <div className="mt-12 grid gap-4 sm:grid-cols-2">
           {GALLERY_IMAGES.map((img) => (
             <div
               key={img.src}
-              className={`relative overflow-hidden rounded-2xl border border-gray-100 bg-gray-100 ${
-                img.wide ? "col-span-2 aspect-[16/10]" : "aspect-square"
+              className={`relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-sm ${
+                img.wide ? "sm:col-span-2 aspect-[3/2]" : "aspect-square"
               }`}
             >
               <Image
                 src={img.src}
                 alt={img.alt}
                 fill
-                sizes="(min-width: 640px) 33vw, 50vw"
-                className="object-cover"
+                sizes="(min-width: 640px) 50vw, 100vw"
+                className="rounded-xl object-contain"
               />
             </div>
           ))}
