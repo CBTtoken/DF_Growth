@@ -8,7 +8,9 @@ import { Hero } from "./Hero";
 import { ImpactSection } from "./ImpactSection";
 import { FourPillars } from "./FourPillars";
 import { Gallery } from "./Gallery";
+import { Infographic } from "./Infographic";
 import { GetInvolved } from "./GetInvolved";
+import { PartnershipSection } from "./PartnershipSection";
 import { HELPLIFT_BLUE, HELPLIFT_CREAM } from "./brand";
 import type { CustomPageProps } from "@/lib/custom-pages/registry";
 
@@ -17,6 +19,10 @@ import type { CustomPageProps } from "@/lib/custom-pages/registry";
 // Warm humanist serif for headings only (Fraunces), exposed as a CSS
 // variable the same way Buffelskop exposes Playfair — body copy stays in the
 // app's default sans. The "human, not clinical" direction the brief asks for.
+//
+// Emotional arc: name the challenge (hero) -> the difference made (impact)
+// -> how (pillars) -> proof (gallery + infographic) -> get involved -> the
+// DigitalFlyer give-back partnership at the very bottom.
 const fraunces = Fraunces({
   subsets: ["latin"],
   weight: ["500", "600", "700"],
@@ -25,9 +31,8 @@ const fraunces = Fraunces({
 });
 
 // Vanderbijlpark address, confirmed by Dewald (NOT the stale Sedgefield one
-// from the legacy export). Kept here so the contact block and any future
-// map read one source.
-const HELPLIFT_ADDRESS = "Cnr. Arhbeck & Mollier St., Vanderbijlpark, 1900";
+// from the legacy export).
+const HELPLIFT_ADDRESS = "Cnr. Arhbeck & Mollier St. (ERHA bldg), CE6, Vanderbijlpark, 1900";
 
 export function HelpliftPage({
   clientId,
@@ -37,6 +42,8 @@ export function HelpliftPage({
   contactEmail,
   callPhone,
   whatsappPhone,
+  photos,
+  photosStorageBase,
 }: CustomPageProps) {
   const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/helplift`;
 
@@ -52,7 +59,10 @@ export function HelpliftPage({
         <FourPillars />
       </ScrollReveal>
       <ScrollReveal>
-        <Gallery />
+        <Gallery photos={photos} storageBase={photosStorageBase} />
+      </ScrollReveal>
+      <ScrollReveal>
+        <Infographic />
       </ScrollReveal>
       <ScrollReveal>
         <GetInvolved callPhone={callPhone} address={HELPLIFT_ADDRESS} />
@@ -69,6 +79,9 @@ export function HelpliftPage({
           websiteUrl={null}
           businessName={businessName}
         />
+      </ScrollReveal>
+      <ScrollReveal>
+        <PartnershipSection />
       </ScrollReveal>
       <PixelConsentGate pixelId={metaPixelId} />
     </main>

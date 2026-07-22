@@ -38,6 +38,15 @@ export type CustomPageProps = {
   bookingEnabled: boolean;
   bookableUnits: PublicBookableUnit[];
   bookingRules: { operating_hours: Record<string, { open: string; close: string }[]>; buffer_minutes: number } | null;
+  // Dewald's ask 2026-07-22 (Helplift): a custom page never received the
+  // client's uploaded photo gallery, so a custom-page member couldn't
+  // self-manage images from the dashboard the way every templated member
+  // can. Threaded through now (already fetched by the shared query in
+  // page.tsx) so Helplift's skills-development gallery reads from the same
+  // dashboard-managed client_photos as everyone else. Pages that don't want
+  // a photo gallery just ignore these.
+  photos: { id: string; storage_path: string }[];
+  photosStorageBase: string;
 };
 
 export const customPages: Record<string, ComponentType<CustomPageProps>> = {

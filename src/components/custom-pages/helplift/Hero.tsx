@@ -1,73 +1,74 @@
 import Image from "next/image";
-import { HELPLIFT_BLUE, HELPLIFT_BLUE_DARK, HELPLIFT_LIME, HAS_LOGO } from "./brand";
+import { HELPLIFT_BLUE, HELPLIFT_BLUE_DARK, HELPLIFT_LIME, HELPLIFT_LIME_DARK, HELPLIFT_INK } from "./brand";
 
-// Sec 3 Hero: no wide-format hero photo was supplied and the material is
-// close-up gallery imagery, so this is a clean colour-block hero built from
-// the logo's blue + lime rather than a stretched, unsuitable photo. Logo
-// slot is gated on HAS_LOGO so preview never shows a broken image before
-// the real file lands.
+// Sec 3 Hero, elevated per Dewald (2026-07-22): built around the full
+// horizontal logo (logo-full.png) rather than the circular mark, and led
+// by a headline that names the challenge Helplift solves — the gap between
+// people who have more than enough and people who go without — so a first-
+// time visitor immediately identifies with it and wants to help. Light,
+// warm ground (their own blue + lime as soft accents) keeps the human,
+// not-clinical feel the brief asks for; no stretched hero photo is forced.
 export function Hero({ callPhone }: { callPhone: string | null }) {
   return (
-    <section
-      className="relative overflow-hidden px-5 py-20 text-white sm:px-8 sm:py-28"
-      style={{ background: `linear-gradient(135deg, ${HELPLIFT_BLUE_DARK} 0%, ${HELPLIFT_BLUE} 55%, ${HELPLIFT_LIME} 140%)` }}
-    >
-      {/* Soft decorative blooms, not a photo — keeps the warm, human feel
-          the brief asks for without forcing unsuitable imagery. */}
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-white/10 blur-2xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-20 size-80 rounded-full" style={{ backgroundColor: `${HELPLIFT_LIME}33`, filter: "blur(48px)" }} />
+    <section className="relative overflow-hidden bg-white px-5 pb-20 pt-14 sm:px-8 sm:pb-28 sm:pt-20">
+      {/* Soft brand blooms — warmth without an unsuitable photo. */}
+      <div aria-hidden className="pointer-events-none absolute -right-28 -top-28 size-80 rounded-full" style={{ backgroundColor: `${HELPLIFT_BLUE}12`, filter: "blur(40px)" }} />
+      <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full" style={{ backgroundColor: `${HELPLIFT_LIME}1f`, filter: "blur(56px)" }} />
 
       <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
-        {HAS_LOGO ? (
-          <Image
-            src="/custom-pages/helplift/logo.png"
-            alt="Helplift Network Vaal Triangle"
-            width={132}
-            height={132}
-            className="mb-7 size-28 rounded-full bg-white/95 object-contain p-3 shadow-lg sm:size-32"
-            priority
-          />
-        ) : (
-          <span className="mb-7 grid size-28 place-items-center rounded-full bg-white/95 text-center shadow-lg sm:size-32">
-            <span className="px-2 text-sm font-extrabold leading-tight" style={{ color: HELPLIFT_BLUE }}>
-              HELPLIFT
-              <span className="mt-0.5 block text-[0.6rem] font-semibold tracking-wide" style={{ color: "#6FA82E" }}>
-                NETWORK
-              </span>
-            </span>
-          </span>
-        )}
+        <Image
+          src="/custom-pages/helplift/logo-full.png"
+          alt="Helplift Network — Inspire and Enable people to help people"
+          width={520}
+          height={160}
+          priority
+          className="h-auto w-full max-w-[300px] sm:max-w-[420px]"
+        />
 
-        <span className="mb-4 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest backdrop-blur">
-          Non-Profit Organisation · NPO 152-090
+        <span
+          className="mt-8 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-widest"
+          style={{ backgroundColor: `${HELPLIFT_BLUE}12`, color: HELPLIFT_BLUE_DARK }}
+        >
+          Non-Profit Organisation · Vaal Triangle · NPO 152-090
         </span>
 
-        <h1 className="font-[family-name:var(--font-helplift-heading)] text-4xl font-bold leading-tight tracking-tight sm:text-5xl md:text-6xl">
-          Inspire and Enable people to help people
+        <h1
+          className="mt-6 font-[family-name:var(--font-helplift-heading)] text-4xl font-bold leading-[1.08] tracking-tight text-balance sm:text-5xl md:text-[3.4rem]"
+          style={{ color: HELPLIFT_INK }}
+        >
+          Some have more than enough.
+          <br className="hidden sm:block" /> Others go{" "}
+          <span style={{ color: HELPLIFT_LIME_DARK }}>without</span>. We connect the two.
         </h1>
 
-        <p className="mt-5 max-w-xl text-base leading-relaxed text-white/90 sm:text-lg">
-          In the Vaal Triangle, we connect the generosity of donors and volunteers directly to the
-          real needs of the community — through giving, dignity, skills, and support.
+        <p className="mt-6 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg">
+          Helplift Network links the generosity of donors and volunteers directly to real needs in
+          our community — with dignity, skill, and care. This is how ordinary people change the
+          world: by helping each other.
         </p>
 
         <div className="mt-9 flex flex-col gap-3 sm:flex-row">
           <a
             href="#lead-form"
-            className="inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm font-bold shadow-sm transition hover:-translate-y-0.5"
-            style={{ color: HELPLIFT_BLUE_DARK }}
+            className="inline-flex items-center justify-center rounded-full px-8 py-3.5 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5"
+            style={{ backgroundColor: HELPLIFT_BLUE }}
           >
-            Get Involved
+            I want to help
           </a>
           {callPhone && (
             <a
               href={`tel:${callPhone.replace(/\s+/g, "")}`}
-              className="inline-flex items-center justify-center rounded-full border-2 border-white/70 px-8 py-3.5 text-sm font-bold text-white transition hover:bg-white/10"
+              className="inline-flex items-center justify-center rounded-full border-2 px-8 py-3.5 text-sm font-bold transition hover:-translate-y-0.5"
+              style={{ borderColor: `${HELPLIFT_BLUE}33`, color: HELPLIFT_BLUE_DARK }}
             >
               Call {callPhone}
             </a>
           )}
         </div>
+
+        <p className="mt-8 text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: HELPLIFT_LIME_DARK }}>
+          Inspire · Enable · Empower
+        </p>
       </div>
     </section>
   );

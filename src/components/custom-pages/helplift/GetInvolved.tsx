@@ -1,15 +1,23 @@
 import { Phone, MapPin, Clock, Facebook, HeartHandshake, Users, Handshake } from "lucide-react";
-import { HELPLIFT_BLUE, HELPLIFT_BLUE_DARK, HELPLIFT_LIME_DARK, HELPLIFT_INK, HELPLIFT_CREAM, PARTNER_REFERRAL_URL } from "./brand";
+import { HELPLIFT_BLUE, HELPLIFT_LIME_DARK, HELPLIFT_INK, HELPLIFT_CREAM } from "./brand";
 
-// Sec 3 Get Involved / Contact + Partner button. As an NPO (not a sales
-// page) the calls to action are give / volunteer / partner, never "buy now."
-// The contact form itself is the shared LeadForm, rendered by HelpliftPage;
-// this section carries the ways-to-help framing, the confirmed contact
-// details, and the real agent-referral "Partner With Us" button.
+// Sec 3 Get Involved / Contact. As an NPO (not a sales page) the calls to
+// action are give / volunteer / partner, never "buy now." The contact form
+// itself is the shared LeadForm, rendered by HelpliftPage; this section
+// carries the ways-to-help framing and the confirmed contact details. The
+// DigitalFlyer give-back partnership is now its own section at the very
+// bottom of the page (PartnershipSection), per Dewald 2026-07-22.
 const WAYS = [
   { icon: HeartHandshake, title: "Give", body: "Donate goods or funds through our voucher programme and reach families directly." },
   { icon: Users, title: "Volunteer", body: "Lend your time and skills to our stores, courses and support work." },
-  { icon: Handshake, title: "Partner", body: "Connect your organisation with ours to multiply the impact across the Vaal Triangle." },
+  { icon: Handshake, title: "Partner", body: "Connect your organisation or business with ours to multiply the impact across the Vaal Triangle." },
+];
+
+// Wednesday runs shorter than the other weekdays (Dewald, 2026-07-22).
+const HOURS = [
+  { days: "Mon, Tue, Thu, Fri", time: "09:00 – 15:00" },
+  { days: "Wednesday", time: "09:00 – 13:00" },
+  { days: "Saturday", time: "09:00 – 12:00" },
 ];
 
 export function GetInvolved({
@@ -19,10 +27,8 @@ export function GetInvolved({
   callPhone: string | null;
   address: string | null;
 }) {
-  const partnerHref = PARTNER_REFERRAL_URL ?? "#lead-form";
-
   return (
-    <section className="px-5 py-20 sm:px-8 sm:py-24" style={{ backgroundColor: HELPLIFT_CREAM }}>
+    <section id="get-involved" className="px-5 py-20 sm:px-8 sm:py-24" style={{ backgroundColor: HELPLIFT_CREAM }}>
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-bold uppercase tracking-widest" style={{ color: HELPLIFT_LIME_DARK }}>
@@ -51,7 +57,7 @@ export function GetInvolved({
           })}
         </div>
 
-        <div className="mt-8 grid gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:grid-cols-2 sm:p-8">
+        <div className="mt-8 grid gap-6 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:grid-cols-2 sm:p-8">
           <ul className="space-y-3 text-sm text-gray-700">
             {callPhone && (
               <li className="flex items-center gap-3">
@@ -65,10 +71,6 @@ export function GetInvolved({
                 <span>{address}</span>
               </li>
             )}
-            <li className="flex items-start gap-3">
-              <Clock className="mt-0.5 size-4 shrink-0" style={{ color: HELPLIFT_BLUE }} aria-hidden />
-              <span>Mon–Fri 09:00–15:00 · Sat 09:00–12:00</span>
-            </li>
             <li className="flex items-center gap-3">
               <Facebook className="size-4 shrink-0" style={{ color: HELPLIFT_BLUE }} aria-hidden />
               <a href="https://www.facebook.com/HelpliftNet" target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">
@@ -77,18 +79,19 @@ export function GetInvolved({
             </li>
           </ul>
 
-          <div className="flex flex-col items-start justify-center gap-3 sm:items-end sm:text-right">
-            <p className="text-sm text-gray-600">
-              Represent an organisation that wants to partner with Helplift?
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold" style={{ color: HELPLIFT_INK }}>
+              <Clock className="size-4 shrink-0" style={{ color: HELPLIFT_BLUE }} aria-hidden />
+              Opening hours
             </p>
-            <a
-              href={partnerHref}
-              {...(PARTNER_REFERRAL_URL ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              className="inline-flex items-center justify-center rounded-full px-7 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5"
-              style={{ backgroundColor: HELPLIFT_BLUE_DARK }}
-            >
-              Partner With Us
-            </a>
+            <ul className="mt-2 space-y-1 text-sm text-gray-600">
+              {HOURS.map((h) => (
+                <li key={h.days} className="flex justify-between gap-4">
+                  <span>{h.days}</span>
+                  <span className="font-medium tabular-nums" style={{ color: HELPLIFT_INK }}>{h.time}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

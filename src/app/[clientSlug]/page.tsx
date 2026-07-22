@@ -242,6 +242,8 @@ export default async function ClientLandingPage({
           bookingEnabled={client.booking_enabled}
           bookableUnits={bookableUnits}
           bookingRules={bookingRules}
+          photos={photos}
+          photosStorageBase={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`}
         />
       </>
     );

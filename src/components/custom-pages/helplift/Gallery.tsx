@@ -1,30 +1,22 @@
-import Image from "next/image";
-import { GALLERY_IMAGES, HELPLIFT_LIME_DARK, HELPLIFT_INK } from "./brand";
+"use client";
 
-// Sec 3 Gallery: the real sewing-course photos (certificate presentations,
-// finished bag/blanket projects) plus the full 2025/26 impact infographic
-// PNG as its own item. Do NOT include any image with the NWU logo or the
-// "Global Innovative Forefront Talent" mark — those are excluded when the
-// files are added to GALLERY_IMAGES.
-//
-// Until the real files land in public/custom-pages/helplift/ (GALLERY_IMAGES
-// is populated), this renders a quiet placeholder rather than broken images.
-// The page stays unpublished during that window.
-export function Gallery() {
-  if (GALLERY_IMAGES.length === 0) {
-    return (
-      <section className="px-5 py-16 sm:px-8" style={{ backgroundColor: "#FFFFFF" }}>
-        <div className="mx-auto max-w-3xl rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-10 text-center">
-          <p className="font-[family-name:var(--font-helplift-heading)] text-lg font-bold" style={{ color: HELPLIFT_INK }}>
-            Gallery — photos to be added
-          </p>
-          <p className="mt-2 text-sm text-gray-500">
-            The real sewing-course photos and the 2025/26 impact infographic slot in here before this page goes live.
-          </p>
-        </div>
-      </section>
-    );
-  }
+import { useState } from "react";
+import Image from "next/image";
+import { HELPLIFT_LIME_DARK, HELPLIFT_INK } from "./brand";
+
+// Sec 3 Gallery, reworked per Dewald (2026-07-22): the skills-development
+// graphics now come from the client's own dashboard-managed photo gallery
+// (client_photos), so Helplift can add / remove / reorder them themselves as
+// courses change — exactly like every other self-build member. Shown as a
+// compact thumbnail grid (was taking up too much of the page) that opens a
+// full, uncropped lightbox on click, so the text baked into each graphic
+// stays fully readable.
+type Photo = { id: string; storage_path: string };
+
+export function Gallery({ photos, storageBase }: { photos: Photo[]; storageBase: string }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  if (photos.length === 0) return null;
 
   return (
     <section className="px-5 py-20 sm:px-8 sm:py-24" style={{ backgroundColor: "#FFFFFF" }}>
@@ -37,32 +29,56 @@ export function Gallery() {
             Real people, real skills, real proof
           </h2>
           <p className="mt-4 text-base leading-relaxed text-gray-600">
-            From our skills-development courses to the goods and support delivered across the Vaal Triangle.
+            From our skills-development courses to the goods and support delivered across the Vaal Triangle. Tap any image to view it in full.
           </p>
         </div>
 
-        {/* These are self-contained designed graphics (text baked in), so
-            they render object-contain on a soft card — never cropped, so no
-            wording is cut off. The wide 2025/26 infographic spans the row. */}
-        <div className="mt-12 grid gap-4 sm:grid-cols-2">
-          {GALLERY_IMAGES.map((img) => (
-            <div
-              key={img.src}
-              className={`relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-2 shadow-sm ${
-                img.wide ? "sm:col-span-2 aspect-[3/2]" : "aspect-square"
-              }`}
+        <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {photos.map((photo, i) => (
+            <button
+              key={photo.id}
+              type="button"
+              onClick={() => setOpenIndex(i)}
+              className="group relative aspect-square overflow-hidden rounded-2xl border border-gray-100 shadow-sm"
             >
               <Image
-                src={img.src}
-                alt={img.alt}
+                src={`${storageBase}/${photo.storage_path}`}
+                alt="Helplift skills-development moment"
                 fill
-                sizes="(min-width: 640px) 50vw, 100vw"
-                className="rounded-xl object-contain"
+                sizes="(min-width: 640px) 220px, 45vw"
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
-            </div>
+            </button>
           ))}
         </div>
       </div>
+
+      {openIndex !== null && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+          onClick={() => setOpenIndex(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setOpenIndex(null)}
+            aria-label="Close"
+            className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+          >
+            &times;
+          </button>
+          <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
+            <Image
+              src={`${storageBase}/${photos[openIndex].storage_path}`}
+              alt="Helplift skills-development moment, enlarged"
+              fill
+              sizes="90vw"
+              className="object-contain"
+            />
+          </div>
+        </div>
+      )}
     </section>
   );
 }
