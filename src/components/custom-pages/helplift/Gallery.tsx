@@ -19,7 +19,7 @@ export function Gallery({ photos, storageBase }: { photos: Photo[]; storageBase:
   if (photos.length === 0) return null;
 
   return (
-    <section className="px-5 py-20 sm:px-8 sm:py-24" style={{ backgroundColor: "#FFFFFF" }}>
+    <section className="px-5 py-14 sm:px-8 sm:py-16" style={{ backgroundColor: "#FFFFFF" }}>
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-bold uppercase tracking-widest" style={{ color: HELPLIFT_LIME_DARK }}>

@@ -11,7 +11,7 @@ export function PartnershipSection() {
   const href = PARTNER_REFERRAL_URL ?? "#lead-form";
 
   return (
-    <section className="px-5 py-16 sm:px-8 sm:py-20" style={{ backgroundColor: "#FFFFFF" }}>
+    <section className="px-5 py-14 sm:px-8 sm:py-16" style={{ backgroundColor: "#FFFFFF" }}>
       <div
         className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl px-6 py-12 text-center text-white sm:px-12 sm:py-16"
         style={{ background: `linear-gradient(135deg, ${HELPLIFT_BLUE_DARK} 0%, ${HELPLIFT_BLUE} 100%)` }}

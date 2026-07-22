@@ -10,7 +10,7 @@ import { HELPLIFT_BLUE, HELPLIFT_BLUE_DARK, HELPLIFT_LIME, HELPLIFT_LIME_DARK, H
 // not-clinical feel the brief asks for; no stretched hero photo is forced.
 export function Hero({ callPhone }: { callPhone: string | null }) {
   return (
-    <section className="relative overflow-hidden bg-white px-5 pb-20 pt-14 sm:px-8 sm:pb-28 sm:pt-20">
+    <section className="relative overflow-hidden bg-white px-5 pb-14 pt-10 sm:px-8 sm:pb-16 sm:pt-14">
       {/* Soft brand blooms — warmth without an unsuitable photo. */}
       <div aria-hidden className="pointer-events-none absolute -right-28 -top-28 size-80 rounded-full" style={{ backgroundColor: `${HELPLIFT_BLUE}12`, filter: "blur(40px)" }} />
       <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-24 size-96 rounded-full" style={{ backgroundColor: `${HELPLIFT_LIME}1f`, filter: "blur(56px)" }} />
@@ -22,7 +22,7 @@ export function Hero({ callPhone }: { callPhone: string | null }) {
           width={520}
           height={160}
           priority
-          className="h-auto w-full max-w-[300px] sm:max-w-[420px]"
+          className="h-auto w-full max-w-[240px] sm:max-w-[380px]"
         />
 
         <span
@@ -33,11 +33,10 @@ export function Hero({ callPhone }: { callPhone: string | null }) {
         </span>
 
         <h1
-          className="mt-6 font-[family-name:var(--font-helplift-heading)] text-4xl font-bold leading-[1.08] tracking-tight text-balance sm:text-5xl md:text-[3.4rem]"
+          className="mt-5 font-[family-name:var(--font-helplift-heading)] text-[2rem] font-bold leading-[1.18] tracking-tight text-balance sm:text-5xl sm:leading-[1.12] md:text-[3.25rem]"
           style={{ color: HELPLIFT_INK }}
         >
-          Some have more than enough.
-          <br className="hidden sm:block" /> Others go{" "}
+          Some have more than enough. Others go{" "}
           <span style={{ color: HELPLIFT_LIME_DARK }}>without</span>. We connect the two.
         </h1>
 

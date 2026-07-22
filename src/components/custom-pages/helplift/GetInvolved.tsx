@@ -28,7 +28,7 @@ export function GetInvolved({
   address: string | null;
 }) {
   return (
-    <section id="get-involved" className="px-5 py-20 sm:px-8 sm:py-24" style={{ backgroundColor: HELPLIFT_CREAM }}>
+    <section id="get-involved" className="px-5 py-14 sm:px-8 sm:py-16" style={{ backgroundColor: HELPLIFT_CREAM }}>
       <div className="mx-auto max-w-5xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-bold uppercase tracking-widest" style={{ color: HELPLIFT_LIME_DARK }}>
