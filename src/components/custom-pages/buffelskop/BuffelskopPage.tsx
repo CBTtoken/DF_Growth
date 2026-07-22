@@ -6,6 +6,7 @@ import { LeadForm } from "@/components/landing/LeadForm";
 import { ScrollReveal } from "@/components/landing/ScrollReveal";
 import { Hero } from "@/components/custom-pages/buffelskop/Hero";
 import { NatureSection } from "@/components/custom-pages/buffelskop/NatureSection";
+import { Gallery } from "@/components/custom-pages/buffelskop/Gallery";
 import { ChooseYourGrind } from "@/components/custom-pages/buffelskop/ChooseYourGrind";
 import { BulkBanner } from "@/components/custom-pages/buffelskop/BulkBanner";
 import { Pricing } from "@/components/custom-pages/buffelskop/Pricing";
@@ -35,6 +36,8 @@ export function BuffelskopPage({
   contactEmail,
   callPhone,
   whatsappPhone,
+  photos,
+  photosStorageBase,
 }: CustomPageProps) {
   const url = `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/buffelskop`;
 
@@ -46,6 +49,9 @@ export function BuffelskopPage({
       <Hero />
       <ScrollReveal>
         <NatureSection />
+      </ScrollReveal>
+      <ScrollReveal>
+        <Gallery photos={photos} storageBase={photosStorageBase} />
       </ScrollReveal>
       <ScrollReveal>
         <ChooseYourGrind />
