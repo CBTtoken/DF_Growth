@@ -11,6 +11,7 @@ import { SectionDivider } from "@/components/marketing/SectionDivider";
 import { SiteFooter } from "@/components/SiteFooter";
 import { GetInTouchSection } from "@/components/marketing/GetInTouchSection";
 import { SHOWCASE_SAMPLES } from "@/lib/templates/sample-showcase";
+import { getTopVisitedClients } from "@/lib/growth-client/top-visited";
 
 // Combined spec Sec 16: factual one-liners for the footer section, now
 // that persuasion for these three lives in the pricing cards themselves —
@@ -195,32 +196,19 @@ type RealClientPage = { slug: string; businessName: string; thumbnailUrl: string
 // explicit hero_photo_id selection wins, otherwise the first gallery
 // photo). No iframe here on purpose — see the comment at this section's
 // render site for why that was already tried and reverted twice.
+//
+// Dewald's feedback, 2026-07-24: a raw gallery/hero photo still isn't a
+// screenshot of the actual page ("using their gallery images does not
+// really give the feeling of the actual page") — a real, automatically
+// captured screenshot (src/lib/screenshot, refreshed weekly by
+// src/app/api/cron/refresh-screenshots for the top-visited clients) now
+// wins over the hero/gallery photo when one exists, since it's the most
+// accurate representation of what the page actually looks like.
 async function getTopVisitedClientPages(limit = 3): Promise<RealClientPage[]> {
+  const topClients = await getTopVisitedClients(limit);
+  if (topClients.length === 0) return [];
+
   const admin = createAdminClient();
-  const { data: views } = await admin.from("page_views").select("growth_client_id").limit(5000);
-  if (!views || views.length === 0) return [];
-
-  const counts = new Map<string, number>();
-  for (const v of views) {
-    counts.set(v.growth_client_id, (counts.get(v.growth_client_id) ?? 0) + 1);
-  }
-  const rankedIds = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
-  if (rankedIds.length === 0) return [];
-
-  const { data: clients } = await admin
-    .from("growth_clients")
-    .select("id, business_name, slug, hero_photo_id")
-    .in("id", rankedIds.slice(0, limit * 3))
-    .eq("status", "active")
-    .not("slug", "is", null);
-  if (!clients) return [];
-
-  const rank = new Map(rankedIds.map((id, i) => [id, i]));
-  const topClients = clients
-    .filter((c): c is typeof c & { slug: string } => !!c.slug)
-    .sort((a, b) => (rank.get(a.id) ?? 999) - (rank.get(b.id) ?? 999))
-    .slice(0, limit);
-
   const clientIds = topClients.map((c) => c.id);
   const { data: allPhotos } = clientIds.length
     ? await admin
@@ -238,14 +226,20 @@ async function getTopVisitedClientPages(limit = 3): Promise<RealClientPage[]> {
   }
 
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
+  const screenshotsStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-screenshots`;
 
   return topClients.map((c) => {
     const clientPhotos = photosByClient.get(c.id) ?? [];
     const heroPhoto = c.hero_photo_id ? clientPhotos.find((p) => p.id === c.hero_photo_id) : clientPhotos[0];
+    const thumbnailUrl = c.screenshot_path
+      ? `${screenshotsStorageBase}/${c.screenshot_path}`
+      : heroPhoto
+        ? `${photosStorageBase}/${heroPhoto.storage_path}`
+        : null;
     return {
       slug: c.slug,
       businessName: c.business_name,
-      thumbnailUrl: heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : null,
+      thumbnailUrl,
     };
   });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { GET as expireEvents } from "../expire-events/route";
 import { GET as onboardingNudge } from "../onboarding-nudge/route";
 import { GET as trialReminders } from "../trial-reminders/route";
+import { GET as refreshScreenshots } from "../refresh-screenshots/route";
 
 // All three jobs now share one invocation instead of the three separate
 // function budgets they had as individual endpoints, and two of them loop
@@ -37,11 +38,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const jobs = [
+  const jobs: [string, (req: Request) => Promise<Response>][] = [
     ["expireEvents", expireEvents],
     ["onboardingNudge", onboardingNudge],
     ["trialReminders", trialReminders],
-  ] as const;
+  ];
+  // Screenshot refresh only needs to run weekly — real pages don't change
+  // often enough to justify a daily capture, and running it daily would
+  // burn through the managed screenshot API's free 100/month tier for no
+  // real benefit. Monday (UTC) chosen arbitrarily; any fixed day works.
+  if (new Date().getUTCDay() === 1) {
+    jobs.push(["refreshScreenshots", refreshScreenshots]);
+  }
 
   const results: Record<string, unknown> = {};
   for (const [name, handler] of jobs) {

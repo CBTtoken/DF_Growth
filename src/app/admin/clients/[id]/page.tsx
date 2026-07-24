@@ -12,6 +12,7 @@ import { AdminClientBuilder } from "@/components/admin/AdminClientBuilder";
 import { AdminMediaSection } from "@/components/admin/AdminMediaSection";
 import { AssignAgentForm } from "@/components/admin/AssignAgentForm";
 import { DangerZone } from "@/components/admin/DangerZone";
+import { ScreenshotRefreshButton } from "@/components/admin/ScreenshotRefreshButton";
 import { Card } from "@/components/ui/Card";
 import { ExternalLinkButton } from "@/components/ui/Button";
 import { StatusPill } from "@/components/ui/StatusPill";
@@ -254,6 +255,8 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             </div>
           )}
         </Card>
+
+        <ScreenshotRefreshButton clientId={client.id} screenshotCapturedAt={client.screenshot_captured_at} />
 
         <DangerZone clientId={client.id} isActive={client.status === "active"} />
       </div>

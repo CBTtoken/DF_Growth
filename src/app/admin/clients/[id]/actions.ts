@@ -9,6 +9,7 @@ import { sendEmail } from "@/lib/email/resend";
 import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 import { planCodeForTier, type Tier, type BillingInterval } from "@/lib/paystack/plans";
 import { step1Schema, step2Schema, step3Schema, templateSchema, step5Schema, step6Schema } from "@/lib/schemas/intake";
+import { captureAndStoreScreenshot } from "@/lib/screenshot/capture-and-store";
 
 type MarketplaceUrlState = { error?: string; success?: boolean } | null;
 type PlanControlState = { error?: string; success?: boolean } | null;
@@ -352,6 +353,27 @@ export async function toggleClientVisibility(clientId: string) {
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/admin");
   revalidatePath("/marketplace");
+  return { success: true };
+}
+
+// Real page screenshot for marketing use ("See It In Action" on
+// /pricing) — the weekly cron (src/app/api/cron/refresh-screenshots)
+// covers the top-visited clients automatically, this is the manual
+// escape hatch for right after a big edit, or for a client the weekly
+// sweep hasn't reached yet.
+export async function refreshClientScreenshot(clientId: string) {
+  const adminUser = await requireAdminEmail();
+  if ("error" in adminUser) return { error: "Not authorized." };
+
+  const admin = createAdminClient();
+  const { data: client } = await admin.from("growth_clients").select("slug").eq("id", clientId).single();
+  if (!client?.slug) return { error: "Client not found or has no live page." };
+
+  const result = await captureAndStoreScreenshot(clientId, client.slug);
+  if (!result.ok) return { error: result.error ?? "Screenshot capture failed." };
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/pricing");
   return { success: true };
 }
 
