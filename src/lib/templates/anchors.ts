@@ -182,10 +182,17 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
   "dark-mode": {
     id: "dark-mode",
     headingFont: "display-condensed",
-    cardRecipe: "dark-panel",
+    // Dewald's live call after seeing it: dark hero + light body reads
+    // better than committing the whole page to dark — the contrast between
+    // the two was the actual good part of the original design, not
+    // something to remove. cardRecipe reverts to a light-safe recipe since
+    // "dark-panel" (translucent white-on-dark) is unreadable on a light
+    // section; the new structural layouts (spotlight-quote/spotlight-tiles/
+    // ambient-stack) stay — those were never dependent on a dark surface.
+    cardRecipe: "soft-shadow",
     eyebrowStyle: "pill-badge",
     spacing: "standard",
-    sectionSurface: "dark",
+    sectionSurface: "light-default",
     trustLayout: "spotlight-quote",
     servicesLayout: "spotlight-tiles",
     packagesLayout: "ambient-stack",
