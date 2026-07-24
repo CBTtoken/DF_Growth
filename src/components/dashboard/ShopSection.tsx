@@ -15,6 +15,7 @@ import {
   type CsvRowError,
 } from "@/app/dashboard/shop-actions";
 import { SHOP_CSV_COLUMNS } from "@/lib/schemas/shop";
+import { Card } from "@/components/ui/Card";
 
 export type ShopProduct = {
   id: string;
@@ -84,7 +85,7 @@ export function ShopSection({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-ink">Shop</h2>
@@ -163,7 +164,7 @@ export function ShopSection({
           </div>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 

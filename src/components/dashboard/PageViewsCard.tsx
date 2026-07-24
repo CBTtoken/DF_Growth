@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/Card";
 // Consolidated Sprint Sec 3.4: "a simple count, ideally a basic trend" —
 // bucketing happens here (client-render-time, on data already fetched by
 // the dashboard's own Promise.all) rather than a database query, simple
@@ -26,7 +27,7 @@ export function PageViewsCard({
   const last7DaysTotal = days.reduce((sum, d) => sum + d.count, 0);
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-lg font-bold tracking-tight text-ink">Page views</h2>
         <p className="text-xs text-gray-400">{last7DaysTotal} in the last 7 days</p>
@@ -44,6 +45,6 @@ export function PageViewsCard({
           </div>
         ))}
       </div>
-    </section>
+    </Card>
   );
 }

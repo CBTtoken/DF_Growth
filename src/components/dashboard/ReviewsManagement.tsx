@@ -1,4 +1,6 @@
 import { replyToReview, flagReviewAsBusiness } from "@/app/dashboard/reviews-actions";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 export type DashboardReview = {
   id: string;
@@ -20,7 +22,7 @@ export type DashboardReview = {
 // page) and works without JS.
 export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Reviews ({reviews.length})</h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -55,14 +57,11 @@ export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
                       name="replyText"
                       defaultValue={r.business_reply}
                       rows={2}
-                      className="rounded-lg border border-gray-200 p-2 text-sm"
+                      className="rounded-lg border border-gray-200 p-2 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
                     />
-                    <button
-                      type="submit"
-                      className="self-start rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
-                    >
+                    <Button type="submit" size="sm" className="self-start">
                       Update reply
-                    </button>
+                    </Button>
                   </form>
                 </details>
               </div>
@@ -74,14 +73,11 @@ export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
                     name="replyText"
                     rows={2}
                     placeholder="Thank you for your feedback..."
-                    className="rounded-lg border border-gray-200 p-2 text-sm"
+                    className="rounded-lg border border-gray-200 p-2 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
                   />
-                  <button
-                    type="submit"
-                    className="self-start rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white hover:bg-brand-dark"
-                  >
+                  <Button type="submit" size="sm" className="self-start">
                     Post reply
-                  </button>
+                  </Button>
                 </form>
               </details>
             )}
@@ -96,14 +92,11 @@ export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
                     name="reason"
                     rows={2}
                     placeholder="Why do you think this review isn't genuine?"
-                    className="rounded-lg border border-gray-200 p-2 text-sm"
+                    className="rounded-lg border border-gray-200 p-2 text-sm outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
                   />
-                  <button
-                    type="submit"
-                    className="self-start rounded-full border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 hover:border-gray-400"
-                  >
+                  <Button type="submit" variant="secondary" size="sm" className="self-start">
                     Flag for admin review
-                  </button>
+                  </Button>
                 </form>
               </details>
             )}
@@ -113,6 +106,6 @@ export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
           <p className="text-sm text-gray-400">No reviews yet — they&apos;ll show up here as customers leave them.</p>
         )}
       </ul>
-    </section>
+    </Card>
   );
 }

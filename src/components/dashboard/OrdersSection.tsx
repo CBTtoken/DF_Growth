@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { assignBatchNumber, markOrderShipped } from "@/app/dashboard/orders-actions";
+import { Card } from "@/components/ui/Card";
 
 export type BookOrder = {
   id: string;
@@ -30,7 +31,7 @@ export type BookOrder = {
 // requests their own custom order-taking page, not just for Dewald.
 export function OrdersSection({ orders }: { orders: BookOrder[] }) {
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Book orders</h2>
         <p className="text-sm text-gray-500">Standing 365 paperback orders, including personalisation details.</p>
@@ -45,7 +46,7 @@ export function OrdersSection({ orders }: { orders: BookOrder[] }) {
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }
 

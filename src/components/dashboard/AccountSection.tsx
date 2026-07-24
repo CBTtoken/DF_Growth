@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { cancelSubscription } from "@/app/dashboard/actions";
 import { TIERS } from "@/lib/paystack/plans";
+import { Card } from "@/components/ui/Card";
+import { Button, ExternalLinkButton } from "@/components/ui/Button";
 
 const PLAN_LABELS: Record<string, string> = {
   foundation: "Foundation",
@@ -33,7 +35,7 @@ export function AccountSection({
 
   if (status === "cancelled" || state?.success) {
     return (
-      <section className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <Card className="flex flex-col gap-2">
         <h2 className="text-lg font-bold tracking-tight text-ink">Your plan</h2>
         <p className="text-sm text-gray-500">
           Your account is cancelled and your page is no longer live. Want it back?{" "}
@@ -42,12 +44,12 @@ export function AccountSection({
           </a>{" "}
           any time.
         </p>
-      </section>
+      </Card>
     );
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Your plan</h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -72,12 +74,9 @@ export function AccountSection({
           <p className="text-sm font-semibold text-ink">Ready to reach more customers?</p>
           <p className="text-xs text-gray-600">Everything in Foundation, plus managed Meta ad tracking.</p>
           <div className="mt-1 flex flex-wrap gap-2">
-            <a
-              href={`/api/plan/upgrade?client=${growthClientId}&interval=monthly`}
-              className="inline-flex items-center rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-brand-dark"
-            >
+            <ExternalLinkButton href={`/api/plan/upgrade?client=${growthClientId}&interval=monthly`}>
               Upgrade — R180/month
-            </a>
+            </ExternalLinkButton>
             <a
               href={`/api/plan/upgrade?client=${growthClientId}&interval=annual`}
               className="inline-flex items-center rounded-full border border-brand px-4 py-2 text-xs font-semibold text-brand transition hover:bg-brand/5"
@@ -105,24 +104,16 @@ export function AccountSection({
             </p>
             {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
             <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={pending}
-                className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
-              >
+              <Button type="submit" variant="destructive" disabled={pending}>
                 {pending ? "Cancelling..." : "Yes, cancel my plan"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirming(false)}
-                className="rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600 transition hover:border-gray-300"
-              >
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => setConfirming(false)}>
                 Never mind
-              </button>
+              </Button>
             </div>
           </form>
         )}
       </div>
-    </section>
+    </Card>
   );
 }

@@ -5,6 +5,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { describeGrowthClientStatus } from "@/lib/growth-client/admin-status-label";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+import { Card } from "@/components/ui/Card";
+import { LinkButton, ExternalLinkButton } from "@/components/ui/Button";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { Table, TableHeadRow, Th, Tr, Td } from "@/components/ui/Table";
 
 // Private, allowlist-only — see onboard/page.tsx for the same reasoning.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -82,75 +86,54 @@ export default async function AdminPage() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="text-2xl font-bold tracking-tight text-ink">Admin</h1>
           <div className="flex flex-wrap items-center gap-3">
-            <Link
-              href="/admin/clients/new"
-              className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:-translate-y-0.5 hover:bg-brand-dark"
-            >
+            <LinkButton href="/admin/clients/new" lift>
               + New Client
-            </Link>
-            <Link
-              href="/admin/reactivation"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
+            </LinkButton>
+            <LinkButton href="/admin/reactivation" variant="secondary" lift>
               Reactivation Batch
-            </Link>
-            <Link
-              href="/admin/support"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
+            </LinkButton>
+            <LinkButton href="/admin/support" variant="secondary" lift>
               Support
               {!!unreadSupportCount && (
                 <span className="rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {unreadSupportCount}
                 </span>
               )}
-            </Link>
-            <Link
-              href="/admin/reviews"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
+            </LinkButton>
+            <LinkButton href="/admin/reviews" variant="secondary" lift>
               Flagged Reviews
               {!!flaggedReviewCount && (
                 <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {flaggedReviewCount}
                 </span>
               )}
-            </Link>
-            <Link
-              href="/admin/events"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
+            </LinkButton>
+            <LinkButton href="/admin/events" variant="secondary" lift>
               Events Queue
               {!!eventsQueueCount && (
                 <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {eventsQueueCount}
                 </span>
               )}
-            </Link>
-            <Link
-              href="/admin/agents"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
+            </LinkButton>
+            <LinkButton href="/admin/agents" variant="secondary" lift>
               Agents
               {!!pendingAgentsCount && (
                 <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {pendingAgentsCount}
                 </span>
               )}
-            </Link>
-            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /api/admin/export is a
-                file-download Route Handler, not a page; Link's client-side routing doesn't apply. */}
-            <a
-              href="/api/admin/export"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
+            </LinkButton>
+            {/* /api/admin/export is a file-download Route Handler, not a page —
+                ExternalLinkButton renders a plain <a>, Link's client-side routing doesn't apply. */}
+            <ExternalLinkButton href="/api/admin/export" variant="secondary" lift>
               Export all as CSV ↓
-            </a>
+            </ExternalLinkButton>
           </div>
         </div>
 
         {needsMetaHelp.length > 0 && (
-          <section className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+          <Card variant="elevated" className="flex flex-col gap-3">
             <h2 className="text-lg font-bold tracking-tight text-ink">
               Waiting on Meta setup help ({needsMetaHelp.length})
             </h2>
@@ -163,97 +146,87 @@ export default async function AdminPage() {
                 <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white px-4 py-3 text-sm">
                   <span className="font-semibold text-gray-900">{c.business_name}</span>
                   <span className="text-gray-500">{c.contact_email ?? "no email on file"}</span>
-                  <span className="rounded-full bg-brand/10 px-2.5 py-0.5 text-xs font-semibold uppercase text-brand">
+                  <StatusPill tone="brand" className="uppercase">
                     {c.plan}
-                  </span>
+                  </StatusPill>
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
         )}
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-bold tracking-tight text-ink">All growth clients ({clients?.length ?? 0})</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-xs uppercase tracking-wide text-gray-400">
-                  <th className="py-2 pr-4">Business</th>
-                  <th className="py-2 pr-4">Email</th>
-                  <th className="py-2 pr-4">Plan</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2 pr-4">Meta</th>
-                  <th className="py-2 pr-4">Channel</th>
-                  <th className="py-2 pr-4">Signed up</th>
-                  <th className="py-2 pr-4" />
-                </tr>
-              </thead>
-              <tbody>
-                {(clients ?? []).map((c) => {
-                  const statusLabel = describeGrowthClientStatus({
-                    plan: c.plan,
-                    status: c.status,
-                    paystack_reference: c.paystack_reference,
-                    contact_email: c.contact_email,
-                    business_description: c.business_description,
-                    brand_primary_color: c.brand_primary_color,
-                    template: c.template,
-                    has_landing_page: clientsWithLandingPage.has(c.id),
-                    packages: c.packages,
-                    meta_pixel_id: c.meta_pixel_id,
-                    meta_setup_requested_help: c.meta_setup_requested_help,
-                  });
-                  return (
-                    <tr key={c.id} className="border-b border-gray-50">
-                      <td className="py-2.5 pr-4 font-medium text-gray-900">{c.business_name}</td>
-                      <td className="py-2.5 pr-4 text-gray-500">{c.contact_email ?? "—"}</td>
-                      <td className="py-2.5 pr-4 text-gray-500">{c.plan}</td>
-                      <td className="py-2.5 pr-4">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            statusLabel === "Active"
-                              ? "bg-green-100 text-green-700"
-                              : statusLabel === "Cancelled" || statusLabel === "Trial lapsed"
-                                ? "bg-red-50 text-red-700"
-                                : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {statusLabel}
-                        </span>
-                      </td>
-                      <td className="py-2.5 pr-4 text-gray-500">
-                        {c.plan === "foundation"
-                          ? "—"
-                          : c.meta_pixel_id
-                            ? "Connected"
-                            : c.meta_setup_requested_help
-                              ? "Needs help"
-                              : "Not connected"}
-                      </td>
-                      <td className="py-2.5 pr-4">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            c.signup_channel === "whatsapp"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {c.signup_channel === "whatsapp" ? "WhatsApp" : "Web"}
-                        </span>
-                      </td>
-                      <td className="py-2.5 pr-4 text-gray-400">{new Date(c.created_at).toLocaleDateString()}</td>
-                      <td className="py-2.5 pr-4 text-right">
-                        <Link href={`/admin/clients/${c.id}`} className="text-xs font-semibold text-brand hover:underline">
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <Table minWidthClassName="min-w-[640px]">
+            <TableHeadRow>
+              <Th>Business</Th>
+              <Th>Email</Th>
+              <Th>Plan</Th>
+              <Th>Status</Th>
+              <Th>Meta</Th>
+              <Th>Channel</Th>
+              <Th>Signed up</Th>
+              <Th />
+            </TableHeadRow>
+            <tbody>
+              {(clients ?? []).map((c) => {
+                const statusLabel = describeGrowthClientStatus({
+                  plan: c.plan,
+                  status: c.status,
+                  paystack_reference: c.paystack_reference,
+                  contact_email: c.contact_email,
+                  business_description: c.business_description,
+                  brand_primary_color: c.brand_primary_color,
+                  template: c.template,
+                  has_landing_page: clientsWithLandingPage.has(c.id),
+                  packages: c.packages,
+                  meta_pixel_id: c.meta_pixel_id,
+                  meta_setup_requested_help: c.meta_setup_requested_help,
+                });
+                return (
+                  <Tr key={c.id}>
+                    <Td className="font-medium text-gray-900">{c.business_name}</Td>
+                    <Td className="text-gray-500">{c.contact_email ?? "—"}</Td>
+                    <Td className="text-gray-500">{c.plan}</Td>
+                    <Td>
+                      <StatusPill
+                        tone={
+                          statusLabel === "Active"
+                            ? "success"
+                            : statusLabel === "Cancelled" || statusLabel === "Trial lapsed"
+                              ? "danger"
+                              : "neutral"
+                        }
+                      >
+                        {statusLabel}
+                      </StatusPill>
+                    </Td>
+                    <Td className="text-gray-500">
+                      {c.plan === "foundation"
+                        ? "—"
+                        : c.meta_pixel_id
+                          ? "Connected"
+                          : c.meta_setup_requested_help
+                            ? "Needs help"
+                            : "Not connected"}
+                    </Td>
+                    <Td>
+                      <StatusPill tone={c.signup_channel === "whatsapp" ? "info" : "neutral"}>
+                        {c.signup_channel === "whatsapp" ? "WhatsApp" : "Web"}
+                      </StatusPill>
+                    </Td>
+                    <Td className="text-gray-400">{new Date(c.created_at).toLocaleDateString()}</Td>
+                    <Td className="text-right">
+                      <Link href={`/admin/clients/${c.id}`} className="text-xs font-semibold text-brand hover:underline">
+                        View
+                      </Link>
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </Card>
       </div>
     </main>
   );

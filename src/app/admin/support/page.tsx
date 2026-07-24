@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { markInquiryRead } from "@/app/admin/support/actions";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { StatusPill } from "@/components/ui/StatusPill";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -34,9 +37,7 @@ export default async function AdminSupportPage() {
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-ink">Support</h1>
           </div>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-            {unreadCount} unread
-          </span>
+          <StatusPill>{unreadCount} unread</StatusPill>
         </div>
         <p className="text-sm text-gray-500">
           Enquiries submitted through the &ldquo;Get in Touch&rdquo; block on the main pricing page — about
@@ -45,12 +46,7 @@ export default async function AdminSupportPage() {
 
         <div className="flex flex-col gap-3">
           {(inquiries ?? []).map((inquiry) => (
-            <div
-              key={inquiry.id}
-              className={`flex flex-col gap-2 rounded-2xl border p-6 shadow-sm ${
-                inquiry.read ? "border-gray-100 bg-white" : "border-brand/20 bg-brand/5"
-              }`}
-            >
+            <Card key={inquiry.id} variant={inquiry.read ? "default" : "elevated"} className="flex flex-col gap-2">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-gray-900">{inquiry.name}</p>
@@ -74,24 +70,21 @@ export default async function AdminSupportPage() {
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-gray-400">{new Date(inquiry.created_at).toLocaleString()}</span>
                   <form action={markInquiryRead.bind(null, inquiry.id, !inquiry.read)}>
-                    <button
-                      type="submit"
-                      className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 transition hover:border-gray-300"
-                    >
+                    <Button type="submit" variant="secondary" size="sm">
                       {inquiry.read ? "Mark unread" : "Mark read"}
-                    </button>
+                    </Button>
                   </form>
                 </div>
               </div>
               {inquiry.message && (
                 <p className="whitespace-pre-wrap rounded-xl bg-gray-50 p-4 text-sm text-gray-600">{inquiry.message}</p>
               )}
-            </div>
+            </Card>
           ))}
           {(!inquiries || inquiries.length === 0) && (
-            <p className="rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-400 shadow-sm">
-              No enquiries yet.
-            </p>
+            <Card>
+              <p className="text-sm text-gray-400">No enquiries yet.</p>
+            </Card>
           )}
         </div>
       </div>

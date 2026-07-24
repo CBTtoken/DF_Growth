@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { generateSocialAsset } from "@/app/dashboard/actions";
 import { ASSET_CONTENT_TYPES, type AssetContentType } from "@/lib/assets/content-types";
+import { Card } from "@/components/ui/Card";
 
 type Photo = { id: string; storage_path: string };
 
@@ -80,7 +81,7 @@ export function SocialAssetGenerator({ photos, storageBase }: { photos: Photo[];
   const meta = ASSET_CONTENT_TYPES.find((t) => t.id === contentType)!;
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Create your image ready for Facebook and Instagram posts</h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -163,6 +164,6 @@ export function SocialAssetGenerator({ photos, storageBase }: { photos: Photo[];
           {pending ? "Generating..." : "Generate image"}
         </button>
       </form>
-    </section>
+    </Card>
   );
 }

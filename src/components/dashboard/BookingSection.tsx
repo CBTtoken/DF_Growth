@@ -11,6 +11,7 @@ import {
   cancelReservation,
 } from "@/app/dashboard/booking-actions";
 import { BOOKABLE_UNIT_TYPES } from "@/lib/schemas/booking";
+import { Card } from "@/components/ui/Card";
 
 export type BookableUnit = {
   id: string;
@@ -91,7 +92,7 @@ export function BookingSection({
   }
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-ink">Booking</h2>
@@ -160,7 +161,7 @@ export function BookingSection({
           </div>
         </div>
       )}
-    </section>
+    </Card>
   );
 }
 

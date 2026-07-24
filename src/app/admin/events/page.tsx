@@ -6,6 +6,9 @@ import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { EVENT_TYPES } from "@/lib/event-types";
 import { publishEvent, dismissEventFlag, removeEvent } from "@/app/admin/events/actions";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { StatusPill } from "@/components/ui/StatusPill";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -56,9 +59,7 @@ export default async function AdminEventsPage() {
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-ink">Events queue</h1>
           </div>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-            {list.length} pending
-          </span>
+          <StatusPill>{list.length} pending</StatusPill>
         </div>
 
         <section className="flex flex-col gap-3">
@@ -66,7 +67,7 @@ export default async function AdminEventsPage() {
             Pending review ({pendingReview.length})
           </h2>
           {pendingReview.map((e) => (
-            <div key={e.id} className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm">
+            <Card key={e.id} variant="elevated" className="flex flex-col gap-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-gray-900">{e.event_name}</p>
@@ -74,7 +75,7 @@ export default async function AdminEventsPage() {
                     {typeLabel(e.event_type)} · {e.city} · {e.contact_details?.email ?? "no email on file"}
                   </p>
                 </div>
-                <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold uppercase text-amber-700">
+                <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold uppercase text-brand">
                   Never published
                 </span>
               </div>
@@ -87,35 +88,29 @@ export default async function AdminEventsPage() {
               <p className="text-xs text-gray-400">Submitted {new Date(e.created_at).toLocaleString()}</p>
               <div className="flex flex-wrap gap-3">
                 <form action={publishEvent.bind(null, e.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white hover:bg-brand-dark"
-                  >
+                  <Button type="submit" size="md">
                     Publish
-                  </button>
+                  </Button>
                 </form>
                 <form action={removeEvent.bind(null, e.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700"
-                  >
+                  <Button type="submit" variant="destructive" size="md">
                     Remove
-                  </button>
+                  </Button>
                 </form>
               </div>
-            </div>
+            </Card>
           ))}
           {pendingReview.length === 0 && (
-            <p className="rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-400 shadow-sm">
-              Nothing waiting on a first review.
-            </p>
+            <Card>
+              <p className="text-sm text-gray-400">Nothing waiting on a first review.</p>
+            </Card>
           )}
         </section>
 
         <section className="flex flex-col gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-500">Flagged ({flagged.length})</h2>
           {flagged.map((e) => (
-            <div key={e.id} className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm">
+            <Card key={e.id} variant="elevated" className="flex flex-col gap-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-gray-900">{e.event_name}</p>
@@ -123,7 +118,7 @@ export default async function AdminEventsPage() {
                     {typeLabel(e.event_type)} · {e.city} · {e.contact_details?.email ?? "no email on file"}
                   </p>
                 </div>
-                <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold uppercase text-amber-700">
+                <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold uppercase text-brand">
                   Flagged by {e.flagged_by}
                 </span>
               </div>
@@ -138,28 +133,22 @@ export default async function AdminEventsPage() {
               </p>
               <div className="flex flex-wrap gap-3">
                 <form action={dismissEventFlag.bind(null, e.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:border-gray-400"
-                  >
+                  <Button type="submit" variant="secondary" size="md" className="bg-white">
                     Keep / dismiss flag
-                  </button>
+                  </Button>
                 </form>
                 <form action={removeEvent.bind(null, e.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700"
-                  >
+                  <Button type="submit" variant="destructive" size="md">
                     Remove
-                  </button>
+                  </Button>
                 </form>
               </div>
-            </div>
+            </Card>
           ))}
           {flagged.length === 0 && (
-            <p className="rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-400 shadow-sm">
-              Nothing flagged right now.
-            </p>
+            <Card>
+              <p className="text-sm text-gray-400">Nothing flagged right now.</p>
+            </Card>
           )}
         </section>
       </div>

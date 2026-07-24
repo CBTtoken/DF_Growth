@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { clearReviewFlag, removeReview } from "@/app/admin/reviews/actions";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { StatusPill } from "@/components/ui/StatusPill";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -51,14 +54,12 @@ export default async function AdminReviewsPage() {
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-ink">Flagged reviews</h1>
           </div>
-          <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
-            {list.length} pending
-          </span>
+          <StatusPill>{list.length} pending</StatusPill>
         </div>
 
         <div className="flex flex-col gap-3">
           {list.map((r) => (
-            <div key={r.id} className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50/50 p-6 shadow-sm">
+            <Card key={r.id} variant="elevated" className="flex flex-col gap-3">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-gray-900">{r.growth_clients?.business_name ?? "Unknown business"}</p>
@@ -66,7 +67,7 @@ export default async function AdminReviewsPage() {
                     Review by {r.reviewer_accounts?.display_name ?? "a customer"} · {"★".repeat(r.rating)}
                   </p>
                 </div>
-                <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold uppercase text-amber-700">
+                <span className="rounded-full bg-white px-2.5 py-0.5 text-xs font-semibold uppercase text-brand">
                   Flagged by {r.flagged_by}
                 </span>
               </div>
@@ -87,28 +88,22 @@ export default async function AdminReviewsPage() {
 
               <div className="flex flex-wrap gap-3">
                 <form action={clearReviewFlag.bind(null, r.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 hover:border-gray-400"
-                  >
+                  <Button type="submit" variant="secondary" size="md" className="bg-white">
                     Keep / dismiss flag
-                  </button>
+                  </Button>
                 </form>
                 <form action={removeReview.bind(null, r.id)}>
-                  <button
-                    type="submit"
-                    className="rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700"
-                  >
+                  <Button type="submit" variant="destructive" size="md">
                     Remove review
-                  </button>
+                  </Button>
                 </form>
               </div>
-            </div>
+            </Card>
           ))}
           {list.length === 0 && (
-            <p className="rounded-2xl border border-gray-100 bg-white p-6 text-sm text-gray-400 shadow-sm">
-              Nothing flagged right now.
-            </p>
+            <Card>
+              <p className="text-sm text-gray-400">Nothing flagged right now.</p>
+            </Card>
           )}
         </div>
       </div>

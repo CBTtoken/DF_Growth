@@ -5,6 +5,7 @@ import Image from "next/image";
 import { deleteClientPhoto, setHeroPhoto } from "@/app/dashboard/actions";
 import { PexelsPicker } from "@/components/dashboard/PexelsPicker";
 import { PhotoUploadInput } from "@/components/dashboard/PhotoUploadInput";
+import { Card } from "@/components/ui/Card";
 
 type Photo = { id: string; storage_path: string };
 
@@ -25,7 +26,7 @@ export function PhotoGallery({
   industryHint?: string;
 }) {
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Your photos</h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -53,7 +54,7 @@ export function PhotoGallery({
       ) : (
         <p className="text-sm text-gray-400">No photos yet, PNG, JPG, or WebP, under 5MB each.</p>
       )}
-    </section>
+    </Card>
   );
 }
 

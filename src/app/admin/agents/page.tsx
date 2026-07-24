@@ -6,6 +6,10 @@ import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { approveAgent, rejectAgent } from "@/app/admin/agents/actions";
 import { getAgentReferralLink } from "@/lib/agents/referral-cookie";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { Table, TableHeadRow, Th, Tr, Td } from "@/components/ui/Table";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -62,114 +66,100 @@ export default async function AdminAgentsPage() {
         <BrandHeader />
         <h1 className="text-2xl font-bold tracking-tight text-ink">Agents</h1>
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-bold tracking-tight text-ink">Pending applications ({pending.length})</h2>
           {pending.length === 0 ? (
             <p className="text-sm text-gray-500">Nothing waiting on review.</p>
           ) : (
             <ul className="flex flex-col gap-4">
               {pending.map((a) => (
-                <li key={a.id} className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-semibold text-gray-900">{a.full_name}</span>
-                    <span className="text-gray-400">{new Date(a.created_at).toLocaleDateString()}</span>
-                  </div>
-                  <div className="text-gray-500">{a.email} · {a.whatsapp_number}</div>
-                  <a href={a.facebook_page_url} target="_blank" rel="noreferrer" className="text-brand hover:underline">
-                    {a.facebook_page_url}
-                  </a>
-                  <div className="text-gray-600">
-                    <span className="font-medium text-gray-800">Promotion: </span>
-                    {PROMOTION_LABELS[a.promotion_method] ?? a.promotion_method}
-                  </div>
-                  <div className="text-gray-600">
-                    <span className="font-medium text-gray-800">Understands Facebook rules: </span>
-                    {a.understands_facebook_rules}
-                  </div>
-                  <div className="text-gray-600">
-                    <span className="font-medium text-gray-800">Can generate content: </span>
-                    {a.can_generate_content}
-                  </div>
-                  <div className="mt-2 flex gap-2">
-                    <form action={approveAgent.bind(null, a.id)}>
-                      <button
-                        type="submit"
-                        className="rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-dark"
-                      >
-                        Approve
-                      </button>
-                    </form>
-                    <form action={rejectAgent.bind(null, a.id)}>
-                      <button
-                        type="submit"
-                        className="rounded-full border border-gray-200 px-4 py-1.5 text-xs font-semibold text-gray-600 transition hover:border-gray-300"
-                      >
-                        Reject
-                      </button>
-                    </form>
-                  </div>
+                <li key={a.id}>
+                  <Card variant="elevated" className="flex flex-col gap-2 p-4 text-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-semibold text-gray-900">{a.full_name}</span>
+                      <span className="text-gray-400">{new Date(a.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="text-gray-500">{a.email} · {a.whatsapp_number}</div>
+                    <a href={a.facebook_page_url} target="_blank" rel="noreferrer" className="text-brand hover:underline">
+                      {a.facebook_page_url}
+                    </a>
+                    <div className="text-gray-600">
+                      <span className="font-medium text-gray-800">Promotion: </span>
+                      {PROMOTION_LABELS[a.promotion_method] ?? a.promotion_method}
+                    </div>
+                    <div className="text-gray-600">
+                      <span className="font-medium text-gray-800">Understands Facebook rules: </span>
+                      {a.understands_facebook_rules}
+                    </div>
+                    <div className="text-gray-600">
+                      <span className="font-medium text-gray-800">Can generate content: </span>
+                      {a.can_generate_content}
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <form action={approveAgent.bind(null, a.id)}>
+                        <Button type="submit" size="sm">
+                          Approve
+                        </Button>
+                      </form>
+                      <form action={rejectAgent.bind(null, a.id)}>
+                        <Button type="submit" variant="secondary" size="sm">
+                          Reject
+                        </Button>
+                      </form>
+                    </div>
+                  </Card>
                 </li>
               ))}
             </ul>
           )}
-        </section>
+        </Card>
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-bold tracking-tight text-ink">All agents ({reviewed.length})</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-100 text-xs uppercase tracking-wide text-gray-400">
-                  <th className="py-2 pr-4">Name</th>
-                  <th className="py-2 pr-4">Status</th>
-                  <th className="py-2 pr-4">Referrals</th>
-                  <th className="py-2 pr-4">Tier</th>
-                  <th className="py-2 pr-4">Unpaid</th>
-                  <th className="py-2 pr-4">Paid to date</th>
-                  <th className="py-2 pr-4">Referral link</th>
-                  <th className="py-2 pr-4" />
-                </tr>
-              </thead>
-              <tbody>
-                {reviewed.map((a) => {
-                  const stats = statsByAgent.get(a.id);
-                  const referralCount = stats?.referredClients.size ?? 0;
-                  const tier = referralCount > 10 ? "40%" : "25%";
-                  return (
-                    <tr key={a.id} className="border-b border-gray-50">
-                      <td className="py-2.5 pr-4 font-medium text-gray-900">{a.full_name}</td>
-                      <td className="py-2.5 pr-4">
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            a.status === "approved" ? "bg-green-100 text-green-700" : "bg-red-50 text-red-700"
-                          }`}
-                        >
-                          {a.status}
-                        </span>
-                      </td>
-                      <td className="py-2.5 pr-4 text-gray-500">{referralCount}</td>
-                      <td className="py-2.5 pr-4 text-gray-500">{a.status === "approved" ? tier : "—"}</td>
-                      <td className="py-2.5 pr-4 text-gray-500">
-                        {stats && stats.unpaid > 0 ? `R${stats.unpaid.toFixed(2)}` : "—"}
-                      </td>
-                      <td className="py-2.5 pr-4 text-gray-500">
-                        {stats && stats.paid > 0 ? `R${stats.paid.toFixed(2)}` : "—"}
-                      </td>
-                      <td className="py-2.5 pr-4 text-gray-500">
-                        {a.referral_code ? getAgentReferralLink(a.referral_code) : "—"}
-                      </td>
-                      <td className="py-2.5 pr-4 text-right">
-                        <Link href={`/admin/agents/${a.id}`} className="text-xs font-semibold text-brand hover:underline">
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <Table minWidthClassName="min-w-[720px]">
+            <TableHeadRow>
+              <Th>Name</Th>
+              <Th>Status</Th>
+              <Th>Referrals</Th>
+              <Th>Tier</Th>
+              <Th>Unpaid</Th>
+              <Th>Paid to date</Th>
+              <Th>Referral link</Th>
+              <Th />
+            </TableHeadRow>
+            <tbody>
+              {reviewed.map((a) => {
+                const stats = statsByAgent.get(a.id);
+                const referralCount = stats?.referredClients.size ?? 0;
+                const tier = referralCount > 10 ? "40%" : "25%";
+                return (
+                  <Tr key={a.id}>
+                    <Td className="font-medium text-gray-900">{a.full_name}</Td>
+                    <Td>
+                      <StatusPill tone={a.status === "approved" ? "success" : "danger"}>{a.status}</StatusPill>
+                    </Td>
+                    <Td className="text-gray-500">{referralCount}</Td>
+                    <Td className="text-gray-500">{a.status === "approved" ? tier : "—"}</Td>
+                    <Td className="text-gray-500">
+                      {stats && stats.unpaid > 0 ? `R${stats.unpaid.toFixed(2)}` : "—"}
+                    </Td>
+                    <Td className="text-gray-500">
+                      {stats && stats.paid > 0 ? `R${stats.paid.toFixed(2)}` : "—"}
+                    </Td>
+                    <Td className="text-gray-500">
+                      {a.referral_code ? getAgentReferralLink(a.referral_code) : "—"}
+                    </Td>
+                    <Td className="text-right">
+                      <Link href={`/admin/agents/${a.id}`} className="text-xs font-semibold text-brand hover:underline">
+                        View
+                      </Link>
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </Card>
       </div>
     </main>
   );

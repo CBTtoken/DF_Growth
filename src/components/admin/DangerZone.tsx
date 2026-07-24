@@ -3,13 +3,15 @@
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toggleClientVisibility, deleteClient } from "@/app/admin/clients/[id]/actions";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 
 export function DangerZone({ clientId, isActive }: { clientId: string; isActive: boolean }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-red-100 bg-red-50/50 p-6">
+    <Card variant="warning" className="flex flex-col gap-4">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Danger zone</h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -19,21 +21,27 @@ export function DangerZone({ clientId, isActive }: { clientId: string; isActive:
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="lg"
+          lift
           disabled={isPending}
+          className="bg-white"
           onClick={() =>
             startTransition(async () => {
               await toggleClientVisibility(clientId);
               router.refresh();
             })
           }
-          className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-400 disabled:opacity-50"
         >
           {isActive ? "Make page inactive" : "Reactivate page"}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="destructive"
+          size="lg"
+          lift
           disabled={isPending}
           onClick={() => {
             if (
@@ -47,11 +55,10 @@ export function DangerZone({ clientId, isActive }: { clientId: string; isActive:
               await deleteClient(clientId);
             });
           }}
-          className="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-red-700 disabled:opacity-50"
         >
           Delete permanently
-        </button>
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }

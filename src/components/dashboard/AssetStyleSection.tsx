@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { changeAssetStyle } from "@/app/dashboard/actions";
 import { ASSET_STYLES } from "@/lib/assets/styles";
+import { Card } from "@/components/ui/Card";
 
 // Real, live-rendered previews (/api/og/preview/[style], sample data) so a
 // client sees an actual generated image before choosing, same "see it,
@@ -15,7 +16,7 @@ export function AssetStyleSection({ currentStyle }: { currentStyle: string }) {
   const [selected, setSelected] = useState(currentStyle);
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-ink">Social asset style</h2>
@@ -75,6 +76,6 @@ export function AssetStyleSection({ currentStyle }: { currentStyle: string }) {
           </button>
         </form>
       )}
-    </section>
+    </Card>
   );
 }

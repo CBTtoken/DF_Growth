@@ -12,6 +12,9 @@ import { AdminClientBuilder } from "@/components/admin/AdminClientBuilder";
 import { AdminMediaSection } from "@/components/admin/AdminMediaSection";
 import { AssignAgentForm } from "@/components/admin/AssignAgentForm";
 import { DangerZone } from "@/components/admin/DangerZone";
+import { Card } from "@/components/ui/Card";
+import { ExternalLinkButton } from "@/components/ui/Button";
+import { StatusPill } from "@/components/ui/StatusPill";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -82,14 +85,11 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
               ← Admin
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-ink">{client.business_name}</h1>
-            <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-semibold text-gray-600">{statusLabel}</span>
+            <StatusPill>{statusLabel}</StatusPill>
           </div>
-          <a
-            href={`/api/admin/export?client=${client.id}`}
-            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-          >
+          <ExternalLinkButton href={`/api/admin/export?client=${client.id}`} variant="secondary" lift>
             Export this client as CSV ↓
-          </a>
+          </ExternalLinkButton>
         </div>
 
         {pageUrl && (
@@ -98,7 +98,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           </a>
         )}
 
-        <section className="grid grid-cols-1 gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm sm:grid-cols-2">
+        <Card className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Plan" value={client.plan} />
           <Field label="Billing cycle" value={client.billing_cycle} />
           <Field label="Day One member" value={client.is_founding_member ? `Yes, #${client.founding_signup_number}` : "No"} />
@@ -106,7 +106,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           <Field label="Trial ends" value={client.trial_ends_at ? new Date(client.trial_ends_at).toLocaleDateString() : null} />
           <Field label="Consented at" value={client.consented_at ? new Date(client.consented_at).toLocaleString() : null} />
           <Field label="Marketing opt-in" value={client.marketing_consent ? "Yes" : "No"} />
-        </section>
+        </Card>
 
         <AdminPlanControls
           clientId={client.id}
@@ -119,7 +119,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
         {/* "Register, we build it, they pay when ready" flow, Sec 3: for a
             client who does need to pay (not comping them), this emails a
             real Paystack checkout link instead of granting free access. */}
-        <section className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-3">
           <div>
             <h2 className="text-lg font-bold tracking-tight text-ink">Send payment link</h2>
             <p className="mt-1 text-sm text-gray-500">
@@ -128,13 +128,13 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             </p>
           </div>
           <SendPaymentLinkForm clientId={client.id} />
-        </section>
+        </Card>
 
         {/* Admin-created clients never clicked a referral link or typed an
             agent's name at signup — this is how admin credits the agent
             who actually brought them in, so commission still flows once
             they pay. See adminAssignAgent's own comment for the mechanics. */}
-        <section className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-3">
           <div>
             <h2 className="text-lg font-bold tracking-tight text-ink">Referring agent</h2>
             <p className="mt-1 text-sm text-gray-500">
@@ -143,7 +143,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             </p>
           </div>
           <AssignAgentForm clientId={client.id} agents={approvedAgents ?? []} currentAgentId={client.referred_by_agent_id} />
-        </section>
+        </Card>
 
         <AdminMediaSection clientId={client.id} logoUrl={logoUrl} photosStorageBase={photosStorageBase} photos={photos ?? []} />
 
@@ -176,7 +176,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           packages={packages}
         />
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-bold tracking-tight text-ink">Contact & business details</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Contact email" value={client.contact_email} />
@@ -194,9 +194,9 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             <Field label="Facebook" value={client.facebook_url} />
             <Field label="Instagram" value={client.instagram_url} />
           </div>
-        </section>
+        </Card>
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-bold tracking-tight text-ink">Page content</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Template" value={client.template} />
@@ -208,10 +208,10 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           <Field label="Subheadline" value={landingPage?.subheadline} />
           <Field label="About text" value={landingPage?.about_text} />
           <Field label="Services text" value={landingPage?.services_text} />
-        </section>
+        </Card>
 
         {packages.length > 0 && (
-          <section className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <Card className="flex flex-col gap-3">
             <h2 className="text-lg font-bold tracking-tight text-ink">Packages</h2>
             <ul className="flex flex-col gap-2">
               {packages.map((p, i) => (
@@ -222,10 +222,10 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
         )}
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-4">
           <div>
             <h2 className="text-lg font-bold tracking-tight text-ink">Marketplace listing</h2>
             {/* Public Beta Polish Sprint Sec 4: distinct from page-live
@@ -240,9 +240,9 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             </p>
           </div>
           <MarketplaceUrlForm clientId={client.id} initialUrl={client.marketplace_url} />
-        </section>
+        </Card>
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <Card className="flex flex-col gap-4">
           <h2 className="text-lg font-bold tracking-tight text-ink">Meta ad connection</h2>
           {client.plan === "foundation" ? (
             <p className="text-sm text-gray-500">Not applicable on Foundation.</p>
@@ -253,7 +253,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
               <Field label="Requested help" value={client.meta_setup_requested_help ? "Yes" : "No"} />
             </div>
           )}
-        </section>
+        </Card>
 
         <DangerZone clientId={client.id} isActive={client.status === "active"} />
       </div>

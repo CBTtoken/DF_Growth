@@ -6,6 +6,7 @@ import { Step2BusinessProfile } from "@/components/onboard/steps/Step2BusinessPr
 import { Step3BrandKit } from "@/components/onboard/steps/Step3BrandKit";
 import { Step5LandingCopy } from "@/components/onboard/steps/Step5LandingCopy";
 import { Step6Packages } from "@/components/onboard/steps/Step6Packages";
+import { Card } from "@/components/ui/Card";
 
 type PackageInitial = { name: string; price: string; description: string; type?: "package" | "special" | "discount" };
 
@@ -70,7 +71,7 @@ export function EditPageClient({
         Preview your page ↗
       </a>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <Card>
         <Step1BusinessInfo
           initialBusinessName={initialData.businessName}
           initialContactEmail={initialData.contactEmail}
@@ -79,9 +80,9 @@ export function EditPageClient({
           onSuccess={showSaved}
           submitLabel="Save changes"
         />
-      </section>
+      </Card>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <Card>
         <Step2BusinessProfile
           initialProvince={initialData.province}
           initialIndustry={initialData.industry}
@@ -97,9 +98,9 @@ export function EditPageClient({
           onSuccess={showSaved}
           submitLabel="Save changes"
         />
-      </section>
+      </Card>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <Card>
         <Step3BrandKit
           initialPrimaryColor={initialData.brandPrimaryColor}
           initialSecondaryColor={initialData.brandSecondaryColor}
@@ -107,9 +108,9 @@ export function EditPageClient({
           onSuccess={showSaved}
           submitLabel="Save changes"
         />
-      </section>
+      </Card>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <Card>
         <Step5LandingCopy
           initialHeadline={initialData.headline}
           initialSubheadline={initialData.subheadline}
@@ -121,11 +122,11 @@ export function EditPageClient({
           onSuccess={showSaved}
           submitLabel="Save changes"
         />
-      </section>
+      </Card>
 
-      <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+      <Card>
         <Step6Packages initialPackages={initialData.packages} onSuccess={showSaved} submitLabel="Save changes" />
-      </section>
+      </Card>
     </div>
   );
 }

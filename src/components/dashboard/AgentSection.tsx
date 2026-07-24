@@ -1,4 +1,5 @@
 import type { AgentDashboardData } from "@/lib/agents/dashboard-data";
+import { Card } from "@/components/ui/Card";
 
 // Sec 9: "Agent" dashboard section, only rendered when the logged-in user
 // has an approved agents row (dashboard/page.tsx's own guard). Shows
@@ -10,7 +11,7 @@ export function AgentSection({ data }: { data: AgentDashboardData }) {
   const nextTierGap = data.currentTier === 25 ? 11 - data.totalReferrals : null;
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <h2 className="text-lg font-bold tracking-tight text-ink">Your agent referrals</h2>
 
       <div className="flex flex-col gap-1 rounded-xl bg-brand/5 px-4 py-3">
@@ -87,6 +88,6 @@ export function AgentSection({ data }: { data: AgentDashboardData }) {
           </div>
         )}
       </div>
-    </section>
+    </Card>
   );
 }

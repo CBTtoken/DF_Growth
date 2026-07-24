@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { changeTemplate } from "@/app/dashboard/actions";
 import { TemplateGallery } from "@/components/templates/TemplateGallery";
+import { Card } from "@/components/ui/Card";
 
 export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: string }) {
   const [state, formAction, pending] = useActionState(changeTemplate, null);
@@ -13,7 +14,7 @@ export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: st
   const [selected, setSelected] = useState(currentTemplate);
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+    <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold tracking-tight text-ink">Page style</h2>
@@ -58,6 +59,6 @@ export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: st
           </div>
         </form>
       )}
-    </section>
+    </Card>
   );
 }
