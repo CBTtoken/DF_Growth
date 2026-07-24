@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { GetInTouchSection } from "@/components/marketing/GetInTouchSection";
-import { getTopVisitedClients } from "@/lib/growth-client/top-visited";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { Hero } from "@/components/home/Hero";
 import { WhyChoose } from "@/components/home/WhyChoose";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { RealOnlinePower } from "@/components/home/RealOnlinePower";
 import { SoundFamiliar } from "@/components/home/SoundFamiliar";
-import { MostVisitedPages } from "@/components/home/MostVisitedPages";
+import { MostVisitedPages, SHOWCASE_SLUGS } from "@/components/home/MostVisitedPages";
 import { HomePricing } from "@/components/home/HomePricing";
 import { DoMore } from "@/components/home/DoMore";
 import { WhatYouGet } from "@/components/home/WhatYouGet";
@@ -42,10 +42,17 @@ export const metadata: Metadata = {
 export const revalidate = 60;
 
 export default async function PricingPage() {
-  const topClients = await getTopVisitedClients(3);
+  // Load the real captured screenshots for exactly the three curated
+  // showcase pages (by their real slugs), so a card always shows the actual
+  // page rather than depending on those pages topping the page-view ranking.
+  const admin = createAdminClient();
+  const { data: showcaseClients } = await admin
+    .from("growth_clients")
+    .select("slug, screenshot_path")
+    .in("slug", SHOWCASE_SLUGS);
   const screenshotsBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-screenshots`;
   const screenshots: Record<string, string> = {};
-  for (const c of topClients) {
+  for (const c of showcaseClients ?? []) {
     if (c.screenshot_path) screenshots[c.slug] = `${screenshotsBase}/${c.screenshot_path}`;
   }
 

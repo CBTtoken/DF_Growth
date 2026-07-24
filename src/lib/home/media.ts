@@ -27,15 +27,15 @@ export type HomeImage = {
 export const HOME_IMAGES = {
   hero: {
     src: "/home/hero.jpg",
-    alt: "A South African small business owner at work in their business",
+    alt: "A South African salon owner smiling and holding an open for business sign",
     width: 1100,
-    height: 825,
+    height: 1100,
   },
   soundFamiliar: {
     src: "/home/sound-familiar.jpg",
-    alt: "A small business owner keeping up with customer messages",
-    width: 1000,
-    height: 750,
+    alt: "A South African tradesman smiling proudly with his tools",
+    width: 1100,
+    height: 1100,
   },
   doMore: {
     src: "/home/do-more.jpg",

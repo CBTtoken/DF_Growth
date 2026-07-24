@@ -12,10 +12,14 @@ const clients = [
     name: "Helplift Network Vaal Triangle",
     tag: "Community Services",
     accent: "from-brand-blue-mid to-brand-blue",
-    slug: "helplift-network-vaal-triangle",
+    slug: "helplift",
   },
-  { name: "Standing 365", tag: "Events & Production", accent: "from-neutral-ink to-brand-blue-dark", slug: "standing-365" },
+  { name: "Standing 365", tag: "Events & Production", accent: "from-neutral-ink to-brand-blue-dark", slug: "standing365" },
 ];
+
+// The exact slugs the page needs screenshots for, so the page and this
+// component can never drift apart on which pages are curated here.
+export const SHOWCASE_SLUGS = clients.map((c) => c.slug);
 
 export function MostVisitedPages({ screenshots = {} }: { screenshots?: Record<string, string> }) {
   return (
