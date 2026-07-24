@@ -28,4 +28,32 @@ export const SAMPLE_DATA = {
     { id: "2", author_name: "David K.", quote: "Fair pricing, no surprises on the bill.", rating: 5 },
   ],
   photoUrl: "https://images.pexels.com/photos/1153213/pexels-photo-1153213.jpeg?auto=compress&cs=tinysrgb&w=1200",
+  // Dark Mode pilot rebuild: PhotoGallerySection requires 2+ photos to
+  // render anything, and the preview route previously had no "gallery"
+  // case at all — storage_path holds the path-after-domain so it
+  // concatenates with the local galleryStorageBase constant in the preview
+  // page into a valid Pexels URL, without needing to touch
+  // PhotoGallerySection.tsx itself.
+  photos: [
+    { id: "1", storage_path: "photos/1153213/pexels-photo-1153213.jpeg?auto=compress&cs=tinysrgb&w=1200" },
+    { id: "2", storage_path: "photos/1435904/pexels-photo-1435904.jpeg?auto=compress&cs=tinysrgb&w=1200" },
+  ],
+  reviews: [
+    {
+      id: "1",
+      rating: 5,
+      review_text: "Same-day callout, fixed the leak in under an hour. Would recommend to anyone.",
+      business_reply: null,
+      created_at: "2026-06-02T10:00:00Z",
+      reviewer_accounts: { display_name: "Nomvula T." },
+    },
+    {
+      id: "2",
+      rating: 4,
+      review_text: "Good work on the geyser install, just took a little longer than quoted.",
+      business_reply: "Thanks for the patience, Peter — we've since added a second van for busier weeks.",
+      created_at: "2026-05-18T10:00:00Z",
+      reviewer_accounts: { display_name: "Peter K." },
+    },
+  ],
 };

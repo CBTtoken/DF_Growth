@@ -213,6 +213,50 @@ export function PackagesSection({
         </div>
       </div>
     );
+  } else if (layout === "ambient-stack") {
+    // Dark Mode pilot rebuild: full-width stacked rows with a glowing
+    // left-edge accent bar in the client's own color, instead of a 3-col
+    // grid — fits the "premium, one clear path" feel this anchor is going
+    // for, and reads better against a dark surface than boxed cards do.
+    body = (
+      <div className="mt-10 flex flex-col gap-4">
+        {packages.map((pkg, i) => {
+          const highlighted = i === highlightIndex;
+          return (
+            <div
+              key={i}
+              className={`relative flex flex-col gap-3 overflow-hidden rounded-xl p-6 pl-8 sm:flex-row sm:items-center sm:justify-between ${cardBg} border ${cardBorder}`}
+            >
+              <div
+                aria-hidden
+                className="absolute inset-y-0 left-0 w-1"
+                style={{ backgroundColor: accentColor, boxShadow: highlighted ? `0 0 16px ${accentColor}` : undefined }}
+              />
+              <div>
+                {highlighted && (
+                  <span
+                    className="mb-1.5 inline-block w-fit rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-white"
+                    style={{ backgroundColor: accentColor }}
+                  >
+                    Most popular
+                  </span>
+                )}
+                <h3 className={`text-base font-semibold ${headingClass}`}>{pkg.name}</h3>
+                {pkg.description && <p className={`mt-1 text-sm ${bodyClass}`}>{pkg.description}</p>}
+              </div>
+              <div className="flex items-center gap-4">
+                {pkg.price && (
+                  <span className="text-2xl font-bold" style={{ color: accentColor }}>
+                    {formatPrice(pkg.price)}
+                  </span>
+                )}
+                {enquireCta}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
   } else {
     body = (
       <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">

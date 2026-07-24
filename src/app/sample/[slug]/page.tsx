@@ -120,7 +120,7 @@ export default async function SamplePage({ params }: { params: Params }) {
         </Link>
       </div>
 
-      {template.hero === "dark" && <DarkHero {...heroProps} />}
+      {template.hero === "dark" && <DarkHero {...heroProps} photoUrl={null} />}
       {template.hero === "geometric" && <GeometricHero {...heroProps} />}
       {template.hero === "editorial" && <EditorialHero {...heroProps} />}
 

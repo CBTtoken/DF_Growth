@@ -98,7 +98,7 @@ export const templates: TemplateMeta[] = [
     description: "Sleek premium dark hero with a glow in your own brand color.",
     icon: Moon,
     hero: "dark",
-    sections: ["about", "story", "services", "packages", "trust", "gallery", "location", "reviews"],
+    sections: ["trust", "about", "services", "packages", "story", "gallery", "location", "reviews"],
   },
   {
     id: "social-proof",

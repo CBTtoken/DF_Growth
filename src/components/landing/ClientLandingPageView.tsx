@@ -330,7 +330,7 @@ export async function ClientLandingPageView({
   }
 
   let photoUrl: string | null = null;
-  if (template.hero === "split") {
+  if (template.hero === "split" || template.hero === "dark") {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
     // does that. No selection falls back to the client's stored fallback
@@ -367,6 +367,11 @@ export async function ClientLandingPageView({
   const nextNumber = (present: boolean) => (present ? String(++sectionCount).padStart(2, "0") : "");
 
   const anchor = getAnchor(template.id);
+  // Dark Mode pilot rebuild: accentColor was only ever contrast-checked
+  // against white, even for a dark-surface anchor — a client color that
+  // clears 4.5:1 against white can be nearly invisible against near-black.
+  // Every other anchor is "light-default", so this is a no-op for them.
+  const anchorAccentColor = ensureContrast(primaryColor, anchor.sectionSurface === "dark" ? "#0b1220" : "#ffffff");
 
   const renderSection = (key: SectionKey) => {
     const number = nextNumber(hasContent[key]);
@@ -377,7 +382,7 @@ export async function ClientLandingPageView({
             businessName={client.business_name}
             tagline={client.tagline}
             aboutText={landingPage.about_text}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
@@ -386,7 +391,7 @@ export async function ClientLandingPageView({
         return (
           <StorySection
             storyText={client.additional_notes}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
@@ -395,23 +400,30 @@ export async function ClientLandingPageView({
         return (
           <ServicesList
             servicesText={landingPage.services_text}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "packages":
-        return <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
+        return (
+          <PackagesSection packages={packages} accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />
+        );
       case "trust":
         return (
-          <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />
+          <TrustBadges
+            testimonials={testimonials}
+            accentColor={anchorAccentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
         );
       case "gallery":
         return (
           <PhotoGallerySection
             photos={photos}
             storageBase={photosStorageBase}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
@@ -420,19 +432,19 @@ export async function ClientLandingPageView({
         return (
           <LocationMap
             businessAddress={client.business_address}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "howItWorks":
-        return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
+        return <HowItWorksSection accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />;
       case "reviews":
         return (
           <ReviewsSection
             businessId={client.id}
             reviews={reviews}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
@@ -448,7 +460,7 @@ export async function ClientLandingPageView({
       {template.hero === "minimal" && <MinimalHero {...heroProps} />}
       {template.hero === "split" && <SplitHero {...heroProps} photoUrl={photoUrl} />}
       {template.hero === "editorial" && <EditorialHero {...heroProps} />}
-      {template.hero === "dark" && <DarkHero {...heroProps} />}
+      {template.hero === "dark" && <DarkHero {...heroProps} photoUrl={photoUrl} />}
       {template.hero === "compact" && <CompactHero {...heroProps} testimonialCount={testimonials.length} />}
       {template.hero === "geometric" && <GeometricHero {...heroProps} />}
       {template.hero === "checklist" && <ChecklistHero {...heroProps} checklistItems={checklistItems} />}
@@ -458,7 +470,9 @@ export async function ClientLandingPageView({
       {/* Combined spec Sec 19: templates don't share a fixed section order
           (About isn't always first), so this goes right after the hero
           instead — the other position the spec allows for. */}
-      {packages.length === 0 && <EarlyContactCta accentColor={accentColor} dark={anchor.sectionSurface === "dark"} />}
+      {packages.length === 0 && (
+        <EarlyContactCta accentColor={anchorAccentColor} dark={anchor.sectionSurface === "dark"} />
+      )}
 
       {template.sections.map((key) => (
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>

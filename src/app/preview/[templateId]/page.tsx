@@ -8,6 +8,8 @@ import { LocationMap } from "@/components/landing/LocationMap";
 import { PackagesSection } from "@/components/landing/PackagesSection";
 import { StorySection } from "@/components/landing/StorySection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
+import { PhotoGallerySection } from "@/components/landing/PhotoGallerySection";
+import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import { MinimalHero } from "@/components/landing/heroes/MinimalHero";
 import { SplitHero } from "@/components/landing/heroes/SplitHero";
 import { EditorialHero } from "@/components/landing/heroes/EditorialHero";
@@ -91,6 +93,15 @@ export default async function TemplatePreviewPage({
   const nextNumber = () => String(++sectionCount).padStart(2, "0");
 
   const anchor = getAnchor(template.id);
+  // Dark Mode pilot rebuild: accentColor was only ever contrast-checked
+  // against white, even for a dark-surface anchor — a client color that
+  // clears 4.5:1 against white can be nearly invisible against near-black.
+  // Every other anchor is "light-default", so this is a no-op for them.
+  const anchorAccentColor = ensureContrast(primaryColor, anchor.sectionSurface === "dark" ? "#0b1220" : "#ffffff");
+  // storage_path values in SAMPLE_DATA.photos are path-after-domain —
+  // concatenated here into a full Pexels URL, same shape PhotoGallerySection
+  // already expects from a real client's storageBase + storage_path.
+  const galleryStorageBase = "https://images.pexels.com";
 
   const renderSection = (key: SectionKey) => {
     const number = nextNumber();
@@ -101,7 +112,7 @@ export default async function TemplatePreviewPage({
             businessName={SAMPLE_DATA.businessName}
             tagline={SAMPLE_DATA.tagline}
             aboutText={SAMPLE_DATA.aboutText}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
@@ -110,7 +121,7 @@ export default async function TemplatePreviewPage({
         return (
           <StorySection
             storyText={SAMPLE_DATA.additionalNotes}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
@@ -119,28 +130,55 @@ export default async function TemplatePreviewPage({
         return (
           <ServicesList
             servicesText={SAMPLE_DATA.servicesText}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "packages":
-        return <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
+        return (
+          <PackagesSection packages={packages} accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />
+        );
       case "trust":
         return (
-          <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />
+          <TrustBadges
+            testimonials={testimonials}
+            accentColor={anchorAccentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
+        );
+      case "gallery":
+        return (
+          <PhotoGallerySection
+            photos={SAMPLE_DATA.photos}
+            storageBase={galleryStorageBase}
+            accentColor={anchorAccentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
         );
       case "location":
         return (
           <LocationMap
             businessAddress={SAMPLE_DATA.businessAddress}
-            accentColor={accentColor}
+            accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "howItWorks":
-        return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
+        return <HowItWorksSection accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />;
+      case "reviews":
+        return (
+          <ReviewsSection
+            businessId="preview"
+            reviews={SAMPLE_DATA.reviews}
+            accentColor={anchorAccentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
+        );
     }
   };
 
@@ -149,7 +187,7 @@ export default async function TemplatePreviewPage({
       {template.hero === "minimal" && <MinimalHero {...heroProps} />}
       {template.hero === "split" && <SplitHero {...heroProps} photoUrl={SAMPLE_DATA.photoUrl} />}
       {template.hero === "editorial" && <EditorialHero {...heroProps} />}
-      {template.hero === "dark" && <DarkHero {...heroProps} />}
+      {template.hero === "dark" && <DarkHero {...heroProps} photoUrl={SAMPLE_DATA.photoUrl} />}
       {template.hero === "compact" && <CompactHero {...heroProps} testimonialCount={testimonials.length} />}
       {template.hero === "geometric" && <GeometricHero {...heroProps} />}
       {template.hero === "checklist" && <ChecklistHero {...heroProps} checklistItems={checklistItems} />}

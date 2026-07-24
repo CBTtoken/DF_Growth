@@ -66,12 +66,15 @@ export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "
 // on an otherwise light section is a legitimate pattern on its own, and
 // becomes the seed dark-mode already has once Chunk 2d commits the whole
 // section surface to dark too.
+// "dark-panel" is a premium glass-panel treatment (translucent bg, hairline
+// white border, subtle blur) rather than a flat slab — only "dark-mode"'s
+// anchor uses this recipe, so this is an isolated change.
 export const CARD_RECIPE_CLASS: Record<CardRecipeId, string> = {
   "flat-border": "rounded-xl border border-gray-200 bg-white",
   "soft-shadow": "rounded-2xl border border-gray-100 bg-white shadow-sm",
   "outlined-accent": "rounded-2xl border-2 border-brand/30 bg-white",
   "editorial-rule": "border-l-4 border-brand/60 bg-transparent pl-5",
-  "dark-panel": "rounded-2xl border border-gray-800 bg-gray-900 text-white",
+  "dark-panel": "rounded-2xl border border-white/10 bg-white/5 text-white backdrop-blur-sm",
 };
 
 export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps";
@@ -129,10 +132,16 @@ export interface TemplateAnchor {
   spacing: SpacingDensity;
   sectionSurface: SectionSurface;
   // Structural overrides — undefined means "use each component's existing
-  // default JSX shape." Implemented in Chunk 2.
-  packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature";
+  // default JSX shape."
+  packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack";
   reviewsLayout?: "list-detail" | "hero-stat";
-  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact";
+  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles";
+  // Dark Mode pilot rebuild: TrustBadges previously had no layout axis at
+  // all (a deliberate earlier decision to keep the axis count bounded) —
+  // reversed here because direct client feedback named structural sameness
+  // as the actual problem. "strip" is today's exact existing horizontal-
+  // scroll card treatment, kept byte-identical as the default.
+  trustLayout?: "strip" | "spotlight-quote";
 }
 
 export const anchors: Record<TemplateId, TemplateAnchor> = {
@@ -177,6 +186,10 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     eyebrowStyle: "pill-badge",
     spacing: "standard",
     sectionSurface: "dark",
+    trustLayout: "spotlight-quote",
+    servicesLayout: "spotlight-tiles",
+    packagesLayout: "ambient-stack",
+    reviewsLayout: "hero-stat",
   },
   "social-proof": {
     id: "social-proof",

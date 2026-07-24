@@ -90,6 +90,34 @@ export function ServicesList({
         ))}
       </ol>
     );
+  } else if (layout === "spotlight-tiles") {
+    // Dark Mode pilot rebuild: an asymmetric grid instead of a uniform
+    // card grid — the first service gets real visual weight (a wider
+    // tile, bigger type), the rest sit as smaller supporting tiles.
+    body = (
+      <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        {services.map((service, i) => {
+          const isFirst = i === 0;
+          return (
+            <div
+              key={i}
+              className={`flex flex-col justify-between gap-6 p-6 ${CARD_RECIPE_CLASS[anchor.cardRecipe]} ${
+                isFirst ? "col-span-2 min-h-[10rem]" : "col-span-1 min-h-[8rem]"
+              }`}
+            >
+              <span className="font-mono text-xs" style={{ color: accentColor }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span
+                className={`font-semibold leading-snug ${isFirst ? "text-xl" : "text-sm"} ${isDark ? "text-white" : "text-gray-900"}`}
+              >
+                {service}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
   } else if (layout === "checklist-compact") {
     // feature-grid / app-dashboard anchors: a dense single-column list
     // rather than a grid of cards — more services readable at a glance,
