@@ -50,3 +50,55 @@ body {
     font-size: 16px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Home page design system (ported from the Bolt home-page design).
+   Scoped by naming, not by selector: these are extra color/shadow tokens and
+   a handful of component classes used only by src/components/home/*. Existing
+   brand tokens above are untouched. brand-blue intentionally equals --brand
+   (#1081b8, the one non-negotiable brand value) so the ported design and the
+   rest of the app share the exact same blue.
+--------------------------------------------------------------------------- */
+@theme {
+  --color-brand-blue: #1081b8;
+  --color-brand-blue-dark: #0c6a97;
+  --color-brand-blue-light: #e8f4fc;
+  --color-brand-blue-mid: #1a9dd4;
+
+  --color-accent: #e8821a;
+  --color-accent-hover: #cf7116;
+  --color-accent-light: #fef3e2;
+
+  --color-neutral-ink: #1c2b3a;
+  --color-neutral-mid: #4a5568;
+  --color-neutral-muted: #718096;
+  --color-neutral-border: #e2e8f0;
+  --color-neutral-light: #f7f9fb;
+  --color-neutral-white: #ffffff;
+
+  --shadow-card: 0 1px 4px 0 rgba(28, 43, 58, 0.08), 0 4px 16px 0 rgba(28, 43, 58, 0.06);
+  --shadow-card-hover: 0 4px 12px 0 rgba(28, 43, 58, 0.12), 0 12px 32px 0 rgba(28, 43, 58, 0.08);
+}
+
+@layer components {
+  /* Primary CTA: always one line, always the amber accent. */
+  .btn-accent {
+    @apply whitespace-nowrap inline-flex items-center justify-center gap-2 bg-accent text-white font-bold px-5 py-3 rounded-xl transition-all duration-200 hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-0.5 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+
+  .btn-accent-lg {
+    @apply whitespace-nowrap inline-flex items-center justify-center gap-2 bg-accent text-white font-bold text-base px-7 py-3.5 rounded-xl shadow-md shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-lg hover:shadow-accent/30 hover:-translate-y-0.5 active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent;
+  }
+
+  .btn-outline {
+    @apply whitespace-nowrap inline-flex items-center justify-center gap-2 border-2 border-brand-blue text-brand-blue font-bold px-5 py-3 rounded-xl transition-all duration-200 hover:bg-brand-blue hover:text-white active:scale-[0.97];
+  }
+
+  .section-eyebrow {
+    @apply text-brand-blue text-xs font-black uppercase tracking-[0.15em] mb-2;
+  }
+
+  .section-heading {
+    @apply text-neutral-ink font-extrabold leading-tight tracking-tight;
+  }
+}
