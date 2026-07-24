@@ -27,6 +27,7 @@ import { GeometricHero } from "@/components/landing/heroes/GeometricHero";
 import { ChecklistHero } from "@/components/landing/heroes/ChecklistHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
+import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
 
 type ClientData = {
   id: string;
@@ -365,6 +366,8 @@ export async function ClientLandingPageView({
   let sectionCount = 0;
   const nextNumber = (present: boolean) => (present ? String(++sectionCount).padStart(2, "0") : "");
 
+  const anchor = getAnchor(template.id);
+
   const renderSection = (key: SectionKey) => {
     const number = nextNumber(hasContent[key]);
     switch (key) {
@@ -376,20 +379,33 @@ export async function ClientLandingPageView({
             aboutText={landingPage.about_text}
             accentColor={accentColor}
             eyebrowNumber={number}
+            anchor={anchor}
           />
         );
       case "story":
-        return <StorySection storyText={client.additional_notes} accentColor={accentColor} eyebrowNumber={number} />;
+        return (
+          <StorySection
+            storyText={client.additional_notes}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
+        );
       case "services":
         return (
-          <ServicesList servicesText={landingPage.services_text} accentColor={accentColor} eyebrowNumber={number} />
+          <ServicesList
+            servicesText={landingPage.services_text}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
         );
       case "packages":
-        return (
-          <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} />
-        );
+        return <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
       case "trust":
-        return <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} />;
+        return (
+          <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />
+        );
       case "gallery":
         return (
           <PhotoGallerySection
@@ -397,21 +413,35 @@ export async function ClientLandingPageView({
             storageBase={photosStorageBase}
             accentColor={accentColor}
             eyebrowNumber={number}
+            anchor={anchor}
           />
         );
       case "location":
         return (
-          <LocationMap businessAddress={client.business_address} accentColor={accentColor} eyebrowNumber={number} />
+          <LocationMap
+            businessAddress={client.business_address}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
         );
       case "howItWorks":
-        return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} />;
+        return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
       case "reviews":
-        return <ReviewsSection businessId={client.id} reviews={reviews} accentColor={accentColor} eyebrowNumber={number} />;
+        return (
+          <ReviewsSection
+            businessId={client.id}
+            reviews={reviews}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
+        );
     }
   };
 
   return (
-    <main>
+    <main className={HEADING_FONT_VARIABLE[anchor.headingFont]}>
       {previewBanner}
       {trackingScripts}
       {schema}
@@ -428,7 +458,7 @@ export async function ClientLandingPageView({
       {/* Combined spec Sec 19: templates don't share a fixed section order
           (About isn't always first), so this goes right after the hero
           instead — the other position the spec allows for. */}
-      {packages.length === 0 && <EarlyContactCta accentColor={accentColor} />}
+      {packages.length === 0 && <EarlyContactCta accentColor={accentColor} dark={anchor.sectionSurface === "dark"} />}
 
       {template.sections.map((key) => (
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>

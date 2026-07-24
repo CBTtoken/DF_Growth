@@ -17,6 +17,7 @@ import { GeometricHero } from "@/components/landing/heroes/GeometricHero";
 import { ChecklistHero } from "@/components/landing/heroes/ChecklistHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
+import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
 import { SAMPLE_DATA } from "@/lib/templates/sample-data";
 
 // Real, live-rendered previews for the template picker (onboarding step 4
@@ -89,6 +90,8 @@ export default async function TemplatePreviewPage({
   let sectionCount = 0;
   const nextNumber = () => String(++sectionCount).padStart(2, "0");
 
+  const anchor = getAnchor(template.id);
+
   const renderSection = (key: SectionKey) => {
     const number = nextNumber();
     switch (key) {
@@ -100,25 +103,49 @@ export default async function TemplatePreviewPage({
             aboutText={SAMPLE_DATA.aboutText}
             accentColor={accentColor}
             eyebrowNumber={number}
+            anchor={anchor}
           />
         );
       case "story":
-        return <StorySection storyText={SAMPLE_DATA.additionalNotes} accentColor={accentColor} eyebrowNumber={number} />;
+        return (
+          <StorySection
+            storyText={SAMPLE_DATA.additionalNotes}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
+        );
       case "services":
-        return <ServicesList servicesText={SAMPLE_DATA.servicesText} accentColor={accentColor} eyebrowNumber={number} />;
+        return (
+          <ServicesList
+            servicesText={SAMPLE_DATA.servicesText}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
+        );
       case "packages":
-        return <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} />;
+        return <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
       case "trust":
-        return <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} />;
+        return (
+          <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />
+        );
       case "location":
-        return <LocationMap businessAddress={SAMPLE_DATA.businessAddress} accentColor={accentColor} eyebrowNumber={number} />;
+        return (
+          <LocationMap
+            businessAddress={SAMPLE_DATA.businessAddress}
+            accentColor={accentColor}
+            eyebrowNumber={number}
+            anchor={anchor}
+          />
+        );
       case "howItWorks":
-        return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} />;
+        return <HowItWorksSection accentColor={accentColor} eyebrowNumber={number} anchor={anchor} />;
     }
   };
 
   return (
-    <main>
+    <main className={HEADING_FONT_VARIABLE[anchor.headingFont]}>
       {template.hero === "minimal" && <MinimalHero {...heroProps} />}
       {template.hero === "split" && <SplitHero {...heroProps} photoUrl={SAMPLE_DATA.photoUrl} />}
       {template.hero === "editorial" && <EditorialHero {...heroProps} />}

@@ -7,9 +7,11 @@
 // entry point that just scrolls down to the same #lead-form — the
 // lower-risk of the two options the spec allows for. Only rendered by the
 // caller when packages.length === 0.
-export function EarlyContactCta({ accentColor }: { accentColor: string }) {
+export function EarlyContactCta({ accentColor, dark = false }: { accentColor: string; dark?: boolean }) {
   return (
-    <div className="border-b border-gray-100 bg-white px-4 py-10 text-center sm:px-8">
+    <div
+      className={`border-b px-4 py-10 text-center sm:px-8 ${dark ? "border-gray-800 bg-ink" : "border-gray-100 bg-white"}`}
+    >
       <a
         href="#lead-form"
         className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5"
