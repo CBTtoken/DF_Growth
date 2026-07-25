@@ -50,8 +50,8 @@ export function PixelConsentGate({ pixelId }: { pixelId: string | null }) {
           className="fixed inset-x-0 bottom-0 z-[60] flex flex-col items-center gap-3 border-t border-white/10 bg-ink/95 px-4 py-4 text-center backdrop-blur sm:flex-row sm:justify-between sm:text-left"
         >
           <p className="max-w-2xl text-sm text-white/80">
-            This page uses a tracking cookie to measure ad performance. You can accept or reject it —
-            either way, the page works exactly the same.
+            This page uses a tracking cookie to measure ad performance. You can accept or reject it.
+            Either way, the page works exactly the same.
           </p>
           <div className="flex shrink-0 items-center gap-3">
             <button
