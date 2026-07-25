@@ -176,7 +176,7 @@ export function BookingSection({
         : Boolean(date);
 
   return (
-    <section id="booking" className="bg-white px-4 py-16 sm:px-8 sm:py-24">
+    <section id="booking" className="bg-white px-4 py-12 sm:px-8 sm:py-16">
       <div className="mx-auto max-w-xl">
         <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{copy.heading}</h2>
 

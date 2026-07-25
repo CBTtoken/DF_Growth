@@ -37,7 +37,7 @@ export function PhotoGallerySection({
   if (!anchor) {
     return (
       <section className="border-b border-gray-100 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
             {eyebrowNumber} — Gallery
           </p>

@@ -36,7 +36,7 @@ export function AboutSection({
   if (!anchor) {
     return (
       <section id="about" className="border-b border-gray-100 bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
             <div>
               <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>

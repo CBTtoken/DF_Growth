@@ -10,7 +10,7 @@ export function PreviewLeadForm({ primaryColor }: { primaryColor: string }) {
 
   return (
     <section id="lead-form" className="scroll-mt-8" style={{ backgroundColor: primaryColor }}>
-      <div className="mx-auto max-w-xl px-4 py-20 sm:px-8 sm:py-28">
+      <div className="mx-auto max-w-xl px-4 py-14 sm:px-8 sm:py-20">
         <div className="rounded-3xl bg-white p-6 shadow-xl shadow-black/10 sm:p-10">
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Get in touch</h2>
           <p className="mt-2 text-gray-500">We&apos;ll respond within one business day.</p>

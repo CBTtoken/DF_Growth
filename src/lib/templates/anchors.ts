@@ -91,12 +91,14 @@ export const EYEBROW_STYLE_CLASS: Record<EyebrowStyle, string> = {
 
 export type SpacingDensity = "airy" | "standard" | "tight";
 
-// "standard" is today's exact existing section padding (py-16 sm:py-24),
-// unchanged — "airy" and "tight" are genuinely different rhythms.
+// Section vertical rhythm. Tightened 2026-07-25 (Dewald: templates had too
+// much white space between sections) — roughly a quarter less top/bottom
+// padding across all three densities, while keeping "airy" > "standard" >
+// "tight" as genuinely different rhythms.
 export const SPACING_CLASS: Record<SpacingDensity, string> = {
-  airy: "py-20 sm:py-28",
-  standard: "py-16 sm:py-24",
-  tight: "py-12 sm:py-16",
+  airy: "py-14 sm:py-20",
+  standard: "py-12 sm:py-16",
+  tight: "py-8 sm:py-12",
 };
 
 // Chunk 2d: "light-default" keeps every component's existing bg-white/

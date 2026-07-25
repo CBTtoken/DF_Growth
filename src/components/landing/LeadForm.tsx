@@ -56,7 +56,7 @@ export function LeadForm({
 
   return (
     <section id="lead-form" className="scroll-mt-8" style={{ backgroundColor: primaryColor }}>
-      <div className="mx-auto max-w-xl px-4 py-20 sm:px-8 sm:py-28">
+      <div className="mx-auto max-w-xl px-4 py-14 sm:px-8 sm:py-20">
         <div className="rounded-3xl bg-white p-6 shadow-xl shadow-black/10 sm:p-10">
           {state?.success ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">

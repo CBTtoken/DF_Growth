@@ -52,7 +52,7 @@ export function ShopSection({
   if (products.length === 0) return null;
 
   return (
-    <section id="shop" className="bg-white px-4 py-16 sm:px-8 sm:py-24">
+    <section id="shop" className="bg-white px-4 py-12 sm:px-8 sm:py-16">
       <div className="mx-auto max-w-5xl">
         <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Shop</h2>
 

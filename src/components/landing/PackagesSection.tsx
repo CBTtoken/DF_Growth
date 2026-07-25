@@ -71,7 +71,7 @@ export function PackagesSection({
   if (!anchor) {
     return (
       <section id="packages" className="border-b border-gray-100 bg-gray-50">
-        <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
+        <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
             {eyebrowNumber} — {title}
           </p>
