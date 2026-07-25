@@ -11,11 +11,18 @@ import { MetaConversion } from "@/components/analytics/MetaConversion";
 // account's onboarding progress instead of a fresh signup, looking like
 // the new signup did nothing at all. Mirrors /pricing/success, which
 // already got this right for paid tiers.
-export default function TrialStartedPage() {
+export default async function TrialStartedPage({
+  searchParams,
+}: {
+  // ?ev= carries the server-side CAPI's event_id (set in pricing/actions.ts)
+  // so the browser pixel can fire the same id and Meta dedupes the two.
+  searchParams: Promise<{ ev?: string }>;
+}) {
+  const { ev } = await searchParams;
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
       <TrackEvent name="sign_up" method="foundation_trial" />
-      <MetaConversion event="CompleteRegistration" />
+      <MetaConversion event="CompleteRegistration" eventId={ev} />
       <BrandHeader />
       <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-10 shadow-sm">
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>

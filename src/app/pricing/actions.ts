@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { redirect } from "next/navigation";
 import { headers, cookies } from "next/headers";
 import { startCheckoutSchema } from "@/lib/schemas/pricing";
@@ -7,6 +8,30 @@ import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { REFERRAL_COOKIE_NAME } from "@/lib/agents/referral-cookie";
 import { resolveReferralAttribution } from "@/lib/agents/attribution";
+import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
+
+// Fires DigitalFlyer's own server-side CompleteRegistration to Meta and returns
+// the event_id so the caller can pass it to the thank-you page — the browser
+// pixel there reuses the same id, and Meta dedupes the two into one conversion.
+// Every non-Foundation tier and Foundation's trial both count as a registration
+// (both thank-you pages fire CompleteRegistration on the browser side too).
+async function fireSignupConversion(
+  email: string,
+  hdrs: Awaited<ReturnType<typeof headers>>,
+  cookieStore: Awaited<ReturnType<typeof cookies>>
+): Promise<string> {
+  const eventId = randomUUID();
+  await sendDigitalFlyerCapiEvent({
+    eventName: "CompleteRegistration",
+    email,
+    eventId,
+    eventSourceUrl: hdrs.get("referer") ?? "https://growth.digitalflyersa.co.za/pricing",
+    clientUserAgent: hdrs.get("user-agent"),
+    fbc: cookieStore.get("_fbc")?.value ?? null,
+    fbp: cookieStore.get("_fbp")?.value ?? null,
+  });
+  return eventId;
+}
 
 type CheckoutState = {
   error?: {
@@ -41,7 +66,9 @@ export async function startCheckout(
   // mint accounts indefinitely. 5 attempts per 10 minutes per IP is
   // generous for a real prospect (who submits once, maybe twice after a
   // typo) but stops a tight loop.
-  const ip = clientIpFromHeaders(await headers());
+  const hdrs = await headers();
+  const cookieStore = await cookies();
+  const ip = clientIpFromHeaders(hdrs);
   if (isRateLimited(`checkout:${ip}`, 5, 10 * 60 * 1000)) {
     return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
   }
@@ -78,7 +105,7 @@ export async function startCheckout(
   // branches below — this Server Action (invoked from a real browser
   // submission) is the only point in the whole signup flow with cookie
   // access; the Paystack webhook that later activates payment has none.
-  const referralCookie = (await cookies()).get(REFERRAL_COOKIE_NAME)?.value;
+  const referralCookie = cookieStore.get(REFERRAL_COOKIE_NAME)?.value;
   const referredByAgentId = await resolveReferralAttribution({
     cookieCode: referralCookie,
     signupEmail: email,
@@ -116,7 +143,8 @@ export async function startCheckout(
     // isn't a brand new one (see the comment on this page for the real
     // bug this caused). The new user isn't actually logged in until they
     // click the magic link that was just emailed to them.
-    redirect("/pricing/trial-started");
+    const eventId = await fireSignupConversion(email, hdrs, cookieStore);
+    redirect(`/pricing/trial-started?ev=${eventId}`);
   }
 
   const result = await provisionGrowthClient({
@@ -144,5 +172,6 @@ export async function startCheckout(
     return { error: { _form: ["Could not start your signup, please try again."] } };
   }
 
-  redirect("/pricing/signup-started");
+  const eventId = await fireSignupConversion(email, hdrs, cookieStore);
+  redirect(`/pricing/signup-started?ev=${eventId}`);
 }

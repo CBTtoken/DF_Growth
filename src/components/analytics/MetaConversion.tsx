@@ -22,7 +22,7 @@ declare global {
   }
 }
 
-export function MetaConversion({ event }: { event: string }) {
+export function MetaConversion({ event, eventId }: { event: string; eventId?: string }) {
   const consent = typeof window === "undefined" ? null : getStoredConsent();
   const active = Boolean(PIXEL) && consent === "accepted";
 
@@ -34,14 +34,23 @@ export function MetaConversion({ event }: { event: string }) {
     let tries = 0;
     const id = setInterval(() => {
       if (typeof window.fbq === "function") {
-        window.fbq("track", event);
+        // Pass the SAME event_id the server-side CAPI used for this signup
+        // (threaded in via the thank-you page's ?ev= param) so Meta dedupes
+        // the browser + server events into one conversion. Without an id
+        // there's nothing to dedupe against and a signup could be counted
+        // twice once CAPI is live.
+        if (eventId) {
+          window.fbq("track", event, {}, { eventID: eventId });
+        } else {
+          window.fbq("track", event);
+        }
         clearInterval(id);
       } else if (++tries > 25) {
         clearInterval(id);
       }
     }, 200);
     return () => clearInterval(id);
-  }, [active, event]);
+  }, [active, event, eventId]);
 
   if (!active) return null;
 
