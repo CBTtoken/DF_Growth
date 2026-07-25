@@ -1,5 +1,6 @@
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { TrackEvent } from "@/components/analytics/TrackEvent";
+import { MetaConversion } from "@/components/analytics/MetaConversion";
 
 // Combined spec Sec 10: growth_engine/enterprise signups no longer pay
 // upfront on /pricing, so this replaces the old immediate redirect to
@@ -11,6 +12,7 @@ export default function SignupStartedPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
       <TrackEvent name="sign_up" method="growth" />
+      <MetaConversion event="CompleteRegistration" />
       <BrandHeader />
       <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-10 shadow-sm">
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>

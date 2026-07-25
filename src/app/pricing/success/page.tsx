@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { TrackEvent } from "@/components/analytics/TrackEvent";
+import { MetaConversion } from "@/components/analytics/MetaConversion";
 
 // Combined spec Sec 10: this used to be the redirect target for a brand-new
 // growth_engine/enterprise signup paying upfront, before ever seeing the
@@ -14,6 +15,7 @@ export default function PricingSuccessPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
       <TrackEvent name="sign_up" method="growth_paid" />
+      <MetaConversion event="Subscribe" />
       <BrandHeader />
       <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-10 shadow-sm">
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>

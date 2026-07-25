@@ -1,5 +1,6 @@
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { TrackEvent } from "@/components/analytics/TrackEvent";
+import { MetaConversion } from "@/components/analytics/MetaConversion";
 
 // Found via real UAT: Foundation's signup used to redirect straight to
 // /onboard, which just shows whatever session happens to already be
@@ -14,6 +15,7 @@ export default function TrialStartedPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
       <TrackEvent name="sign_up" method="foundation_trial" />
+      <MetaConversion event="CompleteRegistration" />
       <BrandHeader />
       <div className="flex max-w-md flex-col items-center gap-3 rounded-2xl border border-gray-100 bg-white p-10 shadow-sm">
         <span className="grid size-14 place-items-center rounded-full bg-brand/10 text-2xl text-brand">✓</span>
