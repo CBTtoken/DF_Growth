@@ -1,3 +1,5 @@
+import { createHmac } from "node:crypto";
+
 // Real screenshots of real client pages, for marketing use ("See It In
 // Action") — a raw uploaded gallery photo isn't a screenshot of the page,
 // and manual screenshotting doesn't scale. A managed API instead of a
@@ -7,6 +9,18 @@
 // screenshotone.com/pricing, 2026-07-24: free for up to 100/month, no
 // card required; $17/month for 2,000/month after that.
 const SCREENSHOTONE_ENDPOINT = "https://api.screenshotone.com/take";
+
+// Verified at screenshotone.com/docs/signed-requests, 2026-07-24: signing
+// is optional unless enforcement is turned on for the access key in
+// ScreenshotOne's dashboard — but since a secret key exists, sign every
+// request anyway rather than depend on that dashboard setting never
+// changing. HMAC-SHA256 over the exact query string (access_key + the
+// rest, unsorted, in insertion order — matches their own CLI example),
+// hex digest appended as a `signature` param.
+function signParams(params: URLSearchParams, secretKey: string): string {
+  const signature = createHmac("sha256", secretKey).update(params.toString()).digest("hex");
+  return signature;
+}
 
 export async function captureScreenshot(url: string): Promise<Buffer | null> {
   const accessKey = process.env.SCREENSHOTONE_ACCESS_KEY;
@@ -28,6 +42,11 @@ export async function captureScreenshot(url: string): Promise<Buffer | null> {
     block_ads: "true",
     cache: "false",
   });
+
+  const secretKey = process.env.SCREENSHOTONE_SECRET_KEY;
+  if (secretKey) {
+    params.set("signature", signParams(params, secretKey));
+  }
 
   const res = await fetch(`${SCREENSHOTONE_ENDPOINT}?${params.toString()}`);
   if (!res.ok) {

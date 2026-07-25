@@ -49,3 +49,7 @@ next-env.d.ts
 
 # real customer PII source data - not for git history
 docs/DigitalFlyer_Legacy_Reactivation_Candidates_1.xlsx
+
+# Reactivation campaign runtime artifacts (contain recipient data)
+scripts/.reactivation-cohort.json
+scripts/.reactivation-email-preview.html

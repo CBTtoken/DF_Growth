@@ -236,7 +236,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       },
       {
         question: "What is the DigitalFlyer Marketplace?",
-        answer: "A shared directory where customers can discover your business alongside other DigitalFlyer members.",
+        answer: "A shared marketplace where customers can discover your business alongside other DigitalFlyer members.",
       },
       {
         question: "What is RE:Biz Nomads?",

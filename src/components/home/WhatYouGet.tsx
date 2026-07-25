@@ -4,7 +4,7 @@ const items = [
   {
     icon: Store,
     title: "DigitalFlyer Marketplace",
-    body: "A shared directory where customers can discover your business alongside other DigitalFlyer members.",
+    body: "A shared marketplace where customers can discover your business alongside other DigitalFlyer members.",
   },
   {
     icon: Users,

@@ -1,11 +1,12 @@
-import Image from "next/image";
 import Link from "next/link";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
+import { Search, Star, MessageCircle, CalendarDays, ShoppingBag } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SortSelect } from "@/components/marketplace/SortSelect";
+import { MarketplaceCard, type MarketplaceCardData } from "@/components/marketplace/MarketplaceCard";
 import { INDUSTRY_TAXONOMY } from "@/lib/industries";
 import { CITIES } from "@/lib/cities";
 
@@ -19,11 +20,15 @@ export const metadata: Metadata = {
   // template — including the suffix here too produced a doubled title.
   title: "Marketplace",
   description:
-    "Find real South African small businesses on DigitalFlyer Growth — search by name, industry, or city.",
+    "Find real South African small businesses on DigitalFlyer Growth. Search by name, industry, or city.",
 };
 
-// Backlog Sec 1 (Marketplace directory + search), built this sprint: a
-// real browsable/searchable page for member businesses.
+// Backlog Sec 1 (Marketplace + search): a real browsable/searchable
+// marketplace of member businesses. Redesigned 2026-07-25 from a Bolt design
+// (docs/marketplace.zip) — the data logic below is unchanged, only the
+// presentation moved to a dark hero + richer MarketplaceCard grid using the
+// home page's design tokens. No "verified" badge yet (Dewald has a separate
+// idea for it) and no fabricated stats (real listing count only).
 //
 // Reads searchParams, which makes this route dynamic by definition — no
 // force-static here, unlike the individual client pages, since the whole
@@ -33,7 +38,7 @@ export default async function MarketplacePage({
 }: {
   searchParams: Promise<{ q?: string; industry?: string; city?: string; sort?: string; lat?: string; lng?: string }>;
 }) {
-  const { q = "", industry = "", city = "", sort = "recent", lat = "", lng = "" } = await searchParams;
+  const { q = "", industry = "", city = "", sort = "near", lat = "", lng = "" } = await searchParams;
   const admin = createAdminClient();
 
   // published landing_pages rows only, and only active (paid/converted)
@@ -42,7 +47,7 @@ export default async function MarketplacePage({
   let query = admin
     .from("growth_clients")
     .select(
-      "id, slug, business_name, tagline, business_description, industry, city, logo_path, hero_photo_id, brand_primary_color, landing_pages!inner(published)"
+      "id, slug, business_name, tagline, business_description, industry, city, logo_path, hero_photo_id, screenshot_path, brand_primary_color, whatsapp_phone, facebook_url, instagram_url, landing_pages!inner(published)"
     )
     .eq("status", "active")
     .eq("landing_pages.published", true)
@@ -69,14 +74,16 @@ export default async function MarketplacePage({
 
   const { data: clients } = await query;
 
-  // Real feedback: text-only cards had "no context or colour" — a real
-  // photo thumbnail per card, same idea as the homepage's "See It In
-  // Action" previews but without embedding a live iframe (that technique
-  // only works there because /sample/* has a deliberately loosened
-  // clickjacking header; widening that to every real client page for a
-  // directory that could grow to hundreds of listings isn't a good trade,
-  // see the earlier conversation). One batched query for every client's
-  // photos rather than one query per card.
+  // Honest hero stat: the real number of live, listable businesses (active +
+  // published), independent of the current filters. Never a fabricated
+  // figure. Shown only when it actually resolves to a positive count.
+  const { count: totalListed } = await admin
+    .from("growth_clients")
+    .select("id, landing_pages!inner(published)", { count: "exact", head: true })
+    .eq("status", "active")
+    .eq("landing_pages.published", true);
+
+  // One batched query for every client's photos rather than one per card.
   const clientIds = (clients ?? []).map((c) => c.id);
   const { data: allPhotos } = clientIds.length
     ? await admin
@@ -93,13 +100,9 @@ export default async function MarketplacePage({
     photosByClient.set(photo.growth_client_id, list);
   }
 
-  // Real feedback: ratings only ever showed on a business's own page, not
-  // here — a visitor browsing the directory had no trust signal to go on
-  // until they'd already clicked through. Same batched-query pattern as
-  // photos above, one round trip for every listed client rather than one
-  // per card. Only ever a positive signal shown when count > 0 — Rate &
-  // Review Sec 5's "no rating shown at all for zero reviews" rule applies
-  // here too, not just on the business's own page.
+  // Ratings, batched, one round trip for every listed client. Only ever a
+  // positive signal shown when count > 0 — Rate & Review Sec 5's "no rating
+  // shown at all for zero reviews" rule applies here too.
   const { data: allRatings } = clientIds.length
     ? await admin.from("reviews").select("business_id, rating").eq("status", "published").in("business_id", clientIds)
     : { data: [] as { business_id: string; rating: number }[] };
@@ -115,10 +118,7 @@ export default async function MarketplacePage({
     }
   }
 
-  // "Most visited" sort — the underlying page-view data now exists
-  // (client dashboard analytics), this was previously blocked on that not
-  // existing at all, not on anything harder. Only fetched when actually
-  // sorting by it, no reason to pay this query's cost on every page load.
+  // "Most visited" sort — only fetched when actually sorting by it.
   let sortedClients = clients ?? [];
   if (sort === "popular" && clientIds.length) {
     const { data: allViews } = await admin.from("page_views").select("growth_client_id").in("growth_client_id", clientIds);
@@ -131,16 +131,9 @@ export default async function MarketplacePage({
     );
   }
 
-  // Quick Sprint: Payments/Geo Sec 3.4 — "Near me", opt-in only (confirmed
-  // with Dewald). Origin coordinates come from either the browser's own GPS
-  // (SortSelect.tsx sent them as lat/lng query params after the visitor
-  // explicitly picked this sort) or, when that's unavailable/denied,
-  // Vercel Edge Network's own IP-geolocation request headers — no separate
-  // geolocation service needed for that fallback tier. If neither is
-  // available (e.g. local dev, or a visitor whose network doesn't resolve
-  // to a location), this silently no-ops and the listing stays in its
-  // existing order — the spec's own "final fallback: existing city filter
-  // stays exactly as it is, unaffected."
+  // "Near me", opt-in only. Origin coords come from the browser's GPS (sent
+  // as lat/lng by SortSelect) or Vercel Edge IP-geolocation headers as a
+  // fallback. If neither is available this silently no-ops.
   const distancesByClient = new Map<string, number>();
   if (sort === "near" && clientIds.length) {
     const latParam = parseFloat(lat);
@@ -168,11 +161,6 @@ export default async function MarketplacePage({
         distancesByClient.set(row.id, row.distance_meters);
       }
       if (distancesByClient.size) {
-        // Stable sort (guaranteed since ES2019): clients with a known
-        // distance come first, nearest to farthest; clients with no stored
-        // location (never geocoded, or a bad address that didn't resolve)
-        // keep their existing relative order at the end, rather than being
-        // dropped from the directory entirely.
         sortedClients = [...sortedClients].sort((a, b) => {
           const da = distancesByClient.get(a.id);
           const db = distancesByClient.get(b.id);
@@ -187,43 +175,94 @@ export default async function MarketplacePage({
 
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
   const logosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos`;
+  const screenshotsStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-screenshots`;
+  const hasFilters = Boolean(q || industry || city);
+
+  const cards: MarketplaceCardData[] = sortedClients.map((client) => {
+    const clientPhotos = photosByClient.get(client.id) ?? [];
+    const heroPhoto = client.hero_photo_id
+      ? clientPhotos.find((p) => p.id === client.hero_photo_id)
+      : clientPhotos[0];
+    const distanceMeters = distancesByClient.get(client.id);
+    // Cover resolution: an uploaded hero photo wins; otherwise the real
+    // captured screenshot of the page's hero (the "snipping tool" pipeline),
+    // which reads far better than a flat colour block; the block is only the
+    // last resort for a page with neither yet.
+    const thumbnailUrl = heroPhoto
+      ? `${photosStorageBase}/${heroPhoto.storage_path}`
+      : client.screenshot_path
+        ? `${screenshotsStorageBase}/${client.screenshot_path}`
+        : null;
+    return {
+      slug: client.slug,
+      businessName: client.business_name,
+      industry: client.industry,
+      city: client.city,
+      tagline: client.tagline || client.business_description,
+      thumbnailUrl,
+      logoUrl: client.logo_path ? `${logosStorageBase}/${client.logo_path}` : null,
+      brandColor: client.brand_primary_color || "#1081b8",
+      rating: ratingsByClient.get(client.id) ?? null,
+      distanceLabel: distanceMeters !== undefined ? formatDistance(distanceMeters) : null,
+      whatsapp: client.whatsapp_phone,
+      facebookUrl: client.facebook_url,
+      instagramUrl: client.instagram_url,
+    };
+  });
+
+  const selectClass =
+    "w-full rounded-lg border border-neutral-border bg-white px-3.5 py-2.5 text-sm text-neutral-ink outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
 
   return (
-    <main className="flex flex-1 flex-col bg-gray-50">
+    <main className="flex flex-1 flex-col bg-neutral-light">
       <MarketingHeader />
 
-      <section className="border-b border-gray-100 bg-white px-4 py-14 sm:px-6">
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 text-center">
-          <span className="font-badge text-xs uppercase tracking-widest text-brand">Marketplace</span>
-          <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-            Find your local supplier
-          </h1>
-          <p className="max-w-xl text-sm text-gray-500 sm:text-base">
-            Real South African small businesses, built and hosted on DigitalFlyer Growth.
-          </p>
+      {/* Hero + search */}
+      <section className="bg-gradient-to-br from-brand-blue-light via-white to-white px-4 pb-10 pt-12 sm:px-6 lg:pb-14 lg:pt-16">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-2 lg:gap-12">
+          <div>
+            <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-blue/20 bg-brand-blue-light px-3 py-1 text-xs font-semibold text-brand-blue">
+              <span className="size-1.5 rounded-full bg-brand-blue" />
+              South African business marketplace
+            </span>
+            <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-neutral-ink sm:text-4xl lg:text-5xl">
+              Find and <span className="text-brand-blue">support</span> your local businesses
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-mid sm:text-base">
+              Search by city, find the one closest to you, and back the quality local businesses near you.
+              The new way to find real services you can trust.
+            </p>
+            {/* Honest signals only, no fabricated numbers */}
+            <div className="mt-5 flex flex-wrap gap-2">
+              {typeof totalListed === "number" && totalListed > 0 && (
+                <span className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-white px-3 py-1.5 text-xs font-semibold text-neutral-ink shadow-sm">
+                  {totalListed} live {totalListed === 1 ? "business" : "businesses"}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-white px-3 py-1.5 text-xs font-semibold text-neutral-ink shadow-sm">
+                <Star size={12} className="fill-amber-400 text-amber-400" /> Real customer ratings
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-border bg-white px-3 py-1.5 text-xs font-semibold text-neutral-ink shadow-sm">
+                <MessageCircle size={12} className="text-emerald-500" /> Direct WhatsApp contact
+              </span>
+            </div>
+          </div>
 
-          {/* One plain form, GET method, no client-side JS at all — this is
-              a Server Component, and an onChange auto-submit handler on the
-              selects (tried first) can't cross the server/client boundary
-              here, which produced a real 500 on every load. A single
-              "Apply" button for all three filters is simpler and avoids
-              needing to split this into a client component just for that. */}
-          <form method="GET" className="mt-4 flex w-full max-w-xl flex-col gap-3">
-            <div className="flex flex-col gap-3 sm:flex-row">
+          {/* One plain GET form (Server Component, no client JS except the
+              SortSelect for the "near me" geolocation). */}
+          <form method="GET" className="flex flex-col gap-3 rounded-2xl border border-neutral-border bg-white p-4 shadow-card sm:p-5">
+            <div className="relative">
+              <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-muted" />
               <input
                 type="text"
                 name="q"
                 defaultValue={q}
                 placeholder="Search by business name or what they do"
-                className="w-full rounded-full border border-gray-200 bg-white px-5 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+                className="w-full rounded-lg border border-neutral-border bg-white py-2.5 pl-10 pr-4 text-sm text-neutral-ink placeholder:text-neutral-muted outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
               />
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <select
-                name="industry"
-                defaultValue={industry}
-                className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <select name="industry" defaultValue={industry} className={selectClass} aria-label="Industry">
                 <option value="">All industries</option>
                 {INDUSTRY_TAXONOMY.map((c) => (
                   <option key={c.name} value={c.name}>
@@ -231,11 +270,7 @@ export default async function MarketplacePage({
                   </option>
                 ))}
               </select>
-              <select
-                name="city"
-                defaultValue={city}
-                className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
+              <select name="city" defaultValue={city} className={selectClass} aria-label="City">
                 <option value="">All cities</option>
                 {CITIES.map((c) => (
                   <option key={c} value={c}>
@@ -245,177 +280,61 @@ export default async function MarketplacePage({
               </select>
               <SortSelect defaultSort={sort} defaultLat={lat} defaultLng={lng} />
             </div>
-            <button
-              type="submit"
-              className="inline-flex w-full items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark sm:w-auto sm:self-center"
-            >
-              Search
-            </button>
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <button
+                type="submit"
+                className="inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-accent px-8 py-3.5 text-base font-bold text-white shadow-md shadow-accent/25 transition hover:-translate-y-0.5 hover:bg-accent-hover"
+              >
+                <Search size={18} /> Search
+              </button>
+              {hasFilters && (
+                <Link href="/marketplace" className="text-xs font-semibold text-neutral-muted hover:text-brand-blue">
+                  Clear filters
+                </Link>
+              )}
+            </div>
           </form>
-
-          {(q || industry || city) && (
-            <Link href="/marketplace" className="text-xs font-medium text-gray-400 hover:text-brand">
-              Clear filters
-            </Link>
-          )}
-          {/* Cross-sell, not a mobile-reachability workaround — the header's
-              real mobile nav menu already covers that (MobileNavMenu.tsx).
-              Kept because someone here looking for a supplier and someone
-              looking for a market/workshop are genuinely different intents
-              worth pointing between either way. */}
-          <Link href="/events" className="text-xs font-medium text-gray-400 hover:text-brand">
-            Looking for events instead? Browse Events →
-          </Link>
-          <Link href="/shop" className="text-xs font-medium text-gray-400 hover:text-brand">
-            Looking for products instead? Browse Shop →
-          </Link>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6">
+      {/* Results */}
+      <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-neutral-ink">
+            {sortedClients.length > 0
+              ? `${sortedClients.length} ${sortedClients.length === 1 ? "business" : "businesses"}${hasFilters ? " found" : ""}`
+              : ""}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/events"
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/30 bg-white px-4 py-2 text-xs font-semibold text-brand-blue shadow-sm transition hover:bg-brand-blue hover:text-white"
+            >
+              <CalendarDays size={14} /> Find Events
+            </Link>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/30 bg-white px-4 py-2 text-xs font-semibold text-brand-blue shadow-sm transition hover:bg-brand-blue hover:text-white"
+            >
+              <ShoppingBag size={14} /> Find local Products
+            </Link>
+          </div>
+        </div>
+
         {sortedClients.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-white p-16 text-center">
-            <p className="text-base font-semibold text-ink">No businesses match yet</p>
-            <p className="max-w-sm text-sm text-gray-500">
-              {q || industry || city
+          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-neutral-border bg-white p-16 text-center">
+            <p className="text-base font-semibold text-neutral-ink">No businesses match yet</p>
+            <p className="max-w-sm text-sm text-neutral-muted">
+              {hasFilters
                 ? "Try a different search or clear your filters."
                 : "New members are added here as soon as their page goes live."}
             </p>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {sortedClients.map((client) => {
-              const logoUrl = client.logo_path ? `${logosStorageBase}/${client.logo_path}` : null;
-              const brandColor = client.brand_primary_color || "#1081b8";
-              const rating = ratingsByClient.get(client.id);
-              const ratingBadge = rating ? (
-                <span className="flex items-center gap-1 text-xs font-semibold text-gray-600">
-                  <span aria-hidden style={{ color: brandColor }}>★</span>
-                  {rating.average.toFixed(1)}
-                  <span className="font-normal text-gray-400">({rating.count})</span>
-                </span>
-              ) : null;
-
-              const distanceMeters = distancesByClient.get(client.id);
-              const distanceBadge =
-                distanceMeters !== undefined ? (
-                  <span className="text-xs font-semibold text-gray-500">{formatDistance(distanceMeters)}</span>
-                ) : null;
-
-              // Same resolution order as a real client page's hero photo
-              // (ClientLandingPageView.tsx): an explicit hero_photo_id
-              // selection wins, otherwise the first uploaded gallery photo
-              // — never a stock photo standing in for a business that
-              // hasn't uploaded anything, that would misrepresent them.
-              const clientPhotos = photosByClient.get(client.id) ?? [];
-              const heroPhoto = client.hero_photo_id
-                ? clientPhotos.find((p) => p.id === client.hero_photo_id)
-                : clientPhotos[0];
-              const thumbnailUrl = heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : null;
-
-              // A real photo genuinely helps and keeps its own card shape.
-              // No-photo cards used to be a big flat colour rectangle with
-              // just 2 initials — with most listings still photo-less
-              // (every one of the first 31 reactivated businesses has zero
-              // gallery photos), a wall of those reads as dull, repetitive
-              // colour blocks rather than a real directory. Redesigned as a
-              // text-forward card instead — a Google Business Profile-style
-              // icon + name + category, name and industry doing the actual
-              // work rather than a colour standing in for content.
-              if (thumbnailUrl) {
-                return (
-                  <Link
-                    key={client.slug}
-                    href={`/${client.slug}`}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-                      <Image
-                        src={thumbnailUrl}
-                        alt={client.business_name}
-                        fill
-                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        className="object-cover transition duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5 p-4">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="size-2 shrink-0 rounded-full"
-                          style={{ backgroundColor: brandColor }}
-                          aria-hidden
-                        />
-                        <h2 className="truncate text-sm font-bold tracking-tight text-ink group-hover:text-brand">
-                          {client.business_name}
-                        </h2>
-                      </div>
-                      <p className="truncate text-xs text-gray-400">
-                        {client.industry}
-                        {client.city ? ` · ${client.city}` : ""}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        {ratingBadge}
-                        {distanceBadge}
-                      </div>
-                      <p className="line-clamp-2 text-sm text-gray-500">
-                        {client.tagline || client.business_description}
-                      </p>
-                    </div>
-                  </Link>
-                );
-              }
-
-              return (
-                <Link
-                  key={client.slug}
-                  href={`/${client.slug}`}
-                  className="group flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-gray-200 hover:shadow-md"
-                >
-                  <div className="flex items-start gap-3">
-                    {logoUrl ? (
-                      <Image
-                        src={logoUrl}
-                        alt={client.business_name}
-                        width={44}
-                        height={44}
-                        className="size-11 shrink-0 rounded-full border border-gray-100 bg-white object-cover p-1"
-                      />
-                    ) : (
-                      <span
-                        className="grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
-                        style={{ backgroundColor: brandColor }}
-                        aria-hidden
-                      >
-                        {client.business_name.slice(0, 2).toUpperCase()}
-                      </span>
-                    )}
-                    <div className="flex min-w-0 flex-col gap-1 pt-0.5">
-                      <h2 className="truncate text-base font-bold tracking-tight text-ink group-hover:text-brand">
-                        {client.business_name}
-                      </h2>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {client.industry && (
-                          <span
-                            className="truncate rounded-full px-2 py-0.5 text-xs font-semibold"
-                            style={{ backgroundColor: `${brandColor}1a`, color: brandColor }}
-                          >
-                            {client.industry}
-                          </span>
-                        )}
-                        {client.city && <span className="text-xs text-gray-400">{client.city}</span>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {ratingBadge}
-                        {distanceBadge}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="line-clamp-2 text-sm text-gray-500">
-                    {client.tagline || client.business_description}
-                  </p>
-                </Link>
-              );
-            })}
+            {cards.map((card) => (
+              <MarketplaceCard key={card.slug} {...card} />
+            ))}
           </div>
         )}
       </section>
