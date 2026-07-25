@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ClientLandingPageView } from "@/components/landing/ClientLandingPageView";
 import { PageViewTracker } from "@/components/landing/PageViewTracker";
@@ -190,7 +190,19 @@ export default async function ClientLandingPage({
     .limit(5, { referencedTable: "testimonials" })
     .single();
 
-  if (!client) return notFound();
+  if (!client) {
+    // The slug may be a former slug (renamed during the URL-shortening
+    // cleanup). 301 to the current slug so old links, shares, and the
+    // reactivation emails already sent all keep working.
+    const { data: renamed } = await admin
+      .from("growth_clients")
+      .select("slug")
+      .contains("previous_slugs", [clientSlug])
+      .eq("status", "active")
+      .maybeSingle();
+    if (renamed?.slug) permanentRedirect(`/${renamed.slug}`);
+    return notFound();
+  }
 
   // Every one of these is embedded as a to-many relationship (no unique
   // constraint ties any of these child tables to exactly one
