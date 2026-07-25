@@ -1,16 +1,16 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { CalendarDays, MapPin } from "lucide-react";
+import { Search, CalendarPlus } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { EventCard } from "@/components/events/EventCard";
 import { CITIES } from "@/lib/cities";
 import { EVENT_TYPES } from "@/lib/event-types";
 
 export const metadata: Metadata = {
   title: "Events",
-  description: "Free events happening near you — markets, workshops, fundraisers, and more, listed by real organisers.",
+  description: "Free community events near you. Markets, workshops, fundraisers, and more, shared by real organisers.",
 };
 
 type EventRow = {
@@ -24,17 +24,11 @@ type EventRow = {
   images: string[] | null;
 };
 
-function formatEventDate(startIso: string) {
-  const d = new Date(startIso);
-  return d.toLocaleString("en-ZA", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
-}
-
-// List Your Event Sec 4: "structurally similar to the Marketplace
-// directory: search box, city filter, event type filter... sorted soonest
-// first by default... past events automatically drop out of the public
-// browse view once their date passes, kept in the database, not deleted."
-// Reads searchParams (dynamic by definition, same as /marketplace) — the
-// whole point is server-side filtering per request, no force-static here.
+// Redesigned 2026-07-25 from a Bolt design to match the Marketplace/home look
+// (light hero, EventCard grid). The data logic below is unchanged: free
+// community events, no ticketing, sorted soonest first, past events drop out
+// of the public browse once their date passes. Reads searchParams, so dynamic
+// per request (server-side filtering), same as /marketplace.
 export default async function EventsPage({
   searchParams,
 }: {
@@ -49,10 +43,8 @@ export default async function EventsPage({
     .from("events")
     .select("id, event_name, description, start_datetime, end_datetime, city, event_type, images")
     .eq("status", "published")
-    // A multi-day event stays visible until it actually ends, not just
-    // until it starts — end_datetime is optional (Sec 3: "end optional"),
-    // so a single-datetime event instead drops out the moment its own
-    // start_datetime passes.
+    // A multi-day event stays visible until it actually ends; a
+    // single-datetime event drops out once its start_datetime passes.
     .or(`end_datetime.gte.${nowIso},and(end_datetime.is.null,start_datetime.gte.${nowIso})`)
     .order("start_datetime", { ascending: true })
     .limit(60);
@@ -69,39 +61,51 @@ export default async function EventsPage({
 
   const photosBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/event-photos`;
   const typeLabel = (value: string) => EVENT_TYPES.find((t) => t.value === value)?.label ?? value;
+  const hasFilters = Boolean(q || city || type);
+
+  const selectClass =
+    "w-full rounded-lg border border-neutral-border bg-white px-3.5 py-2.5 text-sm text-neutral-ink outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
 
   return (
-    <main className="flex flex-1 flex-col bg-gray-50">
+    <main className="flex flex-1 flex-col bg-neutral-light">
       <MarketingHeader />
 
-      <section className="border-b border-gray-100 bg-white px-4 py-14 sm:px-6">
-        <div className="mx-auto flex max-w-3xl flex-col items-center gap-3 text-center">
-          <span className="font-badge text-xs uppercase tracking-widest text-brand">Events</span>
-          <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">What&apos;s happening near you</h1>
-          <p className="max-w-xl text-sm text-gray-500 sm:text-base">
-            Markets, workshops, fundraisers, and more — free to list, free to browse.
-          </p>
-          <Link
-            href="/events/new"
-            className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
-          >
-            + List your event
-          </Link>
+      {/* Hero + search */}
+      <section className="bg-gradient-to-br from-brand-blue-light via-white to-white px-4 pb-10 pt-12 sm:px-6 lg:pb-14 lg:pt-16">
+        <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-2 lg:gap-12">
+          <div>
+            <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-blue/20 bg-brand-blue-light px-3 py-1 text-xs font-semibold text-brand-blue">
+              <span className="size-1.5 rounded-full bg-brand-blue" />
+              Community events
+            </span>
+            <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-neutral-ink sm:text-4xl lg:text-5xl">
+              Find <span className="text-brand-blue">free events</span> near you
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-mid sm:text-base">
+              Markets, workshops, fundraisers, and more, happening near you. Free to browse, and always free to list
+              your own.
+            </p>
+            <Link
+              href="/events/new"
+              className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-bold text-white shadow-md shadow-accent/25 transition hover:-translate-y-0.5 hover:bg-accent-hover"
+            >
+              <CalendarPlus size={16} /> List your event, free
+            </Link>
+          </div>
 
-          <form method="GET" className="mt-4 flex w-full max-w-xl flex-col gap-3">
-            <input
-              type="text"
-              name="q"
-              defaultValue={q}
-              placeholder="Search events"
-              className="w-full rounded-full border border-gray-200 bg-white px-5 py-3 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <select
-                name="city"
-                defaultValue={city}
-                className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
+          <form method="GET" className="flex flex-col gap-3 rounded-2xl border border-neutral-border bg-white p-4 shadow-card sm:p-5">
+            <div className="relative">
+              <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-muted" />
+              <input
+                type="text"
+                name="q"
+                defaultValue={q}
+                placeholder="Search events"
+                className="w-full rounded-lg border border-neutral-border bg-white py-2.5 pl-10 pr-4 text-sm text-neutral-ink placeholder:text-neutral-muted outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <select name="city" defaultValue={city} className={selectClass} aria-label="City">
                 <option value="">All cities</option>
                 {CITIES.map((c) => (
                   <option key={c} value={c}>
@@ -109,11 +113,7 @@ export default async function EventsPage({
                   </option>
                 ))}
               </select>
-              <select
-                name="type"
-                defaultValue={type}
-                className="w-full rounded-full border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-700 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-              >
+              <select name="type" defaultValue={type} className={selectClass} aria-label="Event type">
                 <option value="">All event types</option>
                 {EVENT_TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -122,78 +122,66 @@ export default async function EventsPage({
                 ))}
               </select>
             </div>
-            <button
-              type="submit"
-              className="inline-flex w-full items-center justify-center rounded-full bg-ink px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 sm:w-auto sm:self-center"
-            >
-              Search
-            </button>
+            <div className="flex flex-col items-center gap-2 pt-1">
+              <button
+                type="submit"
+                className="inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-brand-blue px-8 py-3 text-base font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-blue-dark"
+              >
+                <Search size={18} /> Search
+              </button>
+              {hasFilters && (
+                <Link href="/events" className="text-xs font-semibold text-neutral-muted hover:text-brand-blue">
+                  Clear filters
+                </Link>
+              )}
+            </div>
           </form>
-
-          {(q || city || type) && (
-            <Link href="/events" className="text-xs font-medium text-gray-400 hover:text-brand">
-              Clear filters
-            </Link>
-          )}
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-12 sm:px-6">
+      {/* Results */}
+      <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-neutral-ink">
+            {list.length > 0 ? `${list.length} upcoming ${list.length === 1 ? "event" : "events"}` : ""}
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/marketplace"
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/30 bg-white px-4 py-2 text-xs font-semibold text-brand-blue shadow-sm transition hover:bg-brand-blue hover:text-white"
+            >
+              Find businesses
+            </Link>
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/30 bg-white px-4 py-2 text-xs font-semibold text-brand-blue shadow-sm transition hover:bg-brand-blue hover:text-white"
+            >
+              Find local products
+            </Link>
+          </div>
+        </div>
+
         {list.length === 0 ? (
-          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-gray-200 bg-white p-16 text-center">
-            <p className="text-base font-semibold text-ink">No upcoming events match yet</p>
-            <p className="max-w-sm text-sm text-gray-500">
-              {q || city || type ? "Try a different search or clear your filters." : "Be the first to list one — it's free."}
+          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-neutral-border bg-white p-16 text-center">
+            <p className="text-base font-semibold text-neutral-ink">No upcoming events match yet</p>
+            <p className="max-w-sm text-sm text-neutral-muted">
+              {hasFilters ? "Try a different search or clear your filters." : "Be the first to list one, it is free."}
             </p>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((event) => {
-              const thumbnailUrl = event.images?.[0] ? `${photosBase}/${event.images[0]}` : null;
-
-              return (
-                <Link
-                  key={event.id}
-                  href={`/events/${event.id}`}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  {thumbnailUrl ? (
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
-                      <Image
-                        src={thumbnailUrl}
-                        alt={event.event_name}
-                        fill
-                        sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        className="object-cover transition duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  ) : (
-                    <div className="grid aspect-[4/3] w-full place-items-center bg-brand/5 text-4xl" aria-hidden>
-                      📅
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-1.5 p-4">
-                    <span className="w-fit rounded-full bg-brand/10 px-2 py-0.5 text-xs font-semibold uppercase text-brand">
-                      {typeLabel(event.event_type)}
-                    </span>
-                    <h2 className="truncate text-sm font-bold tracking-tight text-ink group-hover:text-brand">
-                      {event.event_name}
-                    </h2>
-                    <div className="flex flex-col gap-0.5 text-xs text-gray-400">
-                      <span className="inline-flex items-center gap-1.5">
-                        <CalendarDays className="size-3.5 flex-shrink-0" aria-hidden />
-                        {formatEventDate(event.start_datetime)}
-                      </span>
-                      <span className="inline-flex items-center gap-1.5">
-                        <MapPin className="size-3.5 flex-shrink-0" aria-hidden />
-                        {event.city}
-                      </span>
-                    </div>
-                    {event.description && <p className="line-clamp-2 text-sm text-gray-500">{event.description}</p>}
-                  </div>
-                </Link>
-              );
-            })}
+            {list.map((event) => (
+              <EventCard
+                key={event.id}
+                id={event.id}
+                name={event.event_name}
+                description={event.description}
+                startIso={event.start_datetime}
+                city={event.city}
+                typeLabel={typeLabel(event.event_type)}
+                imageUrl={event.images?.[0] ? `${photosBase}/${event.images[0]}` : null}
+              />
+            ))}
           </div>
         )}
       </section>
