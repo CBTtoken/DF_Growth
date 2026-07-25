@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { captureLead } from "@/app/[clientSlug]/actions";
+import { TrackEvent } from "@/components/analytics/TrackEvent";
 import { readableTextOn, ensureContrast } from "@/lib/color";
 
 // South African cell numbers are typically entered locally ("082 123
@@ -60,6 +61,7 @@ export function LeadForm({
         <div className="rounded-3xl bg-white p-6 shadow-xl shadow-black/10 sm:p-10">
           {state?.success ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
+              <TrackEvent name="generate_lead" />
               <span
                 aria-hidden
                 className="grid size-12 place-items-center rounded-full text-2xl"
