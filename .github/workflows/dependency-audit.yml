@@ -32,8 +32,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Audit (informational, all severities)
+      - name: Audit (informational, all severities incl. dev)
         run: npm audit || true
 
-      - name: Audit (fails on high/critical)
-        run: npm audit --audit-level=high
+      # The gating audit is scoped to production dependencies (--omit=dev).
+      # High-severity advisories in the ESLint/build toolchain (e.g.
+      # brace-expansion/minimatch via eslint) are dev-only, never shipped,
+      # and their only "fix" is a breaking eslint major bump — not worth
+      # failing every push over. Anything that reaches the production tree
+      # (e.g. postcss via next) is still gated here and must be patched
+      # (see the postcss override in package.json). The informational step
+      # above still surfaces the dev-only findings for review.
+      - name: Audit production deps (fails on high/critical)
+        run: npm audit --audit-level=high --omit=dev
