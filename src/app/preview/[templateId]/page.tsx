@@ -17,6 +17,9 @@ import { DarkHero } from "@/components/landing/heroes/DarkHero";
 import { CompactHero } from "@/components/landing/heroes/CompactHero";
 import { GeometricHero } from "@/components/landing/heroes/GeometricHero";
 import { ChecklistHero } from "@/components/landing/heroes/ChecklistHero";
+import { BentoHero } from "@/components/landing/heroes/BentoHero";
+import { TimelineHero } from "@/components/landing/heroes/TimelineHero";
+import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -191,6 +194,15 @@ export default async function TemplatePreviewPage({
       {template.hero === "compact" && <CompactHero {...heroProps} testimonialCount={testimonials.length} />}
       {template.hero === "geometric" && <GeometricHero {...heroProps} />}
       {template.hero === "checklist" && <ChecklistHero {...heroProps} checklistItems={checklistItems} />}
+      {template.hero === "bento" && <BentoHero {...heroProps} highlights={checklistItems} ctaHref={template.ctaHref} />}
+      {template.hero === "timeline" && <TimelineHero {...heroProps} steps={checklistItems} ctaHref={template.ctaHref} />}
+      {template.hero === "showcase" && (
+        <ShowcaseHero
+          {...heroProps}
+          packages={packages.map((p) => ({ name: p.name, price: p.price }))}
+          ctaHref={template.ctaHref}
+        />
+      )}
       {template.hero === "default" && (
         <ConversionHero {...heroProps} tagline={SAMPLE_DATA.tagline} ctaHref={template.ctaHref} />
       )}

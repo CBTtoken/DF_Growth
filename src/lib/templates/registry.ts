@@ -31,7 +31,18 @@ export type TemplateId =
   | "multi-product"
   | "app-dashboard";
 
-export type HeroVariant = "default" | "minimal" | "split" | "editorial" | "dark" | "compact" | "geometric" | "checklist";
+export type HeroVariant =
+  | "default"
+  | "minimal"
+  | "split"
+  | "editorial"
+  | "dark"
+  | "compact"
+  | "geometric"
+  | "checklist"
+  | "bento"
+  | "timeline"
+  | "showcase";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -79,7 +90,7 @@ export const templates: TemplateMeta[] = [
     archetype: "Multi-column · detailed",
     description: "Leads with your services and packages for businesses with a lot to offer.",
     icon: Grid3x3,
-    hero: "default",
+    hero: "bento",
     sections: ["services", "packages", "about", "story", "trust", "gallery", "location", "reviews"],
   },
   {
@@ -115,7 +126,7 @@ export const templates: TemplateMeta[] = [
     archetype: "How-it-works · form-forward",
     description: "A simple 3-step process up top, ending in a clear call to get in touch.",
     icon: ListChecks,
-    hero: "default",
+    hero: "timeline",
     sections: ["howItWorks", "about", "services", "packages", "trust", "gallery", "location", "reviews"],
   },
   {
@@ -133,7 +144,7 @@ export const templates: TemplateMeta[] = [
     archetype: "Packages-first",
     description: "Your packages and pricing take the spotlight, right after the hero.",
     icon: ShoppingBag,
-    hero: "default",
+    hero: "showcase",
     sections: ["packages", "services", "about", "trust", "story", "gallery", "location", "reviews"],
     ctaHref: "#packages",
   },
