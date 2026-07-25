@@ -63,66 +63,110 @@ export default async function ShopPage({
     <main className="flex flex-1 flex-col bg-neutral-light">
       <MarketingHeader />
 
-      {/* Hero + search */}
-      <section className="bg-gradient-to-br from-brand-blue-light via-white to-white px-4 pb-10 pt-12 sm:px-6 lg:pb-14 lg:pt-16">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 lg:grid-cols-2 lg:gap-12">
-          <div>
-            <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-blue/20 bg-brand-blue-light px-3 py-1 text-xs font-semibold text-brand-blue">
-              <span className="size-1.5 rounded-full bg-brand-blue" />
-              Local products
-            </span>
-            <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-neutral-ink sm:text-4xl lg:text-5xl">
-              Shop <span className="text-brand-blue">local products</span> from real businesses
-            </h1>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-neutral-mid sm:text-base">
-              Real products from South African small businesses, built and hosted on DigitalFlyer. Buy directly from
-              the people who make them.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <Link
-                href="/marketplace"
-                className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/30 bg-white px-4 py-2 text-xs font-semibold text-brand-blue shadow-sm transition hover:bg-brand-blue hover:text-white"
-              >
-                Find businesses
-              </Link>
-              <Link
-                href="/events"
-                className="inline-flex items-center gap-1.5 rounded-full border border-brand-blue/30 bg-white px-4 py-2 text-xs font-semibold text-brand-blue shadow-sm transition hover:bg-brand-blue hover:text-white"
-              >
-                Find events
-              </Link>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-blue via-brand-blue-mid to-brand-blue-dark">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.12]"
+          style={{ backgroundImage: "radial-gradient(circle, white 1.5px, transparent 1.5px)", backgroundSize: "26px 26px" }}
+          aria-hidden
+        />
+        <div className="pointer-events-none absolute -right-24 -top-24 size-80 rounded-full bg-white/10 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -bottom-28 left-10 size-80 rounded-full bg-accent/20 blur-3xl" aria-hidden />
+
+        <div className="relative mx-auto max-w-6xl px-4 pb-8 pt-14 sm:px-6 lg:pt-20">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div className="text-white">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+                Local products
+              </span>
+              <h1 className="mt-4 text-4xl font-black leading-[1.05] tracking-tight sm:text-5xl">
+                Shop <span className="text-amber-300">local products</span> from real businesses
+              </h1>
+              <p className="mt-4 max-w-lg text-base leading-relaxed text-white/80">
+                Real products from South African small businesses. Buy directly from the people who make them, no
+                middleman.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <a
+                  href="#products"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-white shadow-lg shadow-black/20 transition hover:-translate-y-0.5 hover:bg-accent-hover"
+                >
+                  <ShoppingBag size={16} /> Browse products
+                </a>
+                <Link
+                  href="/marketplace"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-6 py-3 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
+                >
+                  Find businesses <ArrowRight size={16} />
+                </Link>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-xs font-medium text-white/70">
+                {["Buy direct from makers", "Secure Paystack checkout", "Support local"].map((p) => (
+                  <span key={p} className="inline-flex items-center gap-1.5">
+                    <span className="grid size-4 place-items-center rounded-full bg-emerald-400/20 text-emerald-300">✓</span>
+                    {p}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Floating product-card previews (decorative) */}
+            <div className="relative mx-auto hidden h-[340px] w-full max-w-sm lg:block" aria-hidden>
+              <div className="absolute right-2 top-12 w-56 -rotate-6 rounded-2xl border border-white/20 bg-white/95 shadow-xl">
+                <div className="flex h-24 items-center justify-center rounded-t-2xl bg-gradient-to-br from-brand-blue-mid to-brand-blue-dark text-white/40">
+                  <ShoppingBag size={26} />
+                </div>
+                <div className="space-y-2 p-3">
+                  <div className="h-2 w-3/4 rounded bg-neutral-border" />
+                  <div className="h-2 w-1/2 rounded bg-neutral-border" />
+                </div>
+              </div>
+              <div className="absolute left-2 top-0 w-64 rotate-3 rounded-2xl border border-white/20 bg-white shadow-2xl">
+                <div className="relative flex h-28 items-center justify-center rounded-t-2xl bg-gradient-to-br from-brand-blue to-brand-blue-dark text-white/50">
+                  <ShoppingBag size={32} />
+                  <span className="absolute right-3 top-3 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white">New</span>
+                </div>
+                <div className="p-3">
+                  <p className="text-sm font-bold text-neutral-ink">Handmade Soap Bar</p>
+                  <p className="text-[11px] text-neutral-muted">Cape Botanicals</p>
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-sm font-bold text-accent">R120</span>
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-blue">
+                      View <ArrowRight size={12} />
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          <form method="GET" className="flex flex-col gap-3 rounded-2xl border border-neutral-border bg-white p-4 shadow-card sm:p-5">
-            <div className="relative">
+          {/* Elevated search bar */}
+          <form
+            method="GET"
+            className="relative z-10 mt-10 flex flex-col gap-3 rounded-2xl bg-white p-3 shadow-2xl shadow-black/20 sm:mt-12 sm:flex-row sm:items-center sm:p-2.5"
+          >
+            <div className="relative flex-1">
               <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-muted" />
               <input
                 type="text"
                 name="q"
                 defaultValue={q}
                 placeholder="Search products"
-                className="w-full rounded-lg border border-neutral-border bg-white py-2.5 pl-10 pr-4 text-sm text-neutral-ink placeholder:text-neutral-muted outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                className="w-full rounded-xl border border-neutral-border bg-white py-2.5 pl-10 pr-4 text-sm text-neutral-ink placeholder:text-neutral-muted outline-none transition focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20 sm:border-transparent sm:focus:border-brand-blue"
               />
             </div>
-            <div className="flex flex-col items-center gap-2 pt-1">
-              <button
-                type="submit"
-                className="inline-flex w-full max-w-sm items-center justify-center gap-2 rounded-full bg-accent px-8 py-3 text-base font-bold text-white shadow-md shadow-accent/25 transition hover:-translate-y-0.5 hover:bg-accent-hover"
-              >
-                <Search size={18} /> Search
-              </button>
-              {q && (
-                <Link href="/shop" className="text-xs font-semibold text-neutral-muted hover:text-brand-blue">
-                  Clear search
-                </Link>
-              )}
-            </div>
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent px-7 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-accent-hover"
+            >
+              <Search size={16} /> Search
+            </button>
           </form>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 sm:px-6">
+      <section id="products" className="mx-auto w-full max-w-6xl flex-1 scroll-mt-8 px-4 py-10 sm:px-6">
         {/* Featured */}
         {!q && (
           <div className="mb-10">
