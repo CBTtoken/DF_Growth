@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FaqAccordion } from "@/components/marketing/FaqAccordion";
+import { AGENT_FAQ } from "@/lib/agents/faq";
 
 // UI/UX pass, 2026-07-17: expanded from 10 flat questions into a full,
 // categorised help centre covering every real feature in the platform —
@@ -311,6 +312,16 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
         answer: "Use the Get in Touch form on our homepage, or reply to any of our emails, we respond within one business day.",
       },
     ],
+  },
+  // Agent Programme Phase 3: "Agent FAQ from Part 2, as an accordion on
+  // /agents and in the main FAQ." Imported rather than retyped, because
+  // agent-terms-and-faq.md opens with "Both must always say the same
+  // thing", and these answers describe how someone gets paid. One array,
+  // two pages, no chance of drift.
+  {
+    id: "agent-programme",
+    title: "Agent Programme",
+    items: AGENT_FAQ,
   },
 ];
 

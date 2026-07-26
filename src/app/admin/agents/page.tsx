@@ -34,7 +34,7 @@ export default async function AdminAgentsPage() {
   const { data: agents } = await admin
     .from("agents")
     .select(
-      "id, full_name, email, whatsapp_number, facebook_page_url, understands_facebook_rules, can_generate_content, promotion_method, status, referral_code, created_at"
+      "id, full_name, email, whatsapp_number, town_or_area, first_three_businesses, facebook_page_url, understands_facebook_rules, can_generate_content, promotion_method, status, referral_code, created_at"
     )
     .order("created_at", { ascending: false });
 
@@ -79,22 +79,49 @@ export default async function AdminAgentsPage() {
                       <span className="font-semibold text-gray-900">{a.full_name}</span>
                       <span className="text-gray-400">{new Date(a.created_at).toLocaleDateString()}</span>
                     </div>
-                    <div className="text-gray-500">{a.email} · {a.whatsapp_number}</div>
-                    <a href={a.facebook_page_url} target="_blank" rel="noreferrer" className="text-brand hover:underline">
-                      {a.facebook_page_url}
-                    </a>
-                    <div className="text-gray-600">
-                      <span className="font-medium text-gray-800">Promotion: </span>
-                      {PROMOTION_LABELS[a.promotion_method] ?? a.promotion_method}
+                    <div className="text-gray-500">
+                      {a.email} · {a.whatsapp_number || "no number"}
+                      {a.town_or_area ? ` · ${a.town_or_area}` : ""}
                     </div>
-                    <div className="text-gray-600">
-                      <span className="font-medium text-gray-800">Understands Facebook rules: </span>
-                      {a.understands_facebook_rules}
-                    </div>
-                    <div className="text-gray-600">
-                      <span className="font-medium text-gray-800">Can generate content: </span>
-                      {a.can_generate_content}
-                    </div>
+
+                    {/* Phase 3: the one question that replaced every tick
+                        box, and the only thing here worth actually
+                        reading. Given the room to say so. */}
+                    {a.first_three_businesses && (
+                      <div className="rounded-xl bg-gray-50 p-3 text-gray-700">
+                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                          How they would find their first three businesses
+                        </p>
+                        <p className="whitespace-pre-line">{a.first_three_businesses}</p>
+                      </div>
+                    )}
+
+                    {/* The retired Facebook-era answers, kept for the three
+                        agents who applied under the old form and rendered
+                        only when they actually hold something. */}
+                    {a.facebook_page_url && (
+                      <a href={a.facebook_page_url} target="_blank" rel="noreferrer" className="text-brand hover:underline">
+                        {a.facebook_page_url}
+                      </a>
+                    )}
+                    {a.promotion_method && (
+                      <div className="text-gray-600">
+                        <span className="font-medium text-gray-800">Promotion: </span>
+                        {PROMOTION_LABELS[a.promotion_method] ?? a.promotion_method}
+                      </div>
+                    )}
+                    {a.understands_facebook_rules && (
+                      <div className="text-gray-600">
+                        <span className="font-medium text-gray-800">Understands Facebook rules: </span>
+                        {a.understands_facebook_rules}
+                      </div>
+                    )}
+                    {a.can_generate_content && (
+                      <div className="text-gray-600">
+                        <span className="font-medium text-gray-800">Can generate content: </span>
+                        {a.can_generate_content}
+                      </div>
+                    )}
                     <div className="mt-2 flex gap-2">
                       <form action={approveAgent.bind(null, a.id)}>
                         <Button type="submit" size="sm">

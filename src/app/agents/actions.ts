@@ -35,10 +35,8 @@ export async function submitAgentApplication(_prevState: ApplyState, formData: F
     fullName: formData.get("fullName"),
     email: formData.get("email"),
     whatsappNumber: formData.get("whatsappNumber"),
-    facebookPageUrl: formData.get("facebookPageUrl"),
-    understandsFacebookRules: formData.get("understandsFacebookRules"),
-    canGenerateContent: formData.get("canGenerateContent"),
-    promotionMethod: formData.get("promotionMethod"),
+    townOrArea: formData.get("townOrArea"),
+    firstThreeBusinesses: formData.get("firstThreeBusinesses"),
   });
 
   if (!parsed.success) {
@@ -46,14 +44,15 @@ export async function submitAgentApplication(_prevState: ApplyState, formData: F
   }
 
   const admin = createAdminClient();
+  // Phase 3: the four retired Facebook-era columns are not written at all
+  // any more. They keep the answers the three existing agents gave, and
+  // the migration drops their NOT NULL so this insert can omit them.
   const { error } = await admin.from("agents").insert({
     full_name: parsed.data.fullName,
     email: parsed.data.email,
     whatsapp_number: parsed.data.whatsappNumber,
-    facebook_page_url: parsed.data.facebookPageUrl,
-    understands_facebook_rules: parsed.data.understandsFacebookRules,
-    can_generate_content: parsed.data.canGenerateContent,
-    promotion_method: parsed.data.promotionMethod,
+    town_or_area: parsed.data.townOrArea,
+    first_three_businesses: parsed.data.firstThreeBusinesses,
   });
 
   if (error) {

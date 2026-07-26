@@ -42,14 +42,16 @@ export function agentContentUpdate(
   return {
     accent_color: values.accentColor,
     town: values.town || null,
-    // Empty string, not null: agents.whatsapp_number is NOT NULL from the
-    // original application form, where it was a required question. Writing
-    // null here fails with a 23502 the moment an agent clears the box,
+    // Empty string, not null. agents.whatsapp_number was NOT NULL from the
+    // original application form, where it was a required question, so
+    // writing null threw a 23502 the moment an agent cleared the box,
     // which is a legitimate thing to do now that this doubles as the
     // public contact number (Natasha's application literally carried the
-    // text "Not provided"). Empty reads as absent everywhere that matters:
-    // agentWhatsAppLink returns null for anything without a dialable
-    // number, so the WhatsApp button simply does not render.
+    // text "Not provided"). The Phase 3 migration drops that constraint,
+    // but this deliberately still writes an empty string so the code does
+    // not depend on which of the two shipped first. Empty reads as absent
+    // everywhere that matters: agentWhatsAppLink returns null for anything
+    // without a dialable number, so the button simply does not render.
     whatsapp_number: values.whatsappNumber ?? "",
     hero_promise: values.heroPromise ? stripEmDashes(values.heroPromise) : null,
     story_text: values.storyText ? stripEmDashes(values.storyText) : null,

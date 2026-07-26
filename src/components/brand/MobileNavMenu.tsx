@@ -56,7 +56,7 @@ export function MobileNavMenu() {
             <Link href="/events" onClick={() => setOpen(false)} className={menuLinkClass}>
               Events
             </Link>
-            <Link href="/agents/apply" onClick={() => setOpen(false)} className={menuLinkClass}>
+            <Link href="/agents" onClick={() => setOpen(false)} className={menuLinkClass}>
               Agents
             </Link>
             <Link href="/faq" onClick={() => setOpen(false)} className={menuLinkClass}>

@@ -83,7 +83,7 @@ export function MarketingHeader() {
             Events
           </Link>
           <Link
-            href="/agents/apply"
+            href="/agents"
             className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
           >
             Agents

@@ -72,14 +72,23 @@ export const agentCopyIntakeSchema = z
     message: "Answer at least one of these so there is something to write from.",
   });
 
+// Agent Programme Phase 3, per docs/agent-recruitment-page-copy.md Sec 9.
+// Five fields, down from seven. Gone: the Facebook page link, the two
+// yes/no Facebook questions and the promotion method dropdown, because
+// they "point applicants at Facebook group posting, which converts badly
+// and risks their Meta account and your brand". In: their town, and one
+// open question that "tells you more than every tick box currently on the
+// form, and it filters out anyone planning to spam."
 export const agentApplicationSchema = z.object({
   fullName: z.string().trim().min(1, "Enter your full name").max(150),
   email: z.string().trim().email("Enter a valid email"),
   whatsappNumber: z.string().trim().min(1, "Enter your WhatsApp number").max(30),
-  facebookPageUrl: z.string().trim().url("Enter a full link, e.g. https://facebook.com/yourpage").max(300),
-  understandsFacebookRules: z.string().trim().min(1, "Tell us a little about this").max(1000),
-  canGenerateContent: z.string().trim().min(1, "Tell us a little about this").max(1000),
-  promotionMethod: z.enum(["facebook_only", "beyond_facebook", "both"], {
-    message: "Select how you'll be promoting",
-  }),
+  townOrArea: z.string().trim().min(1, "Tell us where you are").max(120),
+  // The one that does the filtering, so it asks for a real answer rather
+  // than accepting a single word.
+  firstThreeBusinesses: z
+    .string()
+    .trim()
+    .min(20, "Give us a couple of sentences here, this is the part we actually read")
+    .max(2000),
 });

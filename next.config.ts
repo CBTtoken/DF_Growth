@@ -135,7 +135,18 @@ const nextConfig: NextConfig = {
   // letting it 404 outright — it may already be bookmarked or shared
   // somewhere before the rename.
   async redirects() {
-    return [{ source: "/standing-365", destination: "/standing365", permanent: true }];
+    return [
+      { source: "/standing-365", destination: "/standing365", permanent: true },
+      // Agent Programme Phase 3: "Existing /agents/apply redirects to
+      // /agents." The rebuilt /agents carries the same form plus the full
+      // disclosure the old page never had, so leaving both live would mean
+      // half the applicants seeing a version of the offer that no longer
+      // matches the terms. This URL is in the footer, in sent emails, and
+      // in whatever the current agents have already shared, so it redirects
+      // rather than 404s. Done here rather than as a page component so it
+      // is a real 308 at the edge with no render involved.
+      { source: "/agents/apply", destination: "/agents", permanent: true },
+    ];
   },
 };
 
