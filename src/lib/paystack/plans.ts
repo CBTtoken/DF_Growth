@@ -24,7 +24,7 @@ export const TIERS: {
     description: "Perfect for businesses ready to build a professional online presence.",
     features: [
       "Professional Business Page",
-      "Marketplace Listing",
+      "Marketplace Presence",
       "Lead Generation Page",
       "Business Profile",
       "Monthly Digital Asset",
@@ -59,7 +59,7 @@ export const TIERS: {
       // what "Everything in Foundation" already includes, so a prospect
       // comparing tiers side by side never saw these three on the Growth
       // card at all.
-      "Marketplace Listing",
+      "Marketplace Presence",
       "RE:Biz Nomads Community",
       "BizUp In-Chat Payments",
     ],

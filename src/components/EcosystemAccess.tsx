@@ -44,12 +44,12 @@ export function EcosystemAccess({
         {unlocked ? (
           <>
             <p className="text-sm text-gray-500">
-              Every paid membership gets a spot on our marketplace directory automatically —
-              there&apos;s nothing to request.
+              Every paid membership gets a spot on our marketplace automatically, there&apos;s
+              nothing to request.
             </p>
             {marketplaceUrl ? (
               <p className="mt-1 text-sm text-gray-500">
-                View your listing{" "}
+                View your marketplace page{" "}
                 <a
                   href={marketplaceUrl}
                   target="_blank"
@@ -62,7 +62,7 @@ export function EcosystemAccess({
               </p>
             ) : (
               <p className="mt-1 text-sm text-gray-500">
-                We&apos;re setting your listing up, check back soon.
+                We&apos;re setting your marketplace page up, check back soon.
               </p>
             )}
           </>

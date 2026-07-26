@@ -116,7 +116,7 @@ export default async function SamplePage({ params }: { params: Params }) {
           |
         </span>
         <Link href="/marketplace" className="underline underline-offset-2 hover:no-underline">
-          Browse real listings
+          Browse the marketplace
         </Link>
       </div>
 

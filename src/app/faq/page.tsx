@@ -51,7 +51,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "What's the difference between Foundation and Growth?",
         answer:
-          "Foundation gives you a professional business page, marketplace listing, lead generation page, and a monthly digital asset. Growth adds campaign landing pages, performance tracking, ongoing marketing assets, monthly optimisation, and growth reporting, everything you need once you're ready to actively reach more customers.",
+          "Foundation gives you a professional business page, marketplace presence, lead generation page, and a monthly digital asset. Growth adds campaign landing pages, performance tracking, ongoing marketing assets, monthly optimisation, and growth reporting, everything you need once you're ready to actively reach more customers.",
       },
       {
         question: "Do I need a credit card to start?",
@@ -232,7 +232,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "What's included besides my own page?",
         answer:
-          "Every membership includes a DigitalFlyer Marketplace listing and RE:Biz Nomads community access, at no extra cost.",
+          "Every membership includes a place on the DigitalFlyer Marketplace and RE:Biz Nomads community access, at no extra cost.",
       },
       {
         question: "What is the DigitalFlyer Marketplace?",
@@ -256,11 +256,11 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
     items: [
       {
         question: "What is DigitalFlyer Events?",
-        answer: "A free listing for markets, workshops, fundraisers, and other community events, browsable by anyone.",
+        answer: "A free event page for markets, workshops, fundraisers, and other community events, browsable by anyone.",
       },
       {
         question: "Do I need to be a DigitalFlyer member to list an event?",
-        answer: "No, listing an event is open to anyone, member or not.",
+        answer: "No, adding an event is open to anyone, member or not.",
       },
       {
         question: "Is there a fee to list an event?",

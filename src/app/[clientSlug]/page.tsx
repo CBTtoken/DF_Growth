@@ -8,6 +8,7 @@ import { getCustomPage, getCustomPageMeta } from "@/lib/custom-pages/registry";
 import type { PublicBookableUnit } from "@/components/landing/BookingSection";
 import type { PublicShopProduct } from "@/components/landing/ShopSection";
 import type { PublicReview } from "@/components/reviews/ReviewsSection";
+import { truncateOnWord } from "@/lib/text";
 
 type LandingPageRow = {
   id: string;
@@ -119,8 +120,14 @@ export async function generateMetadata({
   // stray "in undefined" text.
   const locationSegment = [client.industry, client.city].filter(Boolean).join(" in ");
   const title = locationSegment ? `${client.business_name} | ${locationSegment}` : client.business_name;
-  const description =
-    client.tagline || client.business_description?.slice(0, 160) || `${client.business_name} on DigitalFlyer.`;
+  // Agent Programme Phase 0.4: this was a raw .slice(160), which cut mid-word
+  // ("...and for my bu") straight into Google results and WhatsApp link
+  // previews. The tagline is truncated too, since a long one hit the same
+  // wall at render time.
+  const description = truncateOnWord(
+    client.tagline || client.business_description || `${client.business_name} on DigitalFlyer.`,
+    160
+  );
   const image = client.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
     : "/brand/logo-blue.png";

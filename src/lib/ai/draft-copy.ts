@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { truncateOnWord, stripEmDashes } from "@/lib/text";
 
 // Haiku 4.5 was tested live against real client input and fabricated facts
 // twice in the same session despite an explicit "never invent claims"
@@ -112,6 +113,14 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
         "not repeat it verbatim or with only capitalization changed. Synthesize the " +
         "headline from what the business actually does (industry/description/" +
         "products), not by echoing the tagline back.\n\n" +
+        "HOUSE STYLE, these are absolute and override any other instinct:\n" +
+        "1. NEVER use an em dash or an en dash. Not once, anywhere, in any field. " +
+        "Use a comma, a full stop, or restructure the sentence. This is the single " +
+        "most common thing to get wrong here.\n" +
+        "2. NEVER use the words 'listing' or 'directory'. The DigitalFlyer SA " +
+        "product is a 'marketplace'. Say 'on the DigitalFlyer SA marketplace', " +
+        "never 'your listing' or 'our directory'.\n" +
+        "3. Do not invent statistics, results, years, awards, or client counts.\n\n" +
         "Reply with ONLY a JSON object, no markdown fences, no commentary, matching " +
         "exactly this shape: " +
         '{"headline": string (max 60 chars), "subheadline": string (max 160 chars), ' +
@@ -157,14 +166,19 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
       return null;
     }
 
+    // Agent Programme Phase 0.2/0.4: every cap here used to be a raw
+    // .slice(), which cut mid-word and shipped "for my bu" onto a live page
+    // and into its meta description. truncateOnWord cuts on a word boundary
+    // instead. stripEmDashes is the write-time backstop for the em dash ban:
+    // the prompt below now forbids them, but a model instruction is not a
+    // guarantee and this copy goes straight into the database.
+    const clean = (text: string, max: number) => truncateOnWord(stripEmDashes(text), max);
+
     const draft: DraftOutput = {
-      headline: parsed.headline.slice(0, 80),
-      subheadline: parsed.subheadline.slice(0, 160),
-      // 800, not 700 (the prompt's own target) — headroom so an over-length
-      // response still gets cut at a word-ish boundary instead of exactly at
-      // the model's own target, which was truncating mid-word in testing.
-      aboutText: parsed.aboutText.slice(0, 800),
-      servicesText: parsed.servicesText.slice(0, 600),
+      headline: clean(parsed.headline, 80),
+      subheadline: clean(parsed.subheadline, 160),
+      aboutText: clean(parsed.aboutText, 800),
+      servicesText: stripEmDashes(parsed.servicesText).slice(0, 600),
     };
 
     if (containsInventedYear(draft, sourceText)) {

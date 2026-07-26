@@ -19,13 +19,13 @@ const HOW_IT_WORKS = [
   {
     icon: Percent,
     title: "Growth & Enterprise Only",
-    description: "Referrals only count on Growth and Enterprise annual plans — never Foundation, never a monthly plan.",
+    description: "Referrals only count on Growth and Enterprise annual plans, never Foundation, never a monthly plan.",
   },
   {
     icon: TrendingUp,
     title: "Your Rate Climbs",
     description:
-      "Your first 10 referrals earn 25% commission. From your 11th referral onward, every referral earns 40% — including your first 10, once they renew.",
+      "Your first 10 referrals earn 25% commission. From your 11th referral onward, every referral earns 40%, including your first 10, once they renew.",
   },
   {
     icon: RefreshCw,
