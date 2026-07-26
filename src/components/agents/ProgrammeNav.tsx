@@ -11,7 +11,12 @@ import { Menu, X } from "lucide-react";
 // is a landing page with its own internal anchors, and a nav pointing at
 // pricing and the marketplace competes with the one action the page wants.
 // The logo still links home, so nobody is trapped here.
+// Home is a real route, the rest are anchors on this page. Kept first, and
+// kept as a normal menu item rather than relying on the logo alone: the
+// logo being clickable is a convention, not a signpost, and this page is
+// aimed at people who may never have seen the rest of the site.
 const LINKS = [
+  { label: "Home", href: "/" },
   { label: "How it works", href: "#how-it-works" },
   { label: "Earnings", href: "#earnings" },
   { label: "What you get", href: "#what-you-get" },
@@ -36,9 +41,23 @@ export function ProgrammeNav() {
       }`}
     >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
-          <Image src="/brand/logo-blue.png" alt="DigitalFlyer SA" width={36} height={36} className="h-9 w-auto" />
-          <span className="text-base font-bold tracking-tight text-[#1EA7D4]">DigitalFlyer Growth</span>
+        {/* The logo alone, no wordmark beside it. The real logo already
+            contains the DigitalFlyer name, so setting "DigitalFlyer Growth"
+            next to it said the brand twice and crowded the bar.
+
+            width/height must match the file's own 1050x330 ratio. They were
+            36x36, which made Next generate a 36px-wide square and let CSS
+            stretch it to about 115px, which is exactly why it looked
+            blurry and squashed. */}
+        <Link href="/" className="flex shrink-0 items-center" aria-label="DigitalFlyer Growth, home">
+          <Image
+            src="/brand/logo-blue.png"
+            alt="DigitalFlyer Growth"
+            width={420}
+            height={132}
+            priority
+            className="h-9 w-auto"
+          />
         </Link>
 
         <div className="hidden items-center gap-7 md:flex">

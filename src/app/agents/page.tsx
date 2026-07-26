@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -639,8 +640,10 @@ export default function AgentProgrammePage() {
       <footer className="bg-slate-900 py-10 text-white/70">
         <div className="mx-auto max-w-6xl px-5 sm:px-8">
           <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            <Link href="/" className="text-base font-bold text-white">
-              DigitalFlyer Growth
+            {/* The white logo, at its real 1200x400 ratio, rather than the
+                brand name set as text. Same reasoning as the nav. */}
+            <Link href="/" aria-label="DigitalFlyer Growth, home">
+              <Image src="/brand/logo-white.png" alt="DigitalFlyer Growth" width={360} height={120} className="h-9 w-auto" />
             </Link>
             <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[15px]">
               <Link href="/marketplace" className="transition-colors hover:text-white">
