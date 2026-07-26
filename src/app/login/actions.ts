@@ -51,7 +51,14 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
       }
     );
     const lookupData = await lookupRes.json();
-    const existingUser = lookupData?.users?.[0] as { id: string; app_metadata?: { has_password?: boolean } } | undefined;
+    // The ?email= filter is ignored by this GoTrue version (returns all users),
+    // so exact-match the email, never trust users[0] (see provision.ts for the
+    // account cross-contamination the [0] version caused).
+    const existingUser = ((lookupData?.users ?? []) as Array<{
+      id: string;
+      email?: string;
+      app_metadata?: { has_password?: boolean };
+    }>).find((u) => u.email?.toLowerCase() === parsed.data.email.toLowerCase());
 
     if (existingUser && existingUser.app_metadata?.has_password !== true) {
       const { error: resetError } = await admin.auth.resetPasswordForEmail(parsed.data.email, {

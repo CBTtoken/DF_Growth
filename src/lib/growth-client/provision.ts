@@ -154,9 +154,17 @@ export async function provisionGrowthClient({
         }
       );
       const lookupData = await lookupRes.json();
-      const existingUser = lookupData?.users?.[0] as
-        | { id: string; app_metadata?: { has_password?: boolean } }
-        | undefined;
+      // CRITICAL: the ?email= filter above is IGNORED by this GoTrue version,
+      // it returns EVERY user, not just the match. Taking users[0] here linked
+      // the first-listed user (an early account) to the new business, the real
+      // data-contamination bug that put an agent's login on two clients that
+      // weren't hers. Always exact-match the email in code, never trust [0].
+      const users = (lookupData?.users ?? []) as Array<{
+        id: string;
+        email?: string;
+        app_metadata?: { has_password?: boolean };
+      }>;
+      const existingUser = users.find((u) => u.email?.toLowerCase() === email.toLowerCase());
       ownerUserId = existingUser?.id ?? null;
 
       // Public Beta Polish Sprint Sec 1: retires the signInWithOtp magic
