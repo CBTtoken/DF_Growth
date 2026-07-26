@@ -125,7 +125,7 @@ export default function AgentApplyPage() {
         <AgentApplicationForm />
       </section>
 
-      <SiteFooter />
+      <SiteFooter showPaymentBadge={false} />
     </main>
   );
 }

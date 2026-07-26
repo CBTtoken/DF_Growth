@@ -32,7 +32,7 @@ export default function AgentSetupPagePage() {
         <AgentCompedSignupForm />
       </section>
 
-      <SiteFooter />
+      <SiteFooter showPaymentBadge={false} />
     </main>
   );
 }

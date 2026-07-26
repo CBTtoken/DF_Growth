@@ -12,13 +12,19 @@
 // checkout at all.
 import Link from "next/link";
 
-export function SiteFooter() {
+// Agent Programme Phase 0.1: the "Secure payment via Paystack" badge must not
+// appear on the agent recruitment pages. Those recruit people who need income,
+// so a payment badge reads as a joining fee. `showPaymentBadge` defaults to
+// true (every existing page is unchanged); the agent pages pass false.
+export function SiteFooter({ showPaymentBadge = true }: { showPaymentBadge?: boolean } = {}) {
   return (
     <footer className="mt-auto flex flex-col items-center gap-2 py-6 text-center text-xs text-gray-400">
-      <div className="flex items-center gap-1.5">
-        <span aria-hidden>🔒</span>
-        <span>Secure payment via Paystack</span>
-      </div>
+      {showPaymentBadge && (
+        <div className="flex items-center gap-1.5">
+          <span aria-hidden>🔒</span>
+          <span>Secure payment via Paystack</span>
+        </div>
+      )}
       <div>
         <Link href="/marketplace" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Marketplace
