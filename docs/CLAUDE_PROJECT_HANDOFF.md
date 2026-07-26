@@ -68,7 +68,7 @@ DigitalFlyer runs its own Meta campaigns as a live rehearsal for the future memb
 - **Sprint 5** Bob Go live shipping, **Sprint 6** WhatsApp order/booking notifications (both parked ~1 week from 26 July), **Sprint 7** production hardening (only after 4-6).
 - **Template redesign**: Batch 1 done (Feature Grid / Step-by-Step / Multi-Product got distinct new heroes; Dark Mode was already rebuilt). Batch 2 (Left-Split, Social-Proof, Vibrant-Geo body sections) and Batch 3 (Single-Action, Storyteller, App-Dashboard polish) still to do.
 - **Deletion-warning emails**: columns exist (`deletion_warning_14d/5d_sent_at`); needs a "pause comp account when trial_ends_at passes with no subscription" step first. Nothing due for deletion before ~mid-Sept.
-- **Member queries/notifications**: no working way yet to be notified of, respond to, or mark client enquiries as read (a known gap being tackled next).
+- **Member queries/notifications (built 26 July 2026)**: enquiries now email a notification (a homepage "Get in touch" emails DigitalFlyer with a Support-tab link; a member page lead already emails the member), and the member dashboard has lead management, a "X new" count + per-lead "New" badge, one-tap Email/Call/WhatsApp quick-reply, and a "Mark as handled" toggle (`leads.handled_at`). WhatsApp notifications deferred to the Sprint 6 pass.
 
 ---
 
