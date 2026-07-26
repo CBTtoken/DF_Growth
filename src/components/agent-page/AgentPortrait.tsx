@@ -1,113 +1,84 @@
 import Image from "next/image";
-import type { AgentTheme } from "@/lib/agent-page/themes";
 import { agentInitials } from "@/lib/agent-page/identity";
+import { SAND, type AgentAccent } from "@/lib/agent-page/themes";
 
-// Agent page v3. The portrait shrank: v1 gave it a full 4:5 frame beside
-// the hero headline, v3 puts it in a 44px chip above the headline, because
-// the headline is the largest thing on the page and the chip only has to
-// establish who is speaking before getting out of the way.
+// The hero portrait from the Bolt design: a 4:5 frame with a soft rotated
+// panel offset behind it, and the "active since" badge floating off the
+// bottom left corner.
 //
-// The duotone survives that shrink and is still worth it. Agent portraits
-// are phone snapshots, not studio work: of the two real ones on file, one
-// is a mid-shot at a restaurant table and the other a tight indoor selfie,
-// each with its own background, framing and colour cast. Mapping both onto
-// two stops of the theme colour is what stops a page looking like it has
-// someone's Facebook photo pasted into it, and it matters more at chip size
-// than less, because a busy background at 44px is just noise.
-//
-// How the blend works: the frame is filled with the highlight stop, the
-// greyscaled photo multiplies onto it (white pixels become the highlight,
-// black stays black), then the shadow stop lightens over the top (black
-// pixels become the shadow, anything brighter is untouched). A true
-// two-stop duotone rather than a colour wash, which is what keeps a face
-// legible. `isolate` is load-bearing: without it the blend reaches past the
-// frame and picks up whatever is behind it.
-// The initials size cannot be a percentage: a percentage font-size
-// resolves against the inherited font size, not the box, so it would come
-// out the same few pixels in both the 44px chip and the 64px avatar. Two
-// named sizes instead, since those are the only two the page uses.
-const MONOGRAM_TEXT: Record<"chip" | "avatar", string> = {
-  chip: "text-base",
-  avatar: "text-2xl",
-};
-
+// The photo is shown as it is, in colour. An earlier version put a duotone
+// over it to unify the two very different snapshots on file, which solved a
+// real problem, but this design surrounds the photo with warm sand and a
+// tinted panel instead, and that does the same job without recolouring
+// someone's face.
 export function AgentPortrait({
   photoUrl,
   fullName,
-  theme,
-  rounded = "xl",
-  size = "chip",
-  priority = false,
+  accent,
+  activeSince,
 }: {
   photoUrl: string | null;
   fullName: string;
-  theme: AgentTheme;
-  rounded?: "xl" | "full";
-  size?: "chip" | "avatar";
-  priority?: boolean;
+  accent: AgentAccent;
+  activeSince: string | null;
 }) {
-  const radius = rounded === "full" ? "rounded-full" : "rounded-2xl";
-
-  if (!photoUrl) {
-    return <AgentMonogram fullName={fullName} theme={theme} rounded={rounded} size={size} />;
-  }
-
   return (
-    <div
-      className={`relative isolate h-full w-full overflow-hidden ${radius}`}
-      style={{ backgroundColor: theme.duotoneHighlight }}
-    >
-      <Image
-        src={photoUrl}
-        alt={fullName}
-        fill
-        priority={priority}
-        sizes="96px"
-        className="object-cover object-top"
-        style={{ filter: "grayscale(1) contrast(1.08)", mixBlendMode: "multiply" }}
-      />
+    <div className="relative mx-auto w-full max-w-sm lg:max-w-none">
+      {/* The offset panel. Purely decorative, so it is hidden from
+          assistive tech and sits behind the frame. */}
       <div
         aria-hidden
-        className="absolute inset-0"
-        style={{ backgroundColor: theme.duotoneShadow, mixBlendMode: "lighten" }}
+        className="absolute -inset-3 -rotate-2 rounded-[2rem]"
+        style={{ background: `linear-gradient(135deg, ${accent[200]}99, ${SAND[300]}99)` }}
       />
-      <div aria-hidden className={`absolute inset-0 ${radius} ring-1 ring-inset ring-black/10`} />
-    </div>
-  );
-}
 
-// Build spec 1.5: for agents with no photo. Explicitly not a stock photo of
-// a stranger, and explicitly the same dimensions and framing a portrait
-// occupies, so the layout never looks broken by its absence.
-//
-// The geometric pattern v1 drew inside this is gone: at 44px it was
-// invisible noise. Initials on the theme's deep stop is what actually
-// reads at chip size.
-export function AgentMonogram({
-  fullName,
-  theme,
-  rounded = "xl",
-  size = "chip",
-}: {
-  fullName: string;
-  theme: AgentTheme;
-  rounded?: "xl" | "full";
-  size?: "chip" | "avatar";
-}) {
-  const radius = rounded === "full" ? "rounded-full" : "rounded-2xl";
-
-  return (
-    <div
-      className={`flex h-full w-full items-center justify-center overflow-hidden ${radius}`}
-      style={{ backgroundColor: theme.heroDeep }}
-    >
-      <span
-        className={`font-[family-name:var(--font-display)] ${MONOGRAM_TEXT[size]} leading-none tracking-tight text-white`}
-        aria-hidden
+      <div
+        className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] border border-white/60 shadow-[0_2px_4px_rgba(26,23,20,0.06),0_18px_40px_rgba(26,23,20,0.12)]"
+        style={{ backgroundColor: SAND[100] }}
       >
-        {agentInitials(fullName)}
-      </span>
-      <span className="sr-only">{fullName}</span>
+        {photoUrl ? (
+          <Image
+            src={photoUrl}
+            alt={fullName}
+            fill
+            priority
+            sizes="(max-width: 1024px) 90vw, 420px"
+            className="object-cover object-top"
+          />
+        ) : (
+          // The Bolt file shows a "photo appears here" placeholder, which
+          // is right in a design preview and wrong on a live page: it tells
+          // a customer the page is unfinished. Initials on the agent's own
+          // colour read as a deliberate mark instead, and it is still never
+          // a stock photo of a stranger.
+          <div
+            className="flex h-full w-full items-center justify-center"
+            style={{ background: `linear-gradient(135deg, ${accent[700]}, ${accent[950]})` }}
+          >
+            <span aria-hidden className="font-display text-[clamp(3.5rem,14vw,6rem)] font-semibold text-white/90">
+              {agentInitials(fullName)}
+            </span>
+            <span className="sr-only">{fullName}</span>
+          </div>
+        )}
+      </div>
+
+      {activeSince && (
+        <div className="absolute -bottom-4 -left-4 flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-[0_1px_2px_rgba(26,23,20,0.04),0_8px_24px_rgba(26,23,20,0.06)] sm:-left-6">
+          <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 shrink-0" aria-hidden>
+            <path
+              d="M12 2.5l2.2 1.6 2.7-.3 1 2.5 2.4 1.3-.7 2.6.7 2.6-2.4 1.3-1 2.5-2.7-.3L12 21.5l-2.2-1.6-2.7.3-1-2.5-2.4-1.3.7-2.6-.7-2.6 2.4-1.3 1-2.5 2.7.3z"
+              fill={accent[600]}
+            />
+            <path d="M8.8 12.2l2.1 2.1 4.3-4.6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span className="text-sm font-semibold" style={{ color: INK_TEXT }}>
+            Active since {activeSince}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
+
+const INK_TEXT = "#1a1714";

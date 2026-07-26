@@ -42,7 +42,7 @@ export function agentContentUpdate(
   formData: FormData
 ): Record<string, unknown> {
   return {
-    page_theme: values.pageTheme,
+    accent_color: values.accentColor,
     town: values.town || null,
     // Empty string, not null. agents.whatsapp_number was NOT NULL from the
     // original application form, where it was a required question, so
@@ -59,7 +59,7 @@ export function agentContentUpdate(
 
 export function readContentFields(formData: FormData) {
   return {
-    pageTheme: formData.get("pageTheme"),
+    accentColor: formData.get("accentColor"),
     town: formData.get("town"),
     whatsappNumber: formData.get("whatsappNumber"),
     bio: formData.get("bio"),

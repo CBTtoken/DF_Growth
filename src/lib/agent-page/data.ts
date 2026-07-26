@@ -1,5 +1,4 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { AgentThemeId } from "@/lib/agent-page/themes";
 
 // Agent page v3 (docs/agent-page-v3-final.md). One shape, loaded the same
 // way for the live page, the admin preview and the OG image route, so a
@@ -21,7 +20,8 @@ export type AgentPage = {
   fullName: string;
   slug: string;
   status: "draft" | "live";
-  theme: AgentThemeId;
+  /** The one colour the agent picks. The whole ramp derives from it. */
+  accentColor: string;
   town: string | null;
   photoUrl: string | null;
   activeSince: string | null;
@@ -41,14 +41,14 @@ export type ProofPage = { businessName: string; slug: string; screenshotUrl: str
 export type AgentSocialProof = { businessName: string; slug: string };
 
 const AGENT_PAGE_COLUMNS =
-  "id, full_name, page_slug, page_status, page_theme, town, photo_path, active_since, bio, services, whatsapp_number, email, referral_code, approved_at";
+  "id, full_name, page_slug, page_status, accent_color, town, photo_path, active_since, bio, services, whatsapp_number, email, referral_code, approved_at";
 
 type AgentRow = {
   id: string;
   full_name: string;
   page_slug: string | null;
   page_status: string;
-  page_theme: string;
+  accent_color: string;
   town: string | null;
   photo_path: string | null;
   active_since: string | null;
@@ -90,7 +90,7 @@ function toAgentPage(row: AgentRow): AgentPage {
     fullName: row.full_name,
     slug: row.page_slug ?? "",
     status: row.page_status === "live" ? "live" : "draft",
-    theme: (row.page_theme as AgentThemeId) ?? "slate",
+    accentColor: row.accent_color ?? "#2f6a44",
     town: row.town,
     photoUrl: agentPhotoUrl(row.photo_path),
     // v3 credential line, "active since {Month Year}". Falls back to the

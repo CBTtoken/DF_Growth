@@ -1,78 +1,97 @@
 import { ensureContrast, shade } from "@/lib/color";
 
-// Agent page v3: "Four curated themes, no free colour picker. Each fully
-// designed and contrast-checked. The agent picks a theme, not a colour."
+// Agent page design, ported from the Bolt design Dewald supplied
+// (docs/project-bolt-sb1-skmsgszg.zip).
 //
-// v1 derived a whole palette from any hex an agent typed, which meant every
-// combination was generated and none was actually designed. Four fixed
-// themes is the better trade: each one is chosen deliberately, they are
-// distinguishable at a glance in the picker, and none of them can produce
-// the muddy result an arbitrary hex sometimes did.
+// That design is built on two colour families: a fixed warm neutral (sand)
+// that carries the page's character, and one accent ramp (forest in the
+// original) used for every button, badge, number and dark section. Only the
+// accent is the agent's to choose, which is the right split: the warmth is
+// the design, the accent is the person.
 //
-// The contrast floor stays anyway. Not because these four need rescuing,
-// they were picked to clear it comfortably, but because a fifth theme added
-// later without checking would otherwise ship broken and nothing would
-// catch it. ensureContrast is the same helper every client landing template
-// already uses, so there is still exactly one definition of readable.
+// So this generates a full ramp from one hex rather than offering fixed
+// themes. Dewald's ask was that an agent picks their own colour, including
+// DigitalFlyer's own brand blue, and the Bolt design's forest and every
+// other choice have to land in the same slots for the layout to hold.
 
-export type AgentThemeId = "slate" | "forest" | "clay" | "plum";
+/** The design's warm neutral. Fixed, never agent-editable. */
+export const SAND = {
+  50: "#fbf8f3",
+  100: "#f5efe4",
+  200: "#ece0c9",
+  300: "#dec9a1",
+  400: "#ccab73",
+} as const;
 
-export type AgentTheme = {
-  id: AgentThemeId;
-  /** Shown in the picker. */
-  name: string;
-  /** Full-bleed hero field. White text always sits on this. */
-  heroBg: string;
-  /** Deeper stop of the same hue, for the monogram field. */
-  heroDeep: string;
-  /** Barely-there wash for the hero section and the inset panel. */
-  tint: string;
-  /** Hairline dividers and panel edges. */
-  border: string;
-  /** The accent used as text on white. Contrast-checked. */
-  accentOnLight: string;
-  /** The two stops the portrait duotone maps shadows and highlights to. */
-  duotoneShadow: string;
-  duotoneHighlight: string;
+/** The design's near-black. Warm, not neutral, which is what stops the page feeling clinical. */
+export const INK = "#1a1714";
+
+export type AgentAccent = {
+  /** Exactly what was picked. */
+  base: string;
+  /** Pale tints, for dark-section chips and light strokes. */
+  200: string;
+  300: string;
+  /** Mid, for small marks and dividers. */
+  500: string;
+  /** The button colour. White text sits on this, so it clears 4.5:1. */
+  600: string;
+  /** Hover, and the resolution line. */
+  700: string;
+  800: string;
+  /** The dark section behind the outcomes and portfolio. */
+  950: string;
 };
 
-// Base hue per theme. Everything else is derived from it, so a theme is one
-// decision rather than eight numbers to keep in sync.
-const BASES: { id: AgentThemeId; name: string; base: string }[] = [
-  { id: "slate", name: "Slate", base: "#22456b" },
-  { id: "forest", name: "Forest", base: "#245c46" },
-  { id: "clay", name: "Clay", base: "#9c4a2a" },
-  { id: "plum", name: "Plum", base: "#6b2d5c" },
-];
+export const DEFAULT_ACCENT = "#2f6a44";
 
-function build({ id, name, base }: { id: AgentThemeId; name: string; base: string }): AgentTheme {
-  // Contrast is symmetric, so one adjusted value serves both uses: a colour
-  // that clears 4.5:1 against white reads as text on white and is dark
-  // enough to carry white text as a background.
-  const readableOnWhite = ensureContrast(base, "#ffffff");
+export function isValidAccent(hex: string): boolean {
+  return /^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(hex.trim());
+}
+
+function normalise(hex: string): string {
+  const trimmed = hex.trim();
+  if (!isValidAccent(trimmed)) return DEFAULT_ACCENT;
+  return trimmed.startsWith("#") ? trimmed : `#${trimmed}`;
+}
+
+export function buildAgentAccent(rawAccent: string): AgentAccent {
+  const base = normalise(rawAccent);
+
+  // The 600 stop is load-bearing: it is the button fill, and white text
+  // sits on it in six places. ensureContrast is the same helper every
+  // client landing template uses, so there is one definition of readable in
+  // the codebase and a pale pick cannot ship an unreadable button.
+  //
+  // Contrast is symmetric, so the value that clears 4.5:1 against white is
+  // also dark enough to carry white text.
+  const six = ensureContrast(base, "#ffffff");
 
   return {
-    id,
-    name,
-    heroBg: shade(readableOnWhite, -0.08),
-    heroDeep: shade(readableOnWhite, -0.4),
-    tint: shade(base, 0.95),
-    border: shade(base, 0.82),
-    accentOnLight: readableOnWhite,
-    duotoneShadow: shade(base, -0.6),
-    duotoneHighlight: shade(base, 0.88),
+    base,
+    200: shade(six, 0.72),
+    300: shade(six, 0.55),
+    500: shade(six, 0.18),
+    600: six,
+    700: shade(six, -0.16),
+    800: shade(six, -0.32),
+    // The dark section. Deep enough that white body copy sits comfortably
+    // on it whatever the hue, which a mid-tone accent would not manage.
+    950: shade(six, -0.62),
   };
 }
 
-export const AGENT_THEMES: Record<AgentThemeId, AgentTheme> = BASES.reduce(
-  (acc, spec) => ({ ...acc, [spec.id]: build(spec) }),
-  {} as Record<AgentThemeId, AgentTheme>
-);
-
-export const AGENT_THEME_LIST: AgentTheme[] = BASES.map((spec) => AGENT_THEMES[spec.id]);
-
-export const DEFAULT_AGENT_THEME: AgentThemeId = "slate";
-
-export function resolveAgentTheme(id: string | null | undefined): AgentTheme {
-  return AGENT_THEMES[(id as AgentThemeId) ?? DEFAULT_AGENT_THEME] ?? AGENT_THEMES[DEFAULT_AGENT_THEME];
-}
+// Offered in the picker alongside a free colour input. The first is the
+// Bolt design's own forest, so the default page is exactly the design as
+// supplied; the second is the DigitalFlyer brand blue, since Dewald asked
+// that an agent be able to run our colours rather than their own.
+export const CURATED_ACCENTS: { name: string; hex: string }[] = [
+  { name: "Forest", hex: "#2f6a44" },
+  { name: "Flyer Blue", hex: "#1081b8" },
+  { name: "Deep Navy", hex: "#1d3a5f" },
+  { name: "Teal", hex: "#0e7c7b" },
+  { name: "Plum", hex: "#6b2d5c" },
+  { name: "Clay", hex: "#9c4a2a" },
+  { name: "Crimson", hex: "#a8202e" },
+  { name: "Graphite", hex: "#3a4148" },
+];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AGENT_THEME_LIST } from "@/lib/agent-page/themes";
+import { CURATED_ACCENTS, buildAgentAccent } from "@/lib/agent-page/themes";
 import type { AgentPage } from "@/lib/agent-page/data";
 
 // Agent page v3. The page fields an agent owns, shared by the admin view
@@ -35,34 +35,55 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 export function AgentPageFields({ agent }: { agent: AgentPage }) {
-  const [theme, setTheme] = useState(agent.theme);
+  const [accent, setAccent] = useState(agent.accentColor);
   const [bio, setBio] = useState(agent.bio ?? "");
+  const preview = buildAgentAccent(accent);
 
   return (
     <>
-      {/* v3: "Four curated themes, no free colour picker. The agent picks a
-          theme, not a colour." Each swatch shows the real hero and accent
-          stops, so what is clicked is what renders. */}
+      {/* One colour, and the whole page ramp derives from it. Curated
+          swatches for speed plus a free picker, since Dewald asked that an
+          agent be able to use their own colour or DigitalFlyer's. The
+          preview strip shows the three stops that actually carry text, so
+          what is clicked is what renders. */}
       <div className="flex flex-col gap-3">
-        <label className="text-xs font-medium text-gray-700">Your theme</label>
-        <input type="hidden" name="pageTheme" value={theme} />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {AGENT_THEME_LIST.map((option) => (
+        <label className="text-xs font-medium text-gray-700">Your colour</label>
+        <input type="hidden" name="accentColor" value={accent} />
+        <div className="flex flex-wrap gap-2">
+          {CURATED_ACCENTS.map((option) => (
             <button
-              key={option.id}
+              key={option.hex}
               type="button"
-              onClick={() => setTheme(option.id)}
-              className={`flex flex-col overflow-hidden rounded-xl border-2 text-left transition ${
-                theme === option.id ? "border-brand" : "border-transparent hover:border-gray-200"
+              onClick={() => setAccent(option.hex)}
+              title={option.name}
+              aria-label={option.name}
+              className={`h-9 w-9 rounded-full transition ${
+                accent.toLowerCase() === option.hex ? "ring-2 ring-brand ring-offset-2" : ""
               }`}
-            >
-              <span className="h-10 w-full" style={{ backgroundColor: option.heroBg }} />
-              <span className="flex items-center gap-1.5 px-2.5 py-2" style={{ backgroundColor: option.tint }}>
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: option.accentOnLight }} />
-                <span className="text-xs font-semibold text-neutral-ink">{option.name}</span>
-              </span>
-            </button>
+              style={{ backgroundColor: option.hex }}
+            />
           ))}
+          <input
+            type="color"
+            value={accent}
+            onChange={(e) => setAccent(e.target.value)}
+            className="h-9 w-9 cursor-pointer rounded-full border border-gray-200 bg-white p-0.5"
+            aria-label="Custom colour"
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-[0.65rem] font-semibold uppercase tracking-wide">
+          <span className="rounded-full px-3 py-1.5 text-white" style={{ backgroundColor: preview[600] }}>
+            Buttons
+          </span>
+          <span className="rounded px-2 py-1" style={{ backgroundColor: "#f5efe4", color: preview[700] }}>
+            Headings
+          </span>
+          <span className="rounded px-2 py-1" style={{ backgroundColor: preview[950], color: preview[200] }}>
+            Dark section
+          </span>
+          <span className="normal-case tracking-normal text-gray-400">
+            Adjusted automatically so text stays readable on any colour.
+          </span>
         </div>
       </div>
 

@@ -26,9 +26,14 @@ export const agentCompedSignupSchema = z.object({
 // name, a photo and a colour is a real, complete page. The boxes sit empty
 // in their dashboard until they feel like filling them in.
 export const agentPageContentSchema = z.object({
-  // v3: four curated themes, no free colour picker. The agent picks a
-  // theme, not a colour, so this is an enum rather than a hex.
-  pageTheme: z.enum(["slate", "forest", "clay", "plum"], { message: "Pick a theme" }),
+  // The agent picks one colour and the whole page ramp derives from it.
+  // A free hex, not an enum: Dewald asked that an agent be able to use
+  // their own colour or DigitalFlyer's, and the ramp builder applies a
+  // contrast floor so no pick can produce an unreadable button.
+  accentColor: z
+    .string()
+    .trim()
+    .regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Pick a colour"),
   town: z.string().trim().max(80).optional().or(z.literal("")),
   whatsappNumber: z.string().trim().max(30).optional().or(z.literal("")),
   // v3: the three copy fields collapse into one optional bio with a hard

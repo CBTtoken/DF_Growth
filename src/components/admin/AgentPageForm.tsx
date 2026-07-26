@@ -16,7 +16,7 @@ import {
   buttonClass,
   secondaryButtonClass,
 } from "@/components/agent-page/AgentPageFields";
-import { resolveAgentTheme } from "@/lib/agent-page/themes";
+import { buildAgentAccent } from "@/lib/agent-page/themes";
 import type { AgentPage } from "@/lib/agent-page/data";
 
 // Agent Programme Phase 1 Sec 1.10, the admin view of an agent's page.
@@ -34,7 +34,7 @@ function Feedback({ state }: { state: AgentPageFormState }) {
 export function AgentPageForm({ agent }: { agent: AgentPage }) {
   const [saveState, saveAction, saving] = useActionState(saveAgentPage.bind(null, agent.id), null);
   const [photoState, photoAction, uploading] = useActionState(uploadAgentPhoto.bind(null, agent.id), null);
-  const theme = resolveAgentTheme(agent.theme);
+  const accent = buildAgentAccent(agent.accentColor);
 
   return (
     <div className="flex flex-col gap-8">
@@ -80,7 +80,7 @@ export function AgentPageForm({ agent }: { agent: AgentPage }) {
             {agent.photoUrl ? (
               <div
                 className="relative isolate aspect-[4/5] w-full overflow-hidden rounded-xl"
-                style={{ backgroundColor: theme.duotoneHighlight }}
+                style={{ backgroundColor: accent[200] }}
               >
                 <Image
                   src={agent.photoUrl}
@@ -93,13 +93,13 @@ export function AgentPageForm({ agent }: { agent: AgentPage }) {
                 <div
                   aria-hidden
                   className="absolute inset-0"
-                  style={{ backgroundColor: theme.duotoneShadow, mixBlendMode: "lighten" }}
+                  style={{ backgroundColor: accent[600], mixBlendMode: "lighten" }}
                 />
               </div>
             ) : (
               <div
                 className="flex aspect-[4/5] w-full items-center justify-center rounded-xl text-xs text-white/70"
-                style={{ backgroundColor: theme.heroDeep }}
+                style={{ backgroundColor: accent[800] }}
               >
                 Monogram badge
               </div>

@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { getLiveAgentPage } from "@/lib/agent-page/data";
-import { resolveAgentTheme } from "@/lib/agent-page/themes";
+import { buildAgentAccent } from "@/lib/agent-page/themes";
 import { withAlpha } from "@/lib/color";
 import { agentInitials, stackedName } from "@/lib/agent-page/identity";
 import { loadAssetFonts } from "@/lib/assets/fonts";
@@ -26,7 +26,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 
   if (!agent) return new Response("Not found", { status: 404 });
 
-  const theme = resolveAgentTheme(agent.theme);
+  const accent = buildAgentAccent(agent.accentColor);
   const { first, rest } = stackedName(agent.fullName);
   const fonts = await loadAssetFonts();
   // Not the bio. The bio is a paragraph, so at card width it always cut
@@ -43,7 +43,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
           width: "100%",
           height: "100%",
           display: "flex",
-          backgroundColor: theme.heroBg,
+          backgroundColor: accent[950],
           padding: 64,
           gap: 56,
           alignItems: "center",
@@ -60,7 +60,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
             flexShrink: 0,
             borderRadius: 24,
             overflow: "hidden",
-            backgroundColor: theme.heroDeep,
+            backgroundColor: accent[800],
             alignItems: "center",
             justifyContent: "center",
           }}
@@ -90,7 +90,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
                   left: 0,
                   width: 344,
                   height: 430,
-                  backgroundColor: withAlpha(theme.heroBg, 0.32),
+                  backgroundColor: withAlpha(accent[950], 0.32),
                 }}
               />
             </div>
