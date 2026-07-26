@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAgentReferralConvertedEmail, sendAgentTierMilestoneEmail } from "@/lib/email/agents";
+import { commissionBasis } from "@/lib/agents/vat";
 
 // Sec 6: one ledger row per commission-earning payment. Called from the
 // Paystack webhook's first-payment branch (the point that already sends
@@ -55,7 +56,12 @@ export async function recordCommissionIfEligible({
   distinctClients.add(clientId);
   const rateApplied = distinctClients.size <= 10 ? 25 : 40;
 
-  const amountDue = (amountKobo / 100) * (rateApplied / 100);
+  // Terms 3.6: the rate applies to the amount excluding VAT, not to what
+  // the member actually paid. Identical today, since DigitalFlyer is not
+  // VAT registered, and deliberately routed through the shared constant so
+  // the day registration happens this does not keep quietly paying every
+  // agent about 13% too much on every payment. See lib/agents/vat.ts.
+  const amountDue = commissionBasis(amountKobo / 100) * (rateApplied / 100);
 
   const { error } = await admin.from("commission_ledger").insert({
     agent_id: referredByAgentId,

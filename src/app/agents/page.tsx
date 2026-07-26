@@ -6,6 +6,7 @@ import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { AgentApplicationForm } from "@/components/agents/AgentApplicationForm";
 import { AGENT_FAQ } from "@/lib/agents/faq";
 import { AGENT_TERMS_PUBLISHED } from "@/lib/agents/terms";
+import { commissionBasis } from "@/lib/agents/vat";
 
 // Agent Programme Phase 3, built from docs/agent-recruitment-page-copy.md.
 //
@@ -116,26 +117,27 @@ const NOT_FOR: { lead: string; body: string }[] = [
   },
 ];
 
-// The copy document leaves the worked example as {GE_ANNUAL} with the note
-// "I will not invent a number on a page about money."
+// The copy document left the worked example as {GE_ANNUAL} with the note "I
+// will not invent a number on a page about money."
 //
-// The price itself is no longer unknown: Growth annual is R1,199/year, live
-// on /pricing and in lib/paystack/plans.ts, so the arithmetic below is real
-// rather than invented. What is still unconfirmed is agent terms 3.6,
-// "commission is calculated on the amount paid excluding VAT". If R1,199 is
-// VAT inclusive, every number here is roughly 13% too high, and that is not
-// a rounding error to publish on a page whose entire argument is that we do
-// not overstate anything.
-//
-// So the block is written and ready, and gated on one boolean. Flip it once
-// Dewald confirms the VAT treatment. Everything else in the earnings
-// section stands on its own without it, because the rate table carries
-// percentages, not amounts.
-const WORKED_EXAMPLE_CONFIRMED = false;
+// Nothing here is invented now. Growth annual is R1,199/year, live on
+// /pricing and in lib/paystack/plans.ts, and the commission basis comes
+// from lib/agents/vat.ts, the same constant the Paystack webhook uses to
+// write real ledger rows. So this page can only ever advertise what an
+// agent would actually be paid, including on the day VAT registration
+// changes the basis under both of them at once.
 const GROWTH_ANNUAL_RANDS = 1199;
+const TEN_MEMBERS_AT_25 = commissionBasis(GROWTH_ANNUAL_RANDS) * 0.25 * 10;
+const TEN_MEMBERS_AT_40 = commissionBasis(GROWTH_ANNUAL_RANDS) * 0.4 * 10;
 
-function rands(value: number): string {
-  return `R${value.toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// en-US, not en-ZA, despite this being a South African page. en-ZA formats
+// as "R1 199,00", space-separated with a comma decimal, and every other
+// price on this site (lib/paystack/plans.ts, /pricing) is written
+// "R1,199/year". A money page that formats the same product's price
+// differently to the page selling it looks like a different number at a
+// glance, which is the last thing this page can afford.
+function rands(value: number, decimals = 2): string {
+  return `R${value.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
 }
 
 function SectionHeading({ eyebrow, children }: { eyebrow?: string; children: React.ReactNode }) {
@@ -278,17 +280,19 @@ export default function AgentProgrammePage() {
               </p>
             </div>
 
-            {WORKED_EXAMPLE_CONFIRMED && (
-              <div className="flex flex-col gap-3 rounded-2xl bg-ink p-6 text-white">
-                <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/55">A worked example</p>
-                <p className="text-base leading-relaxed text-white/90">
-                  Growth Engine on the yearly plan is {rands(GROWTH_ANNUAL_RANDS)} a year. Ten of those at 25% earns
-                  you {rands(GROWTH_ANNUAL_RANDS * 0.25 * 10)}. Sign an eleventh, and when those first ten renew the
-                  following year they pay 40%, which is {rands(GROWTH_ANNUAL_RANDS * 0.4 * 10)}, without signing anyone
-                  new.
-                </p>
-              </div>
-            )}
+            <div className="flex flex-col gap-3 rounded-2xl bg-ink p-6 text-white">
+              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/55">A worked example</p>
+              <p className="text-base leading-relaxed text-white/90">
+                Growth Engine on the yearly plan is {rands(GROWTH_ANNUAL_RANDS, 0)} a year. Ten of those at 25% earns
+                you{" "}
+                {rands(TEN_MEMBERS_AT_25)}. Sign an eleventh, and when those first ten renew the following year they
+                pay 40%, which is {rands(TEN_MEMBERS_AT_40)}, without signing anyone new.
+              </p>
+              <p className="text-sm text-white/60">
+                Real numbers at today&apos;s published price, not a projection. It is an example of the maths, not a
+                promise that you will sign ten.
+              </p>
+            </div>
           </div>
         </section>
 
