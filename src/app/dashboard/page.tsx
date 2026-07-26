@@ -27,7 +27,7 @@ import { ShopSection } from "@/components/dashboard/ShopSection";
 import { BookingShopUpsell } from "@/components/dashboard/BookingShopUpsell";
 import { DashboardTabs, type DashboardTab } from "@/components/dashboard/DashboardTabs";
 import { SiteFooter } from "@/components/SiteFooter";
-import { logOut } from "@/app/dashboard/actions";
+import { logOut, markLeadHandled } from "@/app/dashboard/actions";
 
 // Private, signed-in-only — see onboard/page.tsx for the same reasoning.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
     // anywhere in the codebase.
     admin
       .from("leads")
-      .select("id, name, email, phone, message, created_at")
+      .select("id, name, email, phone, message, created_at, handled_at")
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -253,35 +253,92 @@ export default async function DashboardPage() {
           <PageViewsCard totalViews={totalPageViews ?? 0} recentViews={recentPageViews ?? []} />
 
           <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-bold tracking-tight text-ink">Leads ({leads?.length ?? 0})</h2>
+            <h2 className="flex flex-wrap items-center gap-2 text-lg font-bold tracking-tight text-ink">
+              Leads ({leads?.length ?? 0})
+              {(() => {
+                const newCount = (leads ?? []).filter((l) => !l.handled_at).length;
+                return newCount > 0 ? (
+                  <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-white">
+                    {newCount} new
+                  </span>
+                ) : null;
+              })()}
+            </h2>
             <ul className="flex flex-col gap-2">
-              {(leads ?? []).map((l) => (
-                <li
-                  key={l.id}
-                  className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-medium text-gray-900">{l.name}</p>
-                      <p className="flex flex-wrap items-center gap-x-2 text-gray-500">
-                        <a href={`mailto:${l.email}`} className="text-brand underline-offset-2 hover:underline">
-                          {l.email}
-                        </a>
-                        {l.phone && (
-                          <>
-                            <span aria-hidden>·</span>
-                            <a href={`tel:${l.phone.replace(/\s+/g, "")}`} className="text-brand underline-offset-2 hover:underline">
-                              {l.phone}
-                            </a>
-                          </>
-                        )}
-                      </p>
+              {(leads ?? []).map((l) => {
+                // Normalise a SA number for wa.me: strip non-digits, leading 0 -> 27.
+                const waNumber = l.phone ? l.phone.replace(/\D/g, "").replace(/^0/, "27") : null;
+                return (
+                  <li
+                    key={l.id}
+                    className={`flex flex-col gap-2 rounded-xl border p-4 text-sm ${
+                      l.handled_at ? "border-gray-100 bg-white opacity-70" : "border-accent/40 bg-accent/5"
+                    }`}
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="flex items-center gap-2 font-medium text-gray-900">
+                          {l.name}
+                          {!l.handled_at && (
+                            <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                              New
+                            </span>
+                          )}
+                        </p>
+                        <p className="flex flex-wrap items-center gap-x-2 text-gray-500">
+                          <a href={`mailto:${l.email}`} className="text-brand underline-offset-2 hover:underline">
+                            {l.email}
+                          </a>
+                          {l.phone && (
+                            <>
+                              <span aria-hidden>·</span>
+                              <a href={`tel:${l.phone.replace(/\s+/g, "")}`} className="text-brand underline-offset-2 hover:underline">
+                                {l.phone}
+                              </a>
+                            </>
+                          )}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-400">{new Date(l.created_at).toLocaleString()}</span>
                     </div>
-                    <span className="text-xs text-gray-400">{new Date(l.created_at).toLocaleString()}</span>
-                  </div>
-                  {l.message && <p className="whitespace-pre-wrap rounded-lg bg-white p-3 text-gray-600">{l.message}</p>}
-                </li>
-              ))}
+                    {l.message && <p className="whitespace-pre-wrap rounded-lg bg-white p-3 text-gray-600">{l.message}</p>}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <a
+                        href={`mailto:${l.email}`}
+                        className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-300"
+                      >
+                        Email
+                      </a>
+                      {l.phone && (
+                        <a
+                          href={`tel:${l.phone.replace(/\s+/g, "")}`}
+                          className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:border-gray-300"
+                        >
+                          Call
+                        </a>
+                      )}
+                      {waNumber && (
+                        <a
+                          href={`https://wa.me/${waNumber}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-full border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition hover:border-green-300"
+                        >
+                          WhatsApp
+                        </a>
+                      )}
+                      <form action={markLeadHandled.bind(null, l.id, !l.handled_at)} className="ml-auto">
+                        <button
+                          type="submit"
+                          className="rounded-full px-3 py-1.5 text-xs font-semibold text-gray-500 transition hover:bg-gray-100 hover:text-gray-700"
+                        >
+                          {l.handled_at ? "Mark as new" : "Mark as handled"}
+                        </button>
+                      </form>
+                    </div>
+                  </li>
+                );
+              })}
               {(!leads || leads.length === 0) && (
                 <p className="text-sm text-gray-400">
                   No leads yet — this fills in as soon as someone contacts you through your page.

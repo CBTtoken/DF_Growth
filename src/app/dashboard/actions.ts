@@ -20,6 +20,23 @@ const PHOTO_CAP = 10;
 
 type DashboardState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
+// Member lead management: toggle whether a lead has been handled. Scoped to the
+// caller's own client via the growth_client_id filter, so a member can never
+// mark another business's leads. null handled_at = new/unhandled.
+export async function markLeadHandled(leadId: string, handled: boolean) {
+  const client = await requireGrowthClientId();
+  if (client.error) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("leads")
+    .update({ handled_at: handled ? new Date().toISOString() : null })
+    .eq("id", leadId)
+    .eq("growth_client_id", client.id);
+
+  revalidatePath("/dashboard");
+}
+
 // CLAUDE.md Section 8: generate the social asset once, when the testimonial
 // is submitted, and cache it in generated_assets — not regenerated on every
 // future view/download.
