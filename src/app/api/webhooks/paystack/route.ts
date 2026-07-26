@@ -7,6 +7,7 @@ import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { sendBookOrderConfirmationEmail } from "@/lib/email/book-order";
 import { trackBetaEvent } from "@/lib/metrics/track";
 import { recordCommissionIfEligible } from "@/lib/agents/commission";
+import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -115,6 +116,21 @@ export async function POST(request: Request) {
         Sentry.captureException(err, { extra: { orderId: order.id } });
       }
     }
+
+    // DigitalFlyer-own Purchase to our ad pixel — the reliable server side of
+    // the book Purchase (the webhook is guaranteed to fire; the browser pixel
+    // isn't). event_id is the Paystack reference, the same id the browser
+    // Purchase uses, so Meta dedupes the two into one sale. amount is in cents.
+    // No-op until DIGITALFLYER_META_CAPI_ACCESS_TOKEN is set.
+    await sendDigitalFlyerCapiEvent({
+      eventName: "Purchase",
+      email: customer?.email,
+      eventId: reference,
+      value: typeof amount === "number" ? amount / 100 : undefined,
+      currency: "ZAR",
+      contentName: `Standing 365 (${metadata.edition})`,
+      eventSourceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/standing365`,
+    });
 
     return NextResponse.json({ received: true });
   }

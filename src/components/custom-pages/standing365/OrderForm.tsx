@@ -9,6 +9,22 @@ import { submitBookOrder } from "@/components/custom-pages/standing365/actions";
 // room. 500 still comfortably fits inside a printed front-cover page.
 const GIFT_MESSAGE_LIMIT = 500;
 
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+  }
+}
+
+// Browser-side Meta InitiateCheckout on the DF pixel when the buyer starts
+// payment — a more frequent mid-funnel signal than Purchase alone, so Meta's
+// Sales optimisation has something to learn from while actual book sales build
+// up. Best-effort: a no-op if the consent-gated pixel hasn't loaded.
+function fireInitiateCheckout(value: number) {
+  if (typeof window.fbq === "function") {
+    window.fbq("track", "InitiateCheckout", { value, currency: "ZAR", content_name: "Standing 365 book" });
+  }
+}
+
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 5/10: opens inline below the
 // chosen card rather than a separate page/modal — keeps the visitor in the
 // same scroll position they were already reading. Loading state on submit
@@ -32,6 +48,7 @@ export function OrderForm({
   // multiple books to one address is genuinely one parcel, not N shipments.
   const [quantity, setQuantity] = useState(1);
   const total = 299 * quantity + 75;
+  const checkoutValue = edition === "personalised" ? 385 + 75 : total;
 
   return (
     <div className="mt-4 rounded-2xl border border-[#B8832A]/30 bg-[#FBF8F3] p-6 text-left">
@@ -52,7 +69,11 @@ export function OrderForm({
         </button>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-3">
+      <form
+        action={formAction}
+        onSubmit={() => fireInitiateCheckout(checkoutValue)}
+        className="flex flex-col gap-3"
+      >
         <div className="flex flex-col gap-1">
           <input
             name="buyerName"

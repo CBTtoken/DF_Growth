@@ -30,12 +30,17 @@ export async function sendDigitalFlyerCapiEvent({
   clientUserAgent,
   fbc,
   fbp,
+  value,
+  currency,
+  contentName,
 }: {
-  eventName: "CompleteRegistration" | "Subscribe" | "Lead";
+  eventName: "CompleteRegistration" | "Subscribe" | "Lead" | "Purchase" | "InitiateCheckout";
   email?: string | null;
-  // The SAME id the browser pixel sends for this conversion (passed through the
-  // thank-you page URL). Meta dedupes server + browser events that share an
-  // event_id + event_name, so one signup is counted once, not twice.
+  // The SAME id the browser pixel sends for this conversion. For signups it's
+  // passed through the thank-you page URL; for a book Purchase it's the
+  // Paystack transaction reference (naturally shared by browser + webhook).
+  // Meta dedupes server + browser events that share an event_id + event_name,
+  // so one conversion is counted once, not twice.
   eventId: string;
   eventSourceUrl: string;
   clientUserAgent?: string | null;
@@ -44,6 +49,11 @@ export async function sendDigitalFlyerCapiEvent({
   // conversions for cookie-decliners (the whole point of CAPI) still land.
   fbc?: string | null;
   fbp?: string | null;
+  // Purchase / InitiateCheckout only: the order value so Meta can optimise for
+  // revenue (value-based optimisation), not just any sale.
+  value?: number | null;
+  currency?: string | null;
+  contentName?: string | null;
 }): Promise<DigitalFlyerCapiResult> {
   const pixelId = process.env.NEXT_PUBLIC_DIGITALFLYER_META_PIXEL_ID;
   const accessToken = process.env.DIGITALFLYER_META_CAPI_ACCESS_TOKEN;
@@ -69,6 +79,15 @@ export async function sendDigitalFlyerCapiEvent({
           fbp: fbp || undefined,
           client_user_agent: clientUserAgent || undefined,
         },
+        custom_data:
+          value != null
+            ? {
+                value,
+                currency: currency || "ZAR",
+                content_name: contentName || undefined,
+                content_type: "product",
+              }
+            : undefined,
       },
     ],
   };

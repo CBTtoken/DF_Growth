@@ -4,6 +4,36 @@ import { useEffect, useState } from "react";
 
 type ReturnState = "success" | "failed" | null;
 
+declare global {
+  interface Window {
+    fbq?: (...args: unknown[]) => void;
+  }
+}
+
+// Fire a browser-side Meta Purchase on the DF pixel (loaded via this page's
+// PixelConsentGate once the visitor accepted cookies). event_id is the Paystack
+// reference, the same id the webhook's server Purchase uses, so Meta dedupes
+// the two into one sale. Best-effort with a short poll, since the consent-gated
+// pixel script may not have run yet; if cookies were rejected and it never
+// loads, the server-side CAPI Purchase still records the sale.
+function firePurchase(reference: string, amountCents: number | null, currency: string | null) {
+  if (amountCents == null) return;
+  let tries = 0;
+  const id = setInterval(() => {
+    if (typeof window.fbq === "function") {
+      window.fbq(
+        "track",
+        "Purchase",
+        { value: amountCents / 100, currency: currency || "ZAR", content_name: "Standing 365 book" },
+        { eventID: reference }
+      );
+      clearInterval(id);
+    } else if (++tries > 15) {
+      clearInterval(id);
+    }
+  }, 200);
+}
+
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 10. Client-side because the
 // page this renders on is force-static (see api/checkout/book-order/verify
 // for the full reason) — window.location.search is the only reliable way
@@ -25,7 +55,14 @@ export function OrderReturnBanner() {
     // costs no meaningful UX over a flashed "checking" state.
     fetch(`/api/checkout/book-order/verify?reference=${encodeURIComponent(reference)}`)
       .then((res) => res.json())
-      .then((data) => setState(data.status === "success" ? "success" : "failed"))
+      .then((data) => {
+        if (data.status === "success") {
+          setState("success");
+          firePurchase(reference, data.amount, data.currency);
+        } else {
+          setState("failed");
+        }
+      })
       .catch(() => setState("failed"));
 
     // Cleans the reference out of the URL so refreshing the page doesn't

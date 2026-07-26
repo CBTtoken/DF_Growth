@@ -24,5 +24,12 @@ export async function GET(request: Request) {
   const data = await res.json();
 
   const status = data?.data?.status === "success" ? "success" : "failed";
-  return NextResponse.json({ status });
+  // Also hand back the amount (in cents) + currency on success so the client
+  // can fire a browser-side Meta Purchase with the real order value, deduped
+  // against the webhook's server Purchase via this same reference.
+  return NextResponse.json({
+    status,
+    amount: status === "success" ? data?.data?.amount ?? null : null,
+    currency: status === "success" ? data?.data?.currency ?? "ZAR" : null,
+  });
 }
