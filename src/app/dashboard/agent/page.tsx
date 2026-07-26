@@ -44,47 +44,58 @@ export default async function AgentDashboardPage() {
           <p className="text-sm text-gray-500">Your agent dashboard.</p>
         </div>
 
-        <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-lg font-bold tracking-tight text-ink">Your page</h2>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                pageIsLive ? "bg-green-100 text-green-700" : "bg-amber-50 text-amber-700"
-              }`}
-            >
-              {pageIsLive ? "Live" : "Not live yet"}
-            </span>
-          </div>
-
-          {pageIsLive && pageUrl ? (
-            <>
-              <a
-                href={pageUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="break-all text-sm font-medium text-brand hover:underline"
+        {/* Only rendered for an agent who actually has a page. Not every
+            agent gets one: HelpLift is an NGO partner who earns on their
+            referral link and is not getting an agent page at all, and an
+            agent still waiting for theirs has nothing here to act on
+            either. The referral link is the thing every agent shares
+            regardless, and AgentSection below already leads with it, so a
+            "your page is being set up" placeholder would be both a
+            promise we have not made and a second, competing share link. */}
+        {agent.pageSlug && (
+          <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-bold tracking-tight text-ink">Your page</h2>
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                  pageIsLive ? "bg-green-100 text-green-700" : "bg-amber-50 text-amber-700"
+                }`}
               >
-                {pageUrl}
-              </a>
+                {pageIsLive ? "Live" : "Not live yet"}
+              </span>
+            </div>
+
+            {pageIsLive && pageUrl ? (
+              <>
+                <a
+                  href={pageUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="break-all text-sm font-medium text-brand hover:underline"
+                >
+                  {pageUrl}
+                </a>
+                <p className="text-sm text-gray-500">
+                  Share this anywhere. Every button on it carries your referral code, so anyone who signs up through
+                  it is counted as yours for 30 days.
+                </p>
+              </>
+            ) : (
               <p className="text-sm text-gray-500">
-                Share this anywhere. Every button on it carries your referral code, so anyone who signs up through it
-                is counted as yours for 30 days.
+                Your page is built and waiting on a final check. You will get the link as soon as it goes live.
               </p>
-            </>
-          ) : (
-            <p className="text-sm text-gray-500">
-              Your page is still being set up. You will get the link as soon as it goes live.
+            )}
+
+            {/* Sec 1.5's nudge, and only when it is actually true: there
+                is a page for the photo to appear on, and no photo on it. */}
+            {!agent.photoPath && <AgentPhotoNudge />}
+
+            <p className="text-xs text-gray-400">
+              Editing your own page copy and colour is coming. For now, send any changes through and they will be
+              made for you.
             </p>
-          )}
-
-          {/* Sec 1.5's nudge, and only when it is actually true. */}
-          {!agent.photoPath && <AgentPhotoNudge />}
-
-          <p className="text-xs text-gray-400">
-            Editing your own page copy and colour is coming. For now, send any changes through and they will be made
-            for you.
-          </p>
-        </section>
+          </section>
+        )}
 
         {agentData ? (
           <AgentSection data={agentData} />
