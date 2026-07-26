@@ -90,3 +90,11 @@ export function ensureContrast(hex: string, background: string, minRatio = 4.5):
   }
   return best;
 }
+
+// Agent page v3: the OG card lays a translucent theme scrim over the
+// agent's photo. Satori supports rgba() but not colour-mix or opacity on a
+// background, so the alpha has to be baked into the colour string.
+export function withAlpha(hex: string, alpha: number): string {
+  const [r, g, b] = hexToRgb(hex);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}

@@ -4,10 +4,9 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { checkSlugAvailable, slugTakenMessage } from "@/lib/slug-namespace";
-import { agentPageSchema, agentCopyIntakeSchema } from "@/lib/schemas/agents";
+import { agentPageSchema } from "@/lib/schemas/agents";
 import { replaceAgentPhoto, clearAgentPhoto } from "@/lib/agent-page/photo";
 import { agentContentUpdate, readContentFields } from "@/lib/agent-page/form";
-import { draftAndSaveAgentCopy } from "@/lib/agent-page/copy";
 
 // Agent Programme Phase 1 Sec 1.10, the admin half of agent page setup:
 // the slug, the go-live decision and "active since". The content half
@@ -62,35 +61,6 @@ export async function saveAgentPage(
 
   revalidatePath(`/admin/agents/${agentId}`);
   revalidatePath(`/${values.pageSlug}`);
-  return { saved: true };
-}
-
-// Sec 1.6: the questions in, drafted copy out. Same shared helper the
-// agent's own dashboard uses, so a draft written for an agent and a draft
-// an agent writes for themselves behave identically.
-export async function draftAgentPageCopy(
-  agentId: string,
-  _prevState: AgentPageFormState,
-  formData: FormData
-): Promise<AgentPageFormState> {
-  const admin_ = await requireAdminEmail();
-  if ("error" in admin_) return { error: "Not allowed." };
-
-  const parsed = agentCopyIntakeSchema.safeParse({
-    before: formData.get("before"),
-    why: formData.get("why"),
-    who: formData.get("who"),
-    area: formData.get("area"),
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Answer at least one of these." };
-  }
-
-  const result = await draftAndSaveAgentCopy(agentId, parsed.data);
-  if (result.error) return { error: result.error };
-
-  revalidatePath(`/admin/agents/${agentId}`);
   return { saved: true };
 }
 

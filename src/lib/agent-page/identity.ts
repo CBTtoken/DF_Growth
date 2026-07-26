@@ -29,12 +29,50 @@ export function stackedName(fullName: string): { first: string; rest: string | n
 // Returns null when there is nothing dialable, which is a real case: an
 // agent record can carry "Not provided" in this field, and a WhatsApp
 // button that opens a broken chat is worse than no button.
-export function agentWhatsAppLink(raw: string | null): string | null {
+export function agentWhatsAppLink(raw: string | null, prefilledMessage?: string): string | null {
   if (!raw) return null;
   const digits = raw.replace(/\D/g, "");
   if (digits.length < 9) return null;
   const international = digits.startsWith("0") ? `27${digits.slice(1)}` : digits;
-  return `https://wa.me/${international}`;
+  const query = prefilledMessage ? `?text=${encodeURIComponent(prefilledMessage)}` : "";
+  return `https://wa.me/${international}${query}`;
+}
+
+// v3: "WhatsApp number is a required field... If a number is somehow
+// missing, primary becomes Message {FirstName}."
+//
+// Dewald's call: not a hard requirement, email is an acceptable contact
+// route. So the primary action resolves to whichever the agent actually
+// has, and the page never renders a signup button in its place. The two
+// share one prefilled opening line so the agent gets the same context
+// either way and knows immediately where the person came from.
+export type AgentContact =
+  | { kind: "whatsapp"; href: string; label: string }
+  | { kind: "email"; href: string; label: string }
+  | null;
+
+export function agentContact(agent: {
+  fullName: string;
+  whatsappNumber: string | null;
+  email: string | null;
+}): AgentContact {
+  const firstName = agent.fullName.trim().split(/\s+/)[0] ?? "";
+  const opener = `Hi ${firstName}, I saw your page and I want to find out about getting my business online.`;
+
+  const whatsapp = agentWhatsAppLink(agent.whatsappNumber, opener);
+  if (whatsapp) return { kind: "whatsapp", href: whatsapp, label: `WhatsApp ${firstName}` };
+
+  if (agent.email?.trim()) {
+    const subject = encodeURIComponent("Getting my business online");
+    const body = encodeURIComponent(opener);
+    return { kind: "email", href: `mailto:${agent.email.trim()}?subject=${subject}&body=${body}`, label: `Email ${firstName}` };
+  }
+
+  return null;
+}
+
+export function agentFirstName(fullName: string): string {
+  return fullName.trim().split(/\s+/)[0] ?? "";
 }
 
 // "Active since July 2026" for the credential strip.

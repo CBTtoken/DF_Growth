@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Newsreader } from "next/font/google";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -5,256 +6,237 @@ import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 import { AgentPortrait } from "@/components/agent-page/AgentPortrait";
 import { AgentAttribution } from "@/components/agent-page/AgentAttribution";
 import { AgentPageView as AgentPixelView } from "@/components/agent-page/AgentPageTracking";
-import { WhatsAppButton } from "@/components/agent-page/AgentCtas";
-import { buildAgentPalette } from "@/lib/agent-page/palette";
-import { activeSinceLabel, agentWhatsAppLink, stackedName } from "@/lib/agent-page/identity";
-import type { AgentPage, AgentSocialProof } from "@/lib/agent-page/data";
+import { ContactButton } from "@/components/agent-page/AgentCtas";
+import { resolveAgentTheme } from "@/lib/agent-page/themes";
+import { activeSinceLabel, agentContact, agentFirstName } from "@/lib/agent-page/identity";
+import type { AgentPage, AgentSocialProof, ProofPage } from "@/lib/agent-page/data";
 
-// Agent Programme Phase 1 Sec 1.3. A bespoke page, deliberately not a
-// template: it is not registered in lib/templates/anchors.ts, it is not in
-// the wizard's template picker, and it is not reusable. Same standing as
-// the Buffelskop and HelpLift custom pages.
+// Agent page v3, per docs/agent-page-v3-final.md.
 //
-// The concept, per the brief: a calling card that scrolls. Business
-// templates are product-first because they sell a product. An agent sells
-// trust, so this is person-first: one accent colour, one face, the name at
-// display size, and then the agent talking in their own voice the whole
-// way down. Where the business templates go bold and busy, this goes quiet.
-// Mobile is the real design; desktop is the same page with room around it.
+// The idea in one line: an agent is not a link, an agent is the reason a
+// business owner does not have to figure any of this out alone. Two things
+// follow from that and they drive everything here.
 //
-// The serif is load-bearing rather than decorative. It is used in exactly
-// one place, the story block, to mark the shift from the platform
-// describing an offer to a person speaking. Everything else stays in the
-// app's sans.
+// The page is short. Five sections. If the promise is that you do not have
+// to do the work, a page that makes you read eleven sections contradicts
+// itself.
+//
+// The page is written in the agent's voice about the reader's business.
+// Not "I am someone who has done these things" but "I will sort this out
+// for you". Sections 2, 3 and 4 are entirely standard copy, which is what
+// lets an agent who uploads nothing still get a page that sounds like a
+// person: the standard copy is already speaking as them.
+//
+// v1 is superseded. It was product-shaped (a promise line, a story, an
+// offer paragraph, four calls to action all saying Start free) and it asked
+// every agent to write three blocks of copy before their page was any good.
 const newsreader = Newsreader({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--font-agent-serif",
 });
 
-// Sec 1.3: "Their own services appear as a subordinate block, present but
-// not competing with the DigitalFlyer offer." The DigitalFlyer half is
-// platform copy, identical on every agent page, and deliberately not
-// agent-editable: agent terms 9.1 and 9.2 forbid an agent inventing
-// features or quoting their own prices for our product, so the safest
-// place for the product claims is here, written once, in first person to
-// stay in the page's voice.
-const PLATFORM_POINTS = [
-  "A professional page built for your business, at your own web address.",
-  "A place on the DigitalFlyer SA marketplace, where local customers search.",
-  "Branded social media posts made for your business every month.",
-  "Real customer reviews, collected and shown on your page.",
+// Section 3's inset checklist. Platform copy, identical on every agent
+// page, and deliberately not agent-editable: agent terms 25 and 26 forbid
+// an agent inventing features or quoting their own prices for our product.
+const WHAT_YOU_END_UP_WITH = [
+  "Your own professional page",
+  "A place on the marketplace",
+  "Branded posts every month",
+  "Real customer reviews",
 ];
 
-function sectionLabel(text: string, colour: string) {
-  return (
-    <p className="text-xs font-semibold uppercase tracking-[0.28em]" style={{ color: colour }}>
-      {text}
-    </p>
-  );
-}
+const STEPS = [
+  {
+    title: "You message me",
+    body: "We talk about what your business does and who you want reaching you. No forms, no jargon.",
+  },
+  {
+    title: "I get it built",
+    body: "Your page, your look, your words. You see it and approve it before anyone else does.",
+  },
+  {
+    title: "You start sharing it",
+    body: "One link for WhatsApp, Facebook, your invoices, the back of your bakkie.",
+  },
+];
 
 export function AgentPageView({
   agent,
   socialProof,
+  proofPages,
   mode,
 }: {
   agent: AgentPage;
   socialProof: AgentSocialProof[];
-  // "preview" is the admin's draft view. It renders the identical page but
-  // sets no attribution cookie and fires no pixel events, so previewing a
-  // draft can never overwrite Dewald's own referral cookie or land in the
-  // ad account's reporting as a real visit.
+  proofPages: ProofPage[];
+  // "preview" is the admin's draft view. Identical page, but it sets no
+  // attribution cookie and fires no pixel events, so previewing a draft
+  // can never overwrite Dewald's own referral cookie or land in the ad
+  // account's reporting as a real visit.
   mode: "live" | "preview";
 }) {
-  const palette = buildAgentPalette(agent.accentColor);
-  const { first, rest } = stackedName(agent.fullName);
-  const whatsappUrl = agentWhatsAppLink(agent.whatsappNumber);
+  const theme = resolveAgentTheme(agent.theme);
+  const firstName = agentFirstName(agent.fullName);
+  const contact = agentContact(agent);
   const activeSince = activeSinceLabel(agent.activeSince);
 
-  // Sec 1.8: every call to action carries the referral code as a URL
-  // parameter as well as relying on the cookie, so a visitor whose browser
-  // blocked the cookie is still attributed.
-  const signupUrl = agent.referralCode ? `/pricing?ref=${encodeURIComponent(agent.referralCode)}` : "/pricing";
+  // v3: "No Start free anywhere on an agent page." The secondary action is
+  // quiet and still carries the referral code, per build spec 1.8, as the
+  // fallback for a visitor whose browser blocked the cookie.
+  const pricesUrl = agent.referralCode ? `/pricing?ref=${encodeURIComponent(agent.referralCode)}` : "/pricing";
 
   const primaryCta =
-    "inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-bold transition hover:-translate-y-0.5 active:scale-[0.98]";
+    "inline-flex items-center justify-center rounded-xl px-6 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-[0.98]";
   const secondaryCta =
-    "inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-bold transition hover:-translate-y-0.5 active:scale-[0.98]";
+    "inline-flex items-center justify-center rounded-xl border px-6 py-3.5 text-sm font-semibold transition hover:-translate-y-0.5 active:scale-[0.98]";
 
   return (
     <main className={`${newsreader.variable} flex flex-1 flex-col bg-white pb-20 sm:pb-0`}>
       {mode === "live" && agent.referralCode && <AgentAttribution referralCode={agent.referralCode} />}
       {mode === "live" && <AgentPixelView slug={agent.slug} />}
 
-      {/* Hero. Flat field, no gradient mesh, no floating cards. The only
-          things in it are the face, the name, and one sentence. */}
-      <section style={{ backgroundColor: palette.heroBg }} className="text-white">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-9 px-5 py-14 sm:py-20 md:flex-row md:items-end md:gap-14">
-          <div className="w-full max-w-[19rem] self-center md:max-w-[21rem] md:self-end">
-            <AgentPortrait photoUrl={agent.photoUrl} fullName={agent.fullName} palette={palette} priority />
-          </div>
-
-          <div className="flex flex-col gap-5 md:flex-1 md:pb-2">
-            <p className="text-[0.7rem] font-semibold uppercase tracking-[0.32em] text-white/60">
-              DigitalFlyer SA Agent
-            </p>
-
-            <h1 className="font-[family-name:var(--font-display)] text-[clamp(3rem,13vw,5.75rem)] uppercase leading-[0.86] tracking-tight">
-              <span className="block">{first}</span>
-              {rest && <span className="block text-white/85">{rest}</span>}
-            </h1>
-
-            {agent.town && (
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/65">{agent.town}</p>
-            )}
-
-            {agent.heroPromise && (
-              <p className="max-w-md text-lg leading-relaxed text-white/90 sm:text-xl">{agent.heroPromise}</p>
-            )}
-
-            <div className="mt-1 flex flex-wrap gap-3">
-              <a href={signupUrl} className={primaryCta} style={{ backgroundColor: "#ffffff", color: palette.heroBg }}>
-                Start free
-              </a>
-              {whatsappUrl && (
-                <WhatsAppButton
-                  whatsappUrl={whatsappUrl}
-                  slug={agent.slug}
-                  className={`${secondaryCta} border-white/35 text-white hover:border-white/70`}
-                />
-              )}
+      {/* 1. Hero. Theme-tinted, not a full-bleed colour field: v3 puts the
+          headline first and the agent second, so the chip establishes who
+          is speaking and then gets out of the way. */}
+      <section style={{ backgroundColor: theme.tint }}>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-7 px-5 py-14 sm:py-20">
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-11 shrink-0 overflow-hidden rounded-full">
+              <AgentPortrait photoUrl={agent.photoUrl} fullName={agent.fullName} theme={theme} rounded="full" size="chip" priority />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-sm font-bold text-neutral-ink">{agent.fullName}</span>
+              <span className="text-xs text-neutral-muted">
+                DigitalFlyer SA agent{agent.town ? `, ${agent.town}` : ""}
+              </span>
             </div>
           </div>
+
+          <h1 className="font-[family-name:var(--font-display)] text-[clamp(2.25rem,8vw,3.75rem)] leading-[1.02] tracking-tight text-neutral-ink">
+            You are good at what you do. Let me handle the online part.
+          </h1>
+
+          <p className="max-w-xl text-lg leading-relaxed text-neutral-mid">
+            Tell me about your business and I will get you a proper page, a place on the marketplace where local
+            customers search, and posts ready to share every month.
+          </p>
+
+          {contact && (
+            <div>
+              <ContactButton
+                contact={contact}
+                slug={agent.slug}
+                className={primaryCta}
+                style={{ backgroundColor: theme.heroBg }}
+              />
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Sec 1.3: thin credential strip. Three plain facts, nothing
-          claimed that isn't in the database. */}
-      <div style={{ backgroundColor: palette.tint, borderColor: palette.border }} className="border-b">
-        <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-x-3 gap-y-1 px-5 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-neutral-mid">
-          <span style={{ color: palette.accentOnLight }}>Verified agent</span>
-          {activeSince && (
-            <>
-              <span aria-hidden className="text-neutral-muted/50">
-                ·
-              </span>
-              <span>Active since {activeSince}</span>
-            </>
-          )}
-          {agent.town && (
-            <>
-              <span aria-hidden className="text-neutral-muted/50">
-                ·
-              </span>
-              <span>{agent.town}</span>
-            </>
-          )}
+      {/* 2. Recognition. Serif, no heading. One of only two places on the
+          page where a person is speaking rather than a product. */}
+      <section className="border-t" style={{ borderColor: theme.border }}>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-5 px-5 py-14 sm:py-20">
+          <p className="font-[family-name:var(--font-agent-serif)] text-xl leading-[1.6] text-neutral-ink sm:text-2xl">
+            Someone asks if you have a website and you are not sure what to say. A competitor with a worse product
+            wins the job, because they had somewhere to send people. Your best post is three scrolls down by the time
+            anyone new sees it.
+          </p>
+          <p className="text-base font-bold text-neutral-ink">That is the gap. Let us close it.</p>
         </div>
-      </div>
+      </section>
 
-      {/* The story. The one serif block on the page. */}
-      {agent.storyText && (
-        <section className="mx-auto w-full max-w-5xl px-5 py-14 sm:py-20">
-          <div className="flex max-w-2xl flex-col gap-6">
-            {sectionLabel("My story", palette.accentOnLight)}
-            <div className="flex flex-col gap-5 font-[family-name:var(--font-agent-serif)] text-xl leading-[1.65] text-neutral-ink sm:text-[1.4rem]">
-              {agent.storyText.split(/\n{1,}/).map((paragraph, i) =>
-                paragraph.trim() ? <p key={i}>{paragraph.trim()}</p> : null
-              )}
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* What the agent can do for a business. The DigitalFlyer offer,
-          which is the reason the page exists. */}
-      <section style={{ backgroundColor: palette.tint }}>
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-5 py-14 sm:py-20">
-          <div className="flex max-w-2xl flex-col gap-5">
-            {sectionLabel("What I do for your business", palette.accentOnLight)}
-            {agent.offerText && (
-              <p className="text-lg leading-relaxed text-neutral-mid sm:text-xl">{agent.offerText}</p>
-            )}
+      {/* 3. How this actually goes. */}
+      <section className="border-t" style={{ borderColor: theme.border }}>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-14 sm:py-20">
+          <div className="flex flex-col gap-2">
+            <h2 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-tight text-neutral-ink sm:text-4xl">
+              How this actually goes
+            </h2>
+            <p className="text-base text-neutral-mid">Three steps, and I am with you for all of them.</p>
           </div>
 
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {PLATFORM_POINTS.map((point) => (
-              <li
-                key={point}
-                className="flex items-start gap-3 rounded-xl bg-white p-4 text-sm leading-relaxed text-neutral-ink"
-                style={{ boxShadow: "var(--shadow-card)" }}
-              >
+          <ol className="flex flex-col gap-6">
+            {STEPS.map((step, index) => (
+              <li key={step.title} className="flex gap-4">
                 <span
-                  aria-hidden
-                  className="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                  style={{ backgroundColor: palette.accentOnLight }}
-                />
-                {point}
+                  className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
+                  style={{ backgroundColor: theme.heroBg }}
+                >
+                  {index + 1}
+                </span>
+                <div className="flex flex-col gap-1">
+                  <p className="text-base font-bold text-neutral-ink">{step.title}</p>
+                  <p className="text-base leading-relaxed text-neutral-mid">{step.body}</p>
+                </div>
               </li>
             ))}
-          </ul>
+          </ol>
 
-          <div>
-            <a href={signupUrl} className={primaryCta} style={{ backgroundColor: palette.heroBg, color: "#ffffff" }}>
-              Start free
-            </a>
+          {/* The only raised element on the page, per v3's rhythm note. */}
+          <div className="rounded-2xl p-5" style={{ backgroundColor: theme.tint }}>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em]" style={{ color: theme.accentOnLight }}>
+              What you end up with
+            </p>
+            <ul className="mt-3 flex flex-col gap-2">
+              {WHAT_YOU_END_UP_WITH.map((item) => (
+                <li key={item} className="flex items-start gap-2.5 text-base text-neutral-ink">
+                  <svg viewBox="0 0 20 20" className="mt-1 h-4 w-4 shrink-0" aria-hidden fill="none">
+                    <path
+                      d="M4 10.5l4 4 8-9"
+                      stroke={theme.accentOnLight}
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {item}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      {/* Sec 1.3: the agent's own services, subordinate. Smaller type, no
-          accent field, no call to action of its own, so it reads as "I
-          also do this" rather than competing with the block above. */}
-      {agent.services.length > 0 && (
-        <section className="mx-auto w-full max-w-5xl px-5 py-12 sm:py-16">
-          <div className="flex flex-col gap-6">
-            {sectionLabel("My own services", palette.accentOnLight)}
-            <div className="grid gap-4 sm:grid-cols-3">
-              {agent.services.map((service) => (
-                <div
-                  key={service.name}
-                  className="flex flex-col gap-1.5 rounded-xl border p-4"
-                  style={{ borderColor: palette.border }}
-                >
-                  <h3 className="text-sm font-bold text-neutral-ink">{service.name}</h3>
-                  {service.price && (
-                    <p className="text-sm font-semibold" style={{ color: palette.accentOnLight }}>
-                      {service.price}
-                    </p>
-                  )}
-                  {service.description && (
-                    <p className="text-sm leading-relaxed text-neutral-mid">{service.description}</p>
-                  )}
-                </div>
-              ))}
+      {/* 4. Proof. Platform proof, not agent proof: a brand new agent with
+          nobody signed up still has to show the reader what they get. */}
+      {proofPages.length > 0 && (
+        <section className="border-t" style={{ borderColor: theme.border }}>
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-14 sm:py-20">
+            <div className="flex flex-col gap-2">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl leading-tight tracking-tight text-neutral-ink sm:text-4xl">
+                Pages like the one you will get
+              </h2>
+              <p className="text-base text-neutral-mid">Real South African businesses, live right now.</p>
             </div>
-            <p className="text-xs text-neutral-muted">
-              These are my own services, separate from DigitalFlyer SA.
-            </p>
-          </div>
-        </section>
-      )}
 
-      {/* Sec 1.3: hidden entirely below three, and the data layer is what
-          enforces that (getAgentSocialProof returns an empty array), so
-          there is no path where a thin version of this renders. No counts,
-          no figures, just the businesses themselves. */}
-      {socialProof.length > 0 && (
-        <section style={{ backgroundColor: palette.tint }}>
-          <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-5 py-14 sm:py-20">
-            {sectionLabel("Businesses I brought on", palette.accentOnLight)}
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {socialProof.map((business) => (
-                <Link
-                  key={business.slug}
-                  href={`/${business.slug}`}
-                  className="flex flex-col gap-1 rounded-xl bg-white p-4 transition hover:-translate-y-0.5"
-                  style={{ boxShadow: "var(--shadow-card)" }}
-                >
-                  <span className="text-sm font-bold text-neutral-ink">{business.businessName}</span>
-                  <span className="text-xs text-neutral-muted">
-                    {[business.industry, business.city].filter(Boolean).join(" · ")}
+            <div className="grid gap-5 sm:grid-cols-3">
+              {proofPages.map((page) => (
+                <Link key={page.slug} href={`/${page.slug}`} className="group flex flex-col gap-2.5">
+                  {/* Device frame. A phone-shaped bezel because that is
+                      what the reader is holding when they see this. */}
+                  <div
+                    className="relative aspect-[9/16] w-full overflow-hidden rounded-[1.25rem] border-4 bg-neutral-light transition group-hover:-translate-y-1"
+                    style={{ borderColor: theme.heroBg }}
+                  >
+                    {page.screenshotUrl ? (
+                      <Image
+                        src={page.screenshotUrl}
+                        alt={`The ${page.businessName} page`}
+                        fill
+                        sizes="(max-width: 640px) 90vw, 220px"
+                        className="object-cover object-top"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center p-3 text-center text-xs text-neutral-muted">
+                        {page.businessName}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-sm font-semibold text-neutral-ink group-hover:underline">
+                    {page.businessName}
                   </span>
                 </Link>
               ))}
@@ -263,55 +245,117 @@ export function AgentPageView({
         </section>
       )}
 
-      {/* Closing. Same two actions, nothing new introduced. */}
-      <section style={{ backgroundColor: palette.heroBg }} className="text-white">
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-5 px-5 py-14 sm:py-20">
-          <h2 className="font-[family-name:var(--font-display)] text-4xl uppercase leading-none tracking-tight sm:text-5xl">
-            Let us get your business found
-          </h2>
-          <p className="max-w-lg text-base leading-relaxed text-white/85">
-            Start free and see your own page before you pay for anything. If you would rather talk it through first,
-            message me.
+      {/* 5. The agent, and the close. */}
+      <section className="border-t" style={{ borderColor: theme.border }}>
+        <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-5 py-14 sm:py-20">
+          <div className="flex items-center gap-4">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full">
+              <AgentPortrait photoUrl={agent.photoUrl} fullName={agent.fullName} theme={theme} rounded="full" size="avatar" />
+            </div>
+            <div className="flex flex-col leading-tight">
+              <span className="text-base font-bold text-neutral-ink">{agent.fullName}</span>
+              {activeSince && (
+                <span className="text-xs text-neutral-muted">
+                  Verified DigitalFlyer SA agent, active since {activeSince}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* The second serif moment. A supplied bio replaces the standard
+              fallback entirely; the fallback is written so that an agent
+              who supplies nothing still sounds like a person. */}
+          <p className="max-w-xl font-[family-name:var(--font-agent-serif)] text-lg leading-[1.6] text-neutral-ink sm:text-xl">
+            {agent.bio?.trim()
+              ? agent.bio.trim()
+              : `I am here${agent.town ? ` in ${agent.town}` : ""}, and I would rather talk to you than have you fill in a form. Ask me anything, even if you are not ready yet.`}
           </p>
+
+          {/* v3: pills, no prices shown. */}
+          {agent.services.length > 0 && (
+            <div className="flex flex-col gap-2.5">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-neutral-muted">
+                {firstName} also does
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {agent.services.map((service) => (
+                  <li
+                    key={service.name}
+                    className="rounded-full border px-3.5 py-1.5 text-sm text-neutral-ink"
+                    style={{ borderColor: theme.border, backgroundColor: theme.tint }}
+                  >
+                    {service.name}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-neutral-muted">
+                These are {firstName}&apos;s own services, separate from DigitalFlyer SA.
+              </p>
+            </div>
+          )}
+
+          {/* One quiet line, hidden below three by the data layer. */}
+          {socialProof.length > 0 && (
+            <p className="text-sm text-neutral-mid">
+              {firstName} has helped{" "}
+              {socialProof.map((business, index) => (
+                <span key={business.slug}>
+                  {index > 0 && (index === socialProof.length - 1 ? " and " : ", ")}
+                  <Link href={`/${business.slug}`} className="font-semibold hover:underline">
+                    {business.businessName}
+                  </Link>
+                </span>
+              ))}{" "}
+              get online.
+            </p>
+          )}
+
           <div className="flex flex-wrap gap-3">
-            <a href={signupUrl} className={primaryCta} style={{ backgroundColor: "#ffffff", color: palette.heroBg }}>
-              Start free
-            </a>
-            {whatsappUrl && (
-              <WhatsAppButton
-                whatsappUrl={whatsappUrl}
+            {contact && (
+              <ContactButton
+                contact={contact}
                 slug={agent.slug}
-                className={`${secondaryCta} border-white/35 text-white hover:border-white/70`}
+                className={primaryCta}
+                style={{ backgroundColor: theme.heroBg }}
               />
             )}
+            <Link
+              href={pricesUrl}
+              className={`${secondaryCta} text-neutral-mid`}
+              style={{ borderColor: theme.border }}
+            >
+              See prices
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Sec 1.3: "No recruitment call to action anywhere on an agent
-          page." The shared footer carries a "Become an Agent" link, which
-          is exactly that, so it is switched off here. */}
-      <SiteFooter showAgentRecruitment={false} />
+      {/* v3 F1: no payment badge on an agent page, and no recruitment link.
+          The badge was leaking onto both live agent pages: it belongs where
+          a payment actually happens, and nothing on this page charges
+          anyone. */}
+      <SiteFooter showPaymentBadge={false} showAgentRecruitment={false} />
 
-      {/* Sec 1.3: sticky bottom bar on mobile, two actions. */}
+      {/* Sticky bar on mobile throughout, per v3. */}
       <div
-        className="fixed inset-x-0 bottom-0 z-50 flex gap-2 border-t px-3 py-2.5 sm:hidden"
-        style={{ backgroundColor: palette.heroBg, borderColor: "rgba(255,255,255,0.15)" }}
+        className="fixed inset-x-0 bottom-0 z-50 flex gap-2 border-t bg-white px-3 py-2.5 sm:hidden"
+        style={{ borderColor: theme.border }}
       >
-        <a
-          href={signupUrl}
-          className="flex flex-1 items-center justify-center rounded-lg px-4 py-3 text-sm font-bold"
-          style={{ backgroundColor: "#ffffff", color: palette.heroBg }}
-        >
-          Start free
-        </a>
-        {whatsappUrl && (
-          <WhatsAppButton
-            whatsappUrl={whatsappUrl}
+        {contact && (
+          <ContactButton
+            contact={contact}
             slug={agent.slug}
-            className="flex flex-1 items-center justify-center rounded-lg border border-white/40 px-4 py-3 text-sm font-bold text-white"
+            className="flex flex-1 items-center justify-center rounded-lg px-4 py-3 text-sm font-bold text-white"
+            style={{ backgroundColor: theme.heroBg }}
           />
         )}
+        <Link
+          href={pricesUrl}
+          className="flex items-center justify-center rounded-lg border px-4 py-3 text-sm font-semibold text-neutral-mid"
+          style={{ borderColor: theme.border }}
+        >
+          See prices
+        </Link>
       </div>
 
       {mode === "live" && <PixelConsentGate pixelId={process.env.NEXT_PUBLIC_DIGITALFLYER_META_PIXEL_ID ?? null} />}

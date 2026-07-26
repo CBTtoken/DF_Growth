@@ -26,15 +26,17 @@ export const agentCompedSignupSchema = z.object({
 // name, a photo and a colour is a real, complete page. The boxes sit empty
 // in their dashboard until they feel like filling them in.
 export const agentPageContentSchema = z.object({
-  accentColor: z
-    .string()
-    .trim()
-    .regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Pick a colour"),
+  // v3: four curated themes, no free colour picker. The agent picks a
+  // theme, not a colour, so this is an enum rather than a hex.
+  pageTheme: z.enum(["slate", "forest", "clay", "plum"], { message: "Pick a theme" }),
   town: z.string().trim().max(80).optional().or(z.literal("")),
   whatsappNumber: z.string().trim().max(30).optional().or(z.literal("")),
-  heroPromise: z.string().trim().max(200).optional().or(z.literal("")),
-  storyText: z.string().trim().max(1200).optional().or(z.literal("")),
-  offerText: z.string().trim().max(500).optional().or(z.literal("")),
+  // v3: the three copy fields collapse into one optional bio with a hard
+  // 400 character cap and a visible counter in the form. The cap is a real
+  // design constraint, not a guess: the bio is the second of only two
+  // serif blocks on the page and a longer one stops reading as someone
+  // talking.
+  bio: z.string().trim().max(400, "Keep this under 400 characters").optional().or(z.literal("")),
 });
 
 // The admin-only additions on top of that. The slug is a namespace
@@ -55,22 +57,10 @@ export const agentPageSchema = agentPageContentSchema.extend({
   activeSince: z.string().trim().optional().or(z.literal("")),
 });
 
-// Sec 1.6's four questions. Answering them is an offer, not a step: they
-// exist so an agent who does not want to write their own copy can get a
-// draft, and they are stored so a redraft never needs the agent
-// interviewed again. At least one answer is required only because there is
-// nothing to write from otherwise, and that check fires on the draft
-// button, never on saving a page.
-export const agentCopyIntakeSchema = z
-  .object({
-    before: z.string().trim().max(1000).optional().or(z.literal("")),
-    why: z.string().trim().max(1000).optional().or(z.literal("")),
-    who: z.string().trim().max(1000).optional().or(z.literal("")),
-    area: z.string().trim().max(1000).optional().or(z.literal("")),
-  })
-  .refine((v) => [v.before, v.why, v.who, v.area].some((a) => (a ?? "").trim().length > 0), {
-    message: "Answer at least one of these so there is something to write from.",
-  });
+// Build spec 1.6's four interview questions and the AI drafter behind them
+// are gone in v3. Sections 2, 3 and 4 of the page are now standard copy
+// written in the agent's voice, so there is nothing left for a draft to
+// write: the only free text is one optional bio the agent types themselves.
 
 // Agent Programme Phase 3, per docs/agent-recruitment-page-copy.md Sec 9.
 // Five fields, down from seven. Gone: the Facebook page link, the two

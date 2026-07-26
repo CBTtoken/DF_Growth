@@ -26,7 +26,7 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
   const { data: agent } = await admin
     .from("agents")
     .select(
-      "id, full_name, email, whatsapp_number, status, referral_code, created_at, approved_at, comped_client_id, intake_before, intake_why, intake_who, intake_area"
+      "id, full_name, email, whatsapp_number, status, referral_code, created_at, approved_at, comped_client_id"
     )
     .eq("id", id)
     .maybeSingle();
@@ -106,15 +106,7 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
             above the commission tables because setting the page up is the
             live job right now; the ledger below is a read-only record. */}
         {agentPage && (
-          <AgentPageForm
-            agent={agentPage}
-            intake={{
-              before: agent.intake_before ?? "",
-              why: agent.intake_why ?? "",
-              who: agent.intake_who ?? "",
-              area: agent.intake_area ?? "",
-            }}
-          />
+          <AgentPageForm agent={agentPage} />
         )}
 
         <section className="flex flex-wrap gap-4">

@@ -5,7 +5,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 const PAGE_TITLE = "How It Works";
 const PAGE_DESCRIPTION =
-  "A plain-language, step-by-step walkthrough of exactly what happens when you join DigitalFlyer — no tech skills needed.";
+  "A plain-language, step-by-step walkthrough of exactly what happens when you join DigitalFlyer, no tech skills needed.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,

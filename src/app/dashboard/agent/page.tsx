@@ -9,7 +9,7 @@ import { AgentPhotoNudge } from "@/components/dashboard/AgentPhotoNudge";
 import { MyAgentPageForm } from "@/components/dashboard/MyAgentPageForm";
 import { getMyAgentDashboardData } from "@/lib/agents/dashboard-data";
 import { getMyAgentRecord, hasBusinessMembership } from "@/lib/agents/dashboard-role";
-import { getAgentPageById, getAgentCopyIntake } from "@/lib/agent-page/data";
+import { getAgentPageById } from "@/lib/agent-page/data";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -29,11 +29,10 @@ export default async function AgentDashboardPage() {
   // is the right place for it, including its own logged-out handling.
   if (!agent) redirect("/dashboard");
 
-  const [agentData, hasBusiness, agentPage, intake] = await Promise.all([
+  const [agentData, hasBusiness, agentPage] = await Promise.all([
     getMyAgentDashboardData(),
     hasBusinessMembership(),
     getAgentPageById(agent.id),
-    getAgentCopyIntake(agent.id),
   ]);
 
   const pageUrl = agent.pageSlug ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${agent.pageSlug}` : null;
@@ -105,7 +104,7 @@ export default async function AgentDashboardPage() {
             already theirs to write by the time it goes up. An agent who is
             never getting a page (HelpLift, the NGO referral partner) has no
             page_slug and no editor. */}
-        {agent.pageSlug && agentPage && <MyAgentPageForm agent={agentPage} intake={intake} />}
+        {agent.pageSlug && agentPage && <MyAgentPageForm agent={agentPage} />}
 
         {agentData ? (
           <AgentSection data={agentData} />

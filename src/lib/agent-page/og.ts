@@ -20,7 +20,7 @@ export function agentPageMetadata(agent: AgentPage): Metadata {
   const location = agent.town ? `${agent.town}, ` : "";
   const title = `${agent.fullName} | ${location}DigitalFlyer SA Agent`;
   const description = truncateOnWord(
-    agent.heroPromise ??
+    agent.bio ??
       `${agent.fullName} helps South African businesses get found online with DigitalFlyer SA.`,
     160
   );

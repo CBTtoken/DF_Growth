@@ -7,8 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ACTIVE_ROLE_COOKIE, getMyAgentRecord, type DashboardRole } from "@/lib/agents/dashboard-role";
 import { replaceAgentPhoto } from "@/lib/agent-page/photo";
 import { agentContentUpdate, readContentFields } from "@/lib/agent-page/form";
-import { draftAndSaveAgentCopy } from "@/lib/agent-page/copy";
-import { agentPageContentSchema, agentCopyIntakeSchema } from "@/lib/schemas/agents";
+import { agentPageContentSchema } from "@/lib/schemas/agents";
 
 // Agent Programme Phase 1 Sec 1.1: the switch itself. Writes the
 // preference, then sends the browser to the right dashboard, so a return
@@ -76,34 +75,6 @@ export async function saveMyAgentPage(
     console.error("Failed to save own agent page", error);
     return { error: "Could not save. Please try again." };
   }
-
-  revalidateForAgent(agent.pageSlug);
-  return { saved: true };
-}
-
-// Sec 1.6, offered rather than required: an agent who would rather not
-// write their own copy answers whichever questions they like and gets a
-// draft they can then edit. Answers are saved before the draft is
-// attempted, so a failed or rejected draft never loses what they typed.
-export async function draftMyAgentPageCopy(
-  _prevState: AgentSelfEditState,
-  formData: FormData
-): Promise<AgentSelfEditState> {
-  const agent = await getMyAgentRecord();
-  if (!agent) return { error: "Only an approved agent can do that." };
-
-  const parsed = agentCopyIntakeSchema.safeParse({
-    before: formData.get("before"),
-    why: formData.get("why"),
-    who: formData.get("who"),
-    area: formData.get("area"),
-  });
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Answer at least one of these." };
-  }
-
-  const result = await draftAndSaveAgentCopy(agent.id, parsed.data);
-  if (result.error) return { error: result.error };
 
   revalidateForAgent(agent.pageSlug);
   return { saved: true };

@@ -184,7 +184,6 @@ export async function POST(request: Request) {
       } else {
         await recordCommissionIfEligible({
           clientId: client.id,
-          plan: client.plan,
           billingCycle: client.billing_cycle,
           referredByAgentId: client.referred_by_agent_id,
           amountKobo: amount,
@@ -331,7 +330,6 @@ export async function POST(request: Request) {
     if (!error && existingClient) {
       await recordCommissionIfEligible({
         clientId: trialClientId,
-        plan: upgradeTo ?? existingClient.plan,
         billingCycle: existingClient.billing_cycle,
         referredByAgentId: existingClient.referred_by_agent_id,
         amountKobo: amount,

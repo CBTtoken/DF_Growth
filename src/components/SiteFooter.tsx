@@ -31,7 +31,6 @@ export function SiteFooter({
     <footer className="mt-auto flex flex-col items-center gap-2 py-6 text-center text-xs text-gray-400">
       {showPaymentBadge && (
         <div className="flex items-center gap-1.5">
-          <span aria-hidden>🔒</span>
           <span>Secure payment via Paystack</span>
         </div>
       )}

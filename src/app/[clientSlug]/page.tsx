@@ -9,7 +9,7 @@ import type { PublicBookableUnit } from "@/components/landing/BookingSection";
 import type { PublicShopProduct } from "@/components/landing/ShopSection";
 import type { PublicReview } from "@/components/reviews/ReviewsSection";
 import { truncateOnWord } from "@/lib/text";
-import { getLiveAgentPage, getAgentSocialProof } from "@/lib/agent-page/data";
+import { getLiveAgentPage, getAgentSocialProof, getProofPages, getAgentPageByFormerSlug } from "@/lib/agent-page/data";
 import { AgentPageView } from "@/components/agent-page/AgentPageView";
 import { agentPageMetadata } from "@/lib/agent-page/og";
 
@@ -216,9 +216,14 @@ export default async function ClientLandingPage({
     // the live page beats redirecting away from it.
     const agent = await getLiveAgentPage(clientSlug);
     if (agent) {
-      const socialProof = await getAgentSocialProof(agent.id);
-      return <AgentPageView agent={agent} socialProof={socialProof} mode="live" />;
+      const [socialProof, proofPages] = await Promise.all([getAgentSocialProof(agent.id), getProofPages()]);
+      return <AgentPageView agent={agent} socialProof={socialProof} proofPages={proofPages} mode="live" />;
     }
+
+    // v3 slug rules: a live agent slug never changes without a permanent
+    // redirect, because these links live in WhatsApp threads forever.
+    const renamedAgent = await getAgentPageByFormerSlug(clientSlug);
+    if (renamedAgent) permanentRedirect(`/${renamedAgent.currentSlug}`);
 
     // The slug may be a former slug (renamed during the URL-shortening
     // cleanup). 301 to the current slug so old links, shares, and the

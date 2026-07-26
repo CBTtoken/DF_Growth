@@ -1,90 +1,83 @@
-// Agent Programme Phase 3. Part 2 of docs/agent-terms-and-faq.md, in full.
+// Part 2 of docs/agent-terms-and-faq-v2.md, in full.
 //
-// One source of truth on purpose. That document opens with "Both must
-// always say the same thing. If a rule changes, change it in both", and
-// this FAQ is rendered in two places (the /agents recruitment page and the
-// main /faq help centre). Two hardcoded copies would be two chances for
-// them to drift, on a set of answers that describe how someone gets paid.
+// One source of truth on purpose. That document opens with "They must
+// always say the same thing", and this FAQ renders in two places (the
+// /agents recruitment page and the main help centre). Two hardcoded copies
+// would be two chances for them to drift, on a set of answers that describe
+// how someone gets paid.
 //
-// The copy document is also explicit that this goes in as-is: "Use the FAQ
-// from agent-terms-and-faq.md Part 2, in full, as an accordion. Do not
-// shorten it. The disclosure is the sales pitch." Nothing here is trimmed.
+// v2 changed the commercial substance, not just the wording: the Foundation
+// 10% carve-out is gone (any yearly plan pays the same), and the three
+// month delay on monthly is gone (monthly pays 10% from the first cleared
+// payment). lib/agents/commission.ts implements exactly these rules.
 export const AGENT_FAQ: { question: string; answer: string }[] = [
   {
     question: "What does an agent actually do?",
     answer:
-      "You introduce South African businesses to DigitalFlyer SA. When one of them becomes a paying member, you earn a share of what they pay, every year they stay.",
-  },
-  {
-    question: "Do I need my own business to become an agent?",
-    answer:
-      "No. You do not need to be a member yourself and you do not need a business. Plenty of agents do have their own business, and that is fine too. You get a page and a dashboard for each.",
+      "You introduce South African businesses to DigitalFlyer SA. When one becomes a paying member, you earn a share of what they pay, every year they stay.",
   },
   {
     question: "Does it cost anything to join?",
     answer:
-      "No. There is no joining fee, no monthly fee, and nothing to buy. If anyone tells you otherwise, it is not us.",
+      "No. No joining fee, nothing to buy, no monthly cost. If anyone asks you to pay to be an agent, it is not us.",
   },
   {
-    question: "What do I actually get?",
+    question: "Do I need my own business?",
     answer:
-      "Your own page with your name, your photo and your story, on your own web address that you can share anywhere. A dashboard showing who signed up, who is still on trial and who has paid. Ready made social posts. Scripts for what to say. And the contact details of the businesses you brought in, so you can follow them up.",
+      "No. You do not need a business and you do not need to be a member yourself. If you do have a business, you can run both, with a page and dashboard for each.",
   },
   {
-    question: "How much can I earn?",
-    answer:
-      "On a Growth Engine or Enterprise member paying annually, you earn 25% of what they pay. Once you have signed more than ten of those, every one earns 40%, including the first ten when they renew. Foundation members paying annually earn you 10%. Anyone paying monthly earns you nothing for their first three months and 10% after that.",
+    question: "How much do I earn?",
+    answer: "25% on any yearly plan, rising to 40% once you have signed more than ten yearly members. 10% on monthly plans.",
   },
   {
-    question: "Why is monthly worth so much less?",
+    question: "Does the 40% apply to the members I signed before that?",
     answer:
-      "Monthly members cost us more to carry and leave sooner. Annual members stay. The rates are built to point you at the sale that is worth more to both of us.",
+      "Yes, when they renew. Your rate is worked out fresh at every payment, so your eleventh sale lifts everything you have already built.",
+  },
+  {
+    question: "Why is yearly worth more than monthly?",
+    answer:
+      "Yearly members stay, and the money arrives upfront. The rates point you at the sale that is worth more to both of us.",
   },
   {
     question: "Do I get paid again next year?",
-    answer:
-      "Yes. Every year a member you introduced renews, you earn on it again, for as long as your account is active.",
+    answer: "Yes, every year they renew, for as long as your account is active.",
   },
   {
-    question: "When do I get my money?",
+    question: "When do I actually get the money?",
     answer:
-      "Commission is added to your account once the member's payment clears, held for 14 days, then paid out at the next weekly payout as long as your balance is R750 or more. If it takes a while to reach R750, it carries over, and anything sitting longer than six months is paid out regardless.",
+      "Commission lands in your account when the member's payment clears, sits for 14 days, then goes out at the next weekly payout as long as you have R750 or more. Under R750 it carries over, and anything sitting more than six months gets paid regardless.",
   },
   {
     question: "Why R750?",
-    answer: "Bank transfer costs make paying out very small amounts wasteful. The six month rule is there so nothing is ever stuck.",
+    answer: "Bank transfer fees make very small payouts wasteful. The six month rule means nothing ever gets stuck.",
   },
   {
-    question: "What if someone cancels or gets a refund?",
-    answer: "That amount comes off your next earnings. We never ask you to pay money back.",
+    question: "What if a member gets a refund?",
+    answer: "It comes off your next earnings. We never ask you to pay money back.",
   },
   {
-    question: "What do I have to do to stay active?",
+    question: "What do I have to do to stay on?",
     answer:
-      "Sign in to your dashboard at least once every 60 days. That is all. There is no sales target. If you have not signed in, we warn you three times before anything happens.",
+      "Sign in to your dashboard once every 60 days. There is no target and no quota, and we warn you three times before anything happens.",
   },
   {
     question: "What happens if I stop?",
     answer:
-      "If you go 60 days without signing in, your page and link stop working and you stop earning on future renewals. Everything you have already earned is still paid to you.",
+      "Your page and link stop working and you stop earning on future renewals. Everything you have already earned is still paid to you.",
   },
   {
     question: "Can I say I work for DigitalFlyer SA?",
-    answer:
-      "No. You are independent, and you should say so. You are an agent, not an employee, and you handle your own tax.",
+    answer: "No. You are independent, you choose your own hours, and you handle your own tax.",
   },
   {
     question: "Can I set my own prices?",
     answer:
-      "No. Quote our published prices. You are welcome to sell your own separate services alongside, and your page has a section for exactly that.",
-  },
-  {
-    question: "How do you know a signup came from me?",
-    answer:
-      "Your page and your link carry your own code. Anyone who arrives through it is held against your name for 30 days, and if they sign up in that time they are yours permanently.",
+      "No, quote ours. You are welcome to sell your own separate services alongside, and your page has a section for exactly that.",
   },
   {
     question: "How do I apply?",
-    answer: "Fill in the form on the agent page. We look at every application and come back to you.",
+    answer: "Fill in the form on the agent page. We read every one and come back to you either way.",
   },
 ];

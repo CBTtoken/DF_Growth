@@ -1,147 +1,117 @@
-// Agent Programme Phase 3. Part 1 of docs/agent-terms-and-faq.md.
+// Part 1 of docs/agent-terms-and-faq-v2.md, which replaces the previous
+// terms entirely.
 //
-// THE GATE. The build spec is unambiguous: "/agents/terms from
-// agent-terms-and-faq.md Part 1. Do not publish until Dewald confirms a
-// legal read of sections 7.3 and 8.4." Those are the two forfeiture
-// clauses: 7.3 (what happens to a balance when an account is deactivated)
-// and 8.4 (an unclaimed balance is forfeited after 90 days).
+// THE GATE. v2's own header: "Legal review still needed on clauses 14 and
+// 18 before publishing." Those are the two money clauses, 14 (commission
+// clears, is held 14 days, then becomes available) and 18 (a refund or
+// reversal comes off future earnings).
 //
-// So the page is written and complete, and this one boolean decides
-// whether the public can reach it. While it is false, /agents/terms
-// renders for an admin and returns a 404 to everyone else, exactly the way
-// a draft agent page does, so the terms can be read and sent for review
-// without being published. /agents links to it only when this is true.
+// Note the numbers moved. The previous version needed a legal read on 7.3
+// and 8.4 under a section-and-subsection scheme; v2 renumbered to a single
+// run of clauses 1 to 31, and the clauses now flagged are different ones.
+// Anything sent for review under the old numbering is stale.
 //
-// Flip to true only after the legal read of 7.3 and 8.4 comes back.
+// While this is false, /agents/terms renders for an admin and returns a 404
+// to everyone else, the same draft-then-publish shape an agent page uses,
+// so the terms can be read and sent for review without being live. /agents
+// links to it only when this is true.
 export const AGENT_TERMS_PUBLISHED = false;
 
-// Kept as structured data rather than prose in JSX so the numbering can
-// never drift out of step with the source document, and so the same
-// content can be rendered elsewhere (a PDF for the acceptance email is the
-// obvious next use) without being retyped.
-export type TermsSection = { number: string; title: string; clauses: { ref: string; text: string }[] };
+export type TermsSection = { title: string; clauses: { ref: string; text: string }[] };
 
 export const AGENT_TERMS_LAST_UPDATED = "26 July 2026";
 
+// v2 opens with a plain-language summary before the clauses, which is the
+// same disclosure-first instinct the recruitment page is built on.
+export const AGENT_TERMS_SUMMARY = [
+  "You introduce a business to DigitalFlyer SA. They sign up and pay. You earn a share of what they pay, every year they stay.",
+  "Yearly plans pay you 25%, and 40% once you have signed more than ten. Monthly plans pay you 10%. We pay out weekly, once you have R750 or more.",
+  "That is the whole deal. The rest of this page is the detail.",
+];
+
 export const AGENT_TERMS: TermsSection[] = [
   {
-    number: "1",
-    title: "What an agent is",
+    title: "What you are",
     clauses: [
       {
-        ref: "1.1",
-        text: "An agent introduces South African businesses to DigitalFlyer SA and earns commission when those businesses become paying members.",
+        ref: "1",
+        text: "You are an independent contractor. Not an employee, not a partner, and you may not describe yourself as one. You set your own hours and work how you like.",
       },
       {
-        ref: "1.2",
-        text: "You are an independent contractor. You are not an employee, partner, or representative of DigitalFlyer SA, and you may not describe yourself as one. You set your own hours and choose how you work.",
+        ref: "2",
+        text: "You handle your own tax. We do not deduct PAYE and we do not register you with SARS. If you are unsure what you owe, speak to a tax practitioner.",
       },
       {
-        ref: "1.3",
-        text: "You are responsible for your own tax on everything you earn here. We do not deduct PAYE and we do not register you with SARS. If you are unsure what you owe, speak to a tax practitioner.",
+        ref: "3",
+        text: "You may run your own business at the same time, and many agents do. You get a separate page and dashboard for each, under one login.",
       },
-      {
-        ref: "1.4",
-        text: "You may run your own business at the same time. Many agents do. Your business gets its own member page and dashboard, and your agent work gets its own agent page and dashboard, under the same login.",
-      },
-      { ref: "1.5", text: "Applying does not guarantee acceptance. We review every application and may decline without giving a reason." },
+      { ref: "4", text: "Applying does not guarantee acceptance. We may decline without giving a reason." },
     ],
   },
   {
-    number: "2",
-    title: "How a referral is counted as yours",
+    title: "How we know a signup came from you",
     clauses: [
-      { ref: "2.1", text: "You get a personal agent page with your own web address, and every link and button on it carries your referral code." },
-      { ref: "2.2", text: "When someone reaches DigitalFlyer SA through your page or your link, that referral is held against your code for 30 days." },
-      { ref: "2.3", text: "If they sign up within those 30 days, the business is attributed to you permanently, for as long as your account stays active." },
-      { ref: "2.4", text: "If two agents have introduced the same business, the referral goes to whichever agent's link was used most recently before signup." },
-      { ref: "2.5", text: "A business that signs up on its own, with no agent link, is a direct signup and earns no commission. We do not attribute businesses retrospectively." },
+      { ref: "5", text: "You get your own page and your own link. Anyone who arrives through either is held against your name for 30 days." },
+      { ref: "6", text: "If they sign up in that time, they are yours permanently, for as long as your account is active." },
+      { ref: "7", text: "Someone who signs up without using your link is not attributed to you. We do not add businesses to an agent afterwards." },
     ],
   },
   {
-    number: "3",
     title: "What you earn",
     clauses: [
-      { ref: "3.1", text: "There are two rates. Which one applies depends on the plan the business takes. On Growth Engine and Enterprise paid annually, your first 10 annual members earn 25% and from your 11th annual member onward you earn 40%. On Foundation paid annually you earn 10%. On any plan paid monthly you earn nothing for the first 3 months, then 10%." },
-      { ref: "3.2", text: "Only Growth Engine and Enterprise annual members count toward your ten. Foundation and monthly members earn you commission but do not move you up the ladder." },
-      { ref: "3.3", text: "Your count is cumulative for the life of your account. It never goes down, even if a member you signed cancels." },
-      { ref: "3.4", text: "On monthly plans, the three unpaid months are counted as three cleared payments, not three calendar months. If a member pauses and comes back, their count carries on from where it stopped." },
-      { ref: "3.5", text: "If a monthly member upgrades to an annual Growth Engine or Enterprise plan, they count toward your ten from that point, and you earn the annual rate that your count earns at that moment." },
-      { ref: "3.6", text: "Commission is calculated on the amount paid excluding VAT." },
+      { ref: "8", text: "On any yearly plan you earn 25% of what the business pays. Once you have signed more than ten yearly members, you earn 40%." },
+      { ref: "9", text: "On any monthly plan you earn 10%." },
+      { ref: "10", text: "You earn again every year a member renews, for as long as your account is active." },
+      {
+        ref: "11",
+        text: "Your rate is worked out fresh at every payment, using how many yearly members you have at that moment. This means your earlier members move up with you. Sign your eleventh yearly member, and when the first ten renew they pay you 40%.",
+      },
+      { ref: "12", text: "Your count of yearly members never goes down, even if one of them cancels." },
+      { ref: "13", text: "Commission is worked out on the amount paid excluding VAT." },
     ],
   },
   {
-    number: "4",
-    title: "Renewals",
+    title: "Getting paid",
     clauses: [
-      { ref: "4.1", text: "You keep earning on a member every year they renew, for as long as your account stays active." },
-      { ref: "4.2", text: "Your rate is worked out fresh at every payment, based on how many annual members you have at that moment. It is not fixed at signup." },
-      { ref: "4.3", text: "This means your first ten move up with you. If you sign your eleventh annual member and then your earlier members renew, those renewals pay 40%, not 25%." },
-      { ref: "4.4", text: "It also works the other way. If you are still at ten or fewer when your members renew, those renewals pay 25%." },
+      { ref: "14", text: "Commission is added to your account when the member's payment clears, held for 14 days in case it is reversed, and then available." },
+      { ref: "15", text: "We pay out every week. If your available balance is R750 or more, all of it is paid to your bank account." },
+      { ref: "16", text: "Under R750 it carries over. Anything sitting for more than 6 months is paid out in full at the next run, whatever the amount." },
+      { ref: "17", text: "Keeping your bank details current is your responsibility. Your dashboard shows every amount and where it is, with the member and date behind each one." },
+      { ref: "18", text: "If a payment you were paid commission on is later refunded or reversed, that amount comes off your next earnings. We will never invoice you or ask for money back." },
+      {
+        ref: "19",
+        text: "If we cannot pay you because a transfer fails or we have no valid bank details, we hold the money for 90 days and try every contact detail we have, keeping a record. You can claim it any time in those 90 days by giving us working details. After 90 days it is forfeited. If an agent has died this does not apply, and the balance is settled with the estate.",
+      },
     ],
   },
   {
-    number: "5",
-    title: "When and how you get paid",
+    title: "Staying on the programme",
     clauses: [
-      { ref: "5.1", text: "Commission is added to your ledger when a member's payment actually clears, not when they sign up." },
-      { ref: "5.2", text: "Every amount is then held for 14 days before it becomes available. This covers reversed and disputed payments." },
-      { ref: "5.3", text: "We run a payout every week. If your available balance is R750 or more, the full available balance is paid out." },
-      { ref: "5.4", text: "If your balance stays under R750, it carries over. Any balance that has been sitting for longer than 6 months is paid out in full at the next run, whatever the amount." },
-      { ref: "5.5", text: "Payment goes by bank transfer to the account you have saved with us. Keeping those details current is your responsibility." },
-      { ref: "5.6", text: "Your dashboard shows every amount at every stage, pending, clearing, available, and paid, with the member and date behind each one." },
-      { ref: "5.7", text: "If a payment we have already paid you commission on is later reversed or refunded, that amount is deducted from your next earnings. We will not invoice you for it or ask you to pay it back." },
+      { ref: "20", text: "Sign in to your dashboard at least once every 60 days. That is the only requirement. There is no sales target." },
+      { ref: "21", text: "If you have not signed in, we warn you at 30 days, 45 days, and a final time at 55 days, on every contact detail we hold. If you still have not signed in by day 60, your account closes." },
+      { ref: "22", text: "When an account closes, your page and link stop working, and you stop earning on future payments including renewals. Those businesses become direct members." },
+      { ref: "23", text: "Everything you have already earned is still yours. Your available balance is paid at the next weekly payout whatever the amount, and anything still clearing is paid once it clears." },
+      { ref: "24", text: "You may apply to rejoin. You start from zero, and your previous businesses do not come back to you." },
     ],
   },
   {
-    number: "6",
-    title: "Staying active",
+    title: "How you work",
     clauses: [
-      { ref: "6.1", text: "To stay active, sign in to your agent dashboard at least once every 60 days. That is the only requirement." },
-      { ref: "6.2", text: "If you have not signed in, we will warn you at 30 days, again at 45 days, and a final time at 55 days, using every contact detail we hold for you." },
-      { ref: "6.3", text: "If you still have not signed in by day 60, your account is deactivated." },
+      { ref: "25", text: "Be honest about what DigitalFlyer SA does. Do not promise results we have not promised and do not invent features." },
+      { ref: "26", text: "Quote our published prices only. No prices, discounts, or packages of your own for DigitalFlyer SA products." },
+      { ref: "27", text: "You may sell your own separate services alongside this, and your page has a place for them, as long as it is clear which is which." },
+      { ref: "28", text: "No spam. No bulk unsolicited messaging, no bought contact lists, and no posting in groups against their rules. Meta closes accounts for this and it lands on our name as well as yours." },
+      { ref: "29", text: "You can see contact details for the businesses attributed to you, so you can follow them up. Those details belong to DigitalFlyer SA and are shared with you under POPIA for that purpose only. Do not sell them, share them, or use them for anything else, and delete them if your account closes." },
+      { ref: "30", text: "We may close an account immediately for a serious breach of this section, without the warnings in clause 21." },
     ],
   },
   {
-    number: "7",
-    title: "What happens if your account is deactivated",
-    clauses: [
-      { ref: "7.1", text: "Your agent page and your referral link stop working." },
-      { ref: "7.2", text: "You stop earning on your members, including on renewals. Those businesses become direct members of DigitalFlyer SA." },
-      { ref: "7.3", text: "Everything you have already earned is still yours. Your available balance is paid out at the next weekly payout, whatever the amount, and anything still clearing is paid once it clears." },
-      { ref: "7.4", text: "You may apply to rejoin. You start again from zero, and businesses you introduced before are not returned to you." },
-    ],
-  },
-  {
-    number: "8",
-    title: "Money we cannot pay you",
-    clauses: [
-      { ref: "8.1", text: "If a payout fails, or we have no valid bank details for you, the amount is held for 90 days." },
-      { ref: "8.2", text: "During those 90 days we will try to reach you on every contact detail we hold, and we keep a record of every attempt." },
-      { ref: "8.3", text: "You can claim it at any point in those 90 days by giving us working bank details." },
-      { ref: "8.4", text: "After 90 days, an unclaimed balance is forfeited." },
-      { ref: "8.5", text: "If an agent has died, this clause does not apply. The account is frozen and the balance is settled with the estate." },
-    ],
-  },
-  {
-    number: "9",
-    title: "How you may work",
-    clauses: [
-      { ref: "9.1", text: "Represent DigitalFlyer SA honestly. Do not promise results we have not promised, and do not invent features." },
-      { ref: "9.2", text: "Quote our published prices only. Do not advertise your own prices, discounts, or packages for DigitalFlyer SA products." },
-      { ref: "9.3", text: "You may sell your own separate services alongside this, and your agent page has a place for them, as long as it is clear which is which." },
-      { ref: "9.4", text: "No spam. That includes bulk unsolicited messaging, buying contact lists, and posting in groups against their rules. Meta bans accounts for this, and it lands on our brand as well as yours." },
-      { ref: "9.5", text: "You will see the contact details of businesses attributed to you, so you can follow up with them. Those details belong to DigitalFlyer SA and are shared with you under POPIA for that purpose only. You may not sell them, share them, or use them for anything else, and you must delete them if your account closes." },
-      { ref: "9.6", text: "We may deactivate an account immediately for a serious breach of this section, without the warning ladder in section 6." },
-    ],
-  },
-  {
-    number: "10",
     title: "Changes",
     clauses: [
-      { ref: "10.1", text: "We may change these terms. We will tell you at least 30 days before a change takes effect." },
-      { ref: "10.2", text: "Commission already earned or clearing is paid at the rate that applied when it was earned." },
-      { ref: "10.3", text: "If you do not accept a change, you may close your account, and section 7 applies." },
+      {
+        ref: "31",
+        text: "We may change these terms, and we will tell you at least 30 days before a change takes effect. Anything already earned or clearing is paid at the rate that applied when you earned it. If you do not accept a change you may close your account, and clauses 22 to 24 apply.",
+      },
     ],
   },
 ];

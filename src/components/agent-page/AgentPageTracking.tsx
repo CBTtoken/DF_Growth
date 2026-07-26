@@ -49,8 +49,14 @@ export function AgentPageView({ slug }: { slug: string }) {
 // Sec 1.9: "Custom event on WhatsApp button click." trackCustom, not track:
 // this is not one of Meta's standard events, and sending a made-up name
 // through `track` is silently dropped from reporting.
-export function trackAgentWhatsAppClick(slug: string) {
+//
+// v3 widened this from WhatsApp to "the contact button", because the
+// primary action is now WhatsApp or email depending on what the agent has,
+// and both are the same conversion moment. The route is sent as a
+// parameter rather than as two event names, so the total is one number in
+// reporting with a breakdown underneath, not two numbers to add up.
+export function trackAgentContactClick(slug: string, route: "whatsapp" | "email") {
   if (getStoredConsent() !== "accepted") return;
   if (typeof window.fbq !== "function") return;
-  window.fbq("trackCustom", "AgentWhatsAppClick", { agent_slug: slug });
+  window.fbq("trackCustom", "AgentContactClick", { agent_slug: slug, contact_route: route });
 }

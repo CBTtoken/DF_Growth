@@ -21,40 +21,65 @@ import { commissionBasis } from "@/lib/agents/vat";
 // tier boundary a beat early or late, never double-pay or lose a row.
 export async function recordCommissionIfEligible({
   clientId,
-  plan,
   billingCycle,
   referredByAgentId,
   amountKobo,
 }: {
   clientId: string;
-  plan: string;
   billingCycle: "monthly" | "annual";
   referredByAgentId: string | null;
   amountKobo: number;
 }): Promise<void> {
-  // Sec 2: Growth and Enterprise annual only, ever — never Foundation, and
-  // never a monthly plan regardless of tier.
-  const planQualifies = plan === "growth_engine" || plan === "enterprise";
-  if (!referredByAgentId || !planQualifies || billingCycle !== "annual") return;
+  // v2 terms (docs/agent-terms-and-faq-v2.md) widened this, and the change
+  // is commercial, not cosmetic. It used to be Growth and Enterprise annual
+  // only: Foundation earned nothing, and monthly earned nothing ever.
+  //
+  // Clause 8: any yearly plan pays 25%, rising to 40% past ten yearly
+  // members. Clause 9: any monthly plan pays 10%, from the first cleared
+  // payment. The previous version's Foundation 10% carve-out and the three
+  // month delay on monthly are both gone.
+  //
+  // So every plan now earns something and the only question is the rate.
+  // Left as-is, this function would have kept silently recording nothing
+  // for Foundation and monthly referrals while the published FAQ told
+  // agents they earn on them.
+  if (!referredByAgentId) return;
 
   const admin = createAdminClient();
 
   const { data: existingRows } = await admin
     .from("commission_ledger")
-    .select("referred_client_id")
+    .select("referred_client_id, rate_applied")
     .eq("agent_id", referredByAgentId);
 
-  // Sec 6's tier count includes the referral converting right now, since
-  // this payment is exactly what makes it "ever-converted" — not just the
-  // rows already on record before this one gets written. isNewConversion
-  // distinguishes this specific client's *first* qualifying payment (the
-  // real "referral converted" moment Sec 10's notification is about) from
-  // a later payment for a client already on record — the set's own
-  // membership check before adding clientId is exactly that signal.
-  const distinctClients = new Set((existingRows ?? []).map((r) => r.referred_client_id));
-  const isNewConversion = !distinctClients.has(clientId);
-  distinctClients.add(clientId);
-  const rateApplied = distinctClients.size <= 10 ? 25 : 40;
+  const rows = existingRows ?? [];
+
+  // isNewConversion distinguishes this client's first commission-earning
+  // payment (the real "referral converted" moment the notification is
+  // about) from a later payment for a client already on record.
+  const everEarned = new Set(rows.map((r) => r.referred_client_id));
+  const isNewConversion = !everEarned.has(clientId);
+
+  // v2 clause 11: the rate is worked out fresh at every payment "using how
+  // many yearly members you have at that moment", and clause 9's monthly
+  // members do not move you up the ladder.
+  //
+  // The yearly count is derived from the rate already stored on each row
+  // rather than from a new column: a monthly row is 10 and a yearly row is
+  // 25 or 40, so "rate is not 10" is exactly "this client earned on a
+  // yearly plan". One less column to keep in sync with a rule that has
+  // already changed once.
+  const yearlyClients = new Set(rows.filter((r) => r.rate_applied !== 10).map((r) => r.referred_client_id));
+
+  let rateApplied: 10 | 25 | 40;
+  if (billingCycle === "annual") {
+    // The count includes the member converting right now, since this
+    // payment is exactly what makes them a yearly member.
+    yearlyClients.add(clientId);
+    rateApplied = yearlyClients.size <= 10 ? 25 : 40;
+  } else {
+    rateApplied = 10;
+  }
 
   // Terms 3.6: the rate applies to the amount excluding VAT, not to what
   // the member actually paid. Identical today, since DigitalFlyer is not
@@ -92,11 +117,16 @@ export async function recordCommissionIfEligible({
       ratePercent: rateApplied,
     });
 
-    // Sec 10: fires exactly once, at the moment the 11th distinct
-    // conversion crosses the threshold — every conversion after this one
-    // is already at 40%, so this exact size===11 check only ever matches
-    // the single crossing event, never re-fires on #12, #13, etc.
-    if (distinctClients.size === 11) {
+    // Fires exactly once, at the moment the 11th yearly member crosses the
+    // threshold: every yearly conversion after this one is already at 40%,
+    // so this exact ===11 check only ever matches the crossing event and
+    // never re-fires on the 12th or 13th.
+    //
+    // Counts yearly members specifically now, not every conversion, since
+    // v2 clause 9 means a monthly member earns commission without moving
+    // the agent up the ladder. Counting all conversions here would have
+    // congratulated an agent on reaching 40% while still paying them 25%.
+    if (billingCycle === "annual" && yearlyClients.size === 11) {
       await sendAgentTierMilestoneEmail({ fullName: agent.full_name, email: agent.email });
     }
   }

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { forbidden, notFound } from "next/navigation";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
-import { getAgentPageById, getAgentSocialProof } from "@/lib/agent-page/data";
+import { getAgentPageById, getAgentSocialProof, getProofPages } from "@/lib/agent-page/data";
 import { AgentPageView } from "@/components/agent-page/AgentPageView";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -20,7 +20,7 @@ export default async function AdminAgentPagePreview({ params }: { params: Promis
   const agent = await getAgentPageById(id);
   if (!agent) notFound();
 
-  const socialProof = await getAgentSocialProof(agent.id);
+  const [socialProof, proofPages] = await Promise.all([getAgentSocialProof(agent.id), getProofPages()]);
 
-  return <AgentPageView agent={agent} socialProof={socialProof} mode="preview" />;
+  return <AgentPageView agent={agent} socialProof={socialProof} proofPages={proofPages} mode="preview" />;
 }
