@@ -9,6 +9,9 @@ import type { PublicBookableUnit } from "@/components/landing/BookingSection";
 import type { PublicShopProduct } from "@/components/landing/ShopSection";
 import type { PublicReview } from "@/components/reviews/ReviewsSection";
 import { truncateOnWord } from "@/lib/text";
+import { getLiveAgentPage, getAgentSocialProof } from "@/lib/agent-page/data";
+import { AgentPageView } from "@/components/agent-page/AgentPageView";
+import { agentPageMetadata } from "@/lib/agent-page/og";
 
 type LandingPageRow = {
   id: string;
@@ -82,7 +85,16 @@ export async function generateMetadata({
     .eq("landing_pages.published", true)
     .single();
 
-  if (!client) return {};
+  // Agent Programme Phase 1 Sec 1.2: agent pages resolve at root level
+  // through this same resolver, no prefix. Checked only after the business
+  // lookup misses, which costs nothing on the overwhelmingly common path
+  // and means an existing business slug can never be shadowed by a new
+  // agent page (lib/slug-namespace.ts is what stops the two colliding in
+  // the first place; this ordering is the belt to that's braces).
+  if (!client) {
+    const agent = await getLiveAgentPage(clientSlug);
+    return agent ? agentPageMetadata(agent) : {};
+  }
 
   // A custom page (STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2/4) needs
   // its own metadata shape — the generic business-listing fields below
@@ -198,6 +210,16 @@ export default async function ClientLandingPage({
     .single();
 
   if (!client) {
+    // Agent Programme Phase 1 Sec 1.2. Ordered ahead of the former-slug
+    // redirect below because an agent page is a live destination and a
+    // former slug is a historical one: if a slug is somehow both, serving
+    // the live page beats redirecting away from it.
+    const agent = await getLiveAgentPage(clientSlug);
+    if (agent) {
+      const socialProof = await getAgentSocialProof(agent.id);
+      return <AgentPageView agent={agent} socialProof={socialProof} mode="live" />;
+    }
+
     // The slug may be a former slug (renamed during the URL-shortening
     // cleanup). 301 to the current slug so old links, shares, and the
     // reactivation emails already sent all keep working.
@@ -208,6 +230,9 @@ export default async function ClientLandingPage({
       .eq("status", "active")
       .maybeSingle();
     if (renamed?.slug) permanentRedirect(`/${renamed.slug}`);
+    // Sec 1.2: "404 on unknown or inactive agent slugs." A draft agent
+    // page falls through to here, since getLiveAgentPage only ever returns
+    // a published one.
     return notFound();
   }
 

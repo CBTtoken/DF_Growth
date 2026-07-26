@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId, listMyGrowthClients } from "@/lib/auth/require-growth-client";
 import { AccountSwitcher } from "@/components/dashboard/AccountSwitcher";
@@ -10,8 +11,8 @@ import { MetaIdsForm } from "@/components/dashboard/MetaIdsForm";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { PlatformFeatures } from "@/components/dashboard/PlatformFeatures";
-import { AgentSection } from "@/components/dashboard/AgentSection";
-import { getMyAgentDashboardData } from "@/lib/agents/dashboard-data";
+import { RoleSwitcher } from "@/components/dashboard/RoleSwitcher";
+import { getMyAgentRecord, getActiveRolePreference } from "@/lib/agents/dashboard-role";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
@@ -34,6 +35,21 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function DashboardPage() {
   const client = await requireGrowthClientId();
+
+  // Agent Programme Phase 1 Sec 1.1: "An agent with no business membership
+  // sees no switcher and lands directly in the agent dashboard." That case
+  // used to hit requireGrowthClientId's "No account found for this login"
+  // and dead-end on the log-in prompt below, despite the login having a
+  // perfectly good approved agent record. Checked before the error branch
+  // for exactly that reason.
+  //
+  // Sec 1.1 also asks the dashboard to "default to whichever role was used
+  // last", which is the second condition: a dual-role login that last used
+  // the agent side gets sent there rather than always landing on business.
+  const agentRecord = await getMyAgentRecord();
+  if (agentRecord && (client.error || (await getActiveRolePreference()) === "agent")) {
+    redirect("/dashboard/agent");
+  }
 
   if (client.error) {
     return (
@@ -215,12 +231,6 @@ export default async function DashboardPage() {
   // more than one (AccountSwitcher's own guard), so this is a no-op extra
   // query for the common single-account case.
   const myAccounts = await listMyGrowthClients();
-
-  // Sec 9: same reasoning as myAccounts above — its own auth.getUser()
-  // call, a no-op extra query for the overwhelming majority of logins who
-  // aren't also an approved agent. Returns null (not an error) when this
-  // login has no linked, approved agents row.
-  const agentDashboardData = await getMyAgentDashboardData();
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
@@ -560,7 +570,12 @@ export default async function DashboardPage() {
             <AccountSection growthClientId={client.id} plan={growthClient.plan} status={growthClient.status} />
           )}
           <PlatformFeatures plan={growthClient?.plan ?? null} />
-          {agentDashboardData && <AgentSection data={agentDashboardData} />}
+          {/* Agent Programme Phase 1 Sec 1.1: "Each role has its own page,
+              its own slug, its own data. They do not share content." The
+              agent referral section used to sit here, inside the business
+              dashboard, which mixed the two roles on one screen. It now
+              lives on /dashboard/agent, reached through the role switcher
+              at the top of this page. */}
 
           <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div>
@@ -638,6 +653,10 @@ export default async function DashboardPage() {
               </button>
             </form>
           </div>
+          {/* Agent Programme Phase 1 Sec 1.1: the role switcher sits above
+              the account switcher because it is the outer choice. Which
+              role first, then which business within the business role. */}
+          {agentRecord && <RoleSwitcher active="business" />}
           <AccountSwitcher accounts={myAccounts} currentId={client.id ?? ""} />
 
           <div className="flex flex-wrap items-center justify-between gap-4">

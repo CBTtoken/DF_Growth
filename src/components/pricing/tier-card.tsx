@@ -48,8 +48,26 @@ export function TierCard({
   const [hasReferralCookie, setHasReferralCookie] = useState(false);
   const [referredAgentName, setReferredAgentName] = useState<string | null>(null);
 
+  // Agent Programme Phase 1 Sec 1.8: "Every call to action on the page
+  // also appends the referral code as a URL parameter, as a fallback for
+  // cookie-blocked visitors." So the code can arrive two ways now, and
+  // ?ref= wins when both are present — it is the more recent signal, which
+  // is also the tie-break Sec 1.8 asks for ("where two agent codes are
+  // present, the most recent wins").
+  //
+  // Read at submit time rather than held in state: the URL cannot change
+  // under this component, so there is nothing to keep in sync, and putting
+  // it in state would mean either a setState inside an effect or a
+  // server/client hydration mismatch on the hidden field.
+  function submitWithReferral(formData: FormData) {
+    const fromUrl = new URLSearchParams(window.location.search).get("ref");
+    if (fromUrl) formData.set("ref", fromUrl);
+    formAction(formData);
+  }
+
   useEffect(() => {
-    const code = readReferralCookie();
+    const fromUrl = new URLSearchParams(window.location.search).get("ref");
+    const code = fromUrl ?? readReferralCookie();
     if (!code) return;
     fetch(`/api/referral/agent-name?code=${encodeURIComponent(code)}`)
       .then((res) => res.json())
@@ -135,7 +153,13 @@ export function TierCard({
           </a>
         </div>
       ) : (
-        <form action={formAction} className="flex flex-col gap-2 mt-auto pt-4">
+        <form action={submitWithReferral} className="flex flex-col gap-2 mt-auto pt-4">
+          {/* Agent Programme Phase 1 Sec 1.8: submitWithReferral is the
+              actual cookie-blocked fallback. Writing the cookie
+              client-side would not help a visitor whose browser refuses
+              cookies at all, so the code rides along in the form
+              submission instead, where the Server Action reads it behind
+              the cookie. */}
           <input type="hidden" name="tier" value={tier} />
           {/* Foundation gained an annual option 2026-07-19 — same toggle
               Growth already had, just no longer gated to growth_engine

@@ -16,7 +16,17 @@ import Link from "next/link";
 // appear on the agent recruitment pages. Those recruit people who need income,
 // so a payment badge reads as a joining fee. `showPaymentBadge` defaults to
 // true (every existing page is unchanged); the agent pages pass false.
-export function SiteFooter({ showPaymentBadge = true }: { showPaymentBadge?: boolean } = {}) {
+//
+// Agent Programme Phase 1 Sec 1.3: "No recruitment call to action anywhere
+// on an agent page." The "Become an Agent" link below is one, so it gets
+// the same treatment as the payment badge above, defaulting on and
+// switched off by the agent pages themselves. An agent page is aimed at
+// business owners, not at recruits, and a recruitment link on it competes
+// directly with the one thing that page is for.
+export function SiteFooter({
+  showPaymentBadge = true,
+  showAgentRecruitment = true,
+}: { showPaymentBadge?: boolean; showAgentRecruitment?: boolean } = {}) {
   return (
     <footer className="mt-auto flex flex-col items-center gap-2 py-6 text-center text-xs text-gray-400">
       {showPaymentBadge && (
@@ -33,10 +43,14 @@ export function SiteFooter({ showPaymentBadge = true }: { showPaymentBadge?: boo
         <Link href="/shop" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Shop
         </Link>
-        <span aria-hidden> · </span>
-        <Link href="/agents/apply" className="underline-offset-2 hover:text-gray-600 hover:underline">
-          Become an Agent
-        </Link>
+        {showAgentRecruitment && (
+          <>
+            <span aria-hidden> · </span>
+            <Link href="/agents/apply" className="underline-offset-2 hover:text-gray-600 hover:underline">
+              Become an Agent
+            </Link>
+          </>
+        )}
         <span aria-hidden> · </span>
         <Link href="/privacy" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Privacy Policy

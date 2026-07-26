@@ -6,6 +6,8 @@ import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { markCommissionApprovedToPay, markCommissionPaid } from "@/app/admin/agents/actions";
 import { getAgentReferralLink } from "@/lib/agents/referral-cookie";
+import { getAgentPageById } from "@/lib/agent-page/data";
+import { AgentPageForm } from "@/components/admin/AgentPageForm";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -23,11 +25,17 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
 
   const { data: agent } = await admin
     .from("agents")
-    .select("id, full_name, email, whatsapp_number, status, referral_code, created_at, approved_at, comped_client_id")
+    .select(
+      "id, full_name, email, whatsapp_number, status, referral_code, created_at, approved_at, comped_client_id, intake_before, intake_why, intake_who, intake_area"
+    )
     .eq("id", id)
     .maybeSingle();
 
   if (!agent) notFound();
+
+  // Same loader the live page and the OG card use, so what the form edits
+  // is exactly what the page renders, with no second mapping to drift.
+  const agentPage = await getAgentPageById(id);
 
   let compedPageSlug: string | null = null;
   if (agent.comped_client_id) {
@@ -92,6 +100,22 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
             )}
           </p>
         </div>
+
+        {/* Agent Programme Phase 1 Sec 1.10: "Add agent page fields to the
+            existing admin agent view so Dewald can populate them." Placed
+            above the commission tables because setting the page up is the
+            live job right now; the ledger below is a read-only record. */}
+        {agentPage && (
+          <AgentPageForm
+            agent={agentPage}
+            intake={{
+              before: agent.intake_before ?? "",
+              why: agent.intake_why ?? "",
+              who: agent.intake_who ?? "",
+              area: agent.intake_area ?? "",
+            }}
+          />
+        )}
 
         <section className="flex flex-wrap gap-4">
           <div className="flex-1 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">

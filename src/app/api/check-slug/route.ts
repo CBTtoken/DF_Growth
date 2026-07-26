@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { slugify, RESERVED_SLUGS } from "@/lib/slugify";
+import { slugify } from "@/lib/slugify";
+import { checkSlugAvailable } from "@/lib/slug-namespace";
 
 // Found via a real stress test: two businesses picking the same name used
 // to silently strand the second one after payment (fixed server-side in the
@@ -23,12 +23,12 @@ export async function GET(request: Request) {
   // Public Beta Polish Sprint Sec 13.2: matches provisionGrowthClient's own
   // reserved-word handling — a reserved slug will always get suffixed at
   // signup, so showing it as "available" here would be misleading.
-  if (RESERVED_SLUGS.has(slug)) {
-    return NextResponse.json({ available: false, slug });
-  }
+  //
+  // Agent Programme Phase 1 Sec 1.2: checkSlugAvailable replaces what used
+  // to be a reserved-word check plus a single growth_clients lookup, so
+  // this now tells the truth about the whole shared namespace, including
+  // live agent pages and former business slugs that still redirect.
+  const result = await checkSlugAvailable(slug);
 
-  const admin = createAdminClient();
-  const { data: existing } = await admin.from("growth_clients").select("id").eq("slug", slug).maybeSingle();
-
-  return NextResponse.json({ available: !existing, slug });
+  return NextResponse.json({ available: !result.taken, slug });
 }

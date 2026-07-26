@@ -105,9 +105,21 @@ export async function startCheckout(
   // branches below — this Server Action (invoked from a real browser
   // submission) is the only point in the whole signup flow with cookie
   // access; the Paystack webhook that later activates payment has none.
+  //
+  // Agent Programme Phase 1 Sec 1.8: an agent page's calls to action also
+  // append the code as ?ref=, which TierCard forwards here as a hidden
+  // field. That is the fallback for a visitor whose browser blocked the
+  // cookie outright, where writing one client-side would have failed too.
+  // Whichever value is used goes through the identical
+  // resolveReferralAttribution path, so the anti-fraud checks (an agent
+  // cannot refer themselves, a business cannot be referred twice) apply to
+  // a hand-typed ?ref= exactly as they do to a cookie.
   const referralCookie = cookieStore.get(REFERRAL_COOKIE_NAME)?.value;
+  const referralParam = formData.get("ref");
+  const referralCode =
+    referralCookie ?? (typeof referralParam === "string" && referralParam.trim() ? referralParam.trim() : undefined);
   const referredByAgentId = await resolveReferralAttribution({
-    cookieCode: referralCookie,
+    cookieCode: referralCode,
     signupEmail: email,
   });
 

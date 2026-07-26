@@ -21,6 +21,16 @@ export function slugify(input: string): string {
 // unreachable at their own slug with no obvious error, which is worse than
 // the signup-time suffix this list forces instead. Add any new top-level
 // route folder here when one is created.
+//
+// Agent Programme Phase 1 Sec 1.2: agent pages now resolve at root level
+// too, so this list stopped being "business slugs vs routes" and became one
+// shared namespace across three things (business slugs, agent page slugs,
+// platform routes). The nine entries added below were real, live top-level
+// route folders that were never in this list — /marketplace, /shop and
+// /faq in particular are pages a business could plausibly be named after.
+// The cross-table half of the check (an agent page slug vs a business slug)
+// can't live in a static Set, so it sits in src/lib/slug-namespace.ts,
+// which reads this list as its first gate.
 export const RESERVED_SLUGS = new Set([
   "growth",
   "stoep",
@@ -45,4 +55,13 @@ export const RESERVED_SLUGS = new Set([
   "sitemap",
   "robots",
   "g",
+  "marketplace",
+  "shop",
+  "events",
+  "faq",
+  "how-it-works",
+  "agents",
+  "agent-link",
+  "unsubscribe",
+  "r",
 ]);

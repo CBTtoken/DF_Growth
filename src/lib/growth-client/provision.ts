@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { slugify, RESERVED_SLUGS } from "@/lib/slugify";
+import { agentPageSlugExists } from "@/lib/slug-namespace";
 import type { Tier } from "@/lib/paystack/plans";
 
 type ProvisionResult = { id: string; slug: string } | { error: string };
@@ -65,7 +66,14 @@ export async function provisionGrowthClient({
   // the same random-suffix disambiguation every subsequent-attempt slug
   // already gets, so the reserved word can never itself become a live,
   // unsuffixed slug at /[slug].
-  const baseSlugReserved = RESERVED_SLUGS.has(baseSlug);
+  //
+  // Agent Programme Phase 1 Sec 1.2: a live agent page slug has to force
+  // the same suffix. The retry loop below can't discover this one on its
+  // own the way it discovers a business-slug collision — that works only
+  // because growth_clients.slug has a unique constraint that fires; an
+  // agent page slug lives in another table and the insert would succeed,
+  // leaving two pages fighting over the same root URL.
+  const baseSlugReserved = RESERVED_SLUGS.has(baseSlug) || (await agentPageSlugExists(baseSlug));
   let inserted: { id: string; slug: string } | null = null;
   let insertError: { message: string; code?: string } | null = null;
 
