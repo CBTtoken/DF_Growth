@@ -122,4 +122,35 @@ The end goal: a member clicks "Advertise my page" and we build + launch a campai
 - **Ongoing tests (one at a time so results stay clean):** image vs video, different headlines, different first line of primary text, a tighter geo.
 - **Once we have signups:** build a **lookalike audience** from people who signed up, often the single biggest performance jump.
 
-*Last updated 25 July 2026, after the first campaign went live.*
+---
+
+## Part H: Selling a product (Sales campaigns) — from the Standing 365 book run
+
+Parts A to G are about getting **signups/leads**. Selling an actual **product** (the Standing 365 book, or any member's Shop item) uses the **Sales** objective and adds a few things. This is the exact playbook for "run ads that sell my product", and the blueprint for offering it to members.
+
+**The one extra requirement: a tracked Purchase.**
+A Sales campaign optimises toward the **Purchase** event, so a real sale has to fire a `Purchase` to the pixel, **with the order value**. On DigitalFlyer's Shop this is now built in: server-side `Purchase` from the Paystack webhook (guaranteed) + browser-side `Purchase` on the order-success screen, deduped by the **Paystack transaction reference** as the shared event_id; `InitiateCheckout` fires when checkout starts. Without a working, tested Purchase event, a Sales campaign spends blind. See [[project_first_meta_campaign]] for the Standing 365 wiring.
+
+**Setup differences vs the signups campaign:**
+- Objective **Sales** (not Leads).
+- Conversion location **Website** — Meta may default to "Website and calls"; change it, we don't optimise for phone calls.
+- Conversion event **Purchase**, value-carrying so Meta can chase revenue.
+- Audience: a product like a book is **interest-specific**, so (unlike broad services) feed Advantage+ one or two relevant interests (topic/genre) plus SA location. Don't over-narrow.
+- Creative: for a book, the **cover** plus a short **video** or a **carousel** wins.
+- CTA: **Order now** / **Shop Now**.
+
+**Prove-it-first (do NOT skip):** a brand-new pixel has no Purchase history, so the ad set shows a "this dataset has no conversion events set up" warning and optimisation has nothing to learn from. Do **one real test purchase before launching** — it proves the whole pipeline end to end AND activates the event so the warning clears. On a live-payment product that's a real charge that returns to you as the seller.
+
+**Low-volume reality:** a single considered purchase (a R374 book) is low-volume, so Purchase optimisation learns slowly. That's exactly why we also fire **InitiateCheckout** — a more frequent mid-funnel signal to learn from while sales build. Judge after a few days on **Cost per purchase** and **ROAS**, never day one.
+
+**New gotchas from this run (straight into the member FAQ):**
+- **Test Events is NOT where real sales appear.** That tab only shows events carrying its `test_event_code`; a real customer purchase doesn't carry it, so it lands in **Events Manager → Overview**, not Test Events. Don't panic when a real sale isn't in the Test Events ticker.
+- **"Duplicate values in titles" at publish (`DofAssetFeedSpecFieldsCanNotContainDuplicateValue`).** When Meta is mixing multiple headlines/texts, no two may be identical (headlines OR primary-text boxes). Fix: delete the duplicate, or turn off **"Optimise text per person."**
+- **Turn off image-altering creative enhancements for finished artwork.** A book cover (or any designed image) gets distorted by AI overlays / visual touch-ups / music / animation. Switch those off; the mild ones (Enhance CTA, brightness) are fine.
+- **Ad transparency / Advertiser is optional** — leave default unless you're genuinely running ads on behalf of a different entity/payer.
+
+**Automating this for members:** members selling via their own Shop already get the Purchase/InitiateCheckout pipeline (built for Standing 365, reusable per client). Running Sales campaigns for them mirrors the signups automation (Part F) but with objective **Sales + Purchase + value**, plus their own product interests and creative.
+
+---
+
+*Last updated 26 July 2026: added Part H after DigitalFlyer's first product-sales campaign (Standing 365 book) went live.*
