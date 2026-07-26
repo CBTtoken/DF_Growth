@@ -4,7 +4,6 @@ import { resolveAgentTheme } from "@/lib/agent-page/themes";
 import { withAlpha } from "@/lib/color";
 import { agentInitials, stackedName } from "@/lib/agent-page/identity";
 import { loadAssetFonts } from "@/lib/assets/fonts";
-import { truncateOnWord } from "@/lib/text";
 
 // Agent Programme Phase 1 Sec 1.2: the og:image for an agent page is the
 // agent's own photo or generated badge, never the DigitalFlyer logo.
@@ -30,7 +29,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
   const theme = resolveAgentTheme(agent.theme);
   const { first, rest } = stackedName(agent.fullName);
   const fonts = await loadAssetFonts();
-  const promise = agent.bio ? truncateOnWord(agent.bio, 120) : null;
+  // Not the bio. The bio is a paragraph, so at card width it always cut
+  // mid-sentence ("I could get people interested in a..."), which reads as
+  // a broken preview rather than a short one. The page headline is the
+  // promise the page actually makes, it is the same for every agent, and
+  // it is always complete.
+  const promise = "You are good at what you do. Let me handle the online part.";
 
   return new ImageResponse(
     (
