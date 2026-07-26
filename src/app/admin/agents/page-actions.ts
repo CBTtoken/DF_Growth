@@ -5,36 +5,17 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { checkSlugAvailable, slugTakenMessage } from "@/lib/slug-namespace";
 import { agentPageSchema, agentCopyIntakeSchema } from "@/lib/schemas/agents";
-import { generateAgentPageCopy } from "@/lib/ai/agent-page-copy";
 import { replaceAgentPhoto, clearAgentPhoto } from "@/lib/agent-page/photo";
-import { stripEmDashes } from "@/lib/text";
-import type { AgentService } from "@/lib/agent-page/data";
+import { agentContentUpdate, readContentFields } from "@/lib/agent-page/form";
+import { draftAndSaveAgentCopy } from "@/lib/agent-page/copy";
 
-// Agent Programme Phase 1 Sec 1.10: "Add agent page fields to the existing
-// admin agent view so Dewald can populate them. Agent self-editing of copy
-// and colour comes with the dashboard in phase 2." Every action here is
-// admin-gated; none of it is reachable by an agent yet.
+// Agent Programme Phase 1 Sec 1.10, the admin half of agent page setup:
+// the slug, the go-live decision and "active since". The content half
+// (copy, colour, services, photo) is shared with the agent's own dashboard
+// via lib/agent-page/form.ts, since Dewald moved agent self-editing
+// forward out of phase 2. Every action here is still admin-gated.
 
 export type AgentPageFormState = { error?: string; saved?: boolean } | null;
-
-// Sec 1.7: three services, same shape as growth_clients.packages. Read out
-// of flat indexed form fields rather than a JSON textarea, so the admin
-// form stays a form.
-function readServices(formData: FormData): AgentService[] {
-  const services: AgentService[] = [];
-  for (let i = 0; i < 3; i++) {
-    const name = String(formData.get(`serviceName${i}`) ?? "").trim();
-    if (!name) continue;
-    const type = String(formData.get(`serviceType${i}`) ?? "package");
-    services.push({
-      name: stripEmDashes(name).slice(0, 80),
-      price: stripEmDashes(String(formData.get(`servicePrice${i}`) ?? "").trim()).slice(0, 40),
-      description: stripEmDashes(String(formData.get(`serviceDescription${i}`) ?? "").trim()).slice(0, 300),
-      type: type === "special" || type === "discount" ? type : "package",
-    });
-  }
-  return services;
-}
 
 export async function saveAgentPage(
   agentId: string,
@@ -45,14 +26,9 @@ export async function saveAgentPage(
   if ("error" in admin_) return { error: "Not allowed." };
 
   const parsed = agentPageSchema.safeParse({
+    ...readContentFields(formData),
     pageSlug: formData.get("pageSlug"),
-    accentColor: formData.get("accentColor"),
-    town: formData.get("town"),
-    whatsappNumber: formData.get("whatsappNumber"),
     activeSince: formData.get("activeSince"),
-    heroPromise: formData.get("heroPromise"),
-    storyText: formData.get("storyText"),
-    offerText: formData.get("offerText"),
   });
 
   if (!parsed.success) {
@@ -73,18 +49,9 @@ export async function saveAgentPage(
   const { error } = await admin
     .from("agents")
     .update({
+      ...agentContentUpdate(values, formData),
       page_slug: values.pageSlug,
-      accent_color: values.accentColor,
-      town: values.town || null,
-      whatsapp_number: values.whatsappNumber || null,
       active_since: values.activeSince || null,
-      // stripEmDashes on write, the same backstop the AI copy path uses:
-      // this text can also be typed or pasted by hand, and pasted copy is
-      // where em dashes actually come from.
-      hero_promise: values.heroPromise ? stripEmDashes(values.heroPromise) : null,
-      story_text: values.storyText ? stripEmDashes(values.storyText) : null,
-      offer_text: values.offerText ? stripEmDashes(values.offerText) : null,
-      services: readServices(formData),
     })
     .eq("id", agentId);
 
@@ -98,9 +65,9 @@ export async function saveAgentPage(
   return { saved: true };
 }
 
-// Sec 1.6: the four questions in, drafted copy out. Saves the answers
-// first so they survive a failed or rejected draft and can be redrafted
-// without asking the agent again.
+// Sec 1.6: the questions in, drafted copy out. Same shared helper the
+// agent's own dashboard uses, so a draft written for an agent and a draft
+// an agent writes for themselves behave identically.
 export async function draftAgentPageCopy(
   agentId: string,
   _prevState: AgentPageFormState,
@@ -117,49 +84,11 @@ export async function draftAgentPageCopy(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Answer all four questions." };
+    return { error: parsed.error.issues[0]?.message ?? "Answer at least one of these." };
   }
 
-  const admin = createAdminClient();
-  const { data: agent } = await admin.from("agents").select("full_name, town").eq("id", agentId).maybeSingle();
-  if (!agent) return { error: "Agent not found." };
-
-  await admin
-    .from("agents")
-    .update({
-      intake_before: parsed.data.before,
-      intake_why: parsed.data.why,
-      intake_who: parsed.data.who,
-      intake_area: parsed.data.area,
-    })
-    .eq("id", agentId);
-
-  const draft = await generateAgentPageCopy({
-    fullName: agent.full_name,
-    town: agent.town ?? "",
-    ...parsed.data,
-  });
-
-  if (!draft) {
-    // Same contract as the member wizard: a failed draft is never an error
-    // state that blocks the page, it just means the copy gets written by
-    // hand. The answers above are already saved either way.
-    return { error: "The draft did not come back usable. The answers are saved, write the copy by hand or try again." };
-  }
-
-  const { error } = await admin
-    .from("agents")
-    .update({
-      hero_promise: draft.heroPromise,
-      story_text: draft.storyText,
-      offer_text: draft.offerText,
-    })
-    .eq("id", agentId);
-
-  if (error) {
-    console.error("Failed to save drafted agent copy", error);
-    return { error: "Drafted the copy but could not save it. Please try again." };
-  }
+  const result = await draftAndSaveAgentCopy(agentId, parsed.data);
+  if (result.error) return { error: result.error };
 
   revalidatePath(`/admin/agents/${agentId}`);
   return { saved: true };

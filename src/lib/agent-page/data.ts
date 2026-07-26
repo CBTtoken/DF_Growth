@@ -132,6 +132,27 @@ export async function getAgentPageById(agentId: string): Promise<AgentPage | nul
   return data ? toAgentPage(data as AgentRow) : null;
 }
 
+// Sec 1.6's four answers, loaded separately from the page itself: they are
+// working notes behind the copy, never rendered on the public page, so
+// they have no business in the AgentPage shape the page component reads.
+export async function getAgentCopyIntake(
+  agentId: string
+): Promise<{ before: string; why: string; who: string; area: string }> {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("agents")
+    .select("intake_before, intake_why, intake_who, intake_area")
+    .eq("id", agentId)
+    .maybeSingle();
+
+  return {
+    before: data?.intake_before ?? "",
+    why: data?.intake_why ?? "",
+    who: data?.intake_who ?? "",
+    area: data?.intake_area ?? "",
+  };
+}
+
 // Sec 1.3: "Social proof section listing businesses attributed to this
 // agent that are active with a live page. If fewer than three, hide the
 // entire section. No counts, no invented figures, same honesty bar as the
