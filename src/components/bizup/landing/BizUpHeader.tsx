@@ -13,15 +13,17 @@ export function BizUpHeader() {
     <header className="sticky top-0 z-40 border-b border-neutral-border bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         {/* The real logo. It is transparent, so it sits on the white header
-            without a plate behind it. Shipped at 480px wide (2x for retina)
+            without a plate behind it. Shipped at 520px wide (2x for retina)
             rather than the 1200px original, because the landing page has a
-            hard 1MB budget. */}
+            hard 1MB budget. The dimensions below must match the file's real
+            proportions: w-auto derives the rendered width from them, so a
+            stale pair squashes the artwork rather than erroring. */}
         <Link href="/bizup" className="flex shrink-0 items-center gap-2">
           <Image
             src="/bizup/logo.png"
             alt="KatisoBiz"
-            width={480}
-            height={180}
+            width={520}
+            height={119}
             priority
             className="h-9 w-auto sm:h-10"
           />

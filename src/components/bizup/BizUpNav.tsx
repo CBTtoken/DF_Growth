@@ -47,7 +47,9 @@ export function BizUpNav({ businessName }: { businessName: string }) {
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
         <Link href="/bizup" className="shrink-0">
-          <Image src="/bizup/logo.png" alt="KatisoBiz" width={480} height={180} priority className="h-8 w-auto" />
+          {/* Dimensions must match the file's real proportions, see the note
+              in landing/BizUpHeader.tsx. */}
+          <Image src="/bizup/logo.png" alt="KatisoBiz" width={520} height={119} priority className="h-8 w-auto" />
         </Link>
 
         {/* Desktop and tablet: everything visible, nothing hidden behind a
