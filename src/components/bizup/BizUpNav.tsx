@@ -28,10 +28,7 @@ const LINKS: NavLink[] = [
   { href: "/bizup/price-list", label: "Price list" },
 ];
 
-const SETTINGS: NavLink[] = [
-  { href: "/bizup/settings/business", label: "Business details" },
-  { href: "/bizup/settings/banking", label: "Banking details" },
-];
+const SETTINGS: NavLink[] = [{ href: "/bizup/settings", label: "Settings" }];
 
 export function BizUpNav({ businessName }: { businessName: string }) {
   const pathname = usePathname();
@@ -69,7 +66,7 @@ export function BizUpNav({ businessName }: { businessName: string }) {
         <div className="hidden shrink-0 items-center gap-3 md:flex">
           <span className="max-w-[14rem] truncate text-sm text-gray-500">{businessName}</span>
           <Link
-            href="/bizup/settings/business"
+            href="/bizup/settings"
             className="text-sm font-medium text-gray-500 hover:text-brand"
           >
             Settings

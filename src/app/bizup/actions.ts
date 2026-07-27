@@ -219,23 +219,37 @@ export async function updateBizUpAccount(
  * that was active when they were issued, because template_id is stored on
  * each document and read from there at render time.
  */
-export async function updateTemplate(formData: FormData): Promise<void> {
+export async function updateTemplate(
+  _prev: BizUpFormState,
+  formData: FormData,
+): Promise<BizUpFormState> {
   const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { error: { _form: ["Please log in again."] } };
 
   const templateId = String(formData.get("templateId") ?? "");
-  if (!isTemplateId(templateId)) return;
+  if (!isTemplateId(templateId)) return { error: { _form: ["Choose one of the templates."] } };
 
   const admin = createAdminClient();
-  await admin
+  const { error } = await admin
     .from("bizup_accounts")
     .update({ template_id: templateId, updated_at: new Date().toISOString() })
     .eq("owner_user_id", user.id);
 
+  // Dewald: "I try to change the template and click on save nothing
+  // happens." It was saving correctly the whole time and saying nothing,
+  // and the radio keeps whatever the member clicked either way, so a
+  // working save looked exactly like a broken one. Silence is the bug.
+  if (error) {
+    console.error("Failed to update BizUp template", error);
+    return { error: { _form: ["We could not save that. Please try again."] } };
+  }
+
   revalidatePath("/bizup/settings/business");
+  revalidatePath("/bizup/settings");
+  return null;
 }
 
 /**

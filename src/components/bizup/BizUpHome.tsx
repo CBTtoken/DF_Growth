@@ -249,8 +249,7 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
       <ShareBizUp />
 
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-4 text-xs font-medium text-gray-500">
-        <Link href="/bizup/settings/business" className="hover:text-brand">Business details</Link>
-        <Link href="/bizup/settings/banking" className="hover:text-brand">Banking details</Link>
+        <Link href="/bizup/settings" className="hover:text-brand">Settings</Link>
         <form action={logOutOfBizUp} className="contents">
           <button type="submit" className="text-xs font-medium text-gray-500 hover:text-brand">
             Log out
