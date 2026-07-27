@@ -1,0 +1,122 @@
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getCapState, type CapState } from "./cap";
+import type { BizUpPlan } from "./entitlements";
+
+// Dewald: "the dashboard is also very confusing and empty when I am through
+// the onboarding steps, no analytics dash or something that shows what this
+// actually is."
+//
+// The three numbers below are the three questions a one-person business
+// actually has, in the order they have them:
+//   1. How much money is owed to me?
+//   2. What is sitting with a customer waiting for an answer?
+//   3. What is late and needs chasing today?
+//
+// Nothing else goes here. A dashboard that shows everything shows nothing,
+// and this member is standing in a driveway, not studying a report.
+
+export interface HomeSummary {
+  owedCents: number;
+  owedCount: number;
+  awaitingReplyCents: number;
+  awaitingReplyCount: number;
+  overdueCents: number;
+  overdueCount: number;
+  cap: CapState;
+  recent: {
+    id: string;
+    href: string;
+    number: string | null;
+    docType: string;
+    status: string;
+    totalCents: number;
+    customerName: string | null;
+    firstViewedAt: string | null;
+  }[];
+}
+
+export async function getHomeSummary(
+  accountId: string,
+  plan: BizUpPlan,
+  topupBalance: number,
+): Promise<HomeSummary> {
+  const admin = createAdminClient();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ data: invoices }, { data: quotes }, { data: payments }, { data: recentRows }, cap] =
+    await Promise.all([
+      admin
+        .from("bizup_documents")
+        .select("id, total_incl_cents, status, due_date")
+        .eq("account_id", accountId)
+        .eq("doc_type", "invoice")
+        .in("status", ["issued", "partially_paid"]),
+      admin
+        .from("bizup_documents")
+        .select("id, total_incl_cents")
+        .eq("account_id", accountId)
+        .eq("doc_type", "quote")
+        .eq("status", "sent"),
+      admin
+        .from("bizup_payments")
+        .select("amount_cents, document_id, bizup_documents!inner(account_id)")
+        .eq("bizup_documents.account_id", accountId),
+      admin
+        .from("bizup_documents")
+        .select("id, number, doc_type, status, total_incl_cents, first_viewed_at, bizup_customers(name)")
+        .eq("account_id", accountId)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      getCapState(accountId, plan, topupBalance),
+    ]);
+
+  // Payments are subtracted per invoice rather than in aggregate, so a
+  // part-paid invoice contributes only what is still outstanding. Summing
+  // totals and then subtracting all payments would give the same figure
+  // here, but breaks the moment a payment exists against a cancelled or
+  // credited invoice.
+  const paidByDoc = new Map<string, number>();
+  for (const p of payments ?? []) {
+    paidByDoc.set(p.document_id, (paidByDoc.get(p.document_id) ?? 0) + p.amount_cents);
+  }
+
+  let owedCents = 0;
+  let owedCount = 0;
+  let overdueCents = 0;
+  let overdueCount = 0;
+
+  for (const inv of invoices ?? []) {
+    const outstanding = inv.total_incl_cents - (paidByDoc.get(inv.id) ?? 0);
+    if (outstanding <= 0) continue;
+    owedCents += outstanding;
+    owedCount += 1;
+    // Overdue is derived from the due date rather than stored, so it is
+    // always right without a nightly job keeping it right.
+    if (inv.due_date && inv.due_date < today) {
+      overdueCents += outstanding;
+      overdueCount += 1;
+    }
+  }
+
+  const awaitingReplyCents = (quotes ?? []).reduce((s, q) => s + q.total_incl_cents, 0);
+
+  return {
+    owedCents,
+    owedCount,
+    awaitingReplyCents,
+    awaitingReplyCount: (quotes ?? []).length,
+    overdueCents,
+    overdueCount,
+    cap,
+    recent: (recentRows ?? []).map((r) => ({
+      id: r.id,
+      href: `/bizup/${r.doc_type === "quote" ? "quotes" : "invoices"}/${r.id}`,
+      number: r.number,
+      docType: r.doc_type,
+      status: r.status,
+      totalCents: r.total_incl_cents,
+      customerName: (r.bizup_customers as unknown as { name: string } | null)?.name ?? null,
+      firstViewedAt: r.first_viewed_at,
+    })),
+  };
+}

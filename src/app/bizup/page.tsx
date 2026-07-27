@@ -7,6 +7,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { BizUpHeader } from "@/components/bizup/landing/BizUpHeader";
 import { GrowthFromBizUp } from "@/components/bizup/BizUpCrossSell";
 import { SetupProgress } from "@/components/bizup/SetupProgress";
+import { BizUpHome } from "@/components/bizup/BizUpHome";
+import { getHomeSummary } from "@/lib/bizup/home";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { BizUpLanding } from "@/components/bizup/landing/BizUpLanding";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 
@@ -53,17 +56,29 @@ export default async function BizUpHomePage() {
   // "no account found" wall.
   if (!account) redirect("/bizup/start");
 
+  const admin = createAdminClient();
+  const { data: planRow } = await admin
+    .from("bizup_accounts")
+    .select("plan, topup_balance")
+    .eq("id", account.id)
+    .single();
+
+  // Falls back to the free tier's limits rather than failing the page if
+  // the row cannot be read. A member seeing a conservative cap is a far
+  // better outcome than a member seeing an error screen.
+  const summary = await getHomeSummary(
+    account.id,
+    planRow?.plan ?? "free",
+    planRow?.topup_balance ?? 0,
+  );
+
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 p-6">
-        <header className="flex items-baseline justify-between">
-          <span className="text-2xl font-bold tracking-tight text-ink">BizUp</span>
-          <span className="text-sm text-gray-500">{account.businessName}</span>
-        </header>
-
-        {/* Replaces the old standalone "add your banking details" warning.
-            That told a member one thing was missing without saying what
-            else was, or what order to do it in. */}
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 p-5">
+        {/* Setup first while it is unfinished, since a member who has not
+            added their banking details has a more pressing job than reading
+            their numbers. It removes itself once the first document is
+            sent. */}
         <SetupProgress
           state={{
             hasBusinessDetails: account.hasBusinessDetails,
@@ -72,34 +87,16 @@ export default async function BizUpHomePage() {
           }}
         />
 
-        <nav className="flex flex-wrap gap-3 text-sm font-medium">
-          <Link href="/bizup/quotes" className="text-brand underline-offset-2 hover:underline">
-            Quotes
+        <BizUpHome businessName={account.businessName} summary={summary} />
+
+        {account.growthClientId && (
+          <Link
+            href="/dashboard"
+            className="text-center text-xs font-medium text-gray-500 underline-offset-2 hover:text-brand hover:underline"
+          >
+            Go to DigitalFlyer Growth
           </Link>
-          <Link href="/bizup/invoices" className="text-brand underline-offset-2 hover:underline">
-            Invoices
-          </Link>
-          <Link href="/bizup/customers" className="text-brand underline-offset-2 hover:underline">
-            Customers
-          </Link>
-          <Link href="/bizup/price-list" className="text-brand underline-offset-2 hover:underline">
-            Price list
-          </Link>
-          <Link href="/bizup/settings/business" className="text-brand underline-offset-2 hover:underline">
-            Business details
-          </Link>
-          <Link href="/bizup/settings/banking" className="text-brand underline-offset-2 hover:underline">
-            Banking details
-          </Link>
-          {/* A member who also holds a Growth account can cross over. The
-              link is only rendered when they actually have one, so it is
-              never an advert dressed up as navigation. */}
-          {account.growthClientId && (
-            <Link href="/dashboard" className="text-gray-500 underline-offset-2 hover:text-brand hover:underline">
-              Go to DigitalFlyer Growth
-            </Link>
-          )}
-        </nav>
+        )}
 
         {/* Cross-sell, and only to someone who does not already pay for
             Growth. Advertising it to an existing Growth member would be
