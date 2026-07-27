@@ -18,7 +18,7 @@ import { verifyEmailAddress } from "@/lib/email/verify-address";
 // silently produced an account that could never receive a document and
 // could never be recovered. Found by Dewald on the live page.
 //
-// It is now a real verification: a 6-digit code, matching this project's
+// It is now a real verification: a typed code, matching this project's
 // standing rule after the Zoho incident, where mail scanners opened
 // confirmation links before the recipient could and consumed the token.
 // A code cannot be consumed by a scanner.

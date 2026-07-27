@@ -114,7 +114,7 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
           {needsReview ? "Your event is submitted!" : "Your event is live!"}
         </h2>
         <p className="text-sm text-gray-500">
-          One more thing — enter the 6-digit code we sent to <span className="font-medium text-ink">{pendingEmail}</span> to
+          One more thing, enter the code we sent to <span className="font-medium text-ink">{pendingEmail}</span> to
           confirm your email, so you can log back in and manage future listings.
           {needsReview && " Your event needs a quick check from our team before it goes public, usually within a day."}
         </p>

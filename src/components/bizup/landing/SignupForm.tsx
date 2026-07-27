@@ -33,7 +33,7 @@ export function SignupForm() {
         <div className="rounded-xl border border-brand-blue/20 bg-brand-blue-light p-4">
           <p className="text-sm font-bold text-neutral-ink">Check your email</p>
           <p className="mt-1 text-sm text-neutral-mid">
-            We sent a 6-digit code to <strong>{awaiting}</strong>. Enter it below and you are in.
+            We sent a code to <strong>{awaiting}</strong>. Enter it below and you are in.
           </p>
         </div>
 
@@ -43,8 +43,13 @@ export function SignupForm() {
             name="code"
             inputMode="numeric"
             autoComplete="one-time-code"
-            maxLength={7}
-            placeholder="123456"
+            // Deliberately generous and deliberately not a fixed length.
+            // Supabase decides how long this code is (mailer_otp_length,
+            // currently 8), and hardcoding 6 here silently truncated it so
+            // the code could never be entered in full. Found by Dewald when
+            // a perfectly good code would not verify.
+            maxLength={12}
+            placeholder="12345678"
             className={`${input} text-center tracking-[0.4em]`}
           />
           {confirmState?.error?.code?.[0] && <span className={err}>{confirmState.error.code[0]}</span>}

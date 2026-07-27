@@ -81,7 +81,7 @@ export function ReviewSubmissionForm({ businessId, accentColor }: { businessId: 
     return (
       <div className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6">
         <p className="text-sm text-gray-500">
-          We sent a 6-digit code to <span className="font-medium text-ink">{pendingEmail}</span>. Enter it to
+          We sent a code to <span className="font-medium text-ink">{pendingEmail}</span>. Enter it to
           publish your review.
         </p>
         <form action={otpAction} className="flex flex-col gap-3">

@@ -25,7 +25,7 @@ function parseReviewFields(formData: FormData) {
 // email is a single-use token, and several email providers (Zoho's
 // link-scanning confirmed live, error_code=otp_expired) automatically open
 // links in incoming mail to scan them for safety, consuming the token
-// before the real recipient ever clicks it. Switched to a 6-digit OTP
+// before the real recipient ever clicks it. Switched to a typed OTP
 // code instead (verifyReviewerSignupOtp below) — no clickable link in the
 // email at all, nothing for a scanner to consume.
 export async function submitReviewNewReviewer(_prevState: ReviewFormState, formData: FormData): Promise<ReviewFormState> {
@@ -202,7 +202,8 @@ export async function submitReviewExistingReviewer(_prevState: ReviewFormState, 
 
 type VerifyOtpState = { error?: string; success?: boolean } | null;
 
-// Verifies the 6-digit code from the "Confirm signup" email. Runs entirely
+// Verifies the code from the "Confirm signup" email (length is set by
+// Supabase mailer_otp_length, currently 8 — do not hardcode it). Runs entirely
 // server-side against the cookie-backed SSR client — verifyOtp() both
 // confirms the account AND establishes the session in one call, writing
 // the session cookie directly as part of this request. No hash-fragment

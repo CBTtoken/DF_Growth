@@ -325,7 +325,7 @@ export async function submitEventAsLoggedInUser(_prevState: EventFormState, form
 
 type VerifyOtpState = { error?: string; success?: boolean } | null;
 
-// Confirms the organiser's email via the 6-digit "Confirm signup" code —
+// Confirms the organiser's email via the "Confirm signup" code —
 // same shape as Rate & Review's verifyReviewerSignupOtp. Their event is
 // already live by the time this runs (see submitEventNewOrganizer above);
 // this only secures their ability to log back in with this account later.
