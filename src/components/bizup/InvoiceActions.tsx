@@ -1,0 +1,87 @@
+"use client";
+
+import { useActionState } from "react";
+import { issueInvoice, recordPayment } from "@/app/bizup/invoices/actions";
+
+const btn =
+  "inline-flex items-center justify-center rounded-full px-5 py-3 text-base font-semibold shadow-sm transition disabled:opacity-50";
+const input =
+  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base outline-none focus:border-brand focus:ring-2 focus:ring-brand/20";
+
+export function IssueInvoiceButton({ documentId, ready }: { documentId: string; ready: boolean }) {
+  const [state, action, pending] = useActionState(issueInvoice, null);
+
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="documentId" value={documentId} />
+      <button type="submit" disabled={pending || !ready} className={`${btn} bg-brand text-white hover:bg-brand-dark`}>
+        {pending ? "Issuing..." : "Issue this invoice"}
+      </button>
+      <p className="text-xs text-gray-500">
+        This gives it a number and a due date. After that the amounts cannot be changed, which is
+        what SARS expects.
+      </p>
+      {/* Sec 3.2's over-R5,000 requirement and Sec 15's cap both surface
+          here, as a next step rather than a failure. The draft is safe
+          either way. */}
+      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.ok && <p className="text-sm font-medium text-green-700">{state.ok}</p>}
+    </form>
+  );
+}
+
+export function RecordPaymentForm({
+  documentId,
+  outstandingLabel,
+}: {
+  documentId: string;
+  outstandingLabel: string;
+}) {
+  const [state, action, pending] = useActionState(recordPayment, null);
+
+  return (
+    <form action={action} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+      <input type="hidden" name="documentId" value={documentId} />
+      <h2 className="text-sm font-semibold text-ink">Record a payment</h2>
+      <p className="text-sm text-gray-500">{outstandingLabel}</p>
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+        Amount received
+        <input name="amount" inputMode="decimal" placeholder="450.00" className={input} />
+      </label>
+
+      <div className="grid grid-cols-2 gap-3">
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+          Date
+          <input
+            type="date"
+            name="paidAt"
+            defaultValue={new Date().toISOString().slice(0, 10)}
+            className={input}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+          How
+          <select name="method" defaultValue="eft" className={input}>
+            <option value="eft">EFT</option>
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+      </div>
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+        Reference <span className="font-normal text-gray-400">(optional)</span>
+        <input name="reference" className={input} placeholder="What appeared on your statement" />
+      </label>
+
+      <button type="submit" disabled={pending} className={`${btn} bg-brand text-white hover:bg-brand-dark`}>
+        {pending ? "Saving..." : "Record payment"}
+      </button>
+
+      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.ok && <p className="text-sm font-medium text-green-700">{state.ok}</p>}
+    </form>
+  );
+}

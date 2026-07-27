@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
 import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
+import { setQuoteOutcome, convertToInvoice } from "@/app/bizup/quotes/convert-actions";
 import { IssueQuoteButton, ShareQuote } from "@/components/bizup/ShareQuote";
 import { headers } from "next/headers";
 import { formatZar } from "@/lib/bizup/money";
@@ -264,6 +265,69 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
             publicUrl={publicUrl}
             defaultEmail={customerRow?.email ?? ""}
           />
+        )}
+
+        {/* Sec 6: the customer has no login, so the member records what
+            happened. Only offered once the quote actually exists. */}
+        {doc.number && (doc.status === "sent" || doc.status === "accepted" || doc.status === "declined") && (
+          <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+            <h2 className="text-sm font-semibold text-ink">What did your customer say?</h2>
+            <div className="flex flex-wrap gap-2">
+              <form action={setQuoteOutcome}>
+                <input type="hidden" name="documentId" value={doc.id} />
+                <input type="hidden" name="outcome" value="accepted" />
+                <button
+                  type="submit"
+                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    doc.status === "accepted"
+                      ? "bg-green-600 text-white"
+                      : "border border-gray-200 bg-white text-gray-700 hover:border-brand hover:text-brand"
+                  }`}
+                >
+                  They accepted
+                </button>
+              </form>
+              <form action={setQuoteOutcome}>
+                <input type="hidden" name="documentId" value={doc.id} />
+                <input type="hidden" name="outcome" value="declined" />
+                <button
+                  type="submit"
+                  className={`rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+                    doc.status === "declined"
+                      ? "bg-gray-700 text-white"
+                      : "border border-gray-200 bg-white text-gray-700 hover:border-brand hover:text-brand"
+                  }`}
+                >
+                  They said no
+                </button>
+              </form>
+            </div>
+
+            {doc.status === "accepted" && (
+              <form action={convertToInvoice} className="flex flex-col gap-2 border-t border-gray-100 pt-4">
+                <input type="hidden" name="documentId" value={doc.id} />
+                <button
+                  type="submit"
+                  className="inline-flex items-center justify-center rounded-full bg-brand px-6 py-3.5 text-base font-semibold text-white shadow-sm hover:bg-brand-dark"
+                >
+                  Turn this into an invoice
+                </button>
+                <p className="text-xs text-gray-500">
+                  Opens as a draft with the same lines, so you can adjust for what was actually done
+                  before you send it.
+                </p>
+              </form>
+            )}
+          </div>
+        )}
+
+        {doc.status === "converted" && (
+          <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
+            This quote has been turned into an invoice.{" "}
+            <Link href="/bizup/invoices" className="font-semibold text-brand underline-offset-2 hover:underline">
+              See your invoices
+            </Link>
+          </p>
         )}
 
         {doc.first_viewed_at && (
