@@ -34,7 +34,7 @@ export const TIERS: {
       // all (KatisoBiz) in a separate section near the footer — a prospect
       // looking at just this card never saw the full value included.
       "RE:Biz Nomads Community",
-      "KatisoBiz In-Chat Payments",
+      "KatisoBiz Easy Quote to Invoice",
     ],
     ctaLabel: "Start Your Free Trial",
   },
@@ -61,7 +61,7 @@ export const TIERS: {
       // card at all.
       "Marketplace Presence",
       "RE:Biz Nomads Community",
-      "KatisoBiz In-Chat Payments",
+      "KatisoBiz Easy Quote to Invoice",
     ],
     ctaLabel: "Start Growing",
   },
