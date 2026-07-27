@@ -21,12 +21,17 @@ export function proxy(request: NextRequest) {
   // KatisoBiz (BizUp/docs/bizup-phase1-spec.md Sec 14.2: same app, shared auth
   // and Supabase/Resend wiring, with katisobiz.co.za mapped as an
   // additional domain in Vercel rather than a separate deployment).
-  // Matches the new katisobiz.co.za and the old bizup.digitalflyer.co.za,
-  // so the rename does not break anything already sent out while DNS for
-  // the new domain is still being set up. The old one can be dropped once
+  // Matched on the first label rather than the full hostname, so this
+  // answers on katisobiz.co.za, katisobiz.digitalflyer.co.za and the old
+  // bizup.digitalflyer.co.za alike. That matters while the new domain's
+  // DNS is still being set up: the subdomain works off the existing
+  // wildcard and needs no registrar change, and nothing already sent out
+  // on the old name breaks. www is the one case the first label cannot
+  // express, so it stays explicit. The bizup. branch can be dropped once
   // nothing points at it.
   const host = hostname.split(":")[0].toLowerCase();
-  if (host === "katisobiz.co.za" || host === "www.katisobiz.co.za" || host.startsWith("bizup.")) {
+  const firstLabel = host.split(".")[0];
+  if (firstLabel === "katisobiz" || firstLabel === "bizup" || host === "www.katisobiz.co.za") {
     const { pathname } = request.nextUrl;
 
     // API routes are never rewritten under any hostname. The Paystack,
