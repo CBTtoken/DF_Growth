@@ -237,3 +237,17 @@ export async function updateTemplate(formData: FormData): Promise<void> {
 
   revalidatePath("/bizup/settings/business");
 }
+
+/**
+ * Log out of BizUp.
+ *
+ * There was no way out of BizUp at all until Dewald tried to sign up a
+ * second account and found himself stuck in the first one. Sends the member
+ * to BizUp's own login rather than Growth's, since that is the product they
+ * were in.
+ */
+export async function logOutOfBizUp(): Promise<void> {
+  const supabase = await createServerClient();
+  await supabase.auth.signOut();
+  redirect("/bizup/login");
+}

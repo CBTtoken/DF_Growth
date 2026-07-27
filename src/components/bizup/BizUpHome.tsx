@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatZar } from "@/lib/bizup/money";
 import { createQuote } from "@/app/bizup/quotes/actions";
+import { logOutOfBizUp } from "@/app/bizup/actions";
 import { capWarning } from "@/lib/bizup/cap";
 import type { HomeSummary } from "@/lib/bizup/home";
 
@@ -195,11 +196,18 @@ export function BizUpHome({
       </section>
 
       {/* Settings deliberately lives down here, not in the navigation bar.
-          A member touches these twice ever. */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 pt-4 text-xs font-medium text-gray-500">
+          A member touches these twice ever. Log out belongs with them for
+          the same reason, and there was no way out of BizUp at all until
+          Dewald went looking for one. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-4 text-xs font-medium text-gray-500">
         <Link href="/bizup/price-list" className="hover:text-brand">Price list</Link>
         <Link href="/bizup/settings/business" className="hover:text-brand">Business details</Link>
         <Link href="/bizup/settings/banking" className="hover:text-brand">Banking details</Link>
+        <form action={logOutOfBizUp} className="contents">
+          <button type="submit" className="text-xs font-medium text-gray-500 hover:text-brand">
+            Log out
+          </button>
+        </form>
       </div>
     </div>
   );
