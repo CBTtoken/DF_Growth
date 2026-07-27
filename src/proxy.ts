@@ -29,13 +29,19 @@ export function proxy(request: NextRequest) {
     // rewrite here would silently break them.
     if (pathname.startsWith("/api/")) return NextResponse.next();
 
-    // Already an explicit /bizup/... path. Left alone rather than
-    // rewritten, which is what stops /bizup/login becoming
-    // /bizup/bizup/login. Both URL forms therefore work on this hostname,
-    // so every existing Link in the app (all of which use the /bizup/...
-    // form) keeps working without a host-aware URL helper.
+    // On BizUp's own hostname the /bizup prefix is redundant, so it is
+    // redirected away rather than merely tolerated. Previously both forms
+    // worked and the app's own redirect() calls use absolute /bizup/...
+    // paths, so members ended up looking at bizup.digitalflyer.co.za/bizup/login.
+    //
+    // This cannot loop. The redirect only fires for a URL the browser
+    // actually requested with the prefix; the rewrite below is internal and
+    // does not re-enter the proxy.
     if (pathname === BIZUP_PREFIX || pathname.startsWith(`${BIZUP_PREFIX}/`)) {
-      return NextResponse.next();
+      const stripped = pathname.slice(BIZUP_PREFIX.length) || "/";
+      const canonical = request.nextUrl.clone();
+      canonical.pathname = stripped;
+      return NextResponse.redirect(canonical);
     }
 
     // bizup.digitalflyer.co.za/login -> /bizup/login

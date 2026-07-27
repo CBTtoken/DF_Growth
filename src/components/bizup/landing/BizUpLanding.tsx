@@ -158,7 +158,7 @@ const PLANS = [
     // getting that list for nothing. That is a misleading representation
     // under the CPA, and the same trap the deck avoids elsewhere with fake
     // testimonials and "SARS compliant".
-    cta: "Start on Free, move up later",
+    cta: "Start today",
   },
   {
     name: "Unlimited",
@@ -167,7 +167,7 @@ const PLANS = [
     highlight: false,
     badge: null,
     features: ["Unlimited documents", "Everything in BizUp", "Up to 5 users", "Recurring invoices"],
-    cta: "Start on Free, move up later",
+    cta: "Start today",
   },
 ];
 
