@@ -18,8 +18,14 @@ export default async function BizUpStartPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/bizup/login");
 
+  // Signup creates the account row the moment the emailed code is
+  // confirmed, so by the time a new member taps "Set up my business" the
+  // account always exists. This used to redirect them to the dashboard,
+  // which meant the setup screen became unreachable the moment it was
+  // needed, and the checklist button pointed at a page that bounced.
+  // Sends them to the same form they came for instead.
   const existing = await getMyBizUpAccount();
-  if (existing) redirect("/bizup");
+  if (existing) redirect("/bizup/settings/business");
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">

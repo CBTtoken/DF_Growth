@@ -30,7 +30,7 @@ export default async function BizUpWelcomePage({
           Add your business details and your banking details once, and every quote you send after
           that takes under a minute.
         </p>
-        <Link href="/bizup/start" className="btn-accent-lg mt-3">
+        <Link href="/bizup/settings/business" className="btn-accent-lg mt-3">
           Set up my business
         </Link>
         <Link href="/bizup/quotes" className="text-sm font-medium text-neutral-muted hover:text-brand-blue">

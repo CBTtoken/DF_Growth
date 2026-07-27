@@ -68,26 +68,42 @@ export function SetupProgress({ state }: { state: SetupState }) {
         />
       </div>
 
-      <ol className="mt-4 flex flex-col gap-2.5">
+      {/* Every step is its own link, not just the next one.
+          Dewald: "I still don't have access to setup my bank details as a
+          new user." Only the next step was clickable, so with business
+          details incomplete the banking step was listed but unreachable,
+          which reads as a locked door rather than an ordered list. A member
+          should be able to do these in whatever order suits them. */}
+      <ol className="mt-4 flex flex-col gap-1">
         {STEPS.map((s) => {
           const isDone = done[s.key];
           const isNext = s.key === next.key;
           return (
-            <li key={s.key} className="flex items-start gap-3">
-              <span
-                aria-hidden
-                className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
-                  isDone ? "bg-green-600 text-white" : isNext ? "bg-brand text-white" : "bg-white text-gray-400"
-                }`}
+            <li key={s.key}>
+              <Link
+                href={s.href}
+                className="-mx-2 flex items-start gap-3 rounded-xl px-2 py-2 transition hover:bg-white"
               >
-                {isDone ? "✓" : STEPS.indexOf(s) + 1}
-              </span>
-              <span className="min-w-0">
-                <span className={`block text-sm font-semibold ${isDone ? "text-gray-400 line-through" : "text-ink"}`}>
-                  {s.title}
+                <span
+                  aria-hidden
+                  className={`mt-0.5 grid size-5 shrink-0 place-items-center rounded-full text-[11px] font-bold ${
+                    isDone ? "bg-green-600 text-white" : isNext ? "bg-brand text-white" : "bg-white text-gray-400"
+                  }`}
+                >
+                  {isDone ? "✓" : STEPS.indexOf(s) + 1}
                 </span>
-                {isNext && <span className="block text-sm text-gray-600">{s.why}</span>}
-              </span>
+                <span className="min-w-0 flex-1">
+                  <span className={`block text-sm font-semibold ${isDone ? "text-gray-400" : "text-ink"}`}>
+                    {s.title}
+                  </span>
+                  {!isDone && <span className="block text-sm text-gray-600">{s.why}</span>}
+                </span>
+                {!isDone && (
+                  <span aria-hidden className="mt-0.5 shrink-0 text-sm text-gray-400">
+                    &rsaquo;
+                  </span>
+                )}
+              </Link>
             </li>
           );
         })}
