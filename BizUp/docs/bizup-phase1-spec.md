@@ -28,7 +28,7 @@ BizUp is deliberately positioned as the cheapest, easiest entry point into the D
 |---|---|---|---|
 | BizUp Free | R0 | 10 | 1 template, no logo upload, basic status tracking, BizUp footer |
 | BizUp | R49/month | 75 | All 5 templates, own logo, customer database, reports, BizUp footer |
-| BizUp Unlimited | R89/month | Unlimited | Everything above, no cap. **Phase 2. Build the entitlement structure now, do not create the tier yet.** |
+| BizUp Unlimited | R89/month | Unlimited | Everything above, plus multi-user, recurring invoices and priority support. **Sprint 2.** |
 
 ### Entitlements when bundled with Growth
 
@@ -39,6 +39,16 @@ BizUp is deliberately positioned as the cheapest, easiest entry point into the D
 | Enterprise | BizUp (75 documents) | Add Unlimited for R40 more |
 
 **A Foundation member who hits the cap must be able to buy the R49 add-on directly, without being forced to upgrade to Growth Engine.** Never block a customer trying to spend money. This also keeps Growth Engine sold on what it is actually for, the Meta tracking and managed campaigns, rather than on invoice volume.
+
+### What each tier is actually for
+
+Keep this straight, because it governs every future "which tier does X go in" argument.
+
+- **Free** proves the product works and puts branded documents in front of other business owners.
+- **R49 makes a solo operator better.** Their own brand, their own price list, their own reports, statements to chase money with. Everything a one-person business needs.
+- **R89 handles a small team.** Multi-user, recurring invoices, no volume ceiling. This is the two or three van operation.
+
+A feature belongs at R89 only if it is genuinely about **scale**, meaning more people or more automation. Client statements are not about scale, they are about getting paid, so they sit at R49.
 
 ### Why these specific numbers
 
@@ -440,7 +450,7 @@ Members must always be able to type a free-text line without touching the catalo
 
 ## 12. Reports (Phase 1 only)
 
-Six screens. Resist adding more.
+Seven screens. Resist adding more.
 
 1. **Quotes** for the period: number sent, number accepted, total value, win rate percentage
 2. **Invoiced** for the period: total issued
@@ -448,22 +458,58 @@ Six screens. Resist adding more.
 4. **Aged debtors**: 0 to 30, 31 to 60, 61 to 90, over 90 days
 5. **Pipeline**: open quotes not yet expired, at face value (no weighting, it will confuse people)
 6. **VAT turnover tracker**: rolling 12-month taxable supplies against the R120,000 and R2.3 million markers
+7. **Client statement**: per customer, all invoices, credit notes and payments over a period, with the closing balance owed
 
-Every report exportable to CSV and PDF. Period selector: this month, last month, this tax year, custom.
+Every report exportable to CSV and PDF. Period selector: this month, last month, this tax year (uses `financial_year_end_month`), custom.
+
+### Client statements
+
+Included in the **R49 tier**, not held back for R89. A statement is a chasing-money tool, and chasing money is a core pain for exactly the solo operator R49 is aimed at. A plumber with a body corporate or a landlord as a repeat customer needs one.
+
+- Generated per customer, for a chosen period.
+- Shows every invoice, every credit note, every payment, and the closing balance.
+- Sends by WhatsApp, email or PDF using the same rails as quotes and invoices.
+- Statements are **not** financial documents in the SARS sense, so they need no number series and can be regenerated freely.
+
+### The accountant export package
+
+**Treat this as a referral channel, not a convenience feature.** A South African accountant typically has fifty to two hundred small business clients. If a member's accountant receives a clean, well-labelled BizUp export every month, that accountant starts recommending BizUp to other clients. This is the highest-leverage acquisition channel available in this market and it costs almost nothing to design for.
+
+One button, "Export for my accountant", producing a single ZIP containing:
+
+- `invoices.csv`, every issued invoice for the period: number, date, customer, description summary, amount excluding VAT, VAT amount, total, status, date paid
+- `credit-notes.csv`, same shape, linked to the original invoice number
+- `payments.csv`, every payment recorded: date, amount, method, reference, invoice number
+- `vat-summary.csv`, only for VAT-registered members: output VAT by period
+- `/documents/`, every PDF, named by document number
+- `cover.pdf`, a one-page summary of the business, the period, the totals and what is in the ZIP
+
+**Design requirements:**
+- CSV is mandatory, not optional. Accountants open everything in Excel.
+- The cover sheet carries a small "Produced with BizUp, DigitalFlyer SA" line with a short link. This is the referral hook. Keep it discreet and professional, because the audience is a professional.
+- Deliver as a **secure expiring download link**, not as a raw email attachment. The ZIP contains third-party personal information and should not sit indefinitely in an inbox.
+- If the member has no accountant, offer at that moment: "Need an accountant? Find one on the DigitalFlyer SA marketplace." Natural, useful, and the cross-sell the business plan calls for.
+
+### Explicitly not built
+**No expense tracking, no bank reconciliation, no financial statements, no general ledger.** BizUp produces documents and tracks payment status. The moment a member needs books, they need an accountant, and BizUp's job is to hand that accountant clean data. This boundary is a positioning decision, not a limitation, and it is what keeps the product light.
 
 ---
 
-## 13. Explicitly NOT in Phase 1
+## 13. What is deferred, and to where
+
+### Sprint 2, and the reason the R89 tier exists
+- **Multi-user accounts**, up to 5 users. Aimed at the two or three van operation.
+- **Recurring invoices**, for retainer work: gardeners, cleaners, monthly service contracts.
+- Build the entitlement structure in Phase 1 so both can be switched on without a migration.
+
+### Explicitly NOT in Phase 1
 
 Listed so the coding session does not drift.
 
-- The R99 Unlimited tier. Build the plan and entitlement structure so it can be switched on, but do not create the tier or its pricing page yet.
-- Recurring or scheduled invoices
 - Online payment collection on the invoice (strong Phase 1.5 candidate given Paystack is already in the stack, but it needs the Sprint 4 payments decision resolved first)
-- Multi-user or multi-seat accounts
 - Multi-currency. Everything is ZAR.
-- Purchase orders, delivery notes, statements of account
-- Expense tracking, bank feeds, reconciliation, any ledger
+- Purchase orders and delivery notes. These serve goods businesses, not the service trades BizUp targets. Not planned.
+- **Expense tracking, bank feeds, reconciliation, financial statements, any ledger. Not deferred, refused.** The moment BizUp does books it stops being light and starts competing with payPod at R159 and Sage at R240 on their ground. BizUp produces documents and hands clean data to an accountant. That boundary is the product.
 - VAT201 return preparation or SARS eFiling integration
 - Debit notes and partial credit notes
 - Full offline sync
@@ -543,6 +589,22 @@ Get steps 1 to 7 in front of one real plumber before building steps 8 onwards. T
 11. **The entitlement matrix is never published.** Pricing page shows three standalone plans only.
 12. **Hard cap, no overage.** Progressive warnings plus a permanently visible counter, with the block applied at Send rather than at Create so a draft can always be built on site.
 13. **R49 topup for 75 extra documents**, rolling over and never expiring, available on every tier.
+14. **Client statements ship in the R49 tier**, not held back for R89.
+15. **Accountant export package built**, designed as a referral channel rather than a convenience feature.
+16. **Multi-user and recurring invoices move to Sprint 2** and become the substance of the R89 tier.
+17. **Volume caps retained despite competitor pressure.** See below.
+
+### Competitive context, reviewed 27 July 2026
+
+**payPod** (paypod.co.za) charges **R159/month** for Premium, more than three times BizUp's R49, and its list includes unlimited everything, recurring invoices, expense tracking, accounting reports, statements, delivery notes, purchase orders and 4 additional users. Critically, **payPod's free plan already offers unlimited invoices and quotes**, and the thing it charges to remove is payPod branding on the PDF. **Zoho Invoice** is genuinely free forever with credit notes, expenses and reports.
+
+An alternative model was proposed and **rejected by Dewald**: unlimited documents on the free tier, with the paywall moved to branding removal instead of volume. The argument for it was that unlimited free is now the South African market default, that a volume cap throttles BizUp's own footer-based acquisition engine, and that "get your own logo instead of ours" is an upgrade trigger better aligned with the product's core promise.
+
+**Decision: keep the current cap structure.** payPod has low brand recognition, the cap logic is already built, and the model can be swapped later if the market pushes back.
+
+**The signal that would trigger a swap, agreed now so it actually gets checked:** free-tier members who reach 10 documents and then **go dormant rather than upgrade**. If most cap-hitters convert, the cap is working. If more than roughly half go quiet for 30 days instead of paying, the cap is turning away the people BizUp exists to attract, and the branding gate should replace it. Instrument this from launch.
+
+**BizUp's real edge over that feature list:** every competitor above sends by **email only**. None of them send on WhatsApp from the member's own number, which is how the South African informal trade actually operates. Compete there, not on row count. payPod is drifting upward into accounting; BizUp deliberately goes the other way, toward the fastest possible quote from a phone.
 
 ### Blocking before public launch, not before build
 - Terms of service and privacy policy updated per section 8. Build can proceed in parallel, but nothing goes live to a real member without these.
@@ -551,7 +613,8 @@ Get steps 1 to 7 in front of one real plumber before building steps 8 onwards. T
 ### To review after 60 days of real usage
 - **The quote-to-win ratio**, which is the true driver of document volume rather than the job count. Track average documents issued per member per month, split by whether they are winning or losing quotes. If members are burning the cap on unsuccessful quoting rather than on growth, the cap is in the wrong place.
 - **Topup versus upgrade behaviour.** How many members top up, how often, and how many eventually move to a monthly plan. If a large group tops up repeatedly and never converts, either the R89 tier is priced wrong or the honest prompt is not working hard enough.
-- **How many members hit the cap and then do nothing.** These are the silent churn risk. They did not upgrade, did not top up, and simply stopped sending documents.
+- **How many members hit the cap and then do nothing.** These are the silent churn risk. They did not upgrade, did not top up, and simply stopped sending documents. **This is the specific metric that decides whether the volume cap survives.** See the competitive context above.
+- **Whether accountant exports lead anywhere.** Tag traffic arriving from the export cover sheet link. If accountants are a real referral channel, it changes where marketing spend should go.
 
 ### Blocking before public launch, not before build
 - Terms of service and privacy policy updated per section 8. Build can proceed in parallel, but nothing goes live to a real member without these.

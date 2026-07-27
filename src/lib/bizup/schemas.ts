@@ -65,6 +65,57 @@ export const businessProfileSchema = z.object({
 export type BusinessProfileInput = z.input<typeof businessProfileSchema>;
 export type BusinessProfileValues = z.output<typeof businessProfileSchema>;
 
+// ============================================================
+// Customers (Sec 4, build step 2)
+// ============================================================
+
+export const customerSchema = z.object({
+  // The only required field. Sec 9's sixty-second target means a member
+  // standing in a customer's kitchen must be able to save a name and get
+  // on with the quote, filling in the rest later or never.
+  name: z.string().trim().min(2, "Enter the customer's name"),
+  isBusiness: z.coerce.boolean().default(false),
+  registrationNumber: optionalText,
+
+  // The customer's own VAT number, prompted (never required) on a full tax
+  // invoice under Sec 3.2. Same SARS format as the member's own.
+  vatNumber: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || isValidVatNumberFormat(v), {
+      message: "A SARS VAT number is 10 digits and starts with a 4",
+    })
+    .transform((v) => (v ? normaliseVatNumber(v) : "")),
+
+  // Validated only when something was actually typed. A blank email is
+  // normal: plenty of customers are reached on WhatsApp alone.
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .refine((v) => !v || z.string().email().safeParse(v).success, {
+      message: "Enter a valid email, or leave it blank",
+    }),
+  phone: optionalText,
+  whatsapp: optionalText,
+
+  // Sec 3.2: required on a full tax invoice, so collected here rather than
+  // asked for mid-invoice. Optional at this point because most jobs never
+  // cross R5,000.
+  addressLine1: optionalText,
+  addressLine2: optionalText,
+  city: optionalText,
+  province: optionalText,
+  postalCode: optionalText,
+
+  notes: optionalText,
+});
+
+export type CustomerValues = z.output<typeof customerSchema>;
+
 export const MONTHS = [
   "January",
   "February",

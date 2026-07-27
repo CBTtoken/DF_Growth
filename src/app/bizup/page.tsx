@@ -63,6 +63,9 @@ export default async function BizUpHomePage() {
         </section>
 
         <nav className="flex flex-wrap gap-3 text-sm font-medium">
+          <Link href="/bizup/customers" className="text-brand underline-offset-2 hover:underline">
+            Customers
+          </Link>
           <Link href="/bizup/settings/business" className="text-brand underline-offset-2 hover:underline">
             Business details
           </Link>

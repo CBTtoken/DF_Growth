@@ -1,6 +1,6 @@
 import type { Tier } from "@/lib/paystack/plans";
 
-// BizUp/docs/bizup-phase1-spec (1).md Sec 2 and Sec 15.
+// BizUp/docs/bizup-phase1-spec.md Sec 2 and Sec 15.
 //
 // Entitlement level (`plan`) and where it came from (`plan_source`) are
 // modelled separately and deliberately. A member on `paid` because Growth
