@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updateBizUpAccount } from "@/app/bizup/actions";
+import { updateBizUpAccount, updateTemplate } from "@/app/bizup/actions";
+import { TEMPLATES } from "@/lib/bizup/pdf/document";
 import { BusinessProfileForm } from "@/components/bizup/BusinessProfileForm";
 import { isVatVendor } from "@/lib/bizup/vat";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -24,7 +25,7 @@ export default async function BizUpBusinessSettingsPage() {
   const { data: account } = await admin
     .from("bizup_accounts")
     .select(
-      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month"
+      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
@@ -32,6 +33,7 @@ export default async function BizUpBusinessSettingsPage() {
   if (!account) redirect("/bizup/start");
 
   const vendor = isVatVendor(account.vat_number);
+  const templateId = account.template_id;
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -74,6 +76,44 @@ export default async function BizUpBusinessSettingsPage() {
             />
           </div>
         </div>
+        {/* Sec 10: choice is per account, changeable at any time, and
+            applies to future documents only. Documents already issued keep
+            the template they were sent with, because template_id is stored
+            on each document. */}
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight text-ink">How your documents look</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Changing this affects new documents only. Anything you have already sent stays exactly
+            as your customer received it.
+          </p>
+
+          <form action={updateTemplate} className="mt-5 flex flex-col gap-3">
+            {TEMPLATES.map((t) => (
+              <label
+                key={t.id}
+                className="flex items-start gap-3 rounded-xl border border-gray-200 p-4 text-sm hover:border-brand"
+              >
+                <input
+                  type="radio"
+                  name="templateId"
+                  value={t.id}
+                  defaultChecked={templateId === t.id}
+                  className="mt-1"
+                />
+                <span>
+                  <span className="block font-semibold text-ink">{t.name}</span>
+                  <span className="block text-gray-500">{t.description}</span>
+                </span>
+              </label>
+            ))}
+            <button
+              type="submit"
+              className="self-start rounded-full bg-brand px-6 py-3 text-base font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+            >
+              Save template
+            </button>
+          </form>
+        </section>
       </div>
       <SiteFooter />
     </main>

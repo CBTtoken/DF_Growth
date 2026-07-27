@@ -8,6 +8,7 @@ import { businessProfileSchema } from "@/lib/bizup/schemas";
 import { bizUpEntitlementForTier } from "@/lib/bizup/entitlements";
 import { setActiveProductPreference } from "@/lib/bizup/product";
 import type { Tier } from "@/lib/paystack/plans";
+import { isTemplateId } from "@/lib/bizup/pdf/document";
 
 export type BizUpFormState = {
   error?: Record<string, string[]> & { _form?: string[] };
@@ -210,4 +211,29 @@ export async function updateBizUpAccount(
   revalidatePath("/bizup");
   revalidatePath("/bizup/settings/business");
   return null;
+}
+
+/**
+ * Sec 10: template choice is per account, changeable at any time, and
+ * applies to future documents only. Historical documents keep the template
+ * that was active when they were issued, because template_id is stored on
+ * each document and read from there at render time.
+ */
+export async function updateTemplate(formData: FormData): Promise<void> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const templateId = String(formData.get("templateId") ?? "");
+  if (!isTemplateId(templateId)) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("bizup_accounts")
+    .update({ template_id: templateId, updated_at: new Date().toISOString() })
+    .eq("owner_user_id", user.id);
+
+  revalidatePath("/bizup/settings/business");
 }

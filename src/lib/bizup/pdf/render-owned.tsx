@@ -1,7 +1,7 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, buildIssuerSnapshot, buildBankSnapshot } from "@/lib/bizup/documents";
-import { CleanDocument, type PdfDocumentData } from "@/lib/bizup/pdf/CleanDocument";
+import { BizUpDocument, type PdfDocumentData } from "@/lib/bizup/pdf/document";
 
 // The member's own copy of a document as a PDF, shared by the quote and
 // invoice routes so the two cannot drift apart. The customer's copy is
@@ -84,6 +84,9 @@ export async function renderOwnedDocumentPdf(id: string): Promise<Response> {
     vatAmountCents: doc.vat_amount_cents,
     totalInclCents: doc.total_incl_cents,
     notes: doc.notes,
+    jobReference: doc.job_reference,
+    siteAddress: doc.site_address,
+    technicianName: doc.technician_name,
     terms: doc.terms,
     lines: (lines ?? []).map((l) => ({
       description: l.description,
@@ -97,7 +100,7 @@ export async function renderOwnedDocumentPdf(id: string): Promise<Response> {
     bank,
   };
 
-  const buffer = await renderToBuffer(<CleanDocument data={data} />);
+  const buffer = await renderToBuffer(<BizUpDocument data={data} templateId={doc.template_id} />);
 
   return new Response(new Uint8Array(buffer), {
     headers: {

@@ -1,6 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { CleanDocument, type PdfDocumentData } from "@/lib/bizup/pdf/CleanDocument";
+import { BizUpDocument, type PdfDocumentData } from "@/lib/bizup/pdf/document";
 
 export const runtime = "nodejs";
 
@@ -49,6 +49,9 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     vatAmountCents: doc.vat_amount_cents,
     totalInclCents: doc.total_incl_cents,
     notes: doc.notes,
+    jobReference: doc.job_reference,
+    siteAddress: doc.site_address,
+    technicianName: doc.technician_name,
     terms: doc.terms,
     lines: (lines ?? []).map((l) => ({
       description: l.description,
@@ -62,7 +65,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     bank: doc.bank_snapshot as PdfDocumentData["bank"],
   };
 
-  const buffer = await renderToBuffer(<CleanDocument data={data} />);
+  const buffer = await renderToBuffer(<BizUpDocument data={data} templateId={doc.template_id} />);
 
   return new Response(new Uint8Array(buffer), {
     headers: {
