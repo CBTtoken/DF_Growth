@@ -24,7 +24,35 @@ export function BizUpFooter() {
   return (
     <footer className="border-t border-neutral-border bg-neutral-light">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-neutral-mid">
+        {/* Growth cross-sell, and the one place on this page it belongs.
+            The copy deck says "do not sell Growth on this page, it dilutes
+            a single clear action", and that reasoning holds for the body.
+            Dewald asked for it at the bottom, which is where a visitor who
+            has already read everything and is still deciding will look.
+            Kept factual and quiet: it states a real entitlement rather than
+            pitching a second product.
+
+            The claim is true as built: Growth Engine and Enterprise include
+            the R49 tier, Foundation includes BizUp Free. See
+            bizUpEntitlementForTier in lib/bizup/entitlements.ts. */}
+        <div className="rounded-2xl border border-brand-blue/20 bg-brand-blue-light p-5">
+          <p className="text-sm font-bold text-neutral-ink">
+            Already on DigitalFlyer Growth? BizUp is included.
+          </p>
+          <p className="mt-1.5 text-sm leading-relaxed text-neutral-mid">
+            Growth gets your business found by local customers with a professional page, a
+            marketplace listing and reviews. BizUp comes with it, so quoting and invoicing are
+            already paid for.
+          </p>
+          <a
+            href="https://growth.digitalflyersa.co.za/pricing"
+            className="mt-3 inline-block text-sm font-bold text-brand-blue hover:underline"
+          >
+            See what is in Growth
+          </a>
+        </div>
+
+        <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-neutral-mid">
           <span className="font-extrabold text-neutral-ink">BizUp</span>
           <a href="#pricing" className="hover:text-brand-blue">Pricing</a>
           <a href="#how-it-works" className="hover:text-brand-blue">How it works</a>
@@ -45,20 +73,7 @@ export function BizUpFooter() {
           </p>
         </div>
 
-        {/* Deliberately low key. The visitor came for a quoting tool, and
-            selling Growth here dilutes the single clear action. Cross-sell
-            happens inside the product once there is a habit. */}
-        <p className="mt-6 text-xs text-neutral-muted">
-          BizUp is from DigitalFlyer SA, which also helps South African businesses get found by
-          local customers.{" "}
-          <a
-            href="https://growth.digitalflyersa.co.za"
-            className="font-semibold text-brand-blue hover:underline"
-          >
-            Find out more
-          </a>
-        </p>
-      </div>
+              </div>
     </footer>
   );
 }

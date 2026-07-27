@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getMyBizUpAccount } from "@/lib/bizup/account";
 import { SiteFooter } from "@/components/SiteFooter";
+import { BizUpHeader } from "@/components/bizup/landing/BizUpHeader";
+import { GrowthFromBizUp } from "@/components/bizup/BizUpCrossSell";
 import { BizUpLanding } from "@/components/bizup/landing/BizUpLanding";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 
@@ -37,6 +39,7 @@ export default async function BizUpHomePage() {
   if (!user) {
     return (
       <>
+        <BizUpHeader />
         <BizUpLanding />
         <BizUpFooter />
       </>
@@ -111,6 +114,11 @@ export default async function BizUpHomePage() {
             </Link>
           )}
         </nav>
+
+        {/* Cross-sell, and only to someone who does not already pay for
+            Growth. Advertising it to an existing Growth member would be
+            noise on their own dashboard. */}
+        {!account.growthClientId && <GrowthFromBizUp />}
       </div>
       <SiteFooter />
     </main>

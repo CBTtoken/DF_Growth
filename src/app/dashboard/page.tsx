@@ -14,6 +14,8 @@ import { PlatformFeatures } from "@/components/dashboard/PlatformFeatures";
 import { RoleSwitcher } from "@/components/dashboard/RoleSwitcher";
 import { getMyAgentRecord, getActiveRolePreference } from "@/lib/agents/dashboard-role";
 import { getMyBizUpAccount } from "@/lib/bizup/account";
+import { BizUpFromGrowth } from "@/components/bizup/BizUpCrossSell";
+import type { Tier } from "@/lib/paystack/plans";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
@@ -84,6 +86,9 @@ export default async function DashboardPage() {
   // requireGrowthClientId() never actually returns one. Asserted, not
   // re-checked, since there's nothing to recover into if it somehow did.
   const growthClientId = client.id!;
+  // Reused below for the BizUp card, so a member who already has BizUp sees
+  // "Go to BizUp" rather than being invited to set up something they have.
+  const bizUpAccount = await getMyBizUpAccount();
 
   const admin = createAdminClient();
   // Consolidated Sprint Sec 3.4: last 7 days' raw timestamps, bucketed by
@@ -587,6 +592,15 @@ export default async function DashboardPage() {
               dashboard, which mixed the two roles on one screen. It now
               lives on /dashboard/agent, reached through the role switcher
               at the top of this page. */}
+
+          {/* BizUp. Until this existed there was no way for a Growth member
+              to discover it at all: the only link between the two products
+              anywhere in the app was a redirect for members who had BizUp
+              and nothing else. */}
+          <BizUpFromGrowth
+            tier={(growthClient?.plan as Tier | undefined) ?? null}
+            hasBizUpAccount={!!bizUpAccount}
+          />
 
           <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
             <div>
