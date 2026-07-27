@@ -10,6 +10,10 @@ const inputClass =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
 const labelClass = "flex flex-col gap-1.5 text-sm font-medium text-gray-700";
 
+// The fields this form always renders. Anything rejected outside this set
+// cannot show its own message, so the catch-all below covers it.
+const VISIBLE_FIELDS = new Set(["name", "whatsapp", "phone", "email", "notes"]);
+
 export interface CustomerDefaults {
   id?: string;
   name?: string | null;
@@ -218,6 +222,21 @@ export function CustomerForm({
       </label>
 
       {state?.error?._form?.[0] && <p className="text-sm text-red-600">{state.error._form[0]}</p>}
+
+      {/* Safety net for the failure Dewald hit: the action rejected fields
+          that were not on screen, so nothing saved and nothing explained
+          why. The underlying cause is fixed, but any future rejection of a
+          field this form does not render would be invisible in exactly the
+          same way. This makes that impossible: if there is an error and no
+          visible field is showing one, say so plainly. */}
+      {state?.error &&
+        !state.error._form &&
+        !Object.keys(state.error).some((k) => VISIBLE_FIELDS.has(k)) && (
+          <p className="text-sm text-red-600">
+            We couldn&apos;t save that, and the problem is not with anything shown here. Please try
+            again, or get in touch if it keeps happening.
+          </p>
+        )}
 
       <button
         type="submit"

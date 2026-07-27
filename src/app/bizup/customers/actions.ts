@@ -28,23 +28,42 @@ async function currentAccountId(): Promise<string | null> {
   return data?.id ?? null;
 }
 
+/**
+ * Reads a field, treating "not on the page" the same as "left blank".
+ *
+ * This form hides the address fields until the member asks for them, and
+ * the registration and VAT fields unless the customer is a business. A
+ * hidden input is not submitted at all, so formData.get returns null rather
+ * than "". The schema's optional fields accept a missing value or an empty
+ * string, but not null, so every one of those fields was being rejected.
+ *
+ * The failure was silent and total: the rejected fields were the ones not
+ * rendered, so no error could be displayed, and saving a private customer
+ * with no address, which is the ordinary case, simply did nothing. Found by
+ * Dewald trying it twice and assuming he had done something wrong.
+ */
+function field(formData: FormData, key: string): string {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : "";
+}
+
 function fieldsFrom(formData: FormData) {
   return {
-    name: formData.get("name"),
+    name: field(formData, "name"),
     // An unchecked checkbox sends nothing at all, which is why this is a
     // presence test rather than reading a value.
     isBusiness: formData.get("isBusiness") !== null,
-    registrationNumber: formData.get("registrationNumber"),
-    vatNumber: formData.get("vatNumber"),
-    email: formData.get("email"),
-    phone: formData.get("phone"),
-    whatsapp: formData.get("whatsapp"),
-    addressLine1: formData.get("addressLine1"),
-    addressLine2: formData.get("addressLine2"),
-    city: formData.get("city"),
-    province: formData.get("province"),
-    postalCode: formData.get("postalCode"),
-    notes: formData.get("notes"),
+    registrationNumber: field(formData, "registrationNumber"),
+    vatNumber: field(formData, "vatNumber"),
+    email: field(formData, "email"),
+    phone: field(formData, "phone"),
+    whatsapp: field(formData, "whatsapp"),
+    addressLine1: field(formData, "addressLine1"),
+    addressLine2: field(formData, "addressLine2"),
+    city: field(formData, "city"),
+    province: field(formData, "province"),
+    postalCode: field(formData, "postalCode"),
+    notes: field(formData, "notes"),
   };
 }
 
