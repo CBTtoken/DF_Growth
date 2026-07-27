@@ -148,6 +148,39 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
 
         {editable && <IssueInvoiceButton documentId={doc.id} ready={rows.length > 0} />}
 
+        {/* Sec 7: one button, on any issued invoice, and it is the only way
+            in. There is deliberately no inline edit anywhere on this page
+            once a number exists, so a correction cannot happen by accident. */}
+        {doc.number && !["cancelled", "credited", "corrected"].includes(doc.status) && (
+          <Link
+            href={`/bizup/invoices/${doc.id}/fix`}
+            className="self-start rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-brand hover:text-brand"
+          >
+            Fix this invoice
+          </Link>
+        )}
+
+        {doc.status === "corrected" && (
+          <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
+            This version has been corrected. The corrected invoice keeps the same number and date.
+          </p>
+        )}
+        {doc.status === "cancelled" && (
+          <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
+            This invoice was cancelled with a credit note. Both are kept in your records.
+          </p>
+        )}
+        {doc.status === "credited" && (
+          <p className="rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-600">
+            This invoice was replaced.{" "}
+            {doc.superseded_by_id && (
+              <Link href={`/bizup/invoices/${doc.superseded_by_id}`} className="font-semibold text-brand underline-offset-2 hover:underline">
+                See the invoice that replaced it
+              </Link>
+            )}
+          </p>
+        )}
+
         {doc.public_token && (
           <>
             <ShareQuote
