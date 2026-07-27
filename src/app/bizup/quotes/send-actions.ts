@@ -13,6 +13,7 @@ import {
   type CustomerRow,
 } from "@/lib/bizup/documents";
 import { getCapState } from "@/lib/bizup/cap";
+import { isKatisoBizHost } from "@/lib/bizup/product";
 import { sendEmail } from "@/lib/email/resend";
 import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, isVatVendor } from "@/lib/bizup/vat";
@@ -40,7 +41,7 @@ async function publicUrlFor(token: string): Promise<string> {
   // strips that prefix, so the customer gets the short /d/... link. On any
   // other host the full path is needed, which is what makes this work in
   // development and on the Growth domain.
-  const path = host.split(":")[0].toLowerCase().startsWith("bizup.")
+  const path = isKatisoBizHost(host)
     ? `/d/${token}`
     : `/bizup/d/${token}`;
 

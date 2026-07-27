@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { bizupLoginPath } from "@/lib/bizup/product";
+import { bizupLoginPath, isKatisoBizHost } from "@/lib/bizup/product";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -71,7 +71,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
   const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const publicUrl = doc.public_token
     ? `${host.startsWith("localhost") ? "http" : "https"}://${host}${
-        host.split(":")[0].toLowerCase().startsWith("bizup.") ? "" : "/bizup"
+        isKatisoBizHost(host) ? "" : "/bizup"
       }/d/${doc.public_token}`
     : "";
 

@@ -18,17 +18,35 @@ export function isProduct(value: unknown): value is Product {
 }
 
 /**
+ * Whether a request arrived on one of KatisoBiz's own hostnames.
+ *
+ * Matched on the first label, exactly as src/proxy.ts does, so the two
+ * cannot disagree about which host is KatisoBiz. They must agree: the proxy
+ * decides whether the /bizup prefix is stripped from the URL, and this
+ * decides whether links are built with the prefix. When only one of them
+ * knew about katisobiz.co.za, every login redirect and every customer
+ * document link on the new domain carried a redundant /bizup that then
+ * bounced through a redirect.
+ *
+ * Covers katisobiz.co.za, www.katisobiz.co.za, katisobiz.digitalflyer.co.za
+ * and the old bizup.digitalflyer.co.za.
+ */
+export function isKatisoBizHost(host: string | null): boolean {
+  if (!host) return false;
+  const bare = host.split(":")[0].toLowerCase();
+  const firstLabel = bare.split(".")[0];
+  return firstLabel === "katisobiz" || firstLabel === "bizup" || bare === "www.katisobiz.co.za";
+}
+
+/**
  * Resolves which product a request belongs to.
  *
- * Host first, path second, and both are supported on purpose. KatisoBiz's own
- * domain (katisobiz.co.za) is not wired yet, so today every KatisoBiz
- * page is reached at /bizup/... on the Growth domain. Once DNS is live the
- * host check starts matching and nothing else has to change -- which is
- * the reason this lives in one function rather than being re-derived at
- * each call site.
+ * Host first, path second, and both are supported on purpose. KatisoBiz is
+ * reachable both on its own domain and at /bizup/... on the Growth domain,
+ * and both have to keep working: links already sent out use the old form.
  */
 export function productFromRequest(host: string | null, pathname: string | null): Product {
-  if (host && host.split(":")[0].toLowerCase().startsWith("bizup.")) return "bizup";
+  if (isKatisoBizHost(host)) return "bizup";
   if (pathname && (pathname === "/bizup" || pathname.startsWith("/bizup/"))) return "bizup";
   return "growth";
 }
@@ -87,5 +105,5 @@ export const PRODUCT_LOGIN: Record<Product, string> = {
 export async function bizupLoginPath(): Promise<string> {
   const { headers } = await import("next/headers");
   const host = (await headers()).get("host") ?? "";
-  return host.split(":")[0].toLowerCase().startsWith("bizup.") ? "/login" : "/bizup/login";
+  return isKatisoBizHost(host) ? "/login" : "/bizup/login";
 }
