@@ -4,6 +4,9 @@ import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
 import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote } from "@/app/bizup/quotes/actions";
+import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
+import { IssueQuoteButton, ShareQuote } from "@/components/bizup/ShareQuote";
+import { headers } from "next/headers";
 import { formatZar } from "@/lib/bizup/money";
 import {
   isVatVendor,
@@ -48,6 +51,27 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
     ]);
 
   if (!doc) notFound();
+
+  // The chosen customer's own contact details, for the WhatsApp deep link
+  // and the email field. Fetched separately from the picker list above,
+  // which only needs names.
+  const { data: customerRow } = doc.customer_id
+    ? await admin
+        .from("bizup_customers")
+        .select("name, email, whatsapp, phone")
+        .eq("id", doc.customer_id)
+        .eq("account_id", account.id)
+        .maybeSingle()
+    : { data: null };
+
+  // Same prefix rule as send-actions.ts: BizUp's own hostname serves the
+  // short /d/... link, anywhere else needs the full path.
+  const host = (await headers()).get("host") ?? "bizup.digitalflyer.co.za";
+  const publicUrl = doc.public_token
+    ? `${host.startsWith("localhost") ? "http" : "https"}://${host}${
+        host.split(":")[0].toLowerCase().startsWith("bizup.") ? "" : "/bizup"
+      }/d/${doc.public_token}`
+    : "";
 
   const vendor = isVatVendor(account.vat_number);
   const editable = doc.number === null && doc.status === "draft";
@@ -213,6 +237,11 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
               </button>
             </form>
 
+            {/* Sec 15: the block happens here, at send, never at create. A
+                member with no allowance left can still build this whole
+                quote, they simply cannot issue it yet. */}
+            <IssueQuoteButton documentId={doc.id} ready={rows.length > 0} />
+
             <form action={deleteDraftQuote}>
               <input type="hidden" name="documentId" value={doc.id} />
               <button type="submit" className="text-sm font-semibold text-red-600 underline-offset-2 hover:underline">
@@ -220,6 +249,33 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
               </button>
             </form>
           </>
+        )}
+
+        {doc.public_token && (
+          <ShareQuote
+            documentId={doc.id}
+            whatsappUrl={await whatsappLinkFor(
+              doc.public_token,
+              account.business_name,
+              customerRow?.name ?? null,
+              doc.total_incl_cents,
+              customerRow?.whatsapp ?? null,
+            )}
+            publicUrl={publicUrl}
+            defaultEmail={customerRow?.email ?? ""}
+          />
+        )}
+
+        {doc.first_viewed_at && (
+          <p className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-900">
+            Your customer opened this on{" "}
+            {new Date(doc.first_viewed_at).toLocaleDateString("en-ZA", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+            .
+          </p>
         )}
       </div>
 

@@ -12,15 +12,32 @@ export async function sendEmail({
   to,
   subject,
   html,
+  fromName,
+  replyTo,
 }: {
   to: string;
   subject: string;
   html: string;
+  // BizUp Sec 9: a document emailed to a customer goes out under the
+  // member's own business name, with replies going to the member rather
+  // than to DigitalFlyer. The sending address itself stays our verified
+  // domain, since we cannot send as an address we do not control.
+  fromName?: string;
+  replyTo?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, error: "Missing RESEND_API_KEY" };
 
-  const from = process.env.RESEND_FROM_EMAIL ?? "DigitalFlyer Growth <onboarding@resend.dev>";
+  const configuredFrom =
+    process.env.RESEND_FROM_EMAIL ?? "DigitalFlyer Growth <onboarding@resend.dev>";
+  // Swaps only the display name, keeping whatever verified address is
+  // configured. Quotes are stripped so a business name containing one
+  // cannot break the header.
+  const from = fromName
+    ? `${fromName.replace(/["<>]/g, "")} <${
+        configuredFrom.includes("<") ? configuredFrom.split("<")[1].replace(">", "") : configuredFrom
+      }>`
+    : configuredFrom;
   // Public Beta Polish Sprint Sec 12: appended here, not at each call site
   // — every email sent through this one function gets it automatically,
   // including anything added later.
@@ -32,7 +49,13 @@ export async function sendEmail({
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from, to, subject, html: htmlWithFooter }),
+    body: JSON.stringify({
+      from,
+      to,
+      subject,
+      html: htmlWithFooter,
+      ...(replyTo ? { reply_to: replyTo } : {}),
+    }),
   });
 
   if (!res.ok) {
