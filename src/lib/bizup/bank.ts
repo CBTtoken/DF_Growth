@@ -18,13 +18,19 @@ export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 /**
  * South African universal branch codes, offered as a convenience so a
- * member on a phone does not have to find one.
+ * member on a phone does not have to find one. A wrong branch code means a
+ * failed payment, which is why these are checked rather than remembered.
  *
- * The field stays editable and this is only a prefill: a member banking
+ * Verified 27 July 2026 against two independent sources that agreed on
+ * every value: Peach Payments' operational list (a payment processor, so
+ * these are codes actually in use) and a published branch code directory.
+ *
+ * The field stays editable and this is only a prefill. A member banking
  * with a branch that does not use the universal code must be able to
- * override it. Worth spot-checking these against each bank before launch,
- * since a wrong prefill that the member does not notice is worse than no
- * prefill at all.
+ * override it, and no validation here can confirm an account exists.
+ *
+ * Re-check before any future launch: bank names and codes do change. This
+ * list has already needed one correction, see GoTyme below.
  */
 export const SA_BANKS: { name: string; branchCode: string }[] = [
   { name: "Absa", branchCode: "632005" },
@@ -33,10 +39,15 @@ export const SA_BANKS: { name: string; branchCode: string }[] = [
   { name: "Capitec", branchCode: "470010" },
   { name: "Discovery Bank", branchCode: "679000" },
   { name: "First National Bank", branchCode: "250655" },
+  // TymeBank formally became GoTyme Bank on 13 April 2026, confirmed by the
+  // South African Reserve Bank in the Government Gazette. The branch code
+  // did not change. Both names are shown because a member who opened the
+  // account before the rebrand will still be looking for "TymeBank" in this
+  // list, and will not find their bank if only the new name appears.
+  { name: "GoTyme Bank (previously TymeBank)", branchCode: "678910" },
   { name: "Investec", branchCode: "580105" },
   { name: "Nedbank", branchCode: "198765" },
   { name: "Standard Bank", branchCode: "051001" },
-  { name: "TymeBank", branchCode: "678910" },
 ];
 
 /** Digits only. Members paste from banking apps, which add spaces and dashes. */
