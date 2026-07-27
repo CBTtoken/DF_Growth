@@ -66,6 +66,9 @@ export default async function BizUpHomePage() {
           <Link href="/bizup/customers" className="text-brand underline-offset-2 hover:underline">
             Customers
           </Link>
+          <Link href="/bizup/price-list" className="text-brand underline-offset-2 hover:underline">
+            Price list
+          </Link>
           <Link href="/bizup/settings/business" className="text-brand underline-offset-2 hover:underline">
             Business details
           </Link>

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidVatNumberFormat, normaliseVatNumber } from "./vat";
+import { parseAmountToCents } from "./money";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 15.1: account setup, business
 // profile and VAT status.
@@ -115,6 +116,81 @@ export const customerSchema = z.object({
 });
 
 export type CustomerValues = z.output<typeof customerSchema>;
+
+// ============================================================
+// Price list (Sec 11, build step 3)
+// ============================================================
+
+/**
+ * Sec 11's three broad shapes, plus callout and other so a plumber's
+ * callout fee does not have to be filed as labour. Labels are what the
+ * member sees, values are what the database stores.
+ */
+export const CATALOGUE_TYPES = [
+  { value: "labour", label: "Labour" },
+  { value: "part", label: "Part" },
+  { value: "product", label: "Product" },
+  { value: "travel", label: "Travel" },
+  { value: "callout", label: "Callout" },
+  { value: "other", label: "Other" },
+] as const;
+
+/**
+ * The unit is what makes a stored price mean anything: R450 is a very
+ * different number per hour than per job.
+ */
+export const CATALOGUE_UNITS = [
+  { value: "hour", label: "per hour" },
+  { value: "day", label: "per day" },
+  { value: "each", label: "each" },
+  { value: "km", label: "per km" },
+  { value: "callout", label: "per callout" },
+  { value: "job", label: "per job" },
+] as const;
+
+export const catalogueItemSchema = z.object({
+  name: z.string().trim().min(2, "Give this a name you will recognise"),
+  description: optionalText,
+  type: z.enum(["labour", "part", "product", "travel", "callout", "other"]).default("labour"),
+  unit: z.enum(["hour", "day", "each", "km", "callout", "job"]).default("each"),
+
+  // Typed by a member on a phone, so it arrives as text and can look like
+  // "450", "R450,00" or "1 234.50". parseAmountToCents handles all of
+  // those and returns null for anything it cannot read confidently, which
+  // becomes a validation message rather than a silently wrong price.
+  unitPriceExclCents: z
+    .string()
+    .trim()
+    .min(1, "Enter a price")
+    .transform((v, ctx) => {
+      const cents = parseAmountToCents(v);
+      if (cents === null || cents < 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a price like 450 or 450.00" });
+        return z.NEVER;
+      }
+      return cents;
+    }),
+
+  // Sec 11: "a plumber buys a geyser at cost and bills at cost plus
+  // margin". Blank means no markup, which is the normal case, so a blank
+  // becomes null rather than zero.
+  defaultMarkupPct: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .transform((v, ctx) => {
+      if (!v) return null;
+      const n = Number(v.replace(",", "."));
+      if (!Number.isFinite(n) || n < 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a percentage like 20" });
+        return z.NEVER;
+      }
+      return n;
+    }),
+});
+
+export type CatalogueItemValues = z.output<typeof catalogueItemSchema>;
 
 export const MONTHS = [
   "January",
