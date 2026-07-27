@@ -64,7 +64,11 @@ export async function signUpForBizUp(_prev: SignupState, formData: FormData): Pr
   // "turnstileToken", not Cloudflare's own "cf-turnstile-response". Reading
   // the wrong one fails closed and silently blocks every signup, which is
   // exactly what happened on the first pass here.
-  const human = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  const human = await verifyTurnstileToken(
+    String(formData.get("turnstileToken") ?? ""),
+    ip,
+    "BIZUP_TURNSTILE_SECRET_KEY",
+  );
   if (!human) {
     return { error: { _form: ["We could not confirm you are a person. Please try again."] } };
   }

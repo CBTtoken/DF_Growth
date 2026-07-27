@@ -18,7 +18,18 @@ declare global {
 // token straight into a hidden input by name, so a parent <form> just
 // drops this in and reads formData.get(name) in its Server Action like
 // any other field — no lifted state, no extra wiring at the call site.
-export function TurnstileWidget({ name = "turnstileToken" }: { name?: string }) {
+// A Turnstile widget is locked to its hostnames in the Cloudflare
+// dashboard, so BizUp runs its own widget rather than reusing Growth's:
+// they are on different domains and Growth's key silently refuses to
+// render on BizUp's. siteKey defaults to Growth's, so every existing call
+// site is unchanged.
+export function TurnstileWidget({
+  name = "turnstileToken",
+  siteKey,
+}: {
+  name?: string;
+  siteKey?: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -29,7 +40,7 @@ export function TurnstileWidget({ name = "turnstileToken" }: { name?: string }) 
     function render() {
       if (cancelled || !containerRef.current || !window.turnstile) return;
       widgetId = window.turnstile.render(containerRef.current, {
-        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!,
+        sitekey: siteKey || process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!,
         callback: (token) => {
           if (inputRef.current) inputRef.current.value = token;
         },
@@ -56,7 +67,7 @@ export function TurnstileWidget({ name = "turnstileToken" }: { name?: string }) 
       cancelled = true;
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
     };
-  }, []);
+  }, [siteKey]);
 
   return (
     <div>

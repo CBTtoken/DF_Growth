@@ -112,7 +112,7 @@ export function SignupForm() {
       </label>
 
       {/* Bot protection, same widget the reviews and events forms use. */}
-      <TurnstileWidget />
+      <TurnstileWidget siteKey={process.env.NEXT_PUBLIC_BIZUP_TURNSTILE_SITE_KEY} />
 
       {state?.error?._form?.[0] && <p className="text-sm text-red-600">{state.error._form[0]}</p>}
 
