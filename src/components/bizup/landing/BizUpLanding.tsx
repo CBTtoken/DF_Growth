@@ -198,7 +198,14 @@ const FAQS = [
   },
   {
     q: "Is my customer information safe?",
-    a: "Yes. Your customer list and your banking details are encrypted, and our support team cannot see them. Your data is yours, it is never shared with other businesses on the platform, and we handle it according to POPIA.",
+    // Was: "Your customer list and your banking details are encrypted, and
+    // our support team cannot see them." Only half of that was true.
+    // Banking details genuinely are encrypted with the decryption path
+    // isolated and logged. Customer lists are not, and an administrator
+    // with database access can read them. This is a security promise about
+    // other people's personal information, so it now says what is actually
+    // the case. The legal brief flagged the same sentence.
+    a: "Your banking details are encrypted, and reading them is restricted and logged. Your customer list is not encrypted, but it is separated from every other business on the platform and our staff do not access it in the course of normal support. Your data is yours, it is never shared with other businesses, and we handle it according to POPIA.",
   },
   {
     q: "Is it really free?",

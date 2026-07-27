@@ -2,6 +2,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calculateTotals, isVatVendor, type BizUpSettings } from "./vat";
 import { lineTotalCents } from "./money";
+import { bizupLogoUrl } from "./logo";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 4, 5 and 6. Shared document logic,
 // kept out of the Server Actions so totals are computed in exactly one
@@ -35,6 +36,7 @@ export interface BizUpAccountRow {
   template_id: string;
   bank_notice_style: string;
   insurance_pricing_enabled: boolean;
+  logo_path: string | null;
 }
 
 /** The signed-in member's account, or null. Every document action starts here. */
@@ -49,7 +51,7 @@ export async function currentAccount(): Promise<BizUpAccountRow | null> {
   const { data } = await admin
     .from("bizup_accounts")
     .select(
-      "id, business_name, trading_name, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, template_id, bank_notice_style, insurance_pricing_enabled"
+      "id, business_name, trading_name, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, template_id, bank_notice_style, insurance_pricing_enabled, logo_path"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
@@ -136,6 +138,12 @@ export function buildIssuerSnapshot(account: BizUpAccountRow) {
     phone: account.phone,
     whatsapp: account.whatsapp,
     is_vat_vendor: isVatVendor(account.vat_number),
+    // Snapshotted like everything else here, per Sec 4 rule 1: a member who
+    // rebrands next year must not have last year's invoices silently
+    // restamped with the new logo. The stored path also keeps working after
+    // a replacement, because uploads are timestamped rather than
+    // overwriting one filename.
+    logo_url: bizupLogoUrl(account.logo_path),
   };
 }
 

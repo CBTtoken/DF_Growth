@@ -6,6 +6,9 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateBizUpAccount, setInsurancePricing } from "@/app/bizup/actions";
 import { TemplatePicker } from "@/components/bizup/TemplatePicker";
+import { LogoUpload } from "@/components/bizup/LogoUpload";
+import { bizupLogoUrl } from "@/lib/bizup/logo";
+import { capabilitiesFor, type BizUpPlan } from "@/lib/bizup/entitlements";
 import { BusinessProfileForm } from "@/components/bizup/BusinessProfileForm";
 import { isVatVendor } from "@/lib/bizup/vat";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -26,7 +29,7 @@ export default async function BizUpBusinessSettingsPage() {
   const { data: account } = await admin
     .from("bizup_accounts")
     .select(
-      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id, insurance_pricing_enabled"
+      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id, insurance_pricing_enabled, logo_path, plan"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
@@ -36,6 +39,7 @@ export default async function BizUpBusinessSettingsPage() {
   const vendor = isVatVendor(account.vat_number);
   const templateId = account.template_id;
   const insurancePricing = account.insurance_pricing_enabled;
+  const capabilities = capabilitiesFor(account.plan as BizUpPlan);
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -88,7 +92,18 @@ export default async function BizUpBusinessSettingsPage() {
             as your customer received it.
           </p>
           <div className="mt-5">
-            <TemplatePicker current={templateId} />
+            <TemplatePicker current={templateId} allTemplates={capabilities.allTemplates} />
+          </div>
+        </section>
+
+        {/* "Your own logo" is sold in the R49 tier and was never built. */}
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight text-ink">Your logo</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Printed at the top of every quote and invoice you send.
+          </p>
+          <div className="mt-5">
+            <LogoUpload logoUrl={bizupLogoUrl(account.logo_path)} allowed={capabilities.ownLogo} />
           </div>
         </section>
 

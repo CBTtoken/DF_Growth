@@ -11,7 +11,19 @@ import { TEMPLATES } from "@/lib/bizup/pdf/document";
 // clicked regardless, so a successful save and a broken one looked exactly
 // the same. That is a real bug even though the data was fine.
 
-export function TemplatePicker({ current }: { current: string }) {
+// The free tier gets one template, per Sec 2 and the published pricing
+// table. The other four are shown but locked rather than hidden, so the
+// upgrade has something concrete attached to it rather than being an
+// abstract price difference.
+const FREE_TEMPLATE_ID = "clean";
+
+export function TemplatePicker({
+  current,
+  allTemplates = true,
+}: {
+  current: string;
+  allTemplates?: boolean;
+}) {
   const [state, action, pending] = useActionState(updateTemplate, null);
   const [selected, setSelected] = useState(current);
   const [saved, setSaved] = useState(false);
@@ -25,11 +37,17 @@ export function TemplatePicker({ current }: { current: string }) {
       }}
       className="flex flex-col gap-3"
     >
-      {TEMPLATES.map((t) => (
+      {TEMPLATES.map((t) => {
+        const locked = !allTemplates && t.id !== FREE_TEMPLATE_ID;
+        return (
         <label
           key={t.id}
           className={`flex items-start gap-3 rounded-xl border p-4 text-sm transition ${
-            selected === t.id ? "border-brand bg-brand/5" : "border-gray-200 hover:border-brand"
+            locked
+              ? "cursor-not-allowed border-gray-200 opacity-60"
+              : selected === t.id
+                ? "border-brand bg-brand/5"
+                : "border-gray-200 hover:border-brand"
           }`}
         >
           <input
@@ -42,13 +60,18 @@ export function TemplatePicker({ current }: { current: string }) {
               setSaved(false);
             }}
             className="mt-1"
+            disabled={locked}
           />
           <span>
-            <span className="block font-semibold text-ink">{t.name}</span>
+            <span className="block font-semibold text-ink">
+              {t.name}
+              {locked && <span className="ml-2 font-normal text-gray-400">R49 plan</span>}
+            </span>
             <span className="block text-gray-500">{t.description}</span>
           </span>
         </label>
-      ))}
+        );
+      })}
 
       {state?.error?._form?.[0] && <p className="text-sm text-red-600">{state.error._form[0]}</p>}
 

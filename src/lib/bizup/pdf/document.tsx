@@ -1,5 +1,5 @@
 import React from "react";
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, nonVendorFooterLine, type DocType } from "@/lib/bizup/vat";
 import { bankNoticeText, type BankNoticeStyle } from "@/lib/bizup/bank";
@@ -60,6 +60,8 @@ export interface PdfDocumentData {
     email?: string | null;
     phone?: string | null;
     is_vat_vendor: boolean;
+    /** Public URL of the member own logo, R49 and above. Null on free. */
+    logo_url?: string | null;
   };
   customer: { name: string; vat_number?: string | null; address?: string | null } | null;
   bank: {
@@ -103,6 +105,29 @@ function IssuerBlock({ data, serif = false, align = "right", color }: { data: Pd
   const ink = color ?? "#1a1a1a";
   return (
     <View style={[align === "right" ? base.right : {}, { color: ink }]}>
+      {/* The member's own logo, an R49 feature. Rendered in the shared
+          issuer block so every one of the five templates gets it without
+          five separate implementations to keep in step, which is the same
+          reasoning Sec 10 gives for the mandatory fields.
+
+          Height is fixed and width follows the image, so a tall logo and a
+          wide one both sit on one line rather than pushing the address off
+          the page. objectFit keeps it from stretching. */}
+      {data.issuer.logo_url ? (
+        // This is @react-pdf/renderer's Image, not an HTML img or
+        // next/image. It has no alt prop, and the output is a PDF rather
+        // than a web page, so the accessibility rule does not apply.
+        // eslint-disable-next-line jsx-a11y/alt-text
+        <Image
+          src={data.issuer.logo_url}
+          style={{
+            height: 34,
+            marginBottom: 6,
+            objectFit: "contain",
+            alignSelf: align === "right" ? "flex-end" : "flex-start",
+          }}
+        />
+      ) : null}
       <Text style={[b, { fontSize: 12, color: ink }]}>{data.issuer.business_name}</Text>
       {data.issuer.trading_name ? <Text style={{ color: ink }}>trading as {data.issuer.trading_name}</Text> : null}
       {data.issuer.address ? <Text style={{ color: ink }}>{data.issuer.address}</Text> : null}

@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
-import { addLine, updateLine, removeLine, setRateType } from "@/app/bizup/quotes/actions";
+import { addLine, updateLine, removeLine, setRateType, saveLineToPriceList } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { updateInvoiceCustomer } from "@/app/bizup/invoices/actions";
 import { IssueInvoiceButton, RecordPaymentForm } from "@/components/bizup/InvoiceActions";
@@ -188,7 +188,19 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
                     {formatZar(line.line_total_excl_cents)}
                   </span>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
+                  {/* Same as the quote builder: a line typed by hand can be
+                      kept, and one already from the price list cannot be
+                      added twice. */}
+                  {!line.catalogue_item_id && (
+                    <button
+                      type="submit"
+                      formAction={saveLineToPriceList}
+                      className="order-2 text-sm font-semibold text-gray-600 underline-offset-2 hover:text-brand hover:underline"
+                    >
+                      Save to price list
+                    </button>
+                  )}
                   <button type="submit" className="text-sm font-semibold text-brand underline-offset-2 hover:underline">
                     Update
                   </button>

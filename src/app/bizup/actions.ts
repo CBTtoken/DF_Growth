@@ -5,13 +5,18 @@ import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { businessProfileSchema } from "@/lib/bizup/schemas";
-import { bizUpEntitlementForTier } from "@/lib/bizup/entitlements";
+import { bizUpEntitlementForTier, capabilitiesFor, type BizUpPlan } from "@/lib/bizup/entitlements";
+import { replaceBizUpLogo, clearBizUpLogo } from "@/lib/bizup/logo";
 import { setActiveProductPreference , bizupLoginPath } from "@/lib/bizup/product";
 import type { Tier } from "@/lib/paystack/plans";
 import { isTemplateId } from "@/lib/bizup/pdf/document";
 
 export type BizUpFormState = {
   error?: Record<string, string[]> & { _form?: string[] };
+  // Some of these actions have no redirect to signal success with, so they
+  // say so instead. Silence reading as failure is a bug this product has
+  // already shipped once, on the template picker.
+  ok?: string;
 } | null;
 
 function fieldsFrom(formData: FormData) {
@@ -284,6 +289,55 @@ export async function setInsurancePricing(formData: FormData): Promise<void> {
 
   revalidatePath("/bizup/settings/business");
   revalidatePath("/bizup/price-list");
+}
+
+/**
+ * Uploads or removes the member's own logo.
+ *
+ * Gated on the plan, because "Your own logo" is sold as an R49 feature.
+ * The check is here on the server rather than only by hiding the form: the
+ * bucket has no insert policy for ordinary users at all, so this action is
+ * the single way a file gets in, and it is the right place to enforce the
+ * tier.
+ */
+export async function updateBizUpLogo(
+  _prev: BizUpFormState,
+  formData: FormData,
+): Promise<BizUpFormState> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: { _form: ["Please log in again."] } };
+
+  const admin = createAdminClient();
+  const { data: account } = await admin
+    .from("bizup_accounts")
+    .select("id, plan")
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+
+  if (!account) return { error: { _form: ["Please finish setting up your business first."] } };
+
+  if (!capabilitiesFor(account.plan as BizUpPlan).ownLogo) {
+    return {
+      error: {
+        _form: ["Your own logo comes with the R49 plan. Your documents still carry your business name and details."],
+      },
+    };
+  }
+
+  if (formData.get("remove") === "true") {
+    await clearBizUpLogo(account.id);
+    revalidatePath("/bizup/settings/business");
+    return { ok: "Logo removed." };
+  }
+
+  const result = await replaceBizUpLogo(account.id, formData.get("logo"));
+  if ("error" in result) return { error: { _form: [result.error] } };
+
+  revalidatePath("/bizup/settings/business");
+  return { ok: "Logo saved. It will appear on documents you send from now on." };
 }
 
 /**

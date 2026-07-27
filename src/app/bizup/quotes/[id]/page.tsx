@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
-import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote, setRateType } from "@/app/bizup/quotes/actions";
+import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote, setRateType, saveLineToPriceList } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { setQuoteOutcome, convertToInvoice } from "@/app/bizup/quotes/convert-actions";
 import { IssueQuoteButton, ShareQuote } from "@/components/bizup/ShareQuote";
@@ -202,6 +202,19 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
                   <button type="submit" className="text-sm font-semibold text-brand underline-offset-2 hover:underline">
                     Update
                   </button>
+                  {/* Only for a line the member typed. One that came from
+                      the price list is already there, and the button
+                      disappearing after a tap is how they can tell it
+                      worked. */}
+                  {!line.catalogue_item_id && (
+                    <button
+                      type="submit"
+                      formAction={saveLineToPriceList}
+                      className="text-sm font-semibold text-gray-600 underline-offset-2 hover:text-brand hover:underline"
+                    >
+                      Save to price list
+                    </button>
+                  )}
                   <button
                     type="submit"
                     formAction={removeLine}

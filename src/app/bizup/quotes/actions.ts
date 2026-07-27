@@ -184,6 +184,83 @@ export async function addLine(formData: FormData): Promise<void> {
   revalidatePath(`/bizup/quotes/${documentId}`);
 }
 
+/**
+ * Saves a line the member typed by hand into their price list.
+ *
+ * The landing page promises this in as many words: "Anything you type into
+ * a quote can be saved to your price list with one tap, so the list builds
+ * itself while you work." It was never built.
+ *
+ * The line keeps the price it already has; only the price list gains an
+ * entry. Re-pricing the line from the new catalogue item would be a
+ * surprise, since the member typed that number deliberately.
+ */
+export async function saveLineToPriceList(formData: FormData): Promise<void> {
+  const documentId = String(formData.get("documentId") ?? "");
+  const lineId = String(formData.get("lineId") ?? "");
+  const owned = await ownedDocument(documentId);
+  if (!owned || !lineId) return;
+  const { account, doc, admin } = owned;
+  if (!isEditable(doc)) return;
+
+  const { data: line } = await admin
+    .from("bizup_document_lines")
+    .select("id, description, unit, unit_price_excl_cents, catalogue_item_id")
+    .eq("id", lineId)
+    .eq("document_id", documentId)
+    .maybeSingle();
+
+  // Already from the price list, so there is nothing to add.
+  if (!line || line.catalogue_item_id) return;
+
+  // A member who taps this twice on the same line should not end up with
+  // the same price listed twice. Matched on the name they gave it, which
+  // is the only thing they would recognise as "the same item".
+  const { data: existing } = await admin
+    .from("bizup_catalogue_items")
+    .select("id")
+    .eq("account_id", account.id)
+    .eq("name", line.description)
+    .maybeSingle();
+
+  let catalogueItemId = existing?.id ?? null;
+
+  if (!catalogueItemId) {
+    const { data: created, error } = await admin
+      .from("bizup_catalogue_items")
+      .insert({
+        account_id: account.id,
+        name: line.description,
+        unit: line.unit,
+        unit_price_excl_cents: line.unit_price_excl_cents,
+        // Typed straight onto a document, so the price is what the member
+        // charges. There is no cost price to mark up here.
+        type: "labour",
+      })
+      .select("id")
+      .single();
+
+    if (error || !created) {
+      console.error("Failed to save KatisoBiz line to price list", error);
+      return;
+    }
+    catalogueItemId = created.id;
+  }
+
+  // Links the line to the new entry, which both records where it came from
+  // for reporting and makes the button disappear, so the member can see it
+  // worked without needing a message.
+  await admin
+    .from("bizup_document_lines")
+    .update({ catalogue_item_id: catalogueItemId })
+    .eq("id", lineId)
+    .eq("document_id", documentId);
+
+  revalidatePath(`/bizup/quotes/${documentId}`);
+  revalidatePath(`/bizup/invoices/${documentId}`);
+  revalidatePath("/bizup/price-list");
+}
+
 export async function updateLine(formData: FormData): Promise<void> {
   const documentId = String(formData.get("documentId") ?? "");
   const lineId = String(formData.get("lineId") ?? "");
