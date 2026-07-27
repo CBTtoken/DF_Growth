@@ -4,9 +4,19 @@ import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getMyBizUpAccount } from "@/lib/bizup/account";
 import { SiteFooter } from "@/components/SiteFooter";
+import { BizUpLanding } from "@/components/bizup/landing/BizUpLanding";
+import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 
 // Private, signed-in-only — same reasoning as onboard/page.tsx.
-export const metadata: Metadata = { robots: { index: false, follow: false } };
+// The signed-out view of this route is the public landing page, so it must
+// be indexable. The signed-in dashboard below renders no member data to a
+// crawler, since a crawler is never signed in.
+export const metadata: Metadata = {
+  title: "BizUp: send a quote that wins the job",
+  description:
+    "A professional quote with your logo and banking details, from your phone, in under a minute. Turn it into an invoice when the job is done. Free to start, no card needed.",
+  alternates: { canonical: "https://bizup.digitalflyer.co.za" },
+};
 
 // BizUp's signed-in home, and the destination resolveLandingPath sends
 // every BizUp member to. Intentionally thin for now: the quote and invoice
@@ -20,7 +30,18 @@ export default async function BizUpHomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/bizup/login");
+  // A visitor gets the landing page; a member gets their dashboard. Same
+  // route either way, so bizup.digitalflyer.co.za is one address that does
+  // the right thing rather than a marketing site with the app hidden
+  // somewhere behind it.
+  if (!user) {
+    return (
+      <>
+        <BizUpLanding />
+        <BizUpFooter />
+      </>
+    );
+  }
 
   const account = await getMyBizUpAccount();
 
