@@ -6,6 +6,7 @@ import { getMyBizUpAccount } from "@/lib/bizup/account";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BizUpHeader } from "@/components/bizup/landing/BizUpHeader";
 import { GrowthFromBizUp } from "@/components/bizup/BizUpCrossSell";
+import { SetupProgress } from "@/components/bizup/SetupProgress";
 import { BizUpLanding } from "@/components/bizup/landing/BizUpLanding";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 
@@ -60,31 +61,16 @@ export default async function BizUpHomePage() {
           <span className="text-sm text-gray-500">{account.businessName}</span>
         </header>
 
-        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h1 className="text-lg font-bold tracking-tight text-ink">Your business is set up</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Quotes and invoices are being built. This is where they will live.
-          </p>
-
-          {/* Sec 15.1 lists banking details as part of account setup, and an
-              invoice cannot be paid without them, so an account missing them
-              is genuinely incomplete rather than merely unfinished. */}
-          {!account.hasBankDetails && (
-            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
-              <p className="text-sm font-semibold text-amber-900">Add your banking details</p>
-              <p className="mt-1 text-sm text-amber-800">
-                Your customers need these to pay you. They are encrypted, and only the last four
-                digits are ever shown back to you.
-              </p>
-              <Link
-                href="/bizup/settings/banking"
-                className="mt-3 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
-              >
-                Add banking details
-              </Link>
-            </div>
-          )}
-        </section>
+        {/* Replaces the old standalone "add your banking details" warning.
+            That told a member one thing was missing without saying what
+            else was, or what order to do it in. */}
+        <SetupProgress
+          state={{
+            hasBusinessDetails: account.hasBusinessDetails,
+            hasBankDetails: account.hasBankDetails,
+            hasSentDocument: account.hasSentDocument,
+          }}
+        />
 
         <nav className="flex flex-wrap gap-3 text-sm font-medium">
           <Link href="/bizup/quotes" className="text-brand underline-offset-2 hover:underline">

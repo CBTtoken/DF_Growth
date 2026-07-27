@@ -15,6 +15,18 @@ export interface BizUpAccountSummary {
   growthClientId: string | null;
   /** BizUp/docs/bizup-phase1-spec.md Sec 15.1: setup is incomplete until banking details exist. */
   hasBankDetails: boolean;
+  /**
+   * Setup progress, for the checklist on the dashboard.
+   *
+   * "Business details" means more than a row existing, since signup creates
+   * one from the business name alone. It means the member has been back and
+   * filled in what a document actually needs: an address, which SARS
+   * requires on an invoice over R5,000 and which looks wrong by its absence
+   * on any document.
+   */
+  hasBusinessDetails: boolean;
+  /** Whether anything has actually been issued yet, which is what ends onboarding. */
+  hasSentDocument: boolean;
 }
 
 /**
@@ -34,7 +46,7 @@ export async function getMyBizUpAccount(): Promise<BizUpAccountSummary | null> {
   const admin = createAdminClient();
   const { data: account } = await admin
     .from("bizup_accounts")
-    .select("id, business_name, vat_number, plan, plan_source, growth_client_id")
+    .select("id, business_name, vat_number, plan, plan_source, growth_client_id, address_line1, city")
     .eq("owner_user_id", user.id)
     .maybeSingle();
 
@@ -44,13 +56,20 @@ export async function getMyBizUpAccount(): Promise<BizUpAccountSummary | null> {
   // Sec 8: the encrypted number is decrypted in exactly one place, the PDF
   // render path, and no other code path should be able to reach it by
   // accident because it happened to select *.
-  const { data: bank } = await admin
-    .from("bizup_bank_details")
-    .select("account_id")
-    .eq("account_id", account.id)
-    .maybeSingle();
+  // Both run together: this sits on every BizUp dashboard render, so two
+  // sequential round trips would be felt.
+  const [{ data: bank }, { count: issuedCount }] = await Promise.all([
+    admin.from("bizup_bank_details").select("account_id").eq("account_id", account.id).maybeSingle(),
+    admin
+      .from("bizup_documents")
+      .select("id", { count: "exact", head: true })
+      .eq("account_id", account.id)
+      .not("issued_at", "is", null),
+  ]);
 
   return {
+    hasBusinessDetails: !!account.address_line1 && !!account.city,
+    hasSentDocument: (issuedCount ?? 0) > 0,
     id: account.id,
     businessName: account.business_name,
     vatNumber: account.vat_number,

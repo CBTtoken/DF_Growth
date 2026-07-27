@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import {
   requestBankChange,
   confirmBankChange,
@@ -111,10 +112,22 @@ export function BankDetailsSection({ summary }: { summary: BankSummary }) {
         </p>
       )}
 
+      {/* Dewald, live testing: confirming the code left you on this screen
+          with a success message and nowhere to go, which reads as "did that
+          work?". A confirmation is a moment of completion, so it gets an
+          explicit next step rather than leaving the member to find one. */}
       {confirmState?.done && (
-        <p className="text-sm font-medium text-green-700">
-          Your banking details have been updated.
-        </p>
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+          <p className="text-sm font-semibold text-green-900">
+            Done. Your banking details will appear on every document you send.
+          </p>
+          <Link
+            href="/bizup"
+            className="mt-3 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+          >
+            Continue
+          </Link>
+        </div>
       )}
 
       <form action={requestAction} className="flex flex-col gap-4">

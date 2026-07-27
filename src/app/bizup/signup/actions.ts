@@ -8,18 +8,32 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { setActiveProductPreference } from "@/lib/bizup/product";
 import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
+import { verifyEmailAddress } from "@/lib/email/verify-address";
 
-// BizUp signup. Landing copy, conversion note 2: "The signup form is name,
-// mobile number, password. Not company registration number, not VAT
-// number, not address. Collect the rest inside the onboarding wizard once
-// they are already committed. Every field on a signup form costs
-// conversions, and this audience abandons fast."
+// BizUp signup, in two steps.
 //
-// One deviation, and the reason for it: email is also collected. It cannot
-// be dropped, because it is how the account is authenticated and how the
-// member receives their own copies. Four fields, not three.
+// The first version of this created the account and signed the member
+// straight in with email_confirm set, which meant a mistyped address
+// silently produced an account that could never receive a document and
+// could never be recovered. Found by Dewald on the live page.
+//
+// It is now a real verification: a 6-digit code, matching this project's
+// standing rule after the Zoho incident, where mail scanners opened
+// confirmation links before the recipient could and consumed the token.
+// A code cannot be consumed by a scanner.
+//
+// Three gates, cheapest first:
+//   1. Turnstile, so a bot never reaches the mail sender at all.
+//   2. An MX lookup on the domain, which catches gmial.com before we send
+//      anything and before the member waits for a code that cannot arrive.
+//   3. The code itself, which proves they actually own the address.
 
-export type SignupState = { error?: Record<string, string[]> & { _form?: string[] } } | null;
+export type SignupState = {
+  error?: Record<string, string[]> & { _form?: string[] };
+  /** Set once the code is on its way, which is what swaps the form for the code screen. */
+  awaitingCode?: string;
+} | null;
 
 const signupSchema = z.object({
   businessName: z.string().trim().min(2, "Enter your business name"),
@@ -38,67 +52,121 @@ export async function signUpForBizUp(_prev: SignupState, formData: FormData): Pr
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
   const { businessName, email, phone, password } = parsed.data;
 
-  const ip = clientIpFromHeaders(await headers());
+  const h = await headers();
+  const ip = clientIpFromHeaders(h);
   if (isRateLimited(`bizup-signup:${ip}`, 5, 15 * 60 * 1000)) {
     return { error: { _form: ["Too many attempts. Please wait a few minutes and try again."] } };
   }
 
-  const admin = createAdminClient();
+  // Gate 1. Before anything else, so an automated signup never costs us a
+  // send and never lands in the mail provider's bounce statistics.
+  const human = await verifyTurnstileToken(String(formData.get("cf-turnstile-response") ?? ""), ip);
+  if (!human) {
+    return { error: { _form: ["We could not confirm you are a person. Please try again."] } };
+  }
 
-  // createUser, not inviteUserByEmail: the member is choosing a password
-  // right now and should land straight in the product, not go and find an
-  // email first. It also sends nothing, which matters because this runs on
-  // every signup attempt.
-  const { data: created, error: createError } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
-
-  if (createError || !created.user) {
-    // An existing account is the one case worth naming specifically, since
-    // "try again" would be useless advice.
-    const already = createError?.message?.toLowerCase().includes("already");
+  // Gate 2. A real MX lookup on the domain. This is the one that catches
+  // the typo Dewald raised: gmial.com, outlok.com, a missing letter in a
+  // company domain. Far better to say so now than to send a code into a
+  // void and leave someone waiting.
+  const address = await verifyEmailAddress(email);
+  if (!address.valid) {
     return {
       error: {
-        _form: [
-          already
-            ? "There is already an account with that email. Log in instead."
-            : "We couldn't create that account. Please try again.",
-        ],
+        email: ["We cannot find that email domain. Please check the spelling."],
       },
     };
   }
 
-  const { error: accountError } = await admin.from("bizup_accounts").insert({
-    owner_user_id: created.user.id,
-    business_name: businessName,
+  // signUp, not admin createUser: this sends the confirmation code and
+  // leaves the account unverified until the code comes back. The business
+  // name and phone ride along as user metadata rather than being written to
+  // a table now, so an abandoned signup leaves no half-made account behind.
+  const supabase = await createServerClient();
+  const { data, error } = await supabase.auth.signUp({
     email,
-    phone,
+    password,
+    options: { data: { bizup_business_name: businessName, bizup_phone: phone } },
   });
 
-  if (accountError) {
-    // Roll the auth user back rather than leaving a login with no account
-    // behind it, which is the exact stranded state that has bitten this
-    // project before on the Growth side.
-    await admin.auth.admin.deleteUser(created.user.id);
-    console.error("Failed to create BizUp account at signup", accountError);
-    return { error: { _form: ["We couldn't finish setting that up. Please try again."] } };
+  if (error) {
+    console.error("BizUp signUp failed", error.message);
+    return { error: { _form: ["We couldn't start that signup. Please try again."] } };
   }
 
-  // Sign them straight in. They just chose this password, so there is no
-  // reason to make them type it again.
+  // Supabase returns a user with an empty identities array when the address
+  // is already registered, rather than saying so, to avoid confirming which
+  // addresses exist. Worth handling explicitly, because "check your email"
+  // would leave a returning member waiting for a code that never comes.
+  if (data.user && data.user.identities?.length === 0) {
+    return {
+      error: { _form: ["There is already an account with that email. Log in instead."] },
+    };
+  }
+
+  return { awaitingCode: email };
+}
+
+/**
+ * Step two: the code. verifyOtp both confirms the address and establishes
+ * the session in one call, which is why this flow needs no callback route,
+ * no hash parsing and no redirect-URL configuration.
+ */
+export async function confirmBizUpSignup(_prev: SignupState, formData: FormData): Promise<SignupState> {
+  const email = String(formData.get("email") ?? "").trim();
+  const token = String(formData.get("code") ?? "").replace(/\s/g, "");
+  if (!email || !token) {
+    return { error: { code: ["Enter the code from your email."] }, awaitingCode: email };
+  }
+
+  const h = await headers();
+  const ip = clientIpFromHeaders(h);
+  if (isRateLimited(`bizup-confirm:${ip}`, 10, 15 * 60 * 1000)) {
+    return { error: { _form: ["Too many attempts. Please wait a few minutes."] }, awaitingCode: email };
+  }
+
   const supabase = await createServerClient();
-  await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "signup" });
+
+  if (error || !data.user) {
+    return { error: { code: ["That code is not right, or it has expired."] }, awaitingCode: email };
+  }
+
+  const meta = data.user.user_metadata ?? {};
+  const businessName = String(meta.bizup_business_name ?? "").trim() || "My business";
+  const phone = String(meta.bizup_phone ?? "").trim() || null;
+
+  const admin = createAdminClient();
+
+  // Idempotent: a member who confirms, navigates away and comes back must
+  // not end up with a second account. owner_user_id is unique anyway, so
+  // this is the friendly path rather than the only defence.
+  const { data: existing } = await admin
+    .from("bizup_accounts")
+    .select("id")
+    .eq("owner_user_id", data.user.id)
+    .maybeSingle();
+
+  if (!existing) {
+    const { error: accountError } = await admin.from("bizup_accounts").insert({
+      owner_user_id: data.user.id,
+      business_name: businessName,
+      email,
+      phone,
+    });
+    if (accountError) {
+      console.error("Failed to create BizUp account after confirmation", accountError);
+      return { error: { _form: ["We couldn't finish setting that up. Please try again."] }, awaitingCode: email };
+    }
+  }
+
   await setActiveProductPreference("bizup");
 
-  // Landing copy, conversion tracking: fire on the EXISTING DigitalFlyer
-  // pixel, deduped with the browser pixel on a shared event_id threaded to
-  // the thank-you page. Awaited rather than fired and forgotten, because
-  // both bare promises and after() were tested on this deployment and
-  // neither reliably completed.
+  // Fired only now, on a verified account, so the conversion count is not
+  // inflated by abandoned or mistyped signups. Awaited rather than fired
+  // and forgotten: neither bare promises nor after() reliably complete on
+  // this deployment.
   const eventId = crypto.randomUUID();
-  const h = await headers();
   const host = h.get("host") ?? "bizup.digitalflyer.co.za";
   await sendDigitalFlyerCapiEvent({
     eventName: "CompleteRegistration",
