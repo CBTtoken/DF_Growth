@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import * as Sentry from "@sentry/nextjs";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { TOPUP_DOCUMENTS } from "@/lib/bizup/billing";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { sendBookOrderConfirmationEmail } from "@/lib/email/book-order";
@@ -41,6 +42,82 @@ export async function POST(request: Request) {
   const { customer, metadata, reference, amount } = event.data;
 
   const admin = createAdminClient();
+
+  // KatisoBiz upgrades and topups. Handled first and returns immediately:
+  // this endpoint is shared by three unrelated flows because a Paystack
+  // account only supports one webhook URL, and everything below this is
+  // growth_clients billing logic that a KatisoBiz charge has nothing to do
+  // with.
+  if (metadata?.product === "bizup") {
+    const accountId = metadata.bizup_account_id;
+    if (!accountId || !reference) {
+      Sentry.captureMessage("KatisoBiz charge missing account id or reference", {
+        extra: { reference },
+      });
+      return NextResponse.json({ received: true });
+    }
+
+    const isTopup = metadata.kind === "topup";
+    const plan: "paid" | "unlimited" | null = isTopup
+      ? null
+      : metadata.bizup_plan === "unlimited"
+        ? "unlimited"
+        : "paid";
+
+    // The insert IS the idempotency check. paystack_reference is unique, so
+    // a redelivered event loses the race and stops here rather than handing
+    // out another 75 documents or re-applying a plan.
+    const { error: eventError } = await admin.from("bizup_billing_events").insert({
+      account_id: accountId,
+      paystack_reference: reference,
+      kind: isTopup ? "topup" : "subscription",
+      plan,
+      amount_cents: amount ?? 0,
+    });
+
+    if (eventError) {
+      // 23505 is the unique violation, meaning already processed. Anything
+      // else is a real failure worth knowing about, and must not fall
+      // through to applying the benefit twice.
+      if (eventError.code !== "23505") {
+        Sentry.captureMessage("Failed to record KatisoBiz billing event", {
+          extra: { error: eventError, reference },
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
+
+    if (isTopup) {
+      // Read then write rather than a raw increment, because the topup
+      // balance is a stored number and two topups arriving together must
+      // not lose one. Paystack does not deliver a member's own charges
+      // concurrently in practice, and the unique reference above already
+      // stops the redelivery case, which is the real risk.
+      const { data: acct } = await admin
+        .from("bizup_accounts")
+        .select("topup_balance")
+        .eq("id", accountId)
+        .maybeSingle();
+
+      await admin
+        .from("bizup_accounts")
+        .update({ topup_balance: (acct?.topup_balance ?? 0) + TOPUP_DOCUMENTS })
+        .eq("id", accountId);
+    } else {
+      await admin
+        .from("bizup_accounts")
+        .update({ plan, plan_source: "self_paid" })
+        .eq("id", accountId);
+    }
+
+    await admin.from("bizup_audit_log").insert({
+      account_id: accountId,
+      action: isTopup ? "topup_purchased" : "plan_upgraded",
+      reason: isTopup ? `${TOPUP_DOCUMENTS} documents, ${reference}` : `${plan}, ${reference}`,
+    });
+
+    return NextResponse.json({ received: true });
+  }
 
   // Found via a real stress test: the old idempotency check was keyed on
   // slug (derived from business_name), which meant any two businesses that

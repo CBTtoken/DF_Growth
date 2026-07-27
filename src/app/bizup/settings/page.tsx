@@ -51,6 +51,15 @@ export default async function BizUpSettingsPage() {
       body: "The things you charge for often, so you never type them twice.",
       warn: null,
     },
+    // A member who wanted to pay us had nowhere to do it. The landing page
+    // says "you choose a paid plan later, from inside KatisoBiz", and this
+    // is the inside.
+    {
+      href: "/bizup/upgrade",
+      title: "Your plan",
+      body: "What you are on now, what the paid plans include, and topups.",
+      warn: null,
+    },
   ];
 
   return (

@@ -125,6 +125,16 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
               You can still build quotes. You just cannot send them until you add more.
             </p>
           )}
+          {/* The way out, next to the number that creates the problem.
+              Before this there was a counter telling a member they were
+              running out and nothing anywhere in the product that let them
+              do anything about it. */}
+          <Link
+            href="/bizup/upgrade"
+            className="mt-2 inline-block text-xs font-semibold text-brand underline-offset-2 hover:underline"
+          >
+            {cap.remaining === 0 ? "Get more documents" : "See plans and topups"}
+          </Link>
         </div>
       )}
 
