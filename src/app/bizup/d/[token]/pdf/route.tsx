@@ -32,6 +32,18 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
     .eq("document_id", doc.id)
     .order("line_no");
 
+  // Payments are read live rather than snapshotted, unlike everything else
+  // on this route. A deposit taken before the invoice, or a payment made
+  // after it, both change what the customer still owes, and a customer
+  // re-opening their link should see the balance as it stands rather than
+  // as it stood the day it was sent. Only the amount, date and method are
+  // selected, never a reference, which can carry a bank account detail.
+  const { data: payments } = await admin
+    .from("bizup_payments")
+    .select("paid_at, amount_cents, method")
+    .eq("document_id", doc.id)
+    .order("paid_at");
+
   const issuer = doc.issuer_snapshot as PdfDocumentData["issuer"] | null;
   // An issued document always has an issuer snapshot. If it somehow does
   // not, refusing is correct: rendering a tax document from guessed
@@ -60,6 +72,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
       unit_price_excl_cents: l.unit_price_excl_cents,
       line_total_excl_cents: l.line_total_excl_cents,
     })),
+    payments: payments ?? [],
     issuer,
     customer: doc.customer_snapshot as PdfDocumentData["customer"],
     bank: doc.bank_snapshot as PdfDocumentData["bank"],

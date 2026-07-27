@@ -188,6 +188,25 @@ export const catalogueItemSchema = z.object({
       }
       return n;
     }),
+
+  // The insurance rate for this item, for accounts that charge one. Blank
+  // is the normal case and means "same price either way", so it becomes
+  // null rather than zero: a null falls back to the price above, while a
+  // zero would put R0.00 on a real quote.
+  insurancePriceExclCents: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .transform((v, ctx) => {
+      if (!v) return null;
+      const cents = parseAmountToCents(v);
+      if (cents === null || cents < 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a price like 450 or 450.00" });
+        return z.NEVER;
+      }
+      return cents;
+    }),
 });
 
 export type CatalogueItemValues = z.output<typeof catalogueItemSchema>;

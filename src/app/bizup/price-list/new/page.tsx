@@ -20,7 +20,7 @@ export default async function NewPriceListItemPage() {
   const admin = createAdminClient();
   const { data: account } = await admin
     .from("bizup_accounts")
-    .select("id")
+    .select("id, insurance_pricing_enabled")
     .eq("owner_user_id", user.id)
     .maybeSingle();
   if (!account) redirect("/bizup/start");
@@ -41,7 +41,11 @@ export default async function NewPriceListItemPage() {
             Something you charge for often, so you do not have to type it again every time.
           </p>
           <div className="mt-6">
-            <PriceListItemForm action={createCatalogueItem} submitLabel="Save to my price list" />
+            <PriceListItemForm
+              action={createCatalogueItem}
+              submitLabel="Save to my price list"
+              insurancePricing={account.insurance_pricing_enabled}
+            />
           </div>
         </div>
       </div>

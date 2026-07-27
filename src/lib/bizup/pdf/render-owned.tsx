@@ -13,7 +13,7 @@ export async function renderOwnedDocumentPdf(id: string): Promise<Response> {
   if (!account) return new Response("Not found", { status: 404 });
 
   const admin = createAdminClient();
-  const [{ data: doc }, { data: lines }] = await Promise.all([
+  const [{ data: doc }, { data: lines }, { data: payments }] = await Promise.all([
     admin
       .from("bizup_documents")
       .select("*, bizup_customers(name, vat_number, address_line1, address_line2, city, province, postal_code)")
@@ -24,6 +24,11 @@ export async function renderOwnedDocumentPdf(id: string): Promise<Response> {
       .eq("account_id", account.id)
       .maybeSingle(),
     admin.from("bizup_document_lines").select("*").eq("document_id", id).order("line_no"),
+    admin
+      .from("bizup_payments")
+      .select("paid_at, amount_cents, method")
+      .eq("document_id", id)
+      .order("paid_at"),
   ]);
 
   if (!doc) return new Response("Not found", { status: 404 });
@@ -95,6 +100,7 @@ export async function renderOwnedDocumentPdf(id: string): Promise<Response> {
       unit_price_excl_cents: l.unit_price_excl_cents,
       line_total_excl_cents: l.line_total_excl_cents,
     })),
+    payments: payments ?? [],
     issuer,
     customer,
     bank,

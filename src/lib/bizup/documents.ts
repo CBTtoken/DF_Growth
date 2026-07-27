@@ -34,6 +34,7 @@ export interface BizUpAccountRow {
   whatsapp: string | null;
   template_id: string;
   bank_notice_style: string;
+  insurance_pricing_enabled: boolean;
 }
 
 /** The signed-in member's account, or null. Every document action starts here. */
@@ -48,7 +49,7 @@ export async function currentAccount(): Promise<BizUpAccountRow | null> {
   const { data } = await admin
     .from("bizup_accounts")
     .select(
-      "id, business_name, trading_name, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, template_id, bank_notice_style"
+      "id, business_name, trading_name, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, template_id, bank_notice_style, insurance_pricing_enabled"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();

@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, recalcDocumentTotals, computeLineTotal } from "@/lib/bizup/documents";
 import { isVatVendor } from "@/lib/bizup/vat";
 import { parseAmountToCents } from "@/lib/bizup/money";
+import { asRateType, priceForRate } from "@/lib/bizup/rates";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 15.4, quote creation.
 //
@@ -21,7 +22,7 @@ async function ownedDocument(documentId: string) {
   const admin = createAdminClient();
   const { data: doc } = await admin
     .from("bizup_documents")
-    .select("id, account_id, status, number, doc_type")
+    .select("id, account_id, status, number, doc_type, rate_type")
     .eq("id", documentId)
     .eq("account_id", account.id)
     .maybeSingle();
@@ -63,6 +64,61 @@ export async function createQuote(): Promise<void> {
   redirect(`/bizup/quotes/${data.id}`);
 }
 
+/**
+ * Switches a draft between private and insurance rates.
+ *
+ * Lines already on the document are re-priced, not left as they were. A
+ * member who realises halfway through that this is an insurance job expects
+ * the whole quote to change, and leaving the earlier lines on the old rate
+ * would produce a document silently mixing the two.
+ *
+ * Only lines that came from the price list can be re-priced. A line typed
+ * in by hand has no second price to look up, so it is left exactly as the
+ * member wrote it.
+ */
+export async function setRateType(formData: FormData): Promise<void> {
+  const documentId = String(formData.get("documentId") ?? "");
+  const owned = await ownedDocument(documentId);
+  if (!owned) return;
+  const { account, doc, admin } = owned;
+  if (!isEditable(doc)) return;
+
+  const rate = asRateType(formData.get("rateType"));
+  if (rate === asRateType(doc.rate_type)) return;
+
+  await admin.from("bizup_documents").update({ rate_type: rate }).eq("id", documentId);
+
+  const { data: lines } = await admin
+    .from("bizup_document_lines")
+    .select("id, quantity, catalogue_item_id")
+    .eq("document_id", documentId)
+    .not("catalogue_item_id", "is", null);
+
+  for (const line of lines ?? []) {
+    const { data: item } = await admin
+      .from("bizup_catalogue_items")
+      .select("unit_price_excl_cents, insurance_price_excl_cents, default_markup_pct")
+      .eq("id", line.catalogue_item_id)
+      .eq("account_id", account.id)
+      .maybeSingle();
+    if (!item) continue;
+
+    const unitPrice = priceForRate(item, rate);
+    await admin
+      .from("bizup_document_lines")
+      .update({
+        unit_price_excl_cents: unitPrice,
+        line_total_excl_cents: computeLineTotal(line.quantity, unitPrice),
+      })
+      .eq("id", line.id)
+      .eq("document_id", documentId);
+  }
+
+  await recalcDocumentTotals(documentId, isVatVendor(account.vat_number));
+  revalidatePath(`/bizup/quotes/${documentId}`);
+  revalidatePath(`/bizup/invoices/${documentId}`);
+}
+
 export async function addLine(formData: FormData): Promise<void> {
   const documentId = String(formData.get("documentId") ?? "");
   const owned = await ownedDocument(documentId);
@@ -83,16 +139,19 @@ export async function addLine(formData: FormData): Promise<void> {
   if (catalogueItemId) {
     const { data: item } = await admin
       .from("bizup_catalogue_items")
-      .select("name, unit, unit_price_excl_cents, default_markup_pct")
+      .select("name, unit, unit_price_excl_cents, insurance_price_excl_cents, default_markup_pct")
       .eq("id", catalogueItemId)
       .eq("account_id", account.id)
       .maybeSingle();
     if (item) {
       description = item.name;
       unit = item.unit;
-      unitPrice = item.default_markup_pct
-        ? Math.round(item.unit_price_excl_cents * (1 + Number(item.default_markup_pct) / 100))
-        : item.unit_price_excl_cents;
+      // Which of the item's two prices to take is decided by the document,
+      // not the customer, and only differs for accounts that have turned
+      // insurance pricing on. Everyone else has rate_type 'private' on
+      // every document and a null insurance price on every item, so this
+      // resolves to exactly the old behaviour.
+      unitPrice = priceForRate(item, asRateType(doc.rate_type));
     }
   }
 

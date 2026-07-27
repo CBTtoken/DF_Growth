@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
-import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote } from "@/app/bizup/quotes/actions";
+import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote, setRateType } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { setQuoteOutcome, convertToInvoice } from "@/app/bizup/quotes/convert-actions";
 import { IssueQuoteButton, ShareQuote } from "@/components/bizup/ShareQuote";
@@ -17,6 +17,7 @@ import {
   documentTitle,
 } from "@/lib/bizup/vat";
 import { CATALOGUE_UNITS } from "@/lib/bizup/schemas";
+import { asRateType, priceForRate, rateLabel, RATE_TYPES } from "@/lib/bizup/rates";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -45,7 +46,7 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
       admin.from("bizup_customers").select("id, name").eq("account_id", account.id).order("name"),
       admin
         .from("bizup_catalogue_items")
-        .select("id, name, unit, unit_price_excl_cents, default_markup_pct")
+        .select("id, name, unit, unit_price_excl_cents, insurance_price_excl_cents, default_markup_pct")
         .eq("account_id", account.id)
         .eq("active", true)
         .order("name"),
@@ -78,6 +79,8 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
   const vendor = isVatVendor(account.vat_number);
   const editable = doc.number === null && doc.status === "draft";
   const rows = lines ?? [];
+  const rateType = asRateType(doc.rate_type);
+  const insurancePricing = account.insurance_pricing_enabled;
 
   // Sec 3.2: the R5,000 notice appears while the document is still being
   // built, as soon as a vendor's running total crosses the threshold.
@@ -205,6 +208,44 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
           ))}
         </section>
 
+        {/* Which price list this document draws from. Only for accounts that
+            charge insurance work differently; everyone else never sees it.
+            Shown even once issued, read-only, because the customer's copy
+            says which rate it was and the member's copy should agree. */}
+        {insurancePricing && (
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-ink">Which rates apply</h2>
+            {editable ? (
+              <>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {RATE_TYPES.map((rate) => (
+                    <form key={rate} action={setRateType}>
+                      <input type="hidden" name="documentId" value={doc.id} />
+                      <input type="hidden" name="rateType" value={rate} />
+                      <button
+                        type="submit"
+                        className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition ${
+                          rate === rateType
+                            ? "bg-brand text-white"
+                            : "border border-gray-200 bg-white text-gray-700 hover:border-brand hover:text-brand"
+                        }`}
+                      >
+                        {rateLabel(rate)}
+                      </button>
+                    </form>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Switching this re-prices every line you added from your price list. Lines you
+                  typed in yourself are left alone.
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-gray-600">{rateLabel(rateType)}</p>
+            )}
+          </section>
+        )}
+
         {editable && (
           <>
             {/* Sec 9: price list items as tappable chips, so a common line is
@@ -222,7 +263,7 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
                         type="submit"
                         className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-brand hover:text-brand"
                       >
-                        {item.name} · {formatZar(item.unit_price_excl_cents)}
+                        {item.name} · {formatZar(priceForRate(item, rateType))}
                       </button>
                     </form>
                   ))}

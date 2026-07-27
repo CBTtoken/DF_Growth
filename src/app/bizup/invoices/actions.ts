@@ -134,6 +134,31 @@ export async function issueInvoice(_prev: InvoiceState, formData: FormData): Pro
     return { error: "We couldn't issue that. Please try again." };
   }
 
+  // A draft can carry deposits taken before it was written, and those were
+  // deliberately not allowed to move its status while it was still a draft.
+  // Now that it is issued, the status has to catch up, or an invoice that
+  // was settled in cash up front would sit in the queue reading as unpaid
+  // and chase the customer for money they have already handed over.
+  const { data: paidRows } = await admin
+    .from("bizup_payments")
+    .select("amount_cents")
+    .eq("document_id", documentId);
+
+  const paid = (paidRows ?? []).reduce((s, p) => s + p.amount_cents, 0);
+  if (paid > 0) {
+    const { data: totals } = await admin
+      .from("bizup_documents")
+      .select("total_incl_cents")
+      .eq("id", documentId)
+      .maybeSingle();
+
+    const settled = paid >= (totals?.total_incl_cents ?? 0);
+    await admin
+      .from("bizup_documents")
+      .update({ status: settled ? "paid" : "partially_paid" })
+      .eq("id", documentId);
+  }
+
   if (cap.usingTopup) {
     await admin
       .from("bizup_accounts")
@@ -175,8 +200,12 @@ export async function recordPayment(_prev: InvoiceState, formData: FormData): Pr
     .maybeSingle();
 
   if (!doc) return { error: "That invoice could not be found." };
-  if (!doc.number) return { error: "Issue this invoice before recording a payment." };
 
+  // A payment on a draft used to be refused. That was wrong for the trades
+  // this is built for: a plumber routinely takes cash or an upfront EFT and
+  // writes the invoice afterwards, and telling him to issue first and
+  // record second means the invoice he sends does not show the deposit at
+  // all. The money genuinely was received, so it is recorded.
   const amount = parseAmountToCents(String(formData.get("amount") ?? ""));
   if (amount === null || amount <= 0) return { error: "Enter an amount like 450 or 450.00" };
 
@@ -205,9 +234,21 @@ export async function recordPayment(_prev: InvoiceState, formData: FormData): Pr
     .eq("document_id", documentId);
 
   const paid = (payments ?? []).reduce((s, p) => s + p.amount_cents, 0);
-  const status = paid >= doc.total_incl_cents ? "paid" : "partially_paid";
 
-  await admin.from("bizup_documents").update({ status }).eq("id", documentId);
+  // A draft stays a draft. Its status is what makes it issuable, so moving
+  // it to paid or partially_paid because a deposit was recorded would leave
+  // an invoice that can never be issued at all. The deposit still shows on
+  // the document and still reduces the balance; only the status waits.
+  const issued = doc.number !== null;
+  const status = !issued
+    ? doc.status
+    : paid >= doc.total_incl_cents
+      ? "paid"
+      : "partially_paid";
+
+  if (status !== doc.status) {
+    await admin.from("bizup_documents").update({ status }).eq("id", documentId);
+  }
 
   await admin.from("bizup_audit_log").insert({
     account_id: account.id,
@@ -220,7 +261,11 @@ export async function recordPayment(_prev: InvoiceState, formData: FormData): Pr
 
   revalidatePath(`/bizup/invoices/${documentId}`);
   return {
-    ok: status === "paid" ? "Paid in full." : "Payment recorded.",
+    ok: !issued
+      ? "Recorded. It will show on the invoice as already paid."
+      : status === "paid"
+        ? "Paid in full."
+        : "Payment recorded.",
   };
 }
 

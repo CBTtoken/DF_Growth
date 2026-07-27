@@ -253,6 +253,40 @@ export async function updateTemplate(
 }
 
 /**
+ * Turns insurance rates on or off for the account.
+ *
+ * Off by default and off for most trades. A plumber or an electrician
+ * quotes insurance work at a different rate to their own private jobs; a
+ * painter or a gardener has one price list and should never be shown a
+ * second price column.
+ *
+ * Turning it off again does not erase the insurance prices already typed
+ * into the price list. They stay in the database, unused, so a member who
+ * switches it off by mistake does not lose an afternoon of work.
+ */
+export async function setInsurancePricing(formData: FormData): Promise<void> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("bizup_accounts")
+    .update({
+      insurance_pricing_enabled: formData.get("enabled") === "true",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("owner_user_id", user.id);
+
+  if (error) console.error("Failed to update KatisoBiz insurance pricing", error);
+
+  revalidatePath("/bizup/settings/business");
+  revalidatePath("/bizup/price-list");
+}
+
+/**
  * Log out of KatisoBiz.
  *
  * There was no way out of KatisoBiz at all until Dewald tried to sign up a

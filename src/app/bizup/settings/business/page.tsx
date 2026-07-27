@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updateBizUpAccount } from "@/app/bizup/actions";
+import { updateBizUpAccount, setInsurancePricing } from "@/app/bizup/actions";
 import { TemplatePicker } from "@/components/bizup/TemplatePicker";
 import { BusinessProfileForm } from "@/components/bizup/BusinessProfileForm";
 import { isVatVendor } from "@/lib/bizup/vat";
@@ -26,7 +26,7 @@ export default async function BizUpBusinessSettingsPage() {
   const { data: account } = await admin
     .from("bizup_accounts")
     .select(
-      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id"
+      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id, insurance_pricing_enabled"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
@@ -35,6 +35,7 @@ export default async function BizUpBusinessSettingsPage() {
 
   const vendor = isVatVendor(account.vat_number);
   const templateId = account.template_id;
+  const insurancePricing = account.insurance_pricing_enabled;
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -89,6 +90,37 @@ export default async function BizUpBusinessSettingsPage() {
           <div className="mt-5">
             <TemplatePicker current={templateId} />
           </div>
+        </section>
+
+        {/* Insurance rates. From a plumber testing the product: insurance
+            work is quoted at a different rate to his own private jobs.
+            Electricians are the same. Most other trades are not, so this
+            is opt-in and everything it adds stays hidden until it is on. */}
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight text-ink">Insurance work</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Turn this on if you charge a different rate for insurance jobs than for your own
+            private work. You then get two prices on each item in your price list, and you pick
+            which one a quote uses.
+          </p>
+          <form action={setInsurancePricing} className="mt-4">
+            <input type="hidden" name="enabled" value={insurancePricing ? "false" : "true"} />
+            <p className="text-sm font-semibold text-ink">
+              {insurancePricing ? "Insurance rates are on" : "Insurance rates are off"}
+            </p>
+            <button
+              type="submit"
+              className="mt-2 text-sm font-semibold text-brand underline-offset-2 hover:underline"
+            >
+              {insurancePricing ? "Turn insurance rates off" : "Turn insurance rates on"}
+            </button>
+            {insurancePricing && (
+              <p className="mt-2 text-xs text-gray-500">
+                Turning this off keeps any insurance prices you have already entered. They are
+                just not used.
+              </p>
+            )}
+          </form>
         </section>
       </div>
       <SiteFooter />

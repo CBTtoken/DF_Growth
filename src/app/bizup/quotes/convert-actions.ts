@@ -92,6 +92,11 @@ export async function convertToInvoice(formData: FormData): Promise<void> {
       template_id: doc.template_id,
       notes: doc.notes,
       terms: doc.terms,
+      // Carried across from the quote. An insurance job that was quoted at
+      // insurance rates is still an insurance job when it is invoiced, and
+      // dropping back to private rates here would silently re-price the
+      // work between the quote the customer accepted and the invoice.
+      rate_type: doc.rate_type,
       // Recomputed from the copied lines below rather than trusted from
       // the quote, so a VAT status that changed between quoting and
       // invoicing is applied correctly.

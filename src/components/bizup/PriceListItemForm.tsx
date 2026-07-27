@@ -19,20 +19,29 @@ export interface PriceListItemDefaults {
   unit?: string | null;
   unitPriceExclCents?: number | null;
   defaultMarkupPct?: number | null;
+  insurancePriceExclCents?: number | null;
 }
 
 export function PriceListItemForm({
   action,
   defaults = {},
   submitLabel,
+  insurancePricing = false,
 }: {
   action: (state: PriceListFormState, formData: FormData) => Promise<PriceListFormState>;
   defaults?: PriceListItemDefaults;
   submitLabel: string;
+  /** Only true for accounts that have turned insurance rates on in settings. */
+  insurancePricing?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const [price, setPrice] = useState(
     defaults.unitPriceExclCents != null ? (defaults.unitPriceExclCents / 100).toFixed(2) : "",
+  );
+  const [insurancePrice, setInsurancePrice] = useState(
+    defaults.insurancePriceExclCents != null
+      ? (defaults.insurancePriceExclCents / 100).toFixed(2)
+      : "",
   );
   const [markup, setMarkup] = useState(
     defaults.defaultMarkupPct != null ? String(defaults.defaultMarkupPct) : "",
@@ -44,6 +53,7 @@ export function PriceListItemForm({
   // and bills at cost plus margin, and doing that arithmetic in your head on
   // a phone is where mistakes come from.
   const cents = parseAmountToCents(price);
+  const insuranceCents = parseAmountToCents(insurancePrice);
   const markupPct = markup.trim() === "" ? null : Number(markup.replace(",", "."));
   const withMarkup =
     cents !== null && markupPct !== null && Number.isFinite(markupPct) && markupPct > 0
@@ -109,7 +119,7 @@ export function PriceListItemForm({
       </div>
 
       <label className={labelClass}>
-        <span>Price, excluding VAT</span>
+        <span>{insurancePricing ? "Private price, excluding VAT" : "Price, excluding VAT"}</span>
         <input
           name="unitPriceExclCents"
           value={price}
@@ -127,6 +137,38 @@ export function PriceListItemForm({
           <span className="text-xs text-red-600">{state.error.unitPriceExclCents[0]}</span>
         )}
       </label>
+
+      {/* Only rendered for accounts that charge insurance work differently.
+          Everyone else never sees a second price field, which is the whole
+          point of putting it behind a setting. */}
+      {insurancePricing && (
+        <label className={labelClass}>
+          <span>
+            Insurance price, excluding VAT{" "}
+            <span className="font-normal text-gray-400">(optional)</span>
+          </span>
+          <input
+            name="insurancePriceExclCents"
+            value={insurancePrice}
+            onChange={(e) => setInsurancePrice(e.target.value)}
+            inputMode="decimal"
+            className={inputClass}
+            placeholder="Same as above"
+          />
+          <span className="text-xs text-gray-500">
+            Leave blank if you charge the same either way. Blank is not zero, it just uses the
+            price above.
+          </span>
+          {insuranceCents !== null && (
+            <span className="text-xs font-medium text-gray-700">
+              {formatZar(insuranceCents)} {unitLabel} on insurance jobs
+            </span>
+          )}
+          {state?.error?.insurancePriceExclCents?.[0] && (
+            <span className="text-xs text-red-600">{state.error.insurancePriceExclCents[0]}</span>
+          )}
+        </label>
+      )}
 
       <label className={labelClass}>
         <span>

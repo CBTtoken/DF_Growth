@@ -37,6 +37,10 @@ function fieldsFrom(formData: FormData) {
     unit: formData.get("unit") ?? "each",
     unitPriceExclCents: formData.get("unitPriceExclCents"),
     defaultMarkupPct: formData.get("defaultMarkupPct"),
+    // Absent from the form entirely when the account does not charge
+    // insurance rates. formData.get returns null for a field that was never
+    // rendered, and the schema treats that the same as blank.
+    insurancePriceExclCents: formData.get("insurancePriceExclCents") ?? "",
   };
 }
 
@@ -48,6 +52,7 @@ function toRow(values: ReturnType<typeof catalogueItemSchema.parse>) {
     unit: values.unit,
     unit_price_excl_cents: values.unitPriceExclCents,
     default_markup_pct: values.defaultMarkupPct,
+    insurance_price_excl_cents: values.insurancePriceExclCents,
   };
 }
 

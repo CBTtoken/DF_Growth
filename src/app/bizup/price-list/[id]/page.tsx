@@ -26,7 +26,7 @@ export default async function EditPriceListItemPage({
   const admin = createAdminClient();
   const { data: account } = await admin
     .from("bizup_accounts")
-    .select("id")
+    .select("id, insurance_pricing_enabled")
     .eq("owner_user_id", user.id)
     .maybeSingle();
   if (!account) redirect("/bizup/start");
@@ -65,6 +65,7 @@ export default async function EditPriceListItemPage({
             <PriceListItemForm
               action={updateCatalogueItem}
               submitLabel="Save changes"
+              insurancePricing={account.insurance_pricing_enabled}
               defaults={{
                 id: item.id,
                 name: item.name,
@@ -73,6 +74,7 @@ export default async function EditPriceListItemPage({
                 unit: item.unit,
                 unitPriceExclCents: item.unit_price_excl_cents,
                 defaultMarkupPct: item.default_markup_pct,
+                insurancePriceExclCents: item.insurance_price_excl_cents,
               }}
             />
           </div>

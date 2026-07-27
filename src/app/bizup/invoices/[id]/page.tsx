@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
-import { addLine, updateLine, removeLine } from "@/app/bizup/quotes/actions";
+import { addLine, updateLine, removeLine, setRateType } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { updateInvoiceCustomer } from "@/app/bizup/invoices/actions";
 import { IssueInvoiceButton, RecordPaymentForm } from "@/components/bizup/InvoiceActions";
@@ -13,6 +13,7 @@ import { ShareQuote } from "@/components/bizup/ShareQuote";
 import { formatZar } from "@/lib/bizup/money";
 import { isVatVendor, taxInvoiceLevel, FULL_TAX_INVOICE_NOTICE, documentTitle } from "@/lib/bizup/vat";
 import { CATALOGUE_UNITS } from "@/lib/bizup/schemas";
+import { asRateType, rateLabel, RATE_TYPES } from "@/lib/bizup/rates";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -50,6 +51,8 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
   const rows = lines ?? [];
   const paid = (payments ?? []).reduce((s, p) => s + p.amount_cents, 0);
   const outstanding = doc.total_incl_cents - paid;
+  const rateType = asRateType(doc.rate_type);
+  const insurancePricing = account.insurance_pricing_enabled;
 
   const customerRow = doc.bizup_customers as unknown as {
     name: string;
@@ -131,6 +134,43 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
           </p>
         )}
 
+        {/* Same control as the quote. An invoice converted from a quote
+            arrives with the quote's rate already set; one raised directly
+            starts on private and can be switched here. */}
+        {insurancePricing && (
+          <section className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+            <h2 className="text-sm font-semibold text-ink">Which rates apply</h2>
+            {editable ? (
+              <>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {RATE_TYPES.map((rate) => (
+                    <form key={rate} action={setRateType}>
+                      <input type="hidden" name="documentId" value={doc.id} />
+                      <input type="hidden" name="rateType" value={rate} />
+                      <button
+                        type="submit"
+                        className={`rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition ${
+                          rate === rateType
+                            ? "bg-brand text-white"
+                            : "border border-gray-200 bg-white text-gray-700 hover:border-brand hover:text-brand"
+                        }`}
+                      >
+                        {rateLabel(rate)}
+                      </button>
+                    </form>
+                  ))}
+                </div>
+                <p className="mt-2 text-xs text-gray-500">
+                  Switching this re-prices every line that came from your price list. Lines you
+                  typed in yourself are left alone.
+                </p>
+              </>
+            ) : (
+              <p className="mt-1 text-sm text-gray-600">{rateLabel(rateType)}</p>
+            )}
+          </section>
+        )}
+
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-ink">What you are charging for</h2>
           {rows.map((line) =>
@@ -189,6 +229,33 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
             </form>
           )}
         </section>
+
+        {/* Money taken before the invoice was written. Optional and easy to
+            walk past: a member who was paid nothing up front just carries on
+            to the button below. What is recorded here shows on the invoice
+            as a deduction from the total, so the customer sees the balance
+            rather than being asked again for money they have handed over. */}
+        {editable && (
+          <>
+            {paid > 0 && (
+              <section className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+                <p className="font-semibold">
+                  {formatZar(paid)} already received on this job.
+                </p>
+                <p className="mt-1">
+                  The invoice will show the full {formatZar(doc.total_incl_cents)}, then deduct
+                  this, leaving {formatZar(Math.max(0, doc.total_incl_cents - paid))} to pay.
+                </p>
+              </section>
+            )}
+            <RecordPaymentForm
+              documentId={doc.id}
+              deposit
+              outstandingAmount=""
+              outstandingLabel="If they paid a deposit or gave you cash before this invoice, add it here. Skip this if they have not paid anything yet."
+            />
+          </>
+        )}
 
         {editable && <IssueInvoiceButton documentId={doc.id} ready={rows.length > 0} />}
 

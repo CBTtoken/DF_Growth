@@ -37,6 +37,17 @@ export interface PdfDocumentData {
   notes: string | null;
   terms: string | null;
   lines: PdfLine[];
+  /**
+   * Money already received against this invoice, most often a deposit or
+   * cash taken before the invoice was written.
+   *
+   * Deliberately not a negative line. A minus line would reduce the
+   * subtotal, and VAT is calculated on the subtotal, so a vendor would
+   * declare VAT on less than they actually sold. A payment does not reduce
+   * what was supplied, it only reduces what is still owed, so it sits
+   * below the total and leaves the taxable value untouched.
+   */
+  payments?: { paid_at: string; amount_cents: number; method: string }[];
   /** Sec 10, the Trade template. Blank on the other four. */
   jobReference?: string | null;
   siteAddress?: string | null;
@@ -212,6 +223,10 @@ function LinesTable({ data, serif = false, headerBg }: { data: PdfDocumentData; 
 function TotalsBlock({ data, serif = false }: { data: PdfDocumentData; serif?: boolean }) {
   const b = serif ? base.boldSerif : base.bold;
   const vendor = data.issuer.is_vat_vendor;
+  // Never on a quote: nothing has been paid against something that has not
+  // been invoiced, and a "balance due" on a quote reads as a demand.
+  const payments = data.docType === "invoice" ? (data.payments ?? []) : [];
+  const paid = payments.reduce((sum, p) => sum + p.amount_cents, 0);
   return (
     <View style={{ marginTop: 14, alignSelf: "flex-end", width: "45%" }}>
       {vendor ? (
@@ -227,10 +242,32 @@ function TotalsBlock({ data, serif = false }: { data: PdfDocumentData; serif?: b
         </>
       ) : null}
       <View style={[base.between, { marginTop: 6, paddingTop: 6, borderTopWidth: 1 }]}>
-        <Text style={b}>{data.docType === "quote" ? "Total" : "Total due"}</Text>
+        <Text style={b}>{data.docType === "quote" ? "Total" : paid > 0 ? "Total" : "Total due"}</Text>
         <Text style={b}>{formatZar(data.totalInclCents)}</Text>
       </View>
       {vendor ? <Text style={{ fontSize: 7, color: "#666" }}>Includes VAT</Text> : null}
+
+      {/* Payments already received. The total above stays at the full
+          value of the work, which is what SARS taxes; only the balance
+          moves. A customer who paid a deposit needs to see both numbers
+          or they will query the invoice. */}
+      {paid > 0 ? (
+        <>
+          {payments.map((p, i) => (
+            <View key={i} style={[base.between, { marginTop: 3 }]}>
+              <Text>
+                Less paid {p.paid_at}
+                {p.method === "cash" ? " (cash)" : ""}
+              </Text>
+              <Text>- {formatZar(p.amount_cents)}</Text>
+            </View>
+          ))}
+          <View style={[base.between, { marginTop: 6, paddingTop: 6, borderTopWidth: 1 }]}>
+            <Text style={b}>Balance due</Text>
+            <Text style={b}>{formatZar(Math.max(0, data.totalInclCents - paid))}</Text>
+          </View>
+        </>
+      ) : null}
     </View>
   );
 }
