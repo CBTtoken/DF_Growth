@@ -87,18 +87,19 @@ const BRAND = "#0f2d52";
 // ============================================================
 
 /** Supplier identity. Carries the supplier address and, for a vendor, the VAT number. Both mandatory on every skin. */
-function IssuerBlock({ data, serif = false, align = "right" }: { data: PdfDocumentData; serif?: boolean; align?: "left" | "right" }) {
+function IssuerBlock({ data, serif = false, align = "right", color }: { data: PdfDocumentData; serif?: boolean; align?: "left" | "right"; color?: string }) {
   const b = serif ? base.boldSerif : base.bold;
+  const ink = color ?? "#1a1a1a";
   return (
-    <View style={align === "right" ? base.right : undefined}>
-      <Text style={[b, { fontSize: 12 }]}>{data.issuer.business_name}</Text>
-      {data.issuer.trading_name ? <Text>trading as {data.issuer.trading_name}</Text> : null}
-      {data.issuer.address ? <Text>{data.issuer.address}</Text> : null}
+    <View style={[align === "right" ? base.right : {}, { color: ink }]}>
+      <Text style={[b, { fontSize: 12, color: ink }]}>{data.issuer.business_name}</Text>
+      {data.issuer.trading_name ? <Text style={{ color: ink }}>trading as {data.issuer.trading_name}</Text> : null}
+      {data.issuer.address ? <Text style={{ color: ink }}>{data.issuer.address}</Text> : null}
       {data.issuer.is_vat_vendor && data.issuer.vat_number ? (
-        <Text>VAT No. {data.issuer.vat_number}</Text>
+        <Text style={{ color: ink }}>VAT No. {data.issuer.vat_number}</Text>
       ) : null}
-      {data.issuer.phone ? <Text>{data.issuer.phone}</Text> : null}
-      {data.issuer.email ? <Text>{data.issuer.email}</Text> : null}
+      {data.issuer.phone ? <Text style={{ color: ink }}>{data.issuer.phone}</Text> : null}
+      {data.issuer.email ? <Text style={{ color: ink }}>{data.issuer.email}</Text> : null}
     </View>
   );
 }
@@ -106,19 +107,30 @@ function IssuerBlock({ data, serif = false, align = "right" }: { data: PdfDocume
 /** Title and the document number. A draft says so, because a draft correctly has no number (Sec 5). */
 function TitleBlock({ data, serif = false, color }: { data: PdfDocumentData; serif?: boolean; color?: string }) {
   const b = serif ? base.boldSerif : base.bold;
+
+  // The colour applies to every line here, not only the heading. Bold puts
+  // this block on a dark navy band, and previously only the title took the
+  // white: the number and the dates kept the page's dark default and were
+  // effectively invisible against the band. Found by Dewald on a real
+  // invoice. A colour passed to a block has to reach everything in it.
+  const ink = color ?? "#1a1a1a";
+
   return (
-    <View>
-      <Text style={[b, { fontSize: 20, color: color ?? "#1a1a1a" }]}>
+    <View style={{ color: ink }}>
+      <Text style={[b, { fontSize: 20, color: ink }]}>
         {documentTitle(data.docType, data.issuer.is_vat_vendor)}
       </Text>
       {data.number ? (
-        <Text style={{ marginTop: 4 }}>{data.number}</Text>
+        <Text style={{ marginTop: 4, color: ink }}>{data.number}</Text>
       ) : (
-        <Text style={[base.draft, b]}>DRAFT, NOT YET ISSUED</Text>
+        // The draft warning is normally red. On a dark band red is no more
+        // readable than the dark text was, so it takes the band's own ink
+        // and leans on weight instead.
+        <Text style={[base.draft, b, color ? { color: ink } : {}]}>DRAFT, NOT YET ISSUED</Text>
       )}
-      {data.issueDate ? <Text>Issued {data.issueDate}</Text> : null}
-      {data.dueDate ? <Text>Due {data.dueDate}</Text> : null}
-      {data.validUntil ? <Text>Valid until {data.validUntil}</Text> : null}
+      {data.issueDate ? <Text style={{ color: ink }}>Issued {data.issueDate}</Text> : null}
+      {data.dueDate ? <Text style={{ color: ink }}>Due {data.dueDate}</Text> : null}
+      {data.validUntil ? <Text style={{ color: ink }}>Valid until {data.validUntil}</Text> : null}
     </View>
   );
 }
@@ -301,9 +313,7 @@ function Bold({ data }: { data: PdfDocumentData }) {
       <View style={{ backgroundColor: BRAND, padding: 24, marginHorizontal: -40, marginBottom: 22 }}>
         <View style={base.between}>
           <TitleBlock data={data} color="#ffffff" />
-          <View style={{ color: "#ffffff" }}>
-            <IssuerBlock data={data} />
-          </View>
+          <IssuerBlock data={data} color="#ffffff" />
         </View>
       </View>
       <CustomerBlock data={data} />

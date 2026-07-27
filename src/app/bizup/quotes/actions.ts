@@ -1,5 +1,6 @@
 "use server";
 
+import { bizupLoginPath } from "@/lib/bizup/product";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -35,7 +36,7 @@ function isEditable(doc: { number: string | null; status: string }): boolean {
 
 export async function createQuote(): Promise<void> {
   const account = await currentAccount();
-  if (!account) redirect("/bizup/login");
+  if (!account) redirect(await bizupLoginPath());
 
   const admin = createAdminClient();
   const { data, error } = await admin

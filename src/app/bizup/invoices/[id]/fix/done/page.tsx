@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bizupLoginPath } from "@/lib/bizup/product";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -25,7 +26,7 @@ export default async function FixDonePage({
   const { cn, new: replacementId } = await searchParams;
 
   const account = await currentAccount();
-  if (!account) redirect("/bizup/login");
+  if (!account) redirect(await bizupLoginPath());
 
   const admin = createAdminClient();
   const { data: doc } = await admin

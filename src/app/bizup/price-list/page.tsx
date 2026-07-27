@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bizupLoginPath } from "@/lib/bizup/product";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
@@ -23,7 +24,7 @@ export default async function BizUpPriceListPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/bizup/login");
+  if (!user) redirect(await bizupLoginPath());
 
   const admin = createAdminClient();
   const { data: account } = await admin

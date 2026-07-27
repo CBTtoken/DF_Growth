@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bizupLoginPath } from "@/lib/bizup/product";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createBizUpAccount } from "@/app/bizup/actions";
@@ -16,7 +17,7 @@ export default async function BizUpStartPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/bizup/login");
+  if (!user) redirect(await bizupLoginPath());
 
   // Signup creates the account row the moment the emailed code is
   // confirmed, so by the time a new member taps "Set up my business" the

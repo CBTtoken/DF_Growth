@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bizupLoginPath } from "@/lib/bizup/product";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -23,7 +24,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
   const { id } = await params;
 
   const account = await currentAccount();
-  if (!account) redirect("/bizup/login");
+  if (!account) redirect(await bizupLoginPath());
 
   const admin = createAdminClient();
   const [{ data: doc }, { data: lines }, { data: payments }, { data: customers }, settings] = await Promise.all([

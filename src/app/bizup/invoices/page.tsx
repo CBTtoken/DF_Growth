@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bizupLoginPath } from "@/lib/bizup/product";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentAccount } from "@/lib/bizup/documents";
@@ -22,7 +23,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function BizUpInvoicesPage() {
   const account = await currentAccount();
-  if (!account) redirect("/bizup/login");
+  if (!account) redirect(await bizupLoginPath());
 
   const admin = createAdminClient();
   const { data: invoices, error } = await admin

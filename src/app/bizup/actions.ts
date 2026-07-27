@@ -6,7 +6,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { businessProfileSchema } from "@/lib/bizup/schemas";
 import { bizUpEntitlementForTier } from "@/lib/bizup/entitlements";
-import { setActiveProductPreference } from "@/lib/bizup/product";
+import { setActiveProductPreference , bizupLoginPath } from "@/lib/bizup/product";
 import type { Tier } from "@/lib/paystack/plans";
 import { isTemplateId } from "@/lib/bizup/pdf/document";
 
@@ -263,5 +263,5 @@ export async function updateTemplate(
 export async function logOutOfBizUp(): Promise<void> {
   const supabase = await createServerClient();
   await supabase.auth.signOut();
-  redirect("/bizup/login");
+  redirect(await bizupLoginPath());
 }

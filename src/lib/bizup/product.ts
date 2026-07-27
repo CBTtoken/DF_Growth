@@ -74,3 +74,18 @@ export const PRODUCT_LOGIN: Record<Product, string> = {
   growth: "/login",
   bizup: "/bizup/login",
 };
+
+/**
+ * The login path to send a signed-out visitor to.
+ *
+ * On BizUp's own hostname the /bizup prefix is redundant, and emitting it
+ * meant every redirect bounced through bizup.digitalflyer.co.za/bizup/login
+ * before the proxy corrected it. The chain ended in the right place but the
+ * member saw the wrong URL on the way, which Dewald quite reasonably read
+ * as a bug. Emitting the right path first removes the hop entirely.
+ */
+export async function bizupLoginPath(): Promise<string> {
+  const { headers } = await import("next/headers");
+  const host = (await headers()).get("host") ?? "";
+  return host.split(":")[0].toLowerCase().startsWith("bizup.") ? "/login" : "/bizup/login";
+}

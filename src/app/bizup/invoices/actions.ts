@@ -1,5 +1,6 @@
 "use server";
 
+import { bizupLoginPath } from "@/lib/bizup/product";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -289,7 +290,7 @@ export async function markInvoicePaid(formData: FormData): Promise<void> {
  */
 export async function createInvoice(): Promise<void> {
   const account = await currentAccount();
-  if (!account) redirect("/bizup/login");
+  if (!account) redirect(await bizupLoginPath());
 
   const admin = createAdminClient();
   const { data, error } = await admin

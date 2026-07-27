@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { bizupLoginPath } from "@/lib/bizup/product";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getMyBizUpAccount } from "@/lib/bizup/account";
@@ -24,7 +25,7 @@ export default async function BizUpSettingsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/bizup/login");
+  if (!user) redirect(await bizupLoginPath());
 
   const account = await getMyBizUpAccount();
   if (!account) redirect("/bizup/start");
