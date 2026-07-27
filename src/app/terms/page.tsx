@@ -74,7 +74,13 @@ export default function TermsPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold tracking-tight text-ink">5. Fees and Payment</h2>
           <ul className="list-disc pl-5 text-sm leading-relaxed text-gray-700">
-            <li>Foundation and Growth plans are billed monthly or annually via Paystack.</li>
+            {/* Tier names were stale: the plans are Foundation, Growth Engine
+                and Enterprise, plus KatisoBiz. A factual correction, not a
+                change of terms. */}
+            <li>
+              Foundation, Growth Engine, Enterprise and KatisoBiz plans are billed monthly or
+              annually via Paystack.
+            </li>
             <li>You can cancel your subscription at any time from your dashboard. There are no long-term contracts.</li>
             <li>Refunds are handled on a case-by-case basis at our discretion.</li>
           </ul>

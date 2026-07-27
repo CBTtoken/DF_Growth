@@ -11,6 +11,7 @@
 // Paystack, unlike a client page's Packages section which has no connected
 // checkout at all.
 import Link from "next/link";
+import { LegalDisclosure } from "@/components/LegalDisclosure";
 
 // Agent Programme Phase 0.1: the "Secure payment via Paystack" badge must not
 // appear on the agent recruitment pages. Those recruit people who need income,
@@ -58,7 +59,14 @@ export function SiteFooter({
         <Link href="/terms" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Terms &amp; Conditions
         </Link>
+        {/* PAIA manual. A private body must make its manual available, and
+            the footer is where anyone looking for it will look. */}
+        <span aria-hidden> · </span>
+        <Link href="/paia" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          PAIA Manual
+        </Link>
       </div>
+      <LegalDisclosure className="mt-1" />
     </footer>
   );
 }

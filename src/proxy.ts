@@ -15,6 +15,20 @@ import { NextResponse, type NextRequest } from "next/server";
 // rules happening to be correct.
 const BIZUP_PREFIX = "/bizup";
 
+// Company-wide legal pages. These are one set of documents for the whole
+// business, deliberately not one per product (Legal Pages Rebuild Brief
+// Part 2.1: two privacy policies drift apart within a year, and a
+// contradiction between two documents you published yourself is worse than
+// either being imperfect).
+//
+// They therefore must not be rewritten into /bizup/... on KatisoBiz's
+// hostnames, which is what was happening: the KatisoBiz footer links to
+// /terms and /privacy and both returned 404 on katisobiz.co.za, because
+// /bizup/terms does not exist and never should. Serving the same routes on
+// every mapped domain is what the brief's Part 2.2 asks for, with a
+// canonical tag on each page pointing at one host.
+const SHARED_LEGAL_PATHS = new Set(["/terms", "/privacy", "/paia"]);
+
 export function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
 
@@ -38,6 +52,9 @@ export function proxy(request: NextRequest) {
     // Resend and WhatsApp webhooks all post to absolute /api paths, and a
     // rewrite here would silently break them.
     if (pathname.startsWith("/api/")) return NextResponse.next();
+
+    // The shared legal pages, served as-is on this hostname too.
+    if (SHARED_LEGAL_PATHS.has(pathname)) return NextResponse.next();
 
     // On KatisoBiz's own hostname the /bizup prefix is redundant, so it is
     // redirected away rather than merely tolerated. Previously both forms

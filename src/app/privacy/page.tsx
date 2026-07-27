@@ -177,24 +177,34 @@ export default function PrivacyPolicyPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold tracking-tight text-ink">10. Contact Us</h2>
           <p className="text-sm leading-relaxed text-gray-700">
-            DigitalFlyer SA
+            Digital Flyer (Pty) Ltd, registration number 2018/350974/07, trading as DigitalFlyer SA
+            <br />
+            609 Swart Street, Pretoria, 0044, South Africa
             <br />
             Email: info@digitalflyer.co.za
             <br />
             WhatsApp: +27723110570
           </p>
+          {/* POPIA expects the Information Officer to be identifiable. One was
+              registered on 11 July 2026 and the page never named them. */}
+          <p className="text-sm leading-relaxed text-gray-700">
+            Our Information Officer is Dewald Rosema, registered with the Information Regulator on
+            11 July 2026 under registration number 2026-061838. Information Officer requests go to
+            info@digitalflyer.co.za.
+          </p>
           <p className="text-sm leading-relaxed text-gray-700">
             If you have concerns about how we handle your personal information, please contact us first.
             You may also approach the Information Regulator at{" "}
             <a
-              href="https://www.justice.gov.za/inforeg"
+              href="https://inforegulator.org.za"
               target="_blank"
               rel="noreferrer"
               className="text-brand underline-offset-2 hover:underline"
             >
-              www.justice.gov.za/inforeg
+              inforegulator.org.za
             </a>
-            .
+            , by email at POPIAComplaints@inforegulator.org.za, or by post at P.O. Box 31533,
+            Braamfontein, Johannesburg, 2017.
           </p>
         </section>
       </div>
