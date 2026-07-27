@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
-import { signUpForBizUp, confirmBizUpSignup } from "@/app/bizup/signup/actions";
+import { signUpForBizUp, confirmBizUpSignup, resendBizUpCode } from "@/app/bizup/signup/actions";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 
 // Four fields, deliberately. Landing copy, conversion note 2: "Every field
@@ -22,8 +22,17 @@ const err = "text-xs font-normal text-red-600";
 export function SignupForm() {
   const [state, action, pending] = useActionState(signUpForBizUp, null);
   const [confirmState, confirmAction, confirming] = useActionState(confirmBizUpSignup, null);
+  const [resendState, resendAction, resending] = useActionState(resendBizUpCode, null);
 
-  const awaiting = confirmState?.awaitingCode ?? state?.awaitingCode;
+  // Lets "use a different email" actually work. The previous version was a
+  // link to this same page, so React kept the component mounted, the state
+  // survived, and clicking it did nothing at all. Found by Dewald when a
+  // code expired and there was no way out of the code screen.
+  const [restarted, setRestarted] = useState(false);
+
+  const awaiting = restarted
+    ? null
+    : (resendState?.awaitingCode ?? confirmState?.awaitingCode ?? state?.awaitingCode);
 
   if (awaiting) {
     return (
@@ -63,19 +72,53 @@ export function SignupForm() {
           {confirming ? "Checking..." : "Confirm and start"}
         </button>
 
-        <p className="text-center text-xs text-neutral-muted">
-          No code? Check your spam folder, or{" "}
-          <Link href="/bizup/signup" className="font-semibold text-brand-blue hover:underline">
-            start again
-          </Link>
-          .
-        </p>
+        {resendState?.resent && (
+          <p className="text-center text-sm font-medium text-green-700">
+            A new code is on its way. The old one no longer works.
+          </p>
+        )}
+        {resendState?.error?._form?.[0] && (
+          <p className="text-center text-sm text-red-600">{resendState.error._form[0]}</p>
+        )}
+
+        {/* The way out, and both halves of it were missing. There was no way
+            to get a fresh code at all, and the only escape was a link to
+            this same page, which changed nothing. */}
+        <div className="flex flex-col gap-2 border-t border-neutral-border pt-4">
+          <p className="text-center text-xs text-neutral-muted">
+            No code, or has it been sitting a while? Check your spam folder. Codes stop working
+            after an hour.
+          </p>
+          <button
+            type="submit"
+            formAction={resendAction}
+            disabled={resending}
+            className="w-full rounded-full border border-neutral-border bg-white px-5 py-3 text-sm font-bold text-neutral-mid transition hover:border-brand-blue hover:text-brand-blue disabled:opacity-50"
+          >
+            {resending ? "Sending..." : "Send me a new code"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setRestarted(true)}
+            className="text-center text-xs font-semibold text-neutral-muted underline-offset-2 hover:text-brand-blue hover:underline"
+          >
+            Use a different email address
+          </button>
+        </div>
       </form>
     );
   }
 
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form
+      // Clears the restart flag, so submitting again brings the code screen
+      // back for the new address instead of appearing to do nothing.
+      action={(fd) => {
+        setRestarted(false);
+        action(fd);
+      }}
+      className="flex flex-col gap-4"
+    >
       <label className={label}>
         Your business name
         <input name="businessName" autoComplete="organization" placeholder="Sipho's Plumbing" className={input} />

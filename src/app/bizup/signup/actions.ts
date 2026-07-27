@@ -33,6 +33,8 @@ export type SignupState = {
   error?: Record<string, string[]> & { _form?: string[] };
   /** Set once the code is on its way, which is what swaps the form for the code screen. */
   awaitingCode?: string;
+  /** True when a fresh code has just gone out, so the screen can say so. */
+  resent?: boolean;
 } | null;
 
 const signupSchema = z.object({
@@ -186,4 +188,43 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
   });
 
   redirect(`/bizup/welcome?ev=${eventId}`);
+}
+
+/**
+ * Sends a fresh code to the same address.
+ *
+ * Dewald: "what happens if the code expired, I clicked on start again and
+ * nothing happens". Two problems, and this is the one that matters. Codes
+ * expire after an hour, and there was no way to ask for another: the only
+ * escape was to abandon the signup entirely and hope. A member who has
+ * already typed four fields and proved they are human should never be sent
+ * back to the beginning for a reason that is not their fault.
+ */
+export async function resendBizUpCode(_prev: SignupState, formData: FormData): Promise<SignupState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) return { error: { _form: ["We lost track of your email. Please start again."] } };
+
+  const h = await headers();
+  const ip = clientIpFromHeaders(h);
+  // Tighter than the signup limit: this sends a real email every time and
+  // needs no form to be filled in first, so it is the cheaper thing to abuse.
+  if (isRateLimited(`bizup-resend:${ip}`, 3, 15 * 60 * 1000)) {
+    return {
+      error: { _form: ["You have asked for a few codes already. Please wait a few minutes."] },
+      awaitingCode: email,
+    };
+  }
+
+  const supabase = await createServerClient();
+  const { error } = await supabase.auth.resend({ type: "signup", email });
+
+  if (error) {
+    console.error("BizUp code resend failed", error.message);
+    return {
+      error: { _form: ["We couldn't send another code. Please try again in a moment."] },
+      awaitingCode: email,
+    };
+  }
+
+  return { awaitingCode: email, resent: true };
 }
