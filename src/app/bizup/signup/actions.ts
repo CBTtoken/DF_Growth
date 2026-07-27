@@ -60,7 +60,11 @@ export async function signUpForBizUp(_prev: SignupState, formData: FormData): Pr
 
   // Gate 1. Before anything else, so an automated signup never costs us a
   // send and never lands in the mail provider's bounce statistics.
-  const human = await verifyTurnstileToken(String(formData.get("cf-turnstile-response") ?? ""), ip);
+  // The field name must match TurnstileWidget's hidden input, which is
+  // "turnstileToken", not Cloudflare's own "cf-turnstile-response". Reading
+  // the wrong one fails closed and silently blocks every signup, which is
+  // exactly what happened on the first pass here.
+  const human = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
   if (!human) {
     return { error: { _form: ["We could not confirm you are a person. Please try again."] } };
   }
