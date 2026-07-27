@@ -151,7 +151,14 @@ const PLANS = [
       "75 documents a month", "All 5 templates", "Your own logo", "Customer list",
       "Reports and statements", "Export for your accountant",
     ],
-    cta: "Start free, upgrade later",
+    // Deliberately does NOT say "Start free" on a paid column. Every button
+    // on this page creates a free account, which is correct per the copy
+    // deck's one-action rule, but a visitor reading the R49 column's feature
+    // list and clicking "Start free" could reasonably believe they were
+    // getting that list for nothing. That is a misleading representation
+    // under the CPA, and the same trap the deck avoids elsewhere with fake
+    // testimonials and "SARS compliant".
+    cta: "Start on Free, move up later",
   },
   {
     name: "Unlimited",
@@ -160,7 +167,7 @@ const PLANS = [
     highlight: false,
     badge: null,
     features: ["Unlimited documents", "Everything in BizUp", "Up to 5 users", "Recurring invoices"],
-    cta: "Start free, upgrade later",
+    cta: "Start on Free, move up later",
   },
 ];
 
@@ -408,7 +415,16 @@ export function BizUpLanding() {
             ))}
           </div>
 
-          <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-neutral-mid">
+          {/* Removes the remaining ambiguity: the buttons all do the same
+              thing, and this says plainly what that thing is. Without it, a
+              visitor could still read "move up later" as "I am signing up
+              for this plan now". */}
+          <p className="mx-auto mt-6 max-w-2xl text-center text-sm font-semibold text-neutral-ink">
+            Everyone starts on the free plan. You choose a paid plan later, from inside BizUp, once
+            you know you need it.
+          </p>
+
+          <p className="mx-auto mt-3 max-w-2xl text-center text-sm leading-relaxed text-neutral-mid">
             A quote and an invoice count as two documents. Most one-person businesses use about 40 a
             month, so 75 is room to grow into. Having a big month? Top up for another 75 documents
             for R49, and they never expire.
