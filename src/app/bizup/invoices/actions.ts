@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   currentAccount,
@@ -220,4 +221,94 @@ export async function recordPayment(_prev: InvoiceState, formData: FormData): Pr
   return {
     ok: status === "paid" ? "Paid in full." : "Payment recorded.",
   };
+}
+
+/**
+ * One-tap "mark as paid" for the dashboard.
+ *
+ * Dewald wants accept, decline and paid available straight from the home
+ * screen without opening the document. Records a payment for whatever is
+ * still outstanding, which is what "they paid me" almost always means. A
+ * part payment still goes through the full form on the invoice itself,
+ * where the amount and reference belong.
+ */
+export async function markInvoicePaid(formData: FormData): Promise<void> {
+  const documentId = String(formData.get("documentId") ?? "");
+  const account = await currentAccount();
+  if (!account) return;
+
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("bizup_documents")
+    .select("id, number, status, total_incl_cents")
+    .eq("id", documentId)
+    .eq("account_id", account.id)
+    .eq("doc_type", "invoice")
+    .maybeSingle();
+
+  if (!doc?.number) return;
+
+  const { data: payments } = await admin
+    .from("bizup_payments")
+    .select("amount_cents")
+    .eq("document_id", documentId);
+
+  const paid = (payments ?? []).reduce((s, p) => s + p.amount_cents, 0);
+  const outstanding = doc.total_incl_cents - paid;
+  if (outstanding <= 0) return;
+
+  await admin.from("bizup_payments").insert({
+    document_id: documentId,
+    amount_cents: outstanding,
+    paid_at: new Date().toISOString().slice(0, 10),
+    method: "eft",
+  });
+
+  await admin.from("bizup_documents").update({ status: "paid" }).eq("id", documentId);
+
+  await admin.from("bizup_audit_log").insert({
+    account_id: account.id,
+    document_id: documentId,
+    action: "invoice_marked_paid",
+    from_status: doc.status,
+    to_status: "paid",
+    reason: "Marked paid in full from the dashboard",
+  });
+
+  revalidatePath("/bizup");
+  revalidatePath("/bizup/invoices");
+}
+
+/**
+ * A blank invoice, with no quote behind it.
+ *
+ * Dewald: "sometimes you can go straight to an invoice and don't need to
+ * produce a quote first." Until now the only way to get an invoice was to
+ * convert a quote, which is wrong for a call-out that is done and paid on
+ * the same visit.
+ */
+export async function createInvoice(): Promise<void> {
+  const account = await currentAccount();
+  if (!account) redirect("/bizup/login");
+
+  const admin = createAdminClient();
+  const { data, error } = await admin
+    .from("bizup_documents")
+    .insert({
+      account_id: account.id,
+      doc_type: "invoice",
+      series: "INV",
+      status: "draft",
+      template_id: account.template_id,
+      vat_rate: isVatVendor(account.vat_number) ? 0.15 : 0,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    console.error("Failed to create BizUp invoice", error);
+    redirect("/bizup/invoices");
+  }
+
+  redirect(`/bizup/invoices/${data.id}`);
 }

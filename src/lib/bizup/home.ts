@@ -61,12 +61,19 @@ export async function getHomeSummary(
         .from("bizup_payments")
         .select("amount_cents, document_id, bizup_documents!inner(account_id)")
         .eq("bizup_documents.account_id", accountId),
+      // Only what is still open. Dewald: "once a quote is approved or
+      // declined, and an invoice marked paid, it moves out of the recent
+      // docs." A finished document is not work, and leaving it here buries
+      // the things that still need an answer under the things that do not.
+      // Everything, finished or not, remains in the full Quotes and
+      // Invoices sections.
       admin
         .from("bizup_documents")
         .select("id, number, doc_type, status, total_incl_cents, first_viewed_at, bizup_customers(name)")
         .eq("account_id", accountId)
+        .in("status", ["draft", "sent", "issued", "partially_paid", "overdue"])
         .order("created_at", { ascending: false })
-        .limit(5),
+        .limit(8),
       getCapState(accountId, plan, topupBalance),
     ]);
 

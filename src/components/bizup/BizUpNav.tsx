@@ -2,69 +2,116 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
-// Dewald: "the whole navigation needs a real deep relook... our members are
-// not computer gurus or have patience to figure it out, it should be super
-// easy to follow, and 1 max 2 clicks to do their job."
+// Rewritten after Dewald's second look. The first version was a fixed
+// bottom bar, which is the pattern a phone app uses. His objection is
+// correct and I should have got there myself: these members are on a web
+// page, not in an installed app, and controls at the bottom is not where
+// they will look. Being different is not worth being confusing.
 //
-// What was there before was a row of six equal text links, which is a
-// developer's menu: it assumes you already know what everything is called
-// and that all six matter equally. They do not.
+// "People" was also just a bad name. It reads as staff, as in people who
+// work for me, when it means the customers you invoice. It is Customers.
 //
-// This is the pattern every app a tradesman already uses has at the bottom
-// of the screen: four destinations, always visible, always in the same
-// place, with the current one obviously lit. Settings is deliberately NOT
-// here. A member touches it twice ever, and giving it a permanent slot
-// would cost a quarter of the bar for nothing.
-//
-// Bottom rather than top on purpose: it is where a thumb already is on a
-// phone held one-handed, which is how this product is used.
+// Mounted in the layout so it is on EVERY page. Dewald: "when I click on
+// either, the menu options goes away, can we have all pages have some
+// decent navigation options?" That was the real failure, worse than the
+// placement: navigation that disappears the moment you use it.
 
-const TABS = [
-  { href: "/bizup", label: "Home", icon: "M3 10.5 12 3l9 7.5M5.5 9.5V20h13V9.5" },
-  { href: "/bizup/quotes", label: "Quotes", icon: "M6 3h9l4 4v14H6zM15 3v4h4M9 12h6M9 16h6" },
-  { href: "/bizup/invoices", label: "Invoices", icon: "M6 3h12v18l-3-2-3 2-3-2-3 2zM9.5 8h5M9.5 12h5" },
-  { href: "/bizup/customers", label: "People", icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21c0-4 3.6-6 8-6s8 2 8 6" },
+type NavLink = { href: string; label: string; exact?: boolean };
+
+const LINKS: NavLink[] = [
+  { href: "/bizup", label: "Home", exact: true },
+  { href: "/bizup/quotes", label: "Quotes" },
+  { href: "/bizup/invoices", label: "Invoices" },
+  { href: "/bizup/customers", label: "Customers" },
+  { href: "/bizup/price-list", label: "Price list" },
 ];
 
-export function BizUpNav() {
+const SETTINGS: NavLink[] = [
+  { href: "/bizup/settings/business", label: "Business details" },
+  { href: "/bizup/settings/banking", label: "Banking details" },
+];
+
+export function BizUpNav({ businessName }: { businessName: string }) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  const isActive = (href: string, exact?: boolean) =>
+    exact ? pathname === href : pathname.startsWith(href);
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white/95 backdrop-blur">
-      <ul className="mx-auto flex max-w-3xl">
-        {TABS.map((t) => {
-          // Home matches only itself; the others match their whole section,
-          // so a member deep inside a quote still sees Quotes lit and knows
-          // where they are.
-          const active = t.href === "/bizup" ? pathname === "/bizup" : pathname.startsWith(t.href);
-          return (
-            <li key={t.href} className="flex-1">
+    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <Link href="/bizup" className="shrink-0 text-xl font-extrabold tracking-tight text-ink">
+          BizUp
+        </Link>
+
+        {/* Desktop and tablet: everything visible, nothing hidden behind a
+            menu. A member should never have to hunt. */}
+        <nav className="hidden flex-1 items-center gap-1 md:flex">
+          {LINKS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              aria-current={isActive(l.href, l.exact) ? "page" : undefined}
+              className={`rounded-full px-3.5 py-2 text-sm font-semibold transition ${
+                isActive(l.href, l.exact)
+                  ? "bg-brand text-white"
+                  : "text-gray-600 hover:bg-gray-100 hover:text-ink"
+              }`}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
+          <span className="max-w-[14rem] truncate text-sm text-gray-500">{businessName}</span>
+          <Link
+            href="/bizup/settings/business"
+            className="text-sm font-medium text-gray-500 hover:text-brand"
+          >
+            Settings
+          </Link>
+        </div>
+
+        {/* Phone: one button, everything inside it, and it opens downward
+            from the top where the member is already looking. */}
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3.5 py-2 text-sm font-semibold text-gray-700 md:hidden"
+        >
+          Menu
+          <span aria-hidden className={`transition-transform ${open ? "rotate-45" : ""}`}>+</span>
+        </button>
+      </div>
+
+      {open && (
+        <div className="border-t border-gray-100 bg-white px-4 py-3 md:hidden">
+          <p className="truncate pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            {businessName}
+          </p>
+          <nav className="flex flex-col">
+            {[...LINKS, ...SETTINGS].map((l) => (
               <Link
-                href={t.href}
-                aria-current={active ? "page" : undefined}
-                className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-semibold transition-colors ${
-                  active ? "text-brand" : "text-gray-500"
+                key={l.href}
+                href={l.href}
+                onClick={() => setOpen(false)}
+                className={`rounded-xl px-3 py-3 text-base font-semibold ${
+                  isActive(l.href, l.exact)
+                    ? "bg-brand/10 text-brand"
+                    : "text-gray-700"
                 }`}
               >
-                <svg
-                  aria-hidden
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={active ? 2.2 : 1.7}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="size-6"
-                >
-                  <path d={t.icon} />
-                </svg>
-                {t.label}
+                {l.label}
               </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+            ))}
+          </nav>
+        </div>
+      )}
+    </header>
   );
 }

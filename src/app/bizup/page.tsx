@@ -87,7 +87,7 @@ export default async function BizUpHomePage() {
           }}
         />
 
-        <BizUpHome businessName={account.businessName} summary={summary} />
+        <BizUpHome summary={summary} />
 
         {account.growthClientId && (
           <Link

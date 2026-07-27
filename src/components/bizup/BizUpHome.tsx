@@ -1,31 +1,32 @@
 import Link from "next/link";
 import { formatZar } from "@/lib/bizup/money";
 import { createQuote } from "@/app/bizup/quotes/actions";
+import { createInvoice } from "@/app/bizup/invoices/actions";
+import { setQuoteOutcome } from "@/app/bizup/quotes/convert-actions";
+import { markInvoicePaid } from "@/app/bizup/invoices/actions";
 import { logOutOfBizUp } from "@/app/bizup/actions";
 import { capWarning } from "@/lib/bizup/cap";
+import { ShareBizUp } from "@/components/bizup/ShareBizUp";
 import type { HomeSummary } from "@/lib/bizup/home";
 
-// The signed-in home screen. Three numbers, one big button, and what you
-// were last working on.
+// Rebuilt to Dewald's own running order, which is better than mine was:
+//   1. Owed to you, and waiting on a reply
+//   2. Documents used this month
+//   3. The four things they actually do: new client, quote, invoice, prices
+//   4. Everything else
 //
-// Dewald's brief: "1 max 2 clicks to do their job they want to do". From
-// here, creating a quote is one tap. Seeing who owes money is one tap.
-// Everything else is deliberately further away.
+// The order matters. The first screen answers "where do I stand", then
+// tells them what they have left, then gets out of the way and lets them
+// work. My previous version led with the New quote button, which is the
+// right button but the wrong first question.
 
 const STATUS_LABEL: Record<string, string> = {
   draft: "Draft",
   sent: "Sent",
   accepted: "Accepted",
-  declined: "Declined",
-  expired: "Expired",
-  converted: "Invoiced",
   issued: "Unpaid",
   partially_paid: "Part paid",
-  paid: "Paid",
   overdue: "Overdue",
-  cancelled: "Cancelled",
-  credited: "Replaced",
-  corrected: "Corrected",
 };
 
 function Stat({
@@ -57,41 +58,14 @@ function Stat({
   );
 }
 
-export function BizUpHome({
-  businessName,
-  summary,
-}: {
-  businessName: string;
-  summary: HomeSummary;
-}) {
+export function BizUpHome({ summary }: { summary: HomeSummary }) {
   const warning = capWarning(summary.cap);
   const { cap } = summary;
 
   return (
-    <div className="flex flex-col gap-5">
-      <header className="flex items-baseline justify-between gap-3">
-        <span className="text-2xl font-bold tracking-tight text-ink">BizUp</span>
-        <span className="truncate text-sm text-gray-500">{businessName}</span>
-      </header>
-
-      {/* The job. Deliberately the largest thing on the screen, because it
-          is what the member opened the app to do.
-
-          A form rather than a link, because this creates a draft. Next
-          prefetches links on hover and on viewport entry, so a link here
-          would quietly create an empty quote every time the home screen
-          loaded. */}
-      <form action={createQuote}>
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-brand px-6 py-5 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark"
-        >
-          <span aria-hidden className="text-2xl leading-none">+</span>
-          New quote
-        </button>
-      </form>
-
-      <div className="grid grid-cols-2 gap-3">
+    <div className="flex flex-col gap-6">
+      {/* 1. Where do I stand */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Stat
           label="Owed to you"
           value={formatZar(summary.owedCents)}
@@ -101,17 +75,13 @@ export function BizUpHome({
         <Stat
           label="Waiting on a reply"
           value={formatZar(summary.awaitingReplyCents)}
-          sub={
-            summary.awaitingReplyCount === 1
-              ? "1 quote sent"
-              : `${summary.awaitingReplyCount} quotes sent`
-          }
+          sub={summary.awaitingReplyCount === 1 ? "1 quote sent" : `${summary.awaitingReplyCount} quotes sent`}
           href="/bizup/quotes"
         />
       </div>
 
-      {/* Only when there is something to chase. An "Overdue: R0" tile every
-          day trains the member to ignore the row it lives in. */}
+      {/* Only when there is something to chase. A permanent "Overdue: R0"
+          teaches the member to ignore the row it lives in. */}
       {summary.overdueCount > 0 && (
         <Stat
           label="Needs chasing"
@@ -126,9 +96,8 @@ export function BizUpHome({
         />
       )}
 
-      {/* Sec 15: "A permanently visible counter is the primary defence, not
-          the warnings. The member should never be able to be surprised by
-          the cap at any point in the month." */}
+      {/* 2. Sec 15: "A permanently visible counter is the primary defence,
+          not the warnings." */}
       {cap.allowance !== null && (
         <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
           <div className="flex items-baseline justify-between gap-3 text-sm">
@@ -154,9 +123,60 @@ export function BizUpHome({
         </div>
       )}
 
+      {/* 3. The four things they actually came to do. Quote is visually
+          first and heaviest because it is the most common by far, but all
+          four are one tap. Two of these create a record, so they are forms
+          rather than links: Next prefetches links on hover and would
+          silently create empty drafts. */}
+      <section>
+        <h2 className="text-sm font-semibold text-ink">Get to work</h2>
+        <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <form action={createQuote} className="contents">
+            <button
+              type="submit"
+              className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-brand px-4 py-5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark"
+            >
+              <span aria-hidden className="text-xl leading-none">+</span>
+              New quote
+            </button>
+          </form>
+
+          <form action={createInvoice} className="contents">
+            <button
+              type="submit"
+              className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+            >
+              <span aria-hidden className="text-xl leading-none">+</span>
+              New invoice
+            </button>
+          </form>
+
+          <Link
+            href="/bizup/customers/new"
+            className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+          >
+            <span aria-hidden className="text-xl leading-none">+</span>
+            New customer
+          </Link>
+
+          <Link
+            href="/bizup/price-list"
+            className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+          >
+            <span aria-hidden className="text-xl leading-none">R</span>
+            Price list
+          </Link>
+        </div>
+      </section>
+
+      {/* 4. What is still open, with the answer one tap away.
+          Dewald: "can we have a quick accept or decline option on their
+          dashboards... and for invoices, paid option." Closed documents drop
+          off this list by design and live in the full Quotes and Invoices
+          sections. */}
       <section>
         <div className="flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold text-ink">Recent</h2>
+          <h2 className="text-sm font-semibold text-ink">Still open</h2>
           <Link href="/bizup/quotes" className="text-xs font-semibold text-brand hover:underline">
             See all
           </Link>
@@ -164,16 +184,16 @@ export function BizUpHome({
 
         {summary.recent.length === 0 ? (
           <p className="mt-2 rounded-2xl border border-gray-100 bg-white p-5 text-center text-sm text-gray-500">
-            Nothing yet. Tap New quote and build one in front of your customer.
+            Nothing open. Tap New quote and build one in front of your customer.
           </p>
         ) : (
           <ul className="mt-2 flex flex-col gap-2">
             {summary.recent.map((d) => (
-              <li key={d.id}>
-                <Link
-                  href={d.href}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-brand"
-                >
+              <li
+                key={d.id}
+                className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+              >
+                <Link href={d.href} className="flex min-w-0 flex-1 items-center justify-between gap-3">
                   <span className="flex min-w-0 flex-col">
                     <span className="truncate text-sm font-semibold text-ink">
                       {d.number ?? "Draft"}
@@ -189,18 +209,46 @@ export function BizUpHome({
                     {formatZar(d.totalCents)}
                   </span>
                 </Link>
+
+                {/* Only on a sent quote or an unpaid issued invoice, which
+                    are the only two states where there is a one-word answer
+                    worth capturing without opening the document. */}
+                {d.docType === "quote" && d.status === "sent" && (
+                  <div className="flex shrink-0 gap-2">
+                    <form action={setQuoteOutcome}>
+                      <input type="hidden" name="documentId" value={d.id} />
+                      <input type="hidden" name="outcome" value="accepted" />
+                      <button className="rounded-full bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700">
+                        Accepted
+                      </button>
+                    </form>
+                    <form action={setQuoteOutcome}>
+                      <input type="hidden" name="documentId" value={d.id} />
+                      <input type="hidden" name="outcome" value="declined" />
+                      <button className="rounded-full border border-gray-200 px-4 py-2 text-xs font-bold text-gray-600 hover:border-gray-400">
+                        Declined
+                      </button>
+                    </form>
+                  </div>
+                )}
+
+                {d.docType === "invoice" && (d.status === "issued" || d.status === "partially_paid") && (
+                  <form action={markInvoicePaid} className="shrink-0">
+                    <input type="hidden" name="documentId" value={d.id} />
+                    <button className="rounded-full bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700">
+                      Mark paid
+                    </button>
+                  </form>
+                )}
               </li>
             ))}
           </ul>
         )}
       </section>
 
-      {/* Settings deliberately lives down here, not in the navigation bar.
-          A member touches these twice ever. Log out belongs with them for
-          the same reason, and there was no way out of BizUp at all until
-          Dewald went looking for one. */}
+      <ShareBizUp />
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-4 text-xs font-medium text-gray-500">
-        <Link href="/bizup/price-list" className="hover:text-brand">Price list</Link>
         <Link href="/bizup/settings/business" className="hover:text-brand">Business details</Link>
         <Link href="/bizup/settings/banking" className="hover:text-brand">Banking details</Link>
         <form action={logOutOfBizUp} className="contents">
