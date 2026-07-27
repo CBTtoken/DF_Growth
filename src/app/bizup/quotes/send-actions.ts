@@ -89,6 +89,14 @@ export async function issueQuote(_prevState: SendState, formData: FormData): Pro
     };
   }
 
+  // Dewald hit this from the other end: a quote issued with no customer
+  // converts into an invoice with no customer, and then cannot be issued.
+  // Requiring it here stops the whole chain, and a quote you are about to
+  // send should know who it is going to anyway.
+  if (!doc.customer_id) {
+    return { error: "Choose who this quote is for before you send it." };
+  }
+
   const { data: customer } = doc.customer_id
     ? await admin
         .from("bizup_customers")

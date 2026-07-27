@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
 import { addLine, updateLine, removeLine } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
+import { updateInvoiceCustomer } from "@/app/bizup/invoices/actions";
 import { IssueInvoiceButton, RecordPaymentForm } from "@/components/bizup/InvoiceActions";
 import { ShareQuote } from "@/components/bizup/ShareQuote";
 import { formatZar } from "@/lib/bizup/money";
@@ -25,7 +26,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
   if (!account) redirect("/bizup/login");
 
   const admin = createAdminClient();
-  const [{ data: doc }, { data: lines }, { data: payments }, settings] = await Promise.all([
+  const [{ data: doc }, { data: lines }, { data: payments }, { data: customers }, settings] = await Promise.all([
     admin
       .from("bizup_documents")
       .select("*, bizup_customers(name, email, whatsapp)")
@@ -35,6 +36,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
       .maybeSingle(),
     admin.from("bizup_document_lines").select("*").eq("document_id", id).order("line_no"),
     admin.from("bizup_payments").select("*").eq("document_id", id).order("paid_at"),
+    admin.from("bizup_customers").select("id, name").eq("account_id", account.id).order("name"),
     loadSettings(),
   ]);
 
@@ -80,6 +82,47 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
             {doc.due_date ? `Due ${doc.due_date}.` : ""}
           </p>
         </div>
+
+        {/* Who it is for. Missing entirely until Dewald converted a quote
+            and was told to choose a customer on a page with nowhere to do
+            it. An invoice can arrive here without one two ways: converted
+            from a quote that never had a customer, or created directly,
+            which starts empty by definition. */}
+        {editable && (
+          <form
+            action={updateInvoiceCustomer}
+            className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+          >
+            <input type="hidden" name="documentId" value={doc.id} />
+            <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+              Who is this invoice for?
+              <select name="customerId" defaultValue={doc.customer_id ?? ""} className={input}>
+                <option value="">Not chosen yet</option>
+                {(customers ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                className="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-brand hover:text-brand"
+              >
+                Save customer
+              </button>
+              {/* Comes straight back here afterwards, so adding someone new
+                  mid-invoice does not lose the invoice. */}
+              <Link
+                href={`/bizup/customers/new?next=${encodeURIComponent(`/bizup/invoices/${doc.id}`)}`}
+                className="text-sm font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                Add a new customer
+              </Link>
+            </div>
+          </form>
+        )}
 
         {level === "full" && editable && (
           <p className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">

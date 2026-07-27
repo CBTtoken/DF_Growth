@@ -312,3 +312,48 @@ export async function createInvoice(): Promise<void> {
 
   redirect(`/bizup/invoices/${data.id}`);
 }
+
+/**
+ * Sets who an invoice is for.
+ *
+ * Missing entirely until Dewald converted a quote and hit "choose a
+ * customer" on a page with nowhere to choose one. Two ways to arrive
+ * without a customer: convert a quote that never had one, or create an
+ * invoice directly, which by definition starts empty.
+ */
+export async function updateInvoiceCustomer(formData: FormData): Promise<void> {
+  const documentId = String(formData.get("documentId") ?? "");
+  const customerId = String(formData.get("customerId") ?? "") || null;
+
+  const account = await currentAccount();
+  if (!account) return;
+
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("bizup_documents")
+    .select("id, number")
+    .eq("id", documentId)
+    .eq("account_id", account.id)
+    .eq("doc_type", "invoice")
+    .maybeSingle();
+
+  // Sec 7: an issued invoice is never quietly edited. Changing who it is
+  // addressed to after the fact is a correction of particulars and goes
+  // through the Fix this invoice flow, not this.
+  if (!doc || doc.number) return;
+
+  // A customer id arriving in a form field is checked against this account
+  // before it is stored, never trusted because it was submitted.
+  if (customerId) {
+    const { data: customer } = await admin
+      .from("bizup_customers")
+      .select("id")
+      .eq("id", customerId)
+      .eq("account_id", account.id)
+      .maybeSingle();
+    if (!customer) return;
+  }
+
+  await admin.from("bizup_documents").update({ customer_id: customerId }).eq("id", documentId);
+  revalidatePath(`/bizup/invoices/${documentId}`);
+}

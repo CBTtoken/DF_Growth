@@ -110,7 +110,12 @@ export async function createCustomer(
   }
 
   revalidatePath("/bizup/customers");
-  redirect("/bizup/customers");
+
+  // Returns to wherever the member came from, so adding someone new in the
+  // middle of an invoice does not lose the invoice. Only ever an internal
+  // path: an absolute URL here would be an open redirect.
+  const next = field(formData, "next");
+  redirect(next.startsWith("/bizup/") ? next : "/bizup/customers");
 }
 
 export async function updateCustomer(

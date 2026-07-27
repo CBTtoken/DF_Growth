@@ -72,10 +72,12 @@ export function CustomerForm({
   action,
   defaults = {},
   submitLabel,
+  next,
 }: {
   action: (state: CustomerFormState, formData: FormData) => Promise<CustomerFormState>;
   defaults?: CustomerDefaults;
   submitLabel: string;
+  next?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const [isBusiness, setIsBusiness] = useState(!!defaults.isBusiness);
@@ -89,6 +91,7 @@ export function CustomerForm({
   return (
     <form action={formAction} className="flex flex-col gap-5">
       {defaults.id && <input type="hidden" name="id" value={defaults.id} />}
+      {next && <input type="hidden" name="next" value={next} />}
 
       <Field
         name="name"

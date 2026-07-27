@@ -9,7 +9,12 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-export default async function NewBizUpCustomerPage() {
+export default async function NewBizUpCustomerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   const supabase = await createServerClient();
   const {
     data: { user },
@@ -40,7 +45,7 @@ export default async function NewBizUpCustomerPage() {
             Only the name is required. You can fill in the rest whenever you have it.
           </p>
           <div className="mt-6">
-            <CustomerForm action={createCustomer} submitLabel="Save customer" />
+            <CustomerForm action={createCustomer} submitLabel="Save customer" next={next} />
           </div>
         </div>
       </div>
