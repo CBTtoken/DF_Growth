@@ -124,9 +124,22 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
             <textarea name="notes" defaultValue={doc.notes ?? ""} rows={2} className={input} disabled={!editable} />
           </label>
           {editable && (
-            <button type="submit" className="self-start rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-brand hover:text-brand">
-              Save details
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="submit" className="self-start rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-brand hover:text-brand">
+                Save details
+              </button>
+              {/* The invoice page had this and the quote page did not, which
+                  is backwards: the quote is where a member meets a new
+                  customer for the first time. Found by walking the flow end
+                  to end rather than by testing the page on its own. Returns
+                  here afterwards so adding someone does not lose the quote. */}
+              <Link
+                href={`/bizup/customers/new?next=${encodeURIComponent(`/bizup/quotes/${doc.id}`)}`}
+                className="text-sm font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                Add a new customer
+              </Link>
+            </div>
           )}
         </form>
 
