@@ -40,7 +40,7 @@ function orNull(value: string | undefined): string | null {
 /**
  * BizUp/docs/bizup-phase1-spec.md Sec 15.1, account setup.
  *
- * Creates the member's BizUp account and, if the same login already holds
+ * Creates the member's KatisoBiz account and, if the same login already holds
  * a Growth business, links the two and applies the bundled entitlement
  * from Sec 2 rather than leaving a Growth Engine member sitting on the
  * free cap.
@@ -115,7 +115,7 @@ export async function createBizUpAccount(
     .single();
 
   if (error || !created) {
-    console.error("Failed to create BizUp account", error);
+    console.error("Failed to create KatisoBiz account", error);
     return { error: { _form: ["We couldn't save that. Please try again."] } };
   }
 
@@ -123,7 +123,7 @@ export async function createBizUpAccount(
     account_id: created.id,
     actor_user_id: user.id,
     action: "account_created",
-    reason: growthTier ? `Linked to Growth tier ${growthTier}` : "Standalone BizUp signup",
+    reason: growthTier ? `Linked to Growth tier ${growthTier}` : "Standalone KatisoBiz signup",
   });
 
   await setActiveProductPreference("bizup");
@@ -194,7 +194,7 @@ export async function updateBizUpAccount(
     .eq("id", account.id);
 
   if (error) {
-    console.error("Failed to update BizUp account", error);
+    console.error("Failed to update KatisoBiz account", error);
     return { error: { _form: ["We couldn't save that. Please try again."] } };
   }
 
@@ -243,7 +243,7 @@ export async function updateTemplate(
   // and the radio keeps whatever the member clicked either way, so a
   // working save looked exactly like a broken one. Silence is the bug.
   if (error) {
-    console.error("Failed to update BizUp template", error);
+    console.error("Failed to update KatisoBiz template", error);
     return { error: { _form: ["We could not save that. Please try again."] } };
   }
 
@@ -253,11 +253,11 @@ export async function updateTemplate(
 }
 
 /**
- * Log out of BizUp.
+ * Log out of KatisoBiz.
  *
- * There was no way out of BizUp at all until Dewald tried to sign up a
+ * There was no way out of KatisoBiz at all until Dewald tried to sign up a
  * second account and found himself stuck in the first one. Sends the member
- * to BizUp's own login rather than Growth's, since that is the product they
+ * to KatisoBiz's own login rather than Growth's, since that is the product they
  * were in.
  */
 export async function logOutOfBizUp(): Promise<void> {

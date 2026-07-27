@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { SA_PROVINCES } from "@/lib/bizup/schemas";
 import type { CustomerFormState } from "@/app/bizup/customers/actions";
 
-// 16px inputs, same reasoning as the other BizUp forms: iOS Safari zooms
+// 16px inputs, same reasoning as the other KatisoBiz forms: iOS Safari zooms
 // into anything smaller and this is a phone-first product.
 const inputClass =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";

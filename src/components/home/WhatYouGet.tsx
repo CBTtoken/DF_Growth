@@ -13,7 +13,7 @@ const items = [
   },
   {
     icon: MessagesSquare,
-    title: "BizUp",
+    title: "KatisoBiz",
     body: "In-chat messaging and payments, so you can talk to and get paid by customers in one place.",
   },
 ];

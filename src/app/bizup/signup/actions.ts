@@ -11,7 +11,7 @@ import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { verifyEmailAddress } from "@/lib/email/verify-address";
 
-// BizUp signup, in two steps.
+// KatisoBiz signup, in two steps.
 //
 // The first version of this created the account and signed the member
 // straight in with email_confirm set, which meant a mistyped address
@@ -100,7 +100,7 @@ export async function signUpForBizUp(_prev: SignupState, formData: FormData): Pr
   });
 
   if (error) {
-    console.error("BizUp signUp failed", error.message);
+    console.error("KatisoBiz signUp failed", error.message);
     return { error: { _form: ["We couldn't start that signup. Please try again."] } };
   }
 
@@ -165,7 +165,7 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
       phone,
     });
     if (accountError) {
-      console.error("Failed to create BizUp account after confirmation", accountError);
+      console.error("Failed to create KatisoBiz account after confirmation", accountError);
       return { error: { _form: ["We couldn't finish setting that up. Please try again."] }, awaitingCode: email };
     }
   }
@@ -177,7 +177,7 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
   // and forgotten: neither bare promises nor after() reliably complete on
   // this deployment.
   const eventId = crypto.randomUUID();
-  const host = h.get("host") ?? "bizup.digitalflyer.co.za";
+  const host = h.get("host") ?? "katisobiz.co.za";
   await sendDigitalFlyerCapiEvent({
     eventName: "CompleteRegistration",
     email,
@@ -219,7 +219,7 @@ export async function resendBizUpCode(_prev: SignupState, formData: FormData): P
   const { error } = await supabase.auth.resend({ type: "signup", email });
 
   if (error) {
-    console.error("BizUp code resend failed", error.message);
+    console.error("KatisoBiz code resend failed", error.message);
     return {
       error: { _form: ["We couldn't send another code. Please try again in a moment."] },
       awaitingCode: email,

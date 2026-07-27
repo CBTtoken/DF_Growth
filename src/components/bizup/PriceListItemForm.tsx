@@ -5,7 +5,7 @@ import { CATALOGUE_TYPES, CATALOGUE_UNITS } from "@/lib/bizup/schemas";
 import { formatZar, parseAmountToCents } from "@/lib/bizup/money";
 import type { PriceListFormState } from "@/app/bizup/price-list/actions";
 
-// 16px inputs, same reasoning as the other BizUp forms: iOS Safari zooms
+// 16px inputs, same reasoning as the other KatisoBiz forms: iOS Safari zooms
 // into anything smaller and this is a phone-first product.
 const inputClass =
   "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";

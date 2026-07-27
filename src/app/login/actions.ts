@@ -79,7 +79,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
   }
 
   // Which product's login page this submission came from. Growth's /login
-  // sends nothing and behaves exactly as before; BizUp's /bizup/login
+  // sends nothing and behaves exactly as before; KatisoBiz's /bizup/login
   // sends "bizup". Only ever used to choose between two dashboards this
   // member already owns (resolveLandingPath checks real ownership first),
   // so a hand-edited value can pick a different landing page but cannot

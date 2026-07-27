@@ -66,9 +66,9 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
         .maybeSingle()
     : { data: null };
 
-  // Same prefix rule as send-actions.ts: BizUp's own hostname serves the
+  // Same prefix rule as send-actions.ts: KatisoBiz's own hostname serves the
   // short /d/... link, anywhere else needs the full path.
-  const host = (await headers()).get("host") ?? "bizup.digitalflyer.co.za";
+  const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const publicUrl = doc.public_token
     ? `${host.startsWith("localhost") ? "http" : "https"}://${host}${
         host.split(":")[0].toLowerCase().startsWith("bizup.") ? "" : "/bizup"

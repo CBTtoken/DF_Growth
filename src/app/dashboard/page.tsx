@@ -54,7 +54,7 @@ export default async function DashboardPage() {
     redirect("/dashboard/agent");
   }
 
-  // Same shape as the agent case above, for the same reason: a BizUp-only
+  // Same shape as the agent case above, for the same reason: a KatisoBiz-only
   // member has no growth_members row at all, so requireGrowthClientId
   // correctly reports "no account found" — but their login is perfectly
   // valid, it just belongs to the other product. Without this they would
@@ -86,8 +86,8 @@ export default async function DashboardPage() {
   // requireGrowthClientId() never actually returns one. Asserted, not
   // re-checked, since there's nothing to recover into if it somehow did.
   const growthClientId = client.id!;
-  // Reused below for the BizUp card, so a member who already has BizUp sees
-  // "Go to BizUp" rather than being invited to set up something they have.
+  // Reused below for the KatisoBiz card, so a member who already has KatisoBiz sees
+  // "Go to KatisoBiz" rather than being invited to set up something they have.
   const bizUpAccount = await getMyBizUpAccount();
 
   const admin = createAdminClient();
@@ -593,9 +593,9 @@ export default async function DashboardPage() {
               lives on /dashboard/agent, reached through the role switcher
               at the top of this page. */}
 
-          {/* BizUp. Until this existed there was no way for a Growth member
+          {/* KatisoBiz. Until this existed there was no way for a Growth member
               to discover it at all: the only link between the two products
-              anywhere in the app was a redirect for members who had BizUp
+              anywhere in the app was a redirect for members who had KatisoBiz
               and nothing else. */}
           <BizUpFromGrowth
             tier={(growthClient?.plan as Tier | undefined) ?? null}

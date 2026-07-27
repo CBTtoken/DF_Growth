@@ -179,7 +179,7 @@ export async function correctParticulars(_prev: FixState, formData: FormData): P
     .single();
 
   if (error || !corrected) {
-    console.error("Failed to correct BizUp invoice", error);
+    console.error("Failed to correct KatisoBiz invoice", error);
     return { error: "We couldn't save that. Please try again." };
   }
 
@@ -236,7 +236,7 @@ export async function cancelInvoice(_prev: FixState, formData: FormData): Promis
   try {
     creditNote = await createFullCreditNote(account, doc, `Cancels ${doc.number}. ${reason}`);
   } catch (e) {
-    console.error("Failed to cancel BizUp invoice", e);
+    console.error("Failed to cancel KatisoBiz invoice", e);
     return { error: "We couldn't cancel that. Please try again." };
   }
 
@@ -275,7 +275,7 @@ export async function replaceInvoice(_prev: FixState, formData: FormData): Promi
   try {
     creditNote = await createFullCreditNote(account, doc, `Replaces ${doc.number}. ${reason}`);
   } catch (e) {
-    console.error("Failed to replace BizUp invoice", e);
+    console.error("Failed to replace KatisoBiz invoice", e);
     return { error: "We couldn't do that. Please try again." };
   }
 

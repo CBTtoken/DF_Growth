@@ -52,7 +52,7 @@ export default async function BizUpCustomersPage({
   // result set both produce an empty list, and telling a member "no
   // customers match" when the search actually broke would send them
   // looking for a record they would swear they had saved.
-  if (queryError) console.error("BizUp customer search failed", queryError);
+  if (queryError) console.error("KatisoBiz customer search failed", queryError);
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -61,7 +61,7 @@ export default async function BizUpCustomersPage({
           href="/bizup"
           className="text-sm font-medium text-gray-500 underline-offset-2 hover:text-brand hover:underline"
         >
-          Back to BizUp
+          Back to KatisoBiz
         </Link>
 
         <div className="flex items-center justify-between gap-4">

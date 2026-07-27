@@ -23,7 +23,7 @@ export type SendState = { error?: string; ok?: string } | null;
 
 /**
  * Sec 9: the public link a customer opens. Built from the request host so
- * a link created on bizup.digitalflyer.co.za points there, and a link
+ * a link created on katisobiz.co.za points there, and a link
  * created in development points at localhost.
  *
  * The host header is used only to build a link the member is about to look
@@ -33,10 +33,10 @@ export type SendState = { error?: string; ok?: string } | null;
  */
 async function publicUrlFor(token: string): Promise<string> {
   const h = await headers();
-  const host = h.get("host") ?? "bizup.digitalflyer.co.za";
+  const host = h.get("host") ?? "katisobiz.co.za";
   const protocol = host.startsWith("localhost") ? "http" : "https";
 
-  // The page lives at /bizup/d/[token]. On BizUp's own hostname the proxy
+  // The page lives at /bizup/d/[token]. On KatisoBiz's own hostname the proxy
   // strips that prefix, so the customer gets the short /d/... link. On any
   // other host the full path is needed, which is what makes this work in
   // development and on the Growth domain.
@@ -135,7 +135,7 @@ export async function issueQuote(_prevState: SendState, formData: FormData): Pro
     .is("number", null);
 
   if (error) {
-    console.error("Failed to issue BizUp quote", error);
+    console.error("Failed to issue KatisoBiz quote", error);
     return { error: "We couldn't issue that. Please try again." };
   }
 
@@ -206,7 +206,7 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   });
 
   if (!sent.ok) {
-    console.error("Failed to email BizUp quote", sent.error);
+    console.error("Failed to email KatisoBiz quote", sent.error);
     return { error: "We couldn't send that email. Please try again, or send on WhatsApp." };
   }
 

@@ -105,7 +105,7 @@ export async function createCustomer(
     .insert({ account_id: accountId, ...toRow(parsed.data) });
 
   if (error) {
-    console.error("Failed to create BizUp customer", error);
+    console.error("Failed to create KatisoBiz customer", error);
     return { error: { _form: ["We couldn't save that. Please try again."] } };
   }
 
@@ -142,7 +142,7 @@ export async function updateCustomer(
     .eq("account_id", accountId);
 
   if (error) {
-    console.error("Failed to update BizUp customer", error);
+    console.error("Failed to update KatisoBiz customer", error);
     return { error: { _form: ["We couldn't save that. Please try again."] } };
   }
 
@@ -171,7 +171,7 @@ export async function deleteCustomer(formData: FormData): Promise<void> {
     // statements are per customer, and Sec 8's 5-year retention covers the
     // financial record they are named in), so it is reported rather than
     // worked around.
-    console.error("Failed to delete BizUp customer", error);
+    console.error("Failed to delete KatisoBiz customer", error);
     redirect("/bizup/customers?error=cannot-delete");
   }
 

@@ -39,7 +39,7 @@ export default async function BizUpBankingPage() {
           href="/bizup"
           className="text-sm font-medium text-gray-500 underline-offset-2 hover:text-brand hover:underline"
         >
-          Back to BizUp
+          Back to KatisoBiz
         </Link>
 
         <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

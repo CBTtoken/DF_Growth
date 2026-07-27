@@ -1,7 +1,7 @@
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-// The BizUp counterpart to lib/agents/dashboard-role.ts's getMyAgentRecord
+// The KatisoBiz counterpart to lib/agents/dashboard-role.ts's getMyAgentRecord
 // and hasBusinessMembership: what does this login actually own? Routing
 // decisions are made from real ownership, never from a cookie or a stored
 // "signed up via" flag, so these are the functions that answer it.
@@ -30,7 +30,7 @@ export interface BizUpAccountSummary {
 }
 
 /**
- * The BizUp account behind the current login, or null.
+ * The KatisoBiz account behind the current login, or null.
  *
  * One indexed lookup on the unique owner_user_id, the same
  * cheap-for-everyone cost getMyAgentRecord already carries on every
@@ -56,7 +56,7 @@ export async function getMyBizUpAccount(): Promise<BizUpAccountSummary | null> {
   // Sec 8: the encrypted number is decrypted in exactly one place, the PDF
   // render path, and no other code path should be able to reach it by
   // accident because it happened to select *.
-  // Both run together: this sits on every BizUp dashboard render, so two
+  // Both run together: this sits on every KatisoBiz dashboard render, so two
   // sequential round trips would be felt.
   const [{ data: bank }, { count: issuedCount }] = await Promise.all([
     admin.from("bizup_bank_details").select("account_id").eq("account_id", account.id).maybeSingle(),
@@ -81,7 +81,7 @@ export async function getMyBizUpAccount(): Promise<BizUpAccountSummary | null> {
 }
 
 /**
- * Does this login own a BizUp account? Kept separate from
+ * Does this login own a KatisoBiz account? Kept separate from
  * getMyBizUpAccount so routing can answer "which products does this person
  * have" without loading a profile it is not going to render, mirroring how
  * hasBusinessMembership sits next to listMyGrowthClients.

@@ -5,13 +5,13 @@ import Link from "next/link";
 import { login } from "@/app/login/actions";
 import { SiteFooter } from "@/components/SiteFooter";
 
-// BizUp's own login page. Same Server Action, same credentials, same
+// KatisoBiz's own login page. Same Server Action, same credentials, same
 // Supabase auth as Growth's /login — the only difference is the hidden
 // `product` field, which tells resolveLandingPath that a member who holds
-// both products meant BizUp this time. A member with only one product is
+// both products meant KatisoBiz this time. A member with only one product is
 // routed by what they own and can log in from either page safely.
 //
-// Styling is deliberately plain for now: BizUp's brand content is still
+// Styling is deliberately plain for now: KatisoBiz's brand content is still
 // being written, and inventing a look here would only have to be undone.
 export default function BizUpLoginPage() {
   const [state, formAction, pending] = useActionState(login, null);
@@ -19,10 +19,10 @@ export default function BizUpLoginPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-6 bg-gray-50 p-8 text-center">
       <Link href="/bizup" className="text-2xl font-bold tracking-tight text-ink">
-        BizUp
+        KatisoBiz
       </Link>
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
-        <h1 className="text-xl font-bold tracking-tight text-ink">Log in to BizUp</h1>
+        <h1 className="text-xl font-bold tracking-tight text-ink">Log in to KatisoBiz</h1>
         <p className="text-sm text-gray-500">Enter the email and password you signed up with.</p>
         <form action={formAction} className="flex w-full flex-col gap-3 text-left">
           <input type="hidden" name="product" value="bizup" />

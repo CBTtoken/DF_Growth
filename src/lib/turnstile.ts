@@ -2,7 +2,7 @@
 // the client widget (TurnstileWidget.tsx) only produces a token, this is
 // what actually proves it's real. Never trust the token's mere presence,
 // always verify it against Cloudflare directly.
-// A Turnstile widget is locked to its hostnames, so BizUp needs its own
+// A Turnstile widget is locked to its hostnames, so KatisoBiz needs its own
 // widget rather than reusing Growth's: they are on different domains.
 // `secretEnvVar` lets a caller name which secret to verify against, and
 // defaults to Growth's so every existing call site is unchanged.

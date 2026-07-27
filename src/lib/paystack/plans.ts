@@ -31,10 +31,10 @@ export const TIERS: {
       "Ready To Share Anywhere",
       // Combined spec Sec 16: bundled into every tier at no extra cost, but
       // previously only mentioned (Marketplace and RE:Biz Nomads) or not at
-      // all (BizUp) in a separate section near the footer — a prospect
+      // all (KatisoBiz) in a separate section near the footer — a prospect
       // looking at just this card never saw the full value included.
       "RE:Biz Nomads Community",
-      "BizUp In-Chat Payments",
+      "KatisoBiz In-Chat Payments",
     ],
     ctaLabel: "Start Your Free Trial",
   },
@@ -61,7 +61,7 @@ export const TIERS: {
       // card at all.
       "Marketplace Presence",
       "RE:Biz Nomads Community",
-      "BizUp In-Chat Payments",
+      "KatisoBiz In-Chat Payments",
     ],
     ctaLabel: "Start Growing",
   },

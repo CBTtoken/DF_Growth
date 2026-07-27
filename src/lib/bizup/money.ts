@@ -1,6 +1,6 @@
-// BizUp money handling (BizUp/docs/bizup-phase1-spec.md).
+// KatisoBiz money handling (BizUp/docs/bizup-phase1-spec.md).
 //
-// Every amount in BizUp is an integer number of cents, matching the
+// Every amount in KatisoBiz is an integer number of cents, matching the
 // existing convention in bookable_units.base_price_cents and
 // shop_products. The spec does not name a numeric type; integer cents is
 // the right one for a tax document because it makes every rounding

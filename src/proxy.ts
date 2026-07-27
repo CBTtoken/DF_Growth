@@ -9,7 +9,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // actual route handler (src/app/agent-link/[slug]/route.ts); the browser's
 // address bar keeps showing the personalized URL throughout.
 //
-// It now also carries BizUp's host routing, see below. Both branches are
+// It now also carries KatisoBiz's host routing, see below. Both branches are
 // host-gated and every other hostname returns untouched, so the live
 // Growth site is unaffected by construction rather than by the rewrite
 // rules happening to be correct.
@@ -18,10 +18,15 @@ const BIZUP_PREFIX = "/bizup";
 export function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
 
-  // BizUp (BizUp/docs/bizup-phase1-spec.md Sec 14.2: same app, shared auth
-  // and Supabase/Resend wiring, with bizup.digitalflyer.co.za mapped as an
+  // KatisoBiz (BizUp/docs/bizup-phase1-spec.md Sec 14.2: same app, shared auth
+  // and Supabase/Resend wiring, with katisobiz.co.za mapped as an
   // additional domain in Vercel rather than a separate deployment).
-  if (hostname.split(":")[0].toLowerCase().startsWith("bizup.")) {
+  // Matches the new katisobiz.co.za and the old bizup.digitalflyer.co.za,
+  // so the rename does not break anything already sent out while DNS for
+  // the new domain is still being set up. The old one can be dropped once
+  // nothing points at it.
+  const host = hostname.split(":")[0].toLowerCase();
+  if (host === "katisobiz.co.za" || host === "www.katisobiz.co.za" || host.startsWith("bizup.")) {
     const { pathname } = request.nextUrl;
 
     // API routes are never rewritten under any hostname. The Paystack,
@@ -29,10 +34,10 @@ export function proxy(request: NextRequest) {
     // rewrite here would silently break them.
     if (pathname.startsWith("/api/")) return NextResponse.next();
 
-    // On BizUp's own hostname the /bizup prefix is redundant, so it is
+    // On KatisoBiz's own hostname the /bizup prefix is redundant, so it is
     // redirected away rather than merely tolerated. Previously both forms
     // worked and the app's own redirect() calls use absolute /bizup/...
-    // paths, so members ended up looking at bizup.digitalflyer.co.za/bizup/login.
+    // paths, so members ended up looking at katisobiz.co.za/bizup/login.
     //
     // This cannot loop. The redirect only fires for a URL the browser
     // actually requested with the prefix; the rewrite below is internal and
@@ -44,8 +49,8 @@ export function proxy(request: NextRequest) {
       return NextResponse.redirect(canonical);
     }
 
-    // bizup.digitalflyer.co.za/login -> /bizup/login
-    // bizup.digitalflyer.co.za/      -> /bizup
+    // katisobiz.co.za/login -> /bizup/login
+    // katisobiz.co.za/      -> /bizup
     const bizupUrl = request.nextUrl.clone();
     bizupUrl.pathname = pathname === "/" ? BIZUP_PREFIX : `${BIZUP_PREFIX}${pathname}`;
     return NextResponse.rewrite(bizupUrl);

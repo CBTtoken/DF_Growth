@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 
-// BizUp's top navigation, matching MarketingHeader's pattern on Growth:
+// KatisoBiz's top navigation, matching MarketingHeader's pattern on Growth:
 // brand on the left, quiet text links that collapse away on small screens,
 // and the one real action as a button that never collapses.
 //
@@ -19,7 +19,7 @@ export function BizUpHeader() {
         <Link href="/bizup" className="flex shrink-0 items-center gap-2">
           <Image
             src="/bizup/logo.png"
-            alt="BizUp"
+            alt="KatisoBiz"
             width={480}
             height={180}
             priority

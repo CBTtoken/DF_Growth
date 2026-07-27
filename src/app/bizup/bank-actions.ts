@@ -119,11 +119,11 @@ export async function requestBankChange(
   // forward.
   const sent = await sendEmail({
     to: account.email,
-    subject: `Your BizUp code to change banking details: ${code}`,
+    subject: `Your KatisoBiz code to change banking details: ${code}`,
     html: `
       <p>Good day ${account.business_name},</p>
-      <p>Someone asked to change the banking details that appear on your BizUp invoices, to an account ending in <strong>${lastFour(accountNumber)}</strong> at ${bankName}.</p>
-      <p>To confirm this change, type this code into BizUp:</p>
+      <p>Someone asked to change the banking details that appear on your KatisoBiz invoices, to an account ending in <strong>${lastFour(accountNumber)}</strong> at ${bankName}.</p>
+      <p>To confirm this change, type this code into KatisoBiz:</p>
       <p style="font-size:28px;font-weight:bold;letter-spacing:4px;margin:20px 0;">${code}</p>
       <p>The code expires in ${CODE_TTL_MINUTES} minutes.</p>
       <p><strong>If this was not you, do not enter the code.</strong> Your banking details have not changed, and they will not change unless this code is entered. Please reply to this email so we can help you secure your account.</p>

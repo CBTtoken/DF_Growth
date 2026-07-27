@@ -33,14 +33,14 @@ export default async function BizUpQuotesPage() {
 
   // Checked rather than assumed, so a broken query never renders as
   // "you have no quotes".
-  if (error) console.error("BizUp quote list failed", error);
+  if (error) console.error("KatisoBiz quote list failed", error);
   const rows = quotes ?? [];
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 p-6">
         <Link href="/bizup" className="text-sm font-medium text-gray-500 underline-offset-2 hover:text-brand hover:underline">
-          Back to BizUp
+          Back to KatisoBiz
         </Link>
 
         <div className="flex items-center justify-between gap-4">

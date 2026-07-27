@@ -3,7 +3,7 @@ import Link from "next/link";
 // BizUp/docs landing copy, Section 10.
 //
 // The disclosure block below is a BUILD REQUIREMENT, not decorative copy.
-// BizUp takes subscription payments online, so ECTA section 43 requires
+// KatisoBiz takes subscription payments online, so ECTA section 43 requires
 // certain disclosures to be available before a transaction is concluded.
 // Where a supplier fails to make them the consumer gains a cancellation
 // right, which is a commercial consequence rather than a fine. It also
@@ -33,15 +33,15 @@ export function BizUpFooter() {
             pitching a second product.
 
             The claim is true as built: Growth Engine and Enterprise include
-            the R49 tier, Foundation includes BizUp Free. See
+            the R49 tier, Foundation includes KatisoBiz Free. See
             bizUpEntitlementForTier in lib/bizup/entitlements.ts. */}
         <div className="rounded-2xl border border-brand-blue/20 bg-brand-blue-light p-5">
           <p className="text-sm font-bold text-neutral-ink">
-            Already on DigitalFlyer Growth? BizUp is included.
+            Already on DigitalFlyer Growth? KatisoBiz is included.
           </p>
           <p className="mt-1.5 text-sm leading-relaxed text-neutral-mid">
             Growth gets your business found by local customers with a professional page, a
-            marketplace listing and reviews. BizUp comes with it, so quoting and invoicing are
+            marketplace listing and reviews. KatisoBiz comes with it, so quoting and invoicing are
             already paid for.
           </p>
           <a
@@ -53,7 +53,7 @@ export function BizUpFooter() {
         </div>
 
         <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-neutral-mid">
-          <span className="font-extrabold text-neutral-ink">BizUp</span>
+          <span className="font-extrabold text-neutral-ink">KatisoBiz</span>
           <a href="#pricing" className="hover:text-brand-blue">Pricing</a>
           <a href="#how-it-works" className="hover:text-brand-blue">How it works</a>
           <a href="#faq" className="hover:text-brand-blue">FAQ</a>
@@ -69,7 +69,7 @@ export function BizUpFooter() {
           </p>
           <p className="mt-1">609 Swart Street, Pretoria, 0044, South Africa</p>
           <p>
-            +27 72 311 0570 · info@digitalflyer.co.za · https://bizup.digitalflyer.co.za
+            +27 72 311 0570 · info@digitalflyer.co.za · https://katisobiz.co.za
           </p>
         </div>
 

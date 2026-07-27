@@ -18,14 +18,14 @@ import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 // be indexable. The signed-in dashboard below renders no member data to a
 // crawler, since a crawler is never signed in.
 export const metadata: Metadata = {
-  title: "BizUp: send a quote that wins the job",
+  title: "KatisoBiz: send a quote that wins the job",
   description:
     "A professional quote with your logo and banking details, from your phone, in under a minute. Turn it into an invoice when the job is done. Free to start, no card needed.",
-  alternates: { canonical: "https://bizup.digitalflyer.co.za" },
+  alternates: { canonical: "https://katisobiz.co.za" },
 };
 
-// BizUp's signed-in home, and the destination resolveLandingPath sends
-// every BizUp member to. Intentionally thin for now: the quote and invoice
+// KatisoBiz's signed-in home, and the destination resolveLandingPath sends
+// every KatisoBiz member to. Intentionally thin for now: the quote and invoice
 // surfaces arrive with build steps 4 onward (BizUp/docs/bizup-phase1-spec.md
 // Sec 15). What it must already do correctly is never dead-end a valid
 // login, which is exactly what used to happen to a member with no Growth
@@ -37,7 +37,7 @@ export default async function BizUpHomePage() {
   } = await supabase.auth.getUser();
 
   // A visitor gets the landing page; a member gets their dashboard. Same
-  // route either way, so bizup.digitalflyer.co.za is one address that does
+  // route either way, so katisobiz.co.za is one address that does
   // the right thing rather than a marketing site with the app hidden
   // somewhere behind it.
   if (!user) {
@@ -52,7 +52,7 @@ export default async function BizUpHomePage() {
 
   const account = await getMyBizUpAccount();
 
-  // Signed in, but no BizUp account yet. Straight into setup rather than a
+  // Signed in, but no KatisoBiz account yet. Straight into setup rather than a
   // "no account found" wall.
   if (!account) redirect("/bizup/start");
 

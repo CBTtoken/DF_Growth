@@ -67,7 +67,7 @@ export async function createCatalogueItem(
     .insert({ account_id: accountId, ...toRow(parsed.data) });
 
   if (error) {
-    console.error("Failed to create BizUp catalogue item", error);
+    console.error("Failed to create KatisoBiz catalogue item", error);
     return { error: { _form: ["We couldn't save that. Please try again."] } };
   }
 
@@ -99,7 +99,7 @@ export async function updateCatalogueItem(
     .eq("account_id", accountId);
 
   if (error) {
-    console.error("Failed to update BizUp catalogue item", error);
+    console.error("Failed to update KatisoBiz catalogue item", error);
     return { error: { _form: ["We couldn't save that. Please try again."] } };
   }
 
@@ -130,7 +130,7 @@ export async function setCatalogueItemActive(formData: FormData): Promise<void> 
     .eq("id", id)
     .eq("account_id", accountId);
 
-  if (error) console.error("Failed to archive BizUp catalogue item", error);
+  if (error) console.error("Failed to archive KatisoBiz catalogue item", error);
 
   revalidatePath("/bizup/price-list");
   redirect("/bizup/price-list");

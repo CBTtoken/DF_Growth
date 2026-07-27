@@ -57,7 +57,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
     whatsapp: string | null;
   } | null;
 
-  const host = (await headers()).get("host") ?? "bizup.digitalflyer.co.za";
+  const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const publicUrl = doc.public_token
     ? `${host.startsWith("localhost") ? "http" : "https"}://${host}${
         host.split(":")[0].toLowerCase().startsWith("bizup.") ? "" : "/bizup"

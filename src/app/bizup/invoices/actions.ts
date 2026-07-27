@@ -130,7 +130,7 @@ export async function issueInvoice(_prev: InvoiceState, formData: FormData): Pro
     .is("number", null);
 
   if (error) {
-    console.error("Failed to issue BizUp invoice", error);
+    console.error("Failed to issue KatisoBiz invoice", error);
     return { error: "We couldn't issue that. Please try again." };
   }
 
@@ -192,7 +192,7 @@ export async function recordPayment(_prev: InvoiceState, formData: FormData): Pr
   });
 
   if (error) {
-    console.error("Failed to record BizUp payment", error);
+    console.error("Failed to record KatisoBiz payment", error);
     return { error: "We couldn't record that. Please try again." };
   }
 
@@ -307,7 +307,7 @@ export async function createInvoice(): Promise<void> {
     .single();
 
   if (error || !data) {
-    console.error("Failed to create BizUp invoice", error);
+    console.error("Failed to create KatisoBiz invoice", error);
     redirect("/bizup/invoices");
   }
 

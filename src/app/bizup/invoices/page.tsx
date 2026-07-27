@@ -33,7 +33,7 @@ export default async function BizUpInvoicesPage() {
     .eq("doc_type", "invoice")
     .order("created_at", { ascending: false });
 
-  if (error) console.error("BizUp invoice list failed", error);
+  if (error) console.error("KatisoBiz invoice list failed", error);
   const rows = invoices ?? [];
 
   const today = new Date().toISOString().slice(0, 10);
@@ -50,7 +50,7 @@ export default async function BizUpInvoicesPage() {
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 p-6">
         <Link href="/bizup" className="text-sm font-medium text-gray-500 underline-offset-2 hover:text-brand hover:underline">
-          Back to BizUp
+          Back to KatisoBiz
         </Link>
 
         <h1 className="text-xl font-bold tracking-tight text-ink">Invoices</h1>

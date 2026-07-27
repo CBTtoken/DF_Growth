@@ -24,7 +24,7 @@ export interface BusinessProfileDefaults {
 
 // Inputs are 16px (text-base), not the 14px used elsewhere in this app.
 // iOS Safari auto-zooms into any input under 16px, which on a form this
-// long means the member is pinching back out after every field. BizUp's
+// long means the member is pinching back out after every field. KatisoBiz's
 // whole target is one-handed use on a phone, so this is deliberate rather
 // than inconsistent.
 const inputClass =

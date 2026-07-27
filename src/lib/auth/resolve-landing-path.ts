@@ -9,21 +9,21 @@ export type LandingPath = "/dashboard" | "/onboard" | "/bizup" | "/bizup/start";
 // Server Action (the /login flow) where an admin client is already the
 // established pattern (see requireGrowthClientId).
 //
-// Extended for BizUp. One login can now hold a Growth business, an agent
-// record, a BizUp account, or any combination, so "where does this person
+// Extended for KatisoBiz. One login can now hold a Growth business, an agent
+// record, a KatisoBiz account, or any combination, so "where does this person
 // belong" is no longer a single status check. The precedence, in order:
 //
 //   1. What they actually own. Someone who holds only one of the products
 //      goes there, whatever page they happened to log in on. This is
 //      checked first and from real rows, never from a cookie.
 //   2. Where they came from. Only breaks the tie for someone who owns
-//      both: logging in on BizUp's own page means they meant BizUp.
+//      both: logging in on KatisoBiz's own page means they meant KatisoBiz.
 //   3. What they used last. Only when they own both and arrived somewhere
 //      that does not say which they meant.
 //
-// Deliberately NOT routed on a stored "signed up via BizUp" flag. Origin
-// is worth recording for attribution, but a member who starts on BizUp and
-// later buys Growth would be sent back to BizUp forever by it.
+// Deliberately NOT routed on a stored "signed up via KatisoBiz" flag. Origin
+// is worth recording for attribution, but a member who starts on KatisoBiz and
+// later buys Growth would be sent back to KatisoBiz forever by it.
 export interface LandingInputs {
   /** Does this login hold a Growth business membership? */
   hasGrowth: boolean;
@@ -47,7 +47,7 @@ export interface LandingInputs {
  */
 export function chooseLandingPath(input: LandingInputs): LandingPath {
   // An active business goes to its dashboard, an unfinished one back into
-  // the wizard. Unchanged from before BizUp existed.
+  // the wizard. Unchanged from before KatisoBiz existed.
   const growthPath: LandingPath = input.growthStatus === "active" ? "/dashboard" : "/onboard";
 
   if (input.hasGrowth && input.hasBizUp) {
@@ -67,9 +67,9 @@ export function chooseLandingPath(input: LandingInputs): LandingPath {
   // /dashboard/agent.
   if (input.hasAgent) return "/dashboard";
 
-  // Nothing yet. Someone arriving on BizUp's own login page with no
+  // Nothing yet. Someone arriving on KatisoBiz's own login page with no
   // account is almost certainly there to make one, so send them into
-  // BizUp's setup rather than Growth's onboarding wizard.
+  // KatisoBiz's setup rather than Growth's onboarding wizard.
   if (input.enteredFrom === "bizup") return "/bizup/start";
 
   return "/onboard";

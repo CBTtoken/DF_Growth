@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { HeroDocument } from "./HeroDocument";
 
-// BizUp landing page. Copy is from the approved deck and is reproduced as
+// KatisoBiz landing page. Copy is from the approved deck and is reproduced as
 // written; it was signed off, so it is not paraphrased or "improved".
 //
 // Rules from the deck that shape the build, not just the words:
@@ -93,7 +93,7 @@ const FEATURES = [
   {
     title: "Fixing a mistake without breaking the rules",
     lead: "Sent an invoice with the wrong amount on it?",
-    body: "Tap “Fix this invoice” and answer one question: does the amount need to change? BizUp does the rest correctly in the background, so your records stay clean and you never have to know what a credit note is.",
+    body: "Tap “Fix this invoice” and answer one question: does the amount need to change? KatisoBiz does the rest correctly in the background, so your records stay clean and you never have to know what a credit note is.",
   },
   {
     title: "Know who owes you what",
@@ -113,7 +113,7 @@ const FEATURES = [
   {
     title: "Hand your accountant everything, in one tap",
     lead: "No shoebox of paper in February.",
-    body: "Tap “Export for my accountant” and BizUp packs up every invoice, credit note and payment for the period into one file they can open in Excel, with all the PDFs alongside it. If you do not have an accountant yet, we can point you to one.",
+    body: "Tap “Export for my accountant” and KatisoBiz packs up every invoice, credit note and payment for the period into one file they can open in Excel, with all the PDFs alongside it. If you do not have an accountant yet, we can point you to one.",
   },
 ];
 
@@ -121,7 +121,7 @@ const COMPLIANCE = [
   "Every document gets its own number, in order, with no gaps. That is what SARS expects.",
   "Not registered for VAT? Your documents say “Invoice” and never charge VAT by accident.",
   "Registered? They say “Tax Invoice”, show your VAT number, and work out the 15% for you.",
-  "Over R5,000 and registered, SARS wants your customer's full details, so BizUp asks for them at the right moment.",
+  "Over R5,000 and registered, SARS wants your customer's full details, so KatisoBiz asks for them at the right moment.",
   "Issued documents are never quietly changed. Corrections are handled properly and both versions are kept.",
   "Everything is kept for you, so if SARS ever asks, you can produce it.",
 ];
@@ -142,7 +142,7 @@ const PLANS = [
     cta: "Start free, no card needed",
   },
   {
-    name: "BizUp",
+    name: "KatisoBiz",
     price: "R49",
     per: "/month",
     highlight: true,
@@ -166,7 +166,7 @@ const PLANS = [
     per: "/month",
     highlight: false,
     badge: null,
-    features: ["Unlimited documents", "Everything in BizUp", "Up to 5 users", "Recurring invoices"],
+    features: ["Unlimited documents", "Everything in KatisoBiz", "Up to 5 users", "Recurring invoices"],
     cta: "Start today",
   },
 ];
@@ -174,11 +174,11 @@ const PLANS = [
 const FAQS = [
   {
     q: "Do I need to be registered for VAT?",
-    a: "No, and most small businesses are not. From April 2026 you only have to register once your turnover passes R2.3 million in any twelve months, and you may choose to register voluntarily above R120,000. Until then BizUp sends clean ordinary invoices with no VAT on them. Add a VAT number later and it switches over automatically.",
+    a: "No, and most small businesses are not. From April 2026 you only have to register once your turnover passes R2.3 million in any twelve months, and you may choose to register voluntarily above R120,000. Until then KatisoBiz sends clean ordinary invoices with no VAT on them. Add a VAT number later and it switches over automatically.",
   },
   {
     q: "Do I need to be good with computers?",
-    a: "No. If you can send a WhatsApp, you can use BizUp. There is nothing to install, nothing to set up on a PC, and no accounting knowledge needed anywhere.",
+    a: "No. If you can send a WhatsApp, you can use KatisoBiz. There is nothing to install, nothing to set up on a PC, and no accounting knowledge needed anywhere.",
   },
   {
     q: "Does my customer need the app?",
@@ -186,11 +186,11 @@ const FAQS = [
   },
   {
     q: "Can I change an invoice after I have sent it?",
-    a: "Yes, and BizUp does it the right way. Anything still in draft can be changed freely. Once an invoice has been sent, tap “Fix this invoice” and answer one question. If only the details were wrong, it corrects them. If the amount was wrong, it cancels the old one properly and gives you a new one. Both are kept, which is what the law requires.",
+    a: "Yes, and KatisoBiz does it the right way. Anything still in draft can be changed freely. Once an invoice has been sent, tap “Fix this invoice” and answer one question. If only the details were wrong, it corrects them. If the amount was wrong, it cancels the old one properly and gives you a new one. Both are kept, which is what the law requires.",
   },
   {
     q: "What is the difference between a quote and an invoice?",
-    a: "A quote is what you send before the job, to win it. An invoice is what you send after, to get paid. BizUp turns one into the other with a single tap.",
+    a: "A quote is what you send before the job, to win it. An invoice is what you send after, to get paid. KatisoBiz turns one into the other with a single tap.",
   },
   {
     q: "What happens if I go over my 75 documents?",
@@ -206,11 +206,11 @@ const FAQS = [
   },
   {
     q: "How long do I need to keep my invoices?",
-    a: "SARS generally wants five years. BizUp keeps them for you and you can download the lot at any time.",
+    a: "SARS generally wants five years. KatisoBiz keeps them for you and you can download the lot at any time.",
   },
   {
-    q: "Does BizUp do my books?",
-    a: "No, on purpose. BizUp gets a professional quote out the door in under a minute and keeps track of who has paid you. It does not do expenses, bank reconciliation or financial statements, because that is an accountant's job and doing it properly would make this app slow and complicated. What BizUp does do is hand your accountant every invoice, credit note and payment in one clean file, so their job is quicker and cheaper.",
+    q: "Does KatisoBiz do my books?",
+    a: "No, on purpose. KatisoBiz gets a professional quote out the door in under a minute and keeps track of who has paid you. It does not do expenses, bank reconciliation or financial statements, because that is an accountant's job and doing it properly would make this app slow and complicated. What KatisoBiz does do is hand your accountant every invoice, credit note and payment in one clean file, so their job is quicker and cheaper.",
   },
 ];
 
@@ -223,7 +223,7 @@ export function BizUpLanding() {
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-12">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-brand-blue/20 bg-brand-blue-light px-3 py-1.5 text-xs font-bold text-brand-blue">
-                BizUp, from DigitalFlyer SA
+                KatisoBiz, from DigitalFlyer SA
               </span>
 
               <h1 className="mt-5 text-4xl font-extrabold leading-[1.08] tracking-tight text-neutral-ink sm:text-5xl lg:text-5xl xl:text-6xl">
@@ -308,7 +308,7 @@ export function BizUpLanding() {
               on mobile. <details> so it works with no JavaScript. */}
           <details className="group mt-4">
             <summary className="btn-outline cursor-pointer list-none px-5 py-3 text-sm">
-              <span className="group-open:hidden">See everything BizUp does</span>
+              <span className="group-open:hidden">See everything KatisoBiz does</span>
               <span className="hidden group-open:inline">Show less</span>
             </summary>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -342,7 +342,7 @@ export function BizUpLanding() {
             ))}
           </ul>
           <p className="mt-7 border-t border-white/15 pt-5 text-xs leading-relaxed text-white/60">
-            BizUp helps you produce the right documents. It is not tax advice, and your tax affairs
+            KatisoBiz helps you produce the right documents. It is not tax advice, and your tax affairs
             stay your own. If something is complicated, speak to a tax practitioner or SARS.
           </p>
         </div>
@@ -365,7 +365,7 @@ export function BizUpLanding() {
               Anyone who quotes a job and then invoices for it
             </span>
           </div>
-          {/* Naming what BizUp is not is a conversion tool. It stops the
+          {/* Naming what KatisoBiz is not is a conversion tool. It stops the
               wrong person signing up and makes the right person trust the
               rest of the page. */}
           <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-neutral-mid">
@@ -420,7 +420,7 @@ export function BizUpLanding() {
               visitor could still read "move up later" as "I am signing up
               for this plan now". */}
           <p className="mx-auto mt-6 max-w-2xl text-center text-sm font-semibold text-neutral-ink">
-            Everyone starts on the free plan. You choose a paid plan later, from inside BizUp, once
+            Everyone starts on the free plan. You choose a paid plan later, from inside KatisoBiz, once
             you know you need it.
           </p>
 

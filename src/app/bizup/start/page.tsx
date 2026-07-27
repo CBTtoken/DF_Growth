@@ -10,8 +10,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 // BizUp/docs/bizup-phase1-spec.md Sec 15.1, the first screen of account
-// setup. Reached by a signed-in member who has no BizUp account yet,
-// including a Growth member adding BizUp to an account they already have.
+// setup. Reached by a signed-in member who has no KatisoBiz account yet,
+// including a Growth member adding KatisoBiz to an account they already have.
 export default async function BizUpStartPage() {
   const supabase = await createServerClient();
   const {
@@ -31,7 +31,7 @@ export default async function BizUpStartPage() {
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 p-6">
-        <span className="text-2xl font-bold tracking-tight text-ink">BizUp</span>
+        <span className="text-2xl font-bold tracking-tight text-ink">KatisoBiz</span>
 
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h1 className="text-xl font-bold tracking-tight text-ink">Set up your business</h1>

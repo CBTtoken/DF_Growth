@@ -9,7 +9,7 @@ import { AGENT_FAQ } from "@/lib/agents/faq";
 // categorised help centre covering every real feature in the platform —
 // Dewald's exact ask. Every answer here describes something genuinely
 // built and live, not aspirational — where a feature is still "coming
-// soon" (Enterprise, BizUp), the answer says so plainly rather than
+// soon" (Enterprise, KatisoBiz), the answer says so plainly rather than
 // implying it already works. Grouped into categories (each its own
 // FaqAccordion instance, so open/closed state doesn't leak between
 // sections) with a jump-list at the top, since a single 40+ item flat
@@ -245,7 +245,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
           "A private community of South African business owners for deals, support, and real conversations with people building the same thing you are.",
       },
       {
-        question: "What is BizUp?",
+        question: "What is KatisoBiz?",
         answer:
           "In-chat messaging and payments, so you can talk to and get paid by customers in one place. It's part of your membership as it rolls out, not live for every account yet.",
       },

@@ -278,7 +278,7 @@ function Endnotes({ data }: { data: PdfDocumentData }) {
 function BrandFooter() {
   return (
     <Text style={base.footer} fixed>
-      Generated via BizUp, DigitalFlyer SA
+      Generated via KatisoBiz, DigitalFlyer SA
     </Text>
   );
 }

@@ -91,7 +91,7 @@ export function HeroDocument() {
             </div>
 
             <p className="mt-3 text-center text-[5.5px] text-neutral-muted">
-              Generated via BizUp, DigitalFlyer SA
+              Generated via KatisoBiz, DigitalFlyer SA
             </p>
           </div>
         </div>

@@ -9,7 +9,7 @@ import { BizUpNav } from "@/components/bizup/BizUpNav";
 // and it is the more important half of the navigation rework. Placement was
 // wrong; navigation vanishing the moment you use it was broken.
 //
-// It appears only for a member who actually has a BizUp account, so the
+// It appears only for a member who actually has a KatisoBiz account, so the
 // landing page, login, signup and the customer's public document link are
 // all untouched. A customer opening a quote is not a member and must not
 // see a member's navigation.

@@ -171,7 +171,7 @@ export default async function PublicDocumentPage({
           </div>
         )}
 
-        {/* Relative on purpose. This page is reached at /d/TOKEN on BizUp's
+        {/* Relative on purpose. This page is reached at /d/TOKEN on KatisoBiz's
             own hostname and at /bizup/d/TOKEN elsewhere, and a relative link
             resolves correctly under both without the page needing to know
             which prefix it is under. */}
@@ -182,7 +182,7 @@ export default async function PublicDocumentPage({
           Download PDF
         </a>
 
-        <p className="text-xs text-gray-400">Generated via BizUp, DigitalFlyer SA</p>
+        <p className="text-xs text-gray-400">Generated via KatisoBiz, DigitalFlyer SA</p>
       </div>
     </main>
   );

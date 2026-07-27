@@ -53,7 +53,7 @@ export interface BizUpCapabilities {
    * and above) because it lives in the reports section and is built from
    * the same data. Worth a second look before launch though: Sec 12 calls
    * it "a referral channel, not a convenience feature", and a referral
-   * channel arguably works harder on the free tier, where it puts BizUp in
+   * channel arguably works harder on the free tier, where it puts KatisoBiz in
    * front of accountants who have never heard of it.
    */
   accountantExport: boolean;
@@ -136,7 +136,7 @@ export function documentAllowance(plan: BizUpPlan): number | null {
 }
 
 /**
- * Sec 2's bundling table. Foundation gets BizUp Free and can buy the R49
+ * Sec 2's bundling table. Foundation gets KatisoBiz Free and can buy the R49
  * tier à la carte without upgrading to Growth Engine, which is why this
  * returns an entitlement rather than gating on tier at the call site.
  */
@@ -155,7 +155,7 @@ export function bizUpEntitlementForTier(tier: Tier): {
 }
 
 /**
- * Sec 15: "When a Growth subscription lapses, the BizUp entitlement drops
+ * Sec 15: "When a Growth subscription lapses, the KatisoBiz entitlement drops
  * to `free`. It does not delete anything." Exposed as its own function so
  * the lapse path cannot accidentally be written as a delete.
  */

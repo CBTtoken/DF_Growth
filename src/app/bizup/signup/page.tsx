@@ -6,7 +6,7 @@ import { SignupForm } from "@/components/bizup/landing/SignupForm";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 
 export const metadata: Metadata = {
-  title: "Start free on BizUp",
+  title: "Start free on KatisoBiz",
   description: "Four fields and you are in. No card needed.",
 };
 
@@ -24,7 +24,7 @@ export default async function BizUpSignupPage() {
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 p-6 py-12">
           <div>
             <Link href="/bizup" className="text-2xl font-extrabold tracking-tight text-neutral-ink">
-              BizUp
+              KatisoBiz
             </Link>
             <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-neutral-ink">
               Create your first quote free
@@ -35,7 +35,7 @@ export default async function BizUpSignupPage() {
           </div>
 
           {/* Dewald, testing: he was already logged in and hit a signup form
-              with no way out, because BizUp had no log out anywhere. Handing
+              with no way out, because KatisoBiz had no log out anywhere. Handing
               someone a blank signup form while they hold a live session is a
               dead end, so say who they are and give them both doors. */}
           {user ? (

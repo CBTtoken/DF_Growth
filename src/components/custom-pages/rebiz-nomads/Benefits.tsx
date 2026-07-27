@@ -55,7 +55,7 @@ export function Benefits() {
           </span>
           <div>
             <h3 className="text-sm font-bold text-ink">
-              BizUp <span className="font-normal text-gray-400">(Coming Soon)</span>
+              KatisoBiz <span className="font-normal text-gray-400">(Coming Soon)</span>
             </h3>
             <p className="mt-1 text-sm text-gray-500">The game changer for communication and sales.</p>
           </div>

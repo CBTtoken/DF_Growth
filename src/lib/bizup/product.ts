@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-// Which product a member is currently in. DigitalFlyer Growth and BizUp
+// Which product a member is currently in. DigitalFlyer Growth and KatisoBiz
 // share one login, one Supabase project and one Next.js app, but they are
 // two products with two landing pages and (soon) two domains, so a request
 // has to be able to answer "which one am I?".
@@ -20,8 +20,8 @@ export function isProduct(value: unknown): value is Product {
 /**
  * Resolves which product a request belongs to.
  *
- * Host first, path second, and both are supported on purpose. BizUp's own
- * domain (bizup.digitalflyer.co.za) is not wired yet, so today every BizUp
+ * Host first, path second, and both are supported on purpose. KatisoBiz's own
+ * domain (katisobiz.co.za) is not wired yet, so today every KatisoBiz
  * page is reached at /bizup/... on the Growth domain. Once DNS is live the
  * host check starts matching and nothing else has to change -- which is
  * the reason this lives in one function rather than being re-derived at
@@ -78,8 +78,8 @@ export const PRODUCT_LOGIN: Record<Product, string> = {
 /**
  * The login path to send a signed-out visitor to.
  *
- * On BizUp's own hostname the /bizup prefix is redundant, and emitting it
- * meant every redirect bounced through bizup.digitalflyer.co.za/bizup/login
+ * On KatisoBiz's own hostname the /bizup prefix is redundant, and emitting it
+ * meant every redirect bounced through katisobiz.co.za/bizup/login
  * before the proxy corrected it. The chain ended in the right place but the
  * member saw the wrong URL on the way, which Dewald quite reasonably read
  * as a bug. Emitting the right path first removes the hop entirely.

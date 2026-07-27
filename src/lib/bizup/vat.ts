@@ -1,4 +1,4 @@
-// BizUp VAT rules (BizUp/docs/bizup-phase1-spec.md Sec 3).
+// KatisoBiz VAT rules (BizUp/docs/bizup-phase1-spec.md Sec 3).
 //
 // Sec 3.1 calls VAT status "the single most important rule in the
 // product", so every decision that depends on it lives in this one file
@@ -248,4 +248,4 @@ export function rollingWindowStart(asOf: Date = new Date()): Date {
  * the product; "SARS-ready" is the approved phrasing.
  */
 export const LIABILITY_NOTICE =
-  "BizUp helps you produce compliant documents but you remain responsible for your own tax affairs. Complex cases should go to a tax practitioner or SARS.";
+  "KatisoBiz helps you produce compliant documents but you remain responsible for your own tax affairs. Complex cases should go to a tax practitioner or SARS.";

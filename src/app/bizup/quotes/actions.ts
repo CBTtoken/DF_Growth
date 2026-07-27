@@ -56,7 +56,7 @@ export async function createQuote(): Promise<void> {
     .single();
 
   if (error || !data) {
-    console.error("Failed to create BizUp quote", error);
+    console.error("Failed to create KatisoBiz quote", error);
     redirect("/bizup/quotes");
   }
 

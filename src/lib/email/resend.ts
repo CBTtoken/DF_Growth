@@ -18,7 +18,7 @@ export async function sendEmail({
   to: string;
   subject: string;
   html: string;
-  // BizUp Sec 9: a document emailed to a customer goes out under the
+  // KatisoBiz Sec 9: a document emailed to a customer goes out under the
   // member's own business name, with replies going to the member rather
   // than to DigitalFlyer. The sending address itself stays our verified
   // domain, since we cannot send as an address we do not control.

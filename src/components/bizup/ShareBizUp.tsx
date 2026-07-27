@@ -18,7 +18,7 @@ import { useState } from "react";
 // not exist. This is "tell your mate", nothing more.
 
 const MESSAGE =
-  "I use BizUp for my quotes and invoices. Takes about a minute on your phone and it is free to start. https://bizup.digitalflyer.co.za";
+  "I use KatisoBiz for my quotes and invoices. Takes about a minute on your phone and it is free to start. https://katisobiz.co.za";
 
 export function ShareBizUp() {
   const [copied, setCopied] = useState(false);

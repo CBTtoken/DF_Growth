@@ -44,7 +44,7 @@ export default async function BizUpPriceListPage({
   // Checked rather than assumed: a failed query and an empty price list
   // both render as nothing, and "you have no prices saved" is a misleading
   // thing to tell someone whose query broke.
-  if (error) console.error("BizUp price list query failed", error);
+  if (error) console.error("KatisoBiz price list query failed", error);
 
   const rows = items ?? [];
   const unitLabel = (u: string) => CATALOGUE_UNITS.find((x) => x.value === u)?.label ?? "";
@@ -57,7 +57,7 @@ export default async function BizUpPriceListPage({
           href="/bizup"
           className="text-sm font-medium text-gray-500 underline-offset-2 hover:text-brand hover:underline"
         >
-          Back to BizUp
+          Back to KatisoBiz
         </Link>
 
         <div className="flex items-center justify-between gap-4">

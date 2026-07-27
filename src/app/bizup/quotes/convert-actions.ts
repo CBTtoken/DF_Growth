@@ -101,7 +101,7 @@ export async function convertToInvoice(formData: FormData): Promise<void> {
     .single();
 
   if (error || !invoice) {
-    console.error("Failed to convert BizUp quote", error);
+    console.error("Failed to convert KatisoBiz quote", error);
     return;
   }
 
