@@ -43,6 +43,17 @@ export function proxy(request: NextRequest) {
     // actually requested with the prefix; the rewrite below is internal and
     // does not re-enter the proxy.
     if (pathname === BIZUP_PREFIX || pathname.startsWith(`${BIZUP_PREFIX}/`)) {
+      // Static files under public/bizup are the exception: they are served
+      // as-is, neither redirected nor rewritten. Next's image optimizer
+      // fetches the source image back through this proxy, so redirecting
+      // /bizup/logo.png made the optimizer return its 307 instead of an
+      // optimized image, costing the header logo an extra round trip and
+      // the WebP conversion. A dot in the last segment is the tell: page
+      // routes never have one.
+      if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
+        return NextResponse.next();
+      }
+
       const stripped = pathname.slice(BIZUP_PREFIX.length) || "/";
       const canonical = request.nextUrl.clone();
       canonical.pathname = stripped;
