@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveLandingPath } from "@/lib/auth/resolve-landing-path";
+import { isProduct, setActiveProductPreference } from "@/lib/bizup/product";
 import { loginSchema } from "@/lib/schemas/auth";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 
@@ -77,6 +78,16 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
     return { error: { _form: ["Incorrect email or password."] } };
   }
 
-  const landingPath = await resolveLandingPath(data.user.id);
+  // Which product's login page this submission came from. Growth's /login
+  // sends nothing and behaves exactly as before; BizUp's /bizup/login
+  // sends "bizup". Only ever used to choose between two dashboards this
+  // member already owns (resolveLandingPath checks real ownership first),
+  // so a hand-edited value can pick a different landing page but cannot
+  // reach a product the login does not have.
+  const raw = formData.get("product");
+  const enteredFrom = isProduct(raw) ? raw : null;
+
+  const landingPath = await resolveLandingPath(data.user.id, enteredFrom);
+  await setActiveProductPreference(landingPath.startsWith("/bizup") ? "bizup" : "growth");
   redirect(landingPath);
 }

@@ -13,6 +13,7 @@ import { EcosystemAccess } from "@/components/EcosystemAccess";
 import { PlatformFeatures } from "@/components/dashboard/PlatformFeatures";
 import { RoleSwitcher } from "@/components/dashboard/RoleSwitcher";
 import { getMyAgentRecord, getActiveRolePreference } from "@/lib/agents/dashboard-role";
+import { getMyBizUpAccount } from "@/lib/bizup/account";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
 import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
@@ -49,6 +50,16 @@ export default async function DashboardPage() {
   const agentRecord = await getMyAgentRecord();
   if (agentRecord && (client.error || (await getActiveRolePreference()) === "agent")) {
     redirect("/dashboard/agent");
+  }
+
+  // Same shape as the agent case above, for the same reason: a BizUp-only
+  // member has no growth_members row at all, so requireGrowthClientId
+  // correctly reports "no account found" — but their login is perfectly
+  // valid, it just belongs to the other product. Without this they would
+  // dead-end on the log-in prompt below after arriving here from any
+  // /dashboard link.
+  if (client.error && (await getMyBizUpAccount())) {
+    redirect("/bizup");
   }
 
   if (client.error) {

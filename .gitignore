@@ -53,3 +53,6 @@ docs/DigitalFlyer_Legacy_Reactivation_Candidates_1.xlsx
 # Reactivation campaign runtime artifacts (contain recipient data)
 scripts/.reactivation-cohort.json
 scripts/.reactivation-email-preview.html
+
+# Supabase CLI local link state
+supabase/.temp/
