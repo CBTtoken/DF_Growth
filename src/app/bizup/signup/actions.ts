@@ -187,6 +187,15 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
     contentName: "bizup_free",
   });
 
+  // A visitor who picked a paid plan on the pricing table goes straight to
+  // paying for it. Every account is created on the free tier because it
+  // has to exist before it can be charged, so without this they were
+  // silently left there having clicked "R49".
+  const chosenPlan = String(formData.get("plan") ?? "");
+  if (chosenPlan === "paid" || chosenPlan === "unlimited") {
+    redirect(`/bizup/upgrade?ev=${eventId}&plan=${chosenPlan}`);
+  }
+
   redirect(`/bizup/welcome?ev=${eventId}`);
 }
 

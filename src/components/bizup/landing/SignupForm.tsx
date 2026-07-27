@@ -19,7 +19,7 @@ const input =
 const label = "flex flex-col gap-1.5 text-sm font-semibold text-neutral-mid";
 const err = "text-xs font-normal text-red-600";
 
-export function SignupForm() {
+export function SignupForm({ plan }: { plan?: string }) {
   const [state, action, pending] = useActionState(signUpForBizUp, null);
   const [confirmState, confirmAction, confirming] = useActionState(confirmBizUpSignup, null);
   const [resendState, resendAction, resending] = useActionState(resendBizUpCode, null);
@@ -34,10 +34,24 @@ export function SignupForm() {
     ? null
     : (resendState?.awaitingCode ?? confirmState?.awaitingCode ?? state?.awaitingCode);
 
+  // Which plan the visitor clicked on the pricing table, carried through
+  // both steps of signup.
+  //
+  // Dewald, testing it: he clicked the R49 column and the next screen said
+  // "Start free, no card needed". That is the exact misleading
+  // representation the pricing table itself was careful to avoid, just
+  // moved one screen later. Every account still starts free, because it
+  // has to exist before it can be charged, but a visitor who chose a paid
+  // plan is told what is happening and taken to payment at the end instead
+  // of being quietly dropped onto the free tier.
+  const chosenPlan = plan === "unlimited" ? "unlimited" : plan === "paid" ? "paid" : null;
+  const planName = chosenPlan === "unlimited" ? "Unlimited, R89 a month" : "KatisoBiz, R49 a month";
+
   if (awaiting) {
     return (
       <form action={confirmAction} className="flex flex-col gap-4">
         <input type="hidden" name="email" value={awaiting} />
+        {chosenPlan && <input type="hidden" name="plan" value={chosenPlan} />}
 
         <div className="rounded-xl border border-brand-blue/20 bg-brand-blue-light p-4">
           <p className="text-sm font-bold text-neutral-ink">Check your email</p>
@@ -119,6 +133,22 @@ export function SignupForm() {
       }}
       className="flex flex-col gap-4"
     >
+      {chosenPlan && <input type="hidden" name="plan" value={chosenPlan} />}
+
+      {/* Says what they actually chose, rather than the free-tier wording
+          they saw before. Every account starts free because it has to exist
+          before it can be charged; the difference is that this one is told
+          so and is taken to payment at the end. */}
+      {chosenPlan && (
+        <div className="rounded-xl border border-brand-blue/20 bg-brand-blue-light p-4">
+          <p className="text-sm font-bold text-neutral-ink">You chose {planName}</p>
+          <p className="mt-1 text-sm text-neutral-mid">
+            Create your account first, then we take you straight to payment. Nothing is charged
+            until you get there.
+          </p>
+        </div>
+      )}
+
       <label className={label}>
         Your business name
         <input name="businessName" autoComplete="organization" placeholder="Sipho's Plumbing" className={input} />
@@ -165,7 +195,11 @@ export function SignupForm() {
       {state?.error?._form?.[0] && <p className="text-sm text-red-600">{state.error._form[0]}</p>}
 
       <button type="submit" disabled={pending} className="btn-accent-lg mt-1 w-full">
-        {pending ? "Sending your code..." : "Start free, no card needed"}
+        {pending
+          ? "Sending your code..."
+          : chosenPlan
+            ? "Create my account"
+            : "Start free, no card needed"}
       </button>
 
       <p className="text-center text-xs leading-relaxed text-neutral-muted">

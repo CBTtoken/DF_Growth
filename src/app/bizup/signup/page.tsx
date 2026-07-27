@@ -12,7 +12,12 @@ export const metadata: Metadata = {
 
 // Landing copy, conversion note 1: every button on the page does the same
 // thing, and this is where they all land.
-export default async function BizUpSignupPage() {
+export default async function BizUpSignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ plan?: string }>;
+}) {
+  const { plan } = await searchParams;
   const supabase = await createServerClient();
   const {
     data: { user },
@@ -61,7 +66,7 @@ export default async function BizUpSignupPage() {
             </div>
           ) : (
             <div className="rounded-2xl border border-neutral-border bg-white p-6 shadow-card">
-              <SignupForm />
+              <SignupForm plan={plan} />
             </div>
           )}
 

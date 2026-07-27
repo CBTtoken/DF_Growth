@@ -140,6 +140,7 @@ const PLANS = [
     badge: null,
     features: ["10 documents a month", "1 template", "WhatsApp sending", "VAT handling", "Credit notes"],
     cta: "Start free, no card needed",
+    planId: null,
   },
   {
     name: "KatisoBiz",
@@ -159,6 +160,7 @@ const PLANS = [
     // under the CPA, and the same trap the deck avoids elsewhere with fake
     // testimonials and "SARS compliant".
     cta: "Start today",
+    planId: "paid",
   },
   {
     name: "Unlimited",
@@ -168,6 +170,7 @@ const PLANS = [
     badge: null,
     features: ["Unlimited documents", "Everything in KatisoBiz", "Up to 5 users", "Recurring invoices"],
     cta: "Start today",
+    planId: "unlimited",
   },
 ];
 
@@ -415,7 +418,15 @@ export function BizUpLanding() {
                     </li>
                   ))}
                 </ul>
-                <Link href={SIGNUP} className={`mt-6 ${p.highlight ? "btn-accent" : "btn-outline"} w-full`}>
+                {/* The chosen plan travels with the click. Without it, a
+                    visitor who picked R49 landed on a screen headed "Start
+                    free, no card needed" and was quietly put on the free
+                    tier, which is the same misleading representation this
+                    table was careful to avoid one screen earlier. */}
+                <Link
+                  href={p.planId ? `${SIGNUP}?plan=${p.planId}` : SIGNUP}
+                  className={`mt-6 ${p.highlight ? "btn-accent" : "btn-outline"} w-full`}
+                >
                   {p.cta}
                 </Link>
               </div>
