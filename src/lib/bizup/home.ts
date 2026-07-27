@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getCapState, type CapState } from "./cap";
+import { getCapState, currentMonthStart, type CapState } from "./cap";
 import type { BizUpPlan } from "./entitlements";
 
 // Dewald: "the dashboard is also very confusing and empty when I am through
@@ -16,6 +16,15 @@ import type { BizUpPlan } from "./entitlements";
 // and this member is standing in a driveway, not studying a report.
 
 export interface HomeSummary {
+  /**
+   * Money actually received this calendar month.
+   *
+   * Dewald asked for this in front of "owed to you", and he is right: it is
+   * the number a one-person business wants first. What landed, not what is
+   * still promised. Calendar month, matching the document counter, because
+   * two different month boundaries on one screen would be indefensible.
+   */
+  incomeThisMonthCents: number;
   owedCents: number;
   owedCount: number;
   awaitingReplyCents: number;
@@ -59,7 +68,7 @@ export async function getHomeSummary(
         .eq("status", "sent"),
       admin
         .from("bizup_payments")
-        .select("amount_cents, document_id, bizup_documents!inner(account_id)")
+        .select("amount_cents, document_id, paid_at, bizup_documents!inner(account_id)")
         .eq("bizup_documents.account_id", accountId),
       // Only what is still open. Dewald: "once a quote is approved or
       // declined, and an invoice marked paid, it moves out of the recent
@@ -107,7 +116,13 @@ export async function getHomeSummary(
 
   const awaitingReplyCents = (quotes ?? []).reduce((s, q) => s + q.total_incl_cents, 0);
 
+  const monthStart = currentMonthStart().toISOString().slice(0, 10);
+  const incomeThisMonthCents = (payments ?? [])
+    .filter((p) => String(p.paid_at) >= monthStart)
+    .reduce((s, p) => s + p.amount_cents, 0);
+
   return {
+    incomeThisMonthCents,
     owedCents,
     owedCount,
     awaitingReplyCents,

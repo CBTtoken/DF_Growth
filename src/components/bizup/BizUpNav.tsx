@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { logOutOfBizUp } from "@/app/bizup/actions";
 
 // Rewritten after Dewald's second look. The first version was a fixed
 // bottom bar, which is the pattern a phone app uses. His objection is
@@ -30,6 +32,10 @@ const LINKS: NavLink[] = [
 
 const SETTINGS: NavLink[] = [{ href: "/bizup/settings", label: "Settings" }];
 
+// Log out lives in the menu with everything else now, rather than only at
+// the bottom of the home screen. Dewald: "move all menus including logout
+// to top menu." One place to look for anything that is not the work.
+
 export function BizUpNav({ businessName }: { businessName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -40,8 +46,8 @@ export function BizUpNav({ businessName }: { businessName: string }) {
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/bizup" className="shrink-0 text-xl font-extrabold tracking-tight text-ink">
-          BizUp
+        <Link href="/bizup" className="shrink-0">
+          <Image src="/bizup/logo.png" alt="BizUp" width={480} height={180} priority className="h-8 w-auto" />
         </Link>
 
         {/* Desktop and tablet: everything visible, nothing hidden behind a
@@ -64,13 +70,15 @@ export function BizUpNav({ businessName }: { businessName: string }) {
         </nav>
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
-          <span className="max-w-[14rem] truncate text-sm text-gray-500">{businessName}</span>
-          <Link
-            href="/bizup/settings"
-            className="text-sm font-medium text-gray-500 hover:text-brand"
-          >
+          <span className="max-w-[12rem] truncate text-sm text-gray-500">{businessName}</span>
+          <Link href="/bizup/settings" className="text-sm font-medium text-gray-500 hover:text-brand">
             Settings
           </Link>
+          <form action={logOutOfBizUp}>
+            <button type="submit" className="text-sm font-medium text-gray-500 hover:text-brand">
+              Log out
+            </button>
+          </form>
         </div>
 
         {/* Phone: one button, everything inside it, and it opens downward
@@ -106,6 +114,14 @@ export function BizUpNav({ businessName }: { businessName: string }) {
                 {l.label}
               </Link>
             ))}
+            <form action={logOutOfBizUp}>
+              <button
+                type="submit"
+                className="w-full rounded-xl px-3 py-3 text-left text-base font-semibold text-gray-700"
+              >
+                Log out
+              </button>
+            </form>
           </nav>
         </div>
       )}

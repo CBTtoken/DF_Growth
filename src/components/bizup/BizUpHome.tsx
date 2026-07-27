@@ -4,7 +4,6 @@ import { createQuote } from "@/app/bizup/quotes/actions";
 import { createInvoice } from "@/app/bizup/invoices/actions";
 import { setQuoteOutcome } from "@/app/bizup/quotes/convert-actions";
 import { markInvoicePaid } from "@/app/bizup/invoices/actions";
-import { logOutOfBizUp } from "@/app/bizup/actions";
 import { capWarning } from "@/lib/bizup/cap";
 import { ShareBizUp } from "@/components/bizup/ShareBizUp";
 import type { HomeSummary } from "@/lib/bizup/home";
@@ -65,7 +64,13 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
   return (
     <div className="flex flex-col gap-6">
       {/* 1. Where do I stand */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Stat
+          label="Income this month"
+          value={formatZar(summary.incomeThisMonthCents)}
+          sub="Payments you have received"
+          href="/bizup/invoices"
+        />
         <Stat
           label="Owed to you"
           value={formatZar(summary.owedCents)}
@@ -248,14 +253,6 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
 
       <ShareBizUp />
 
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-gray-100 pt-4 text-xs font-medium text-gray-500">
-        <Link href="/bizup/settings" className="hover:text-brand">Settings</Link>
-        <form action={logOutOfBizUp} className="contents">
-          <button type="submit" className="text-xs font-medium text-gray-500 hover:text-brand">
-            Log out
-          </button>
-        </form>
-      </div>
     </div>
   );
 }

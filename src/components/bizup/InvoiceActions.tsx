@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { issueInvoice, recordPayment } from "@/app/bizup/invoices/actions";
 
 const btn =
@@ -33,11 +33,16 @@ export function IssueInvoiceButton({ documentId, ready }: { documentId: string; 
 export function RecordPaymentForm({
   documentId,
   outstandingLabel,
+  outstandingAmount,
 }: {
   documentId: string;
   outstandingLabel: string;
+  /** What is still owed, as a plain "450.00", so "paid in full" can fill it in. */
+  outstandingAmount: string;
 }) {
   const [state, action, pending] = useActionState(recordPayment, null);
+  const [mode, setMode] = useState<"full" | "part">("full");
+  const [amount, setAmount] = useState(outstandingAmount);
 
   return (
     <form action={action} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
@@ -45,9 +50,50 @@ export function RecordPaymentForm({
       <h2 className="text-sm font-semibold text-ink">Record a payment</h2>
       <p className="text-sm text-gray-500">{outstandingLabel}</p>
 
+      {/* Dewald: "can we make it even easier, like full amount or part
+          amount". Almost every payment is the whole thing, so that is one
+          tap and the amount fills itself in. Part payment is still there,
+          just not the default that everyone has to type around. */}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setMode("full");
+            setAmount(outstandingAmount);
+          }}
+          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+            mode === "full" ? "bg-brand text-white" : "border border-gray-200 bg-white text-gray-700"
+          }`}
+        >
+          Paid in full
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMode("part");
+            setAmount("");
+          }}
+          className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+            mode === "part" ? "bg-brand text-white" : "border border-gray-200 bg-white text-gray-700"
+          }`}
+        >
+          Part payment
+        </button>
+      </div>
+
       <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
         Amount received
-        <input name="amount" inputMode="decimal" placeholder="450.00" className={input} />
+        <input
+          name="amount"
+          inputMode="decimal"
+          placeholder="450.00"
+          value={amount}
+          onChange={(e) => {
+            setAmount(e.target.value);
+            setMode("part");
+          }}
+          className={input}
+        />
       </label>
 
       <div className="grid grid-cols-2 gap-3">

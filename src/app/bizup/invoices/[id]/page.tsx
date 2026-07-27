@@ -253,6 +253,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
 
             <RecordPaymentForm
               documentId={doc.id}
+              outstandingAmount={(Math.max(0, outstanding) / 100).toFixed(2)}
               outstandingLabel={
                 outstanding <= 0
                   ? "This invoice is paid in full."

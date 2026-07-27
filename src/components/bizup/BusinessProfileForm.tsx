@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import Link from "next/link";
 import { MONTHS, SA_PROVINCES } from "@/lib/bizup/schemas";
 import { isValidVatNumberFormat, VAT_NUMBER_HELP, VAT_ACTIVATION_CONFIRMATION } from "@/lib/bizup/vat";
 import type { BizUpFormState } from "@/app/bizup/actions";
@@ -74,10 +75,14 @@ export function BusinessProfileForm({
   action,
   defaults,
   submitLabel,
+  nextHref = "/bizup/settings/banking",
+  nextLabel = "Next: banking details",
 }: {
   action: (state: BizUpFormState, formData: FormData) => Promise<BizUpFormState>;
   defaults: BusinessProfileDefaults;
   submitLabel: string;
+  nextHref?: string;
+  nextLabel?: string;
 }) {
   const [state, formAction, pending] = useActionState(action, null);
   const [vatNumber, setVatNumber] = useState(defaults.vatNumber ?? "");
@@ -261,7 +266,28 @@ export function BusinessProfileForm({
       </fieldset>
 
       {state?.error?._form?.[0] && <p className="text-sm text-red-600">{state.error._form[0]}</p>}
-      {saved && !state?.error && <p className="text-sm font-medium text-green-700">Saved.</p>}
+      {/* Dewald: saving left him on the form with nowhere to go, so setup
+          appeared to stop. Mirrors the banking screen: confirm, then offer
+          the next step rather than making him find the menu. */}
+      {saved && !state?.error && (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+          <p className="text-sm font-semibold text-green-900">Saved.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link
+              href={nextHref}
+              className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+            >
+              {nextLabel}
+            </Link>
+            <Link
+              href="/bizup"
+              className="inline-flex items-center justify-center rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-brand hover:text-brand"
+            >
+              Go to my dashboard
+            </Link>
+          </div>
+        </div>
+      )}
 
       <button
         type="submit"
