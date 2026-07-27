@@ -75,6 +75,8 @@ export default async function EditPriceListItemPage({
                 unitPriceExclCents: item.unit_price_excl_cents,
                 defaultMarkupPct: item.default_markup_pct,
                 insurancePriceExclCents: item.insurance_price_excl_cents,
+                markupType: item.markup_type,
+                defaultMarkupAmountCents: item.default_markup_amount_cents,
               }}
             />
           </div>

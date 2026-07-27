@@ -30,10 +30,18 @@ export function asRateType(value: unknown): RateType {
   return value === "insurance" ? "insurance" : "private";
 }
 
+export type MarkupType = "percent" | "amount";
+
+export function asMarkupType(value: unknown): MarkupType {
+  return value === "amount" ? "amount" : "percent";
+}
+
 export interface PricedCatalogueItem {
   unit_price_excl_cents: number;
   insurance_price_excl_cents: number | null;
   default_markup_pct?: number | string | null;
+  markup_type?: string | null;
+  default_markup_amount_cents?: number | null;
 }
 
 /**
@@ -52,12 +60,26 @@ export function basePriceForRate(item: PricedCatalogueItem, rate: RateType): num
 }
 
 /**
+ * The item's markup applied to a base price.
+ *
+ * Two shapes, one in force at a time, decided by markup_type. A percentage
+ * suits a part bought at cost and sold on at a margin; a flat rand amount
+ * suits a fixed handling fee, where making the member work out the
+ * equivalent percentage on a phone is where wrong prices come from.
+ */
+export function applyMarkup(base: number, item: PricedCatalogueItem): number {
+  if (asMarkupType(item.markup_type) === "amount") {
+    return base + (item.default_markup_amount_cents ?? 0);
+  }
+  const pct = Number(item.default_markup_pct ?? 0);
+  return pct ? Math.round(base * (1 + pct / 100)) : base;
+}
+
+/**
  * The price including the item's default markup, which is what actually
  * lands on the document. Markup is applied after the rate is chosen, so a
  * markup set on an item applies to whichever of its two prices was used.
  */
 export function priceForRate(item: PricedCatalogueItem, rate: RateType): number {
-  const base = basePriceForRate(item, rate);
-  const markup = Number(item.default_markup_pct ?? 0);
-  return markup ? Math.round(base * (1 + markup / 100)) : base;
+  return applyMarkup(basePriceForRate(item, rate), item);
 }

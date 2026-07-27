@@ -13,7 +13,9 @@ import { ShareQuote } from "@/components/bizup/ShareQuote";
 import { formatZar } from "@/lib/bizup/money";
 import { isVatVendor, taxInvoiceLevel, FULL_TAX_INVOICE_NOTICE, documentTitle } from "@/lib/bizup/vat";
 import { CATALOGUE_UNITS } from "@/lib/bizup/schemas";
-import { asRateType, rateLabel, RATE_TYPES } from "@/lib/bizup/rates";
+import { asRateType, priceForRate, rateLabel, RATE_TYPES } from "@/lib/bizup/rates";
+import { PriceListPicker } from "@/components/bizup/PriceListPicker";
+import { CustomerPicker } from "@/components/bizup/CustomerPicker";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -28,7 +30,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
   if (!account) redirect(await bizupLoginPath());
 
   const admin = createAdminClient();
-  const [{ data: doc }, { data: lines }, { data: payments }, { data: customers }, settings] = await Promise.all([
+  const [{ data: doc }, { data: lines }, { data: payments }, { data: customers }, { data: priceList }, settings] = await Promise.all([
     admin
       .from("bizup_documents")
       .select("*, bizup_customers(name, email, whatsapp)")
@@ -39,6 +41,12 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
     admin.from("bizup_document_lines").select("*").eq("document_id", id).order("line_no"),
     admin.from("bizup_payments").select("*").eq("document_id", id).order("paid_at"),
     admin.from("bizup_customers").select("id, name").eq("account_id", account.id).order("name"),
+    admin
+      .from("bizup_catalogue_items")
+      .select("id, name, unit, unit_price_excl_cents, insurance_price_excl_cents, default_markup_pct, markup_type, default_markup_amount_cents")
+      .eq("account_id", account.id)
+      .eq("active", true)
+      .order("name"),
     loadSettings(),
   ]);
 
@@ -98,17 +106,11 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
             className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
           >
             <input type="hidden" name="documentId" value={doc.id} />
-            <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-              Who is this invoice for?
-              <select name="customerId" defaultValue={doc.customer_id ?? ""} className={input}>
-                <option value="">Not chosen yet</option>
-                {(customers ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <CustomerPicker
+              customers={customers ?? []}
+              selectedId={doc.customer_id}
+              label="Who is this invoice for?"
+            />
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="submit"
@@ -206,6 +208,21 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
                 <span className="shrink-0 font-semibold text-ink">{formatZar(line.line_total_excl_cents)}</span>
               </div>
             ),
+          )}
+
+          {/* The invoice page never had the price list at all, so an invoice
+              raised directly meant typing every line by hand even when the
+              prices were already saved. */}
+          {editable && (priceList ?? []).length > 0 && (
+            <PriceListPicker
+              documentId={doc.id}
+              items={(priceList ?? []).map((item) => ({
+                id: item.id,
+                name: item.name,
+                priceLabel: formatZar(priceForRate(item, rateType)),
+                unitLabel: unitLabel(item.unit),
+              }))}
+            />
           )}
 
           {editable && (

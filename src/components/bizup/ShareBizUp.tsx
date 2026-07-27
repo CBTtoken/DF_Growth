@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 // Dewald: "should we not add a button somewhere where they can quickly
 // share the platform with someone?"
@@ -29,12 +29,21 @@ const MESSAGE_PREFIX =
 export function ShareBizUp() {
   const [copied, setCopied] = useState(false);
 
-  // Set after mount rather than read during render. The WhatsApp link
-  // needs the address in its href at render time, and reading window
-  // there would make the server and browser produce different HTML,
-  // which React treats as a hydration error.
-  const [origin, setOrigin] = useState("");
-  useEffect(() => setOrigin(window.location.origin), []);
+  // The WhatsApp link needs the address in its href at render time, and
+  // reading window during render would make the server and the browser
+  // produce different HTML, which React treats as a hydration error.
+  // useSyncExternalStore is the sanctioned way to read a browser-only
+  // value: it takes an explicit server snapshot, so the first render
+  // matches on both sides and React swaps in the real value itself. An
+  // effect calling setState would do the same job with a cascading
+  // re-render, which is what react-hooks/set-state-in-effect objects to.
+  const origin = useSyncExternalStore(
+    // Never changes within a page's life, so there is nothing to
+    // subscribe to and the unsubscribe is a no-op.
+    () => () => {},
+    () => window.location.origin,
+    () => "",
+  );
 
   const shareMessage = MESSAGE_PREFIX + origin;
 

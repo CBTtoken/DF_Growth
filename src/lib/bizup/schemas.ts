@@ -171,6 +171,28 @@ export const catalogueItemSchema = z.object({
       return cents;
     }),
 
+  // Which of the two markup fields is in force. Only one is ever applied,
+  // so the unused one is nulled on save rather than left holding a stale
+  // value that would come back the moment the type was switched again.
+  markupType: z.enum(["percent", "amount"]).default("percent"),
+
+  // The flat rand form of the markup. Same blank-means-null rule as the
+  // percentage below.
+  defaultMarkupAmountCents: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(""))
+    .transform((v, ctx) => {
+      if (!v) return null;
+      const cents = parseAmountToCents(v);
+      if (cents === null || cents < 0) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter an amount like 150 or 150.00" });
+        return z.NEVER;
+      }
+      return cents;
+    }),
+
   // Sec 11: "a plumber buys a geyser at cost and bills at cost plus
   // margin". Blank means no markup, which is the normal case, so a blank
   // becomes null rather than zero.

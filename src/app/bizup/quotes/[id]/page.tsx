@@ -18,6 +18,8 @@ import {
 } from "@/lib/bizup/vat";
 import { CATALOGUE_UNITS } from "@/lib/bizup/schemas";
 import { asRateType, priceForRate, rateLabel, RATE_TYPES } from "@/lib/bizup/rates";
+import { PriceListPicker } from "@/components/bizup/PriceListPicker";
+import { CustomerPicker } from "@/components/bizup/CustomerPicker";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -46,7 +48,7 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
       admin.from("bizup_customers").select("id, name").eq("account_id", account.id).order("name"),
       admin
         .from("bizup_catalogue_items")
-        .select("id, name, unit, unit_price_excl_cents, insurance_price_excl_cents, default_markup_pct")
+        .select("id, name, unit, unit_price_excl_cents, insurance_price_excl_cents, default_markup_pct, markup_type, default_markup_amount_cents")
         .eq("account_id", account.id)
         .eq("active", true)
         .order("name"),
@@ -108,17 +110,22 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
         {/* Who it is for, and how long it stands */}
         <form action={updateQuoteMeta} className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
           <input type="hidden" name="documentId" value={doc.id} />
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Customer
-            <select name="customerId" defaultValue={doc.customer_id ?? ""} className={input} disabled={!editable}>
-              <option value="">Not chosen yet</option>
-              {(customers ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {/* An issued quote shows the customer as plain text: the picker
+              would offer a change that the Save button no longer accepts. */}
+          {editable ? (
+            <CustomerPicker
+              customers={customers ?? []}
+              selectedId={doc.customer_id}
+              label="Customer"
+            />
+          ) : (
+            <div className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+              <span>Customer</span>
+              <span className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-base text-gray-900">
+                {(customers ?? []).find((c) => c.id === doc.customer_id)?.name ?? "Not chosen"}
+              </span>
+            </div>
+          )}
           <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
             Valid until
             <input type="date" name="validUntil" defaultValue={doc.valid_until ?? ""} className={input} disabled={!editable} />
@@ -248,27 +255,19 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
 
         {editable && (
           <>
-            {/* Sec 9: price list items as tappable chips, so a common line is
-                one tap rather than three fields. */}
+            {/* Sec 9's one-tap price list, now searchable. Prices are worked
+                out here on the server so the browser never needs the rate or
+                markup rules. */}
             {(priceList ?? []).length > 0 && (
-              <section className="flex flex-col gap-2">
-                <h2 className="text-sm font-semibold text-ink">From your price list</h2>
-                <div className="flex flex-wrap gap-2">
-                  {(priceList ?? []).map((item) => (
-                    <form key={item.id} action={addLine}>
-                      <input type="hidden" name="documentId" value={doc.id} />
-                      <input type="hidden" name="catalogueItemId" value={item.id} />
-                      <input type="hidden" name="quantity" value="1" />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-brand hover:text-brand"
-                      >
-                        {item.name} · {formatZar(priceForRate(item, rateType))}
-                      </button>
-                    </form>
-                  ))}
-                </div>
-              </section>
+              <PriceListPicker
+                documentId={doc.id}
+                items={(priceList ?? []).map((item) => ({
+                  id: item.id,
+                  name: item.name,
+                  priceLabel: formatZar(priceForRate(item, rateType)),
+                  unitLabel: unitLabel(item.unit),
+                }))}
+              />
             )}
 
             {/* Sec 11: a member must always be able to type a one-off line

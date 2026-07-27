@@ -19,6 +19,8 @@ export interface PriceListItemDefaults {
   unit?: string | null;
   unitPriceExclCents?: number | null;
   defaultMarkupPct?: number | null;
+  markupType?: string | null;
+  defaultMarkupAmountCents?: number | null;
   insurancePriceExclCents?: number | null;
 }
 
@@ -46,6 +48,14 @@ export function PriceListItemForm({
   const [markup, setMarkup] = useState(
     defaults.defaultMarkupPct != null ? String(defaults.defaultMarkupPct) : "",
   );
+  const [markupType, setMarkupType] = useState<"percent" | "amount">(
+    defaults.markupType === "amount" ? "amount" : "percent",
+  );
+  const [markupAmount, setMarkupAmount] = useState(
+    defaults.defaultMarkupAmountCents != null
+      ? (defaults.defaultMarkupAmountCents / 100).toFixed(2)
+      : "",
+  );
   const [unit, setUnit] = useState(defaults.unit ?? "each");
 
   // Live preview of what this line will actually bill at once the markup is
@@ -55,10 +65,20 @@ export function PriceListItemForm({
   const cents = parseAmountToCents(price);
   const insuranceCents = parseAmountToCents(insurancePrice);
   const markupPct = markup.trim() === "" ? null : Number(markup.replace(",", "."));
+  const markupCents = parseAmountToCents(markupAmount);
+  // Live preview of what this line actually bills at, whichever markup
+  // shape is in force. Doing this arithmetic in your head on a phone is
+  // where mistakes come from, so the answer is shown rather than implied.
   const withMarkup =
-    cents !== null && markupPct !== null && Number.isFinite(markupPct) && markupPct > 0
-      ? Math.round(cents * (1 + markupPct / 100))
-      : null;
+    cents === null
+      ? null
+      : markupType === "amount"
+        ? markupCents !== null && markupCents > 0
+          ? cents + markupCents
+          : null
+        : markupPct !== null && Number.isFinite(markupPct) && markupPct > 0
+          ? Math.round(cents * (1 + markupPct / 100))
+          : null;
   const unitLabel = CATALOGUE_UNITS.find((u) => u.value === unit)?.label ?? "";
 
   return (
@@ -170,18 +190,56 @@ export function PriceListItemForm({
         </label>
       )}
 
-      <label className={labelClass}>
+      {/* Dewald: "the markup on the price list, should be a % or flat
+          figure?" Both. A percentage suits a part bought at cost and sold
+          on at a margin; a flat amount suits a fixed handling fee, where
+          working out the equivalent percentage on a phone is exactly where
+          wrong prices come from. */}
+      <div className={labelClass}>
         <span>
           Markup <span className="font-normal text-gray-400">(optional)</span>
         </span>
-        <input
-          name="defaultMarkupPct"
-          value={markup}
-          onChange={(e) => setMarkup(e.target.value)}
-          inputMode="decimal"
-          className={inputClass}
-          placeholder="20"
-        />
+
+        <input type="hidden" name="markupType" value={markupType} />
+        <div className="flex gap-2">
+          {(["percent", "amount"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setMarkupType(t)}
+              className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                markupType === t
+                  ? "bg-brand text-white"
+                  : "border border-gray-200 bg-white text-gray-700"
+              }`}
+            >
+              {t === "percent" ? "Percentage" : "Rand amount"}
+            </button>
+          ))}
+        </div>
+
+        {markupType === "percent" ? (
+          <input
+            name="defaultMarkupPct"
+            value={markup}
+            onChange={(e) => setMarkup(e.target.value)}
+            inputMode="decimal"
+            className={inputClass}
+            placeholder="20"
+            aria-label="Markup percentage"
+          />
+        ) : (
+          <input
+            name="defaultMarkupAmountCents"
+            value={markupAmount}
+            onChange={(e) => setMarkupAmount(e.target.value)}
+            inputMode="decimal"
+            className={inputClass}
+            placeholder="150.00"
+            aria-label="Markup in rands"
+          />
+        )}
+
         <span className="text-xs text-gray-500">
           For things you buy in and sell on. Leave blank if you charge what you paid.
         </span>
@@ -193,7 +251,10 @@ export function PriceListItemForm({
         {state?.error?.defaultMarkupPct?.[0] && (
           <span className="text-xs text-red-600">{state.error.defaultMarkupPct[0]}</span>
         )}
-      </label>
+        {state?.error?.defaultMarkupAmountCents?.[0] && (
+          <span className="text-xs text-red-600">{state.error.defaultMarkupAmountCents[0]}</span>
+        )}
+      </div>
 
       {state?.error?._form?.[0] && <p className="text-sm text-red-600">{state.error._form[0]}</p>}
 

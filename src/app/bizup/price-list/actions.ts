@@ -36,7 +36,9 @@ function fieldsFrom(formData: FormData) {
     type: formData.get("type") ?? "labour",
     unit: formData.get("unit") ?? "each",
     unitPriceExclCents: formData.get("unitPriceExclCents"),
+    markupType: formData.get("markupType") ?? "percent",
     defaultMarkupPct: formData.get("defaultMarkupPct"),
+    defaultMarkupAmountCents: formData.get("defaultMarkupAmountCents") ?? "",
     // Absent from the form entirely when the account does not charge
     // insurance rates. formData.get returns null for a field that was never
     // rendered, and the schema treats that the same as blank.
@@ -51,8 +53,14 @@ function toRow(values: ReturnType<typeof catalogueItemSchema.parse>) {
     type: values.type,
     unit: values.unit,
     unit_price_excl_cents: values.unitPriceExclCents,
-    default_markup_pct: values.defaultMarkupPct,
     insurance_price_excl_cents: values.insurancePriceExclCents,
+    markup_type: values.markupType,
+    // The markup field that is not in force is written as null, not left
+    // as it was. Otherwise switching from 20% to a flat R150 and back again
+    // would silently resurrect the old percentage.
+    default_markup_pct: values.markupType === "percent" ? values.defaultMarkupPct : null,
+    default_markup_amount_cents:
+      values.markupType === "amount" ? values.defaultMarkupAmountCents : null,
   };
 }
 
