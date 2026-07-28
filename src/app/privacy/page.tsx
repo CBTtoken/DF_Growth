@@ -159,11 +159,18 @@ export default function PrivacyPolicyPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold tracking-tight text-ink">8a. Cookies and Advertising Tracking</h2>
           <p className="text-sm leading-relaxed text-gray-700">
-            Some client pages use a tracking cookie (Meta Pixel) to help measure advertising performance.
-            This cookie is never loaded automatically — it only loads after you actively choose
-            &ldquo;Accept&rdquo; on the cookie banner shown on that page. Choosing &ldquo;Reject&rdquo;, or
-            not choosing at all, means the cookie is never set, and the page works exactly the same either
-            way.
+            {/* Widened 28 July 2026. This said "some client pages", which was
+                already narrow for our own marketing pages and became wrong
+                when the pixel was added to the KatisoBiz signup funnel. A
+                privacy policy that describes less tracking than actually
+                happens is the one kind of inaccuracy worth fixing the same
+                day it is noticed. */}
+            Our own pages, and some client pages, use a tracking cookie (Meta Pixel) to help measure
+            advertising performance. This includes the DigitalFlyer and KatisoBiz marketing and
+            signup pages. This cookie is never loaded automatically. It only loads after you
+            actively choose &ldquo;Accept&rdquo; on the cookie banner shown on that page. Choosing
+            &ldquo;Reject&rdquo;, or not choosing at all, means the cookie is never set, and the page
+            works exactly the same either way.
           </p>
         </section>
 
