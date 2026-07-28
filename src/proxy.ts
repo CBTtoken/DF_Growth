@@ -36,6 +36,19 @@ const SHARED_LEGAL_PATHS = new Set(["/terms", "/privacy", "/paia"]);
 // own rules and its own page list.
 const SHARED_CRAWLER_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);
 
+// Growth's own pages, which exist only on the Growth hostname. SiteFooter
+// renders on every logged-in KatisoBiz screen and links to all four with
+// relative hrefs, so on katisobiz.co.za they were rewritten to
+// /bizup/marketplace and friends and returned 404. This is the same bug the
+// legal paths above already had, four routes further on.
+//
+// Sent to Growth rather than served here, unlike the legal pages: these are
+// Growth product pages, a KatisoBiz member clicking Marketplace wants
+// Growth, and serving them on both hostnames would put the same content on
+// two domains with no canonical tag to say which one counts.
+const GROWTH_ONLY_PATHS = ["/marketplace", "/katisobiz-members", "/shop", "/agents"];
+const GROWTH_ORIGIN = process.env.NEXT_PUBLIC_SITE_URL ?? "https://growth.digitalflyersa.co.za";
+
 // Next generates these without a file extension, so they need naming
 // explicitly rather than being caught by the dot test below.
 const METADATA_IMAGE_SEGMENTS = ["opengraph-image", "twitter-image", "icon", "apple-icon"];
@@ -67,6 +80,12 @@ export function proxy(request: NextRequest) {
     // The shared legal pages, served as-is on this hostname too.
     if (SHARED_LEGAL_PATHS.has(pathname)) return NextResponse.next();
     if (SHARED_CRAWLER_PATHS.has(pathname)) return NextResponse.next();
+
+    // Growth's pages live on Growth's hostname. Prefix matched so a child
+    // route such as /agents/apply travels with its parent.
+    if (GROWTH_ONLY_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+      return NextResponse.redirect(new URL(pathname + request.nextUrl.search, GROWTH_ORIGIN));
+    }
 
     // On KatisoBiz's own hostname the /bizup prefix is redundant, so it is
     // redirected away rather than merely tolerated. Previously both forms
