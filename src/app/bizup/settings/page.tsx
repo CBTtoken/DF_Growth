@@ -46,6 +46,17 @@ export default async function BizUpSettingsPage() {
       warn: account.hasBankDetails ? null : "Not set up yet. Your customers cannot pay you without this.",
     },
     {
+      href: "/bizup/settings/numbering",
+      title: "Invoice numbering",
+      body: "Coming from another system? Carry on from your last invoice number.",
+      // Only worth prompting about while it can still be changed. Once a
+      // member has issued something the setting is locked, and a warning
+      // about a thing they can no longer do is just noise.
+      warn: account.hasSentDocument
+        ? null
+        : "Set this before your first invoice. It locks once you send one.",
+    },
+    {
       href: "/bizup/price-list",
       title: "Price list",
       body: "The things you charge for often, so you never type them twice.",

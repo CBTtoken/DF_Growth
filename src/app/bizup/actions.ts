@@ -10,6 +10,7 @@ import { replaceBizUpLogo, clearBizUpLogo } from "@/lib/bizup/logo";
 import { setActiveProductPreference , bizupLoginPath } from "@/lib/bizup/product";
 import type { Tier } from "@/lib/paystack/plans";
 import { isTemplateId } from "@/lib/bizup/pdf/document";
+import { formatDocumentNumber } from "@/lib/bizup/documents";
 
 export type BizUpFormState = {
   error?: Record<string, string[]> & { _form?: string[] };
@@ -391,6 +392,95 @@ export async function setBizUpListing(formData: FormData): Promise<void> {
 
   revalidatePath("/bizup/settings/business");
   revalidatePath("/katisobiz-members");
+}
+
+/**
+ * Sets where a member's numbering starts, so it continues from whatever
+ * they used before KatisoBiz.
+ *
+ * This is a legal requirement, not a convenience. A tax invoice must carry
+ * a number in a sequential series, and a business that reached 450 in a
+ * paper book and then starts again at 1 has broken that series. An auditor
+ * reads a restart as missing invoices.
+ *
+ * Only changeable while the series has issued nothing this year. Allowing
+ * it afterwards would either duplicate a number already sent to a customer
+ * or leave a gap, which are the two things the sequence rule exists to
+ * prevent. The counter is per year, so a member joining mid-year sets it
+ * once and the next January starts cleanly at 1.
+ *
+ * next_value is what the database function returns before incrementing, so
+ * storing the chosen number directly means their first document carries
+ * exactly the number they typed.
+ */
+export async function setStartingNumber(
+  _prev: { error?: string; ok?: string } | null,
+  formData: FormData
+): Promise<{ error?: string; ok?: string } | null> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Log in first." };
+
+  const admin = createAdminClient();
+  const { data: account } = await admin
+    .from("bizup_accounts")
+    .select("id")
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+  if (!account) return { error: "No account found." };
+
+  const series = String(formData.get("series") ?? "");
+  if (series !== "INV" && series !== "QUO") return { error: "Unknown document type." };
+
+  const label = series === "INV" ? "invoice" : "quote";
+  const raw = String(formData.get("startAt") ?? "").trim();
+  const startAt = Number(raw);
+  if (!raw || !Number.isInteger(startAt) || startAt < 1 || startAt > 9_999_999) {
+    return { error: "Enter a whole number of 1 or more." };
+  }
+
+  const year = new Date().getFullYear();
+
+  // Re-checked here rather than trusting the form to have hidden itself.
+  const { count } = await admin
+    .from("bizup_documents")
+    .select("id", { count: "exact", head: true })
+    .eq("account_id", account.id)
+    .eq("series", series)
+    .not("number", "is", null);
+
+  if ((count ?? 0) > 0) {
+    return {
+      error: `You have already issued ${label === "invoice" ? "an invoice" : "a quote"}, so this is locked. Changing it now would repeat a number your customer already has, or leave a gap.`,
+    };
+  }
+
+  const { error } = await admin
+    .from("bizup_number_counters")
+    .upsert(
+      { account_id: account.id, series, year, next_value: startAt },
+      { onConflict: "account_id,series,year" }
+    );
+
+  if (error) {
+    console.error("Failed to set KatisoBiz starting number", error);
+    return { error: "That did not save. Please try again." };
+  }
+
+  await admin.from("bizup_audit_log").insert({
+    account_id: account.id,
+    actor_user_id: user.id,
+    action: "starting_number_set",
+    reason: `${series} ${year} starts at ${startAt}`,
+  });
+
+  revalidatePath("/bizup/settings/numbering");
+
+  return {
+    ok: `Your next ${label} will be ${formatDocumentNumber(series, year, startAt)}.`,
+  };
 }
 
 /**
