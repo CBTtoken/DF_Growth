@@ -194,10 +194,18 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   // members that is what gets the domain throttled, and once that happens
   // even login codes stop arriving.
   //
-  // Syntax plus a DNS check, which catches the real-world case (gmial.com,
-  // a typo'd domain) without a paid verification vendor. The message names
-  // the address so the member can see the typo, and offers WhatsApp,
-  // because being blocked from sending at all would be worse than a bounce.
+  // Syntax plus a DNS check, without a paid verification vendor.
+  //
+  // What it actually catches, tested rather than assumed: malformed
+  // addresses, and domains that do not resolve at all. What it does not
+  // catch is a typo that happens to be a registered domain: gmial.com has
+  // an MX record because squatters own it, so it passes. Catching that
+  // needs a real verification API, which is worth revisiting if bounce
+  // rates say so and is not worth a vendor today.
+  //
+  // The message names the address so the member can see the mistake, and
+  // offers WhatsApp, because blocking the send entirely would be worse
+  // than a bounce.
   const address = await verifyEmailAddress(to);
   if (!address.valid) {
     return {
