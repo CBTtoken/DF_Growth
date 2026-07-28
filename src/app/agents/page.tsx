@@ -57,6 +57,18 @@ export const metadata: Metadata = {
     description:
       "You introduce the business, we build and run everything, and you get paid every year they stay with us.",
     url: "/agents",
+    // Named because overriding openGraph replaces the root layout's block
+    // wholesale, images included, so a page that sets only a title loses
+    // its share picture. Site audit, 28 July 2026, found this on four
+    // pages at once.
+    images: [{ url: "/brand/logo-blue.png", width: 1200, height: 630, alt: "DigitalFlyer SA" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "DigitalFlyer SA Agent Programme",
+    description:
+      "You introduce the business, we build and run everything, and you get paid every year they stay with us.",
+    images: ["/brand/logo-blue.png"],
   },
 };
 

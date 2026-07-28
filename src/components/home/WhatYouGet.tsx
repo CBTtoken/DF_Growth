@@ -14,7 +14,10 @@ const items = [
   {
     icon: MessagesSquare,
     title: "KatisoBiz",
-    body: "In-chat messaging and payments, so you can talk to and get paid by customers in one place.",
+    // Site audit, 28 July 2026: this described an earlier concept and was
+    // never updated when the module actually shipped. KatisoBiz is quoting
+    // and invoicing, and it said so on the page Growth's own ads point at.
+    body: "Mobile quoting and invoicing. Build a quote on your phone, send it on WhatsApp, turn it into an invoice when the job is done.",
   },
 ];
 

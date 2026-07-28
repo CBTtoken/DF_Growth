@@ -38,8 +38,18 @@ export const metadata: Metadata = {
     description: HELP_DESCRIPTION,
     url: "https://katisobiz.co.za/help",
     locale: "en_ZA",
+    // The same generated card the KatisoBiz homepage uses. Named because
+    // overriding this block replaces the root layout's, images included,
+    // and a file-based opengraph-image is not inherited from a parent
+    // route segment.
+    images: [{ url: "/bizup/opengraph-image", width: 1200, height: 630, alt: "KatisoBiz" }],
   },
-  twitter: { card: "summary_large_image", title: "How KatisoBiz works", description: HELP_DESCRIPTION },
+  twitter: {
+    card: "summary_large_image",
+    title: "How KatisoBiz works",
+    description: HELP_DESCRIPTION,
+    images: ["/bizup/opengraph-image"],
+  },
 };
 
 // The buttons are drawn inline rather than described, so a member reads

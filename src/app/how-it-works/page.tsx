@@ -11,8 +11,20 @@ export const metadata: Metadata = {
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/how-it-works" },
-  openGraph: { title: PAGE_TITLE, description: PAGE_DESCRIPTION, url: "/how-it-works" },
-  twitter: { title: PAGE_TITLE, description: PAGE_DESCRIPTION },
+  // Images named explicitly: overriding these blocks replaces the root
+  // layout's wholesale, so setting only a title drops the share picture.
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: "/how-it-works",
+    images: [{ url: "/brand/logo-blue.png", width: 1200, height: 630, alt: "DigitalFlyer SA" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: ["/brand/logo-blue.png"],
+  },
 };
 
 export const revalidate = 3600;

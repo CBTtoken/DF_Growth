@@ -35,8 +35,24 @@ export const metadata: Metadata = {
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/pricing" },
-  openGraph: { title: PAGE_TITLE, description: PAGE_DESCRIPTION, url: "/pricing" },
-  twitter: { title: PAGE_TITLE, description: PAGE_DESCRIPTION },
+  // Site audit, 28 July 2026: this page is Growth's home page, and every
+  // share of it appeared as a bare link. Overriding openGraph and twitter
+  // replaces the root layout's blocks wholesale, images and card type
+  // included, so naming the title and description here silently dropped
+  // both. Restated rather than inherited, because a partial override is
+  // what caused it.
+  openGraph: {
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    url: "/pricing",
+    images: [{ url: "/brand/logo-blue.png", width: 1200, height: 630, alt: "DigitalFlyer SA" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: PAGE_TITLE,
+    description: PAGE_DESCRIPTION,
+    images: ["/brand/logo-blue.png"],
+  },
 };
 
 export const revalidate = 60;

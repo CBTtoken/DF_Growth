@@ -247,7 +247,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "What is KatisoBiz?",
         answer:
-          "In-chat messaging and payments, so you can talk to and get paid by customers in one place. It's part of your membership as it rolls out, not live for every account yet.",
+          "Mobile quoting and invoicing for your business. Build a quote on your phone while you are standing on the job, send it on WhatsApp from your own number, and turn it into an invoice when the work is done. Foundation includes the free plan, ten documents a month. Growth includes the R49 plan.",
       },
     ],
   },

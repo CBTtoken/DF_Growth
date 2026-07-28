@@ -34,7 +34,13 @@ export const TIERS: {
       // all (KatisoBiz) in a separate section near the footer — a prospect
       // looking at just this card never saw the full value included.
       "RE:Biz Nomads Community",
-      "KatisoBiz Easy Quote to Invoice",
+      // Site audit, 28 July 2026: this read as an unqualified bullet on
+      // both Foundation and Growth, while the entitlement genuinely
+      // differs. bizUpEntitlementForTier gives Foundation the free plan,
+      // ten documents a month, and Growth the R49 plan. A member paying
+      // R100, reading the same words as the R180 card, would hit the cap
+      // at ten documents and reasonably ask for a refund.
+      "KatisoBiz quoting and invoicing, free plan included",
     ],
     ctaLabel: "Start Your Free Trial",
   },
@@ -61,7 +67,9 @@ export const TIERS: {
       // card at all.
       "Marketplace Presence",
       "RE:Biz Nomads Community",
-      "KatisoBiz Easy Quote to Invoice",
+      // The R49 plan, not the free one. See the note on the Foundation
+      // card above for why these two must not read the same.
+      "KatisoBiz quoting and invoicing, R49 plan included free",
     ],
     ctaLabel: "Start Growing",
   },
