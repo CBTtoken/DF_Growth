@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
+import { KatisoBizTerms } from "@/components/legal/KatisoBizTerms";
+import { COMPANY } from "@/lib/legal/company";
 
 // Sprint 1, Build Item 9. Content is final, provided by Dewald 2026-07-11 —
 // rendered verbatim, not edited. Only the two bracketed placeholders in the
@@ -120,13 +122,21 @@ export default function TermsPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold tracking-tight text-ink">10. Contact</h2>
           <p className="text-sm leading-relaxed text-gray-700">
-            DigitalFlyer SA
+            {COMPANY.legalName}, registration number {COMPANY.registrationNumber}, trading as {COMPANY.tradingName}
+            <br />
+            {COMPANY.address}
             <br />
             Email: info@digitalflyer.co.za
             <br />
             WhatsApp: +27723110570
           </p>
         </section>
+        {/* The KatisoBiz schedule. A separate, clearly marked schedule
+            rather than clauses folded into the general terms, because what
+            is promised to a KatisoBiz member genuinely differs from what is
+            promised to a marketplace business, and merging them is how a
+            business ends up bound by terms it never meant to offer. */}
+        <KatisoBizTerms />
       </div>
     </main>
   );

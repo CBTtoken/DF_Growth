@@ -73,7 +73,7 @@ export default async function AccountantExportPage({
           <section className="rounded-2xl border border-green-200 bg-green-50 p-5">
             <p className="text-sm font-semibold text-green-900">Your link is ready</p>
             <p className="mt-1 text-sm text-green-900">
-              Send this to your accountant. It works without a login and stops working in 14 days.
+              Send this to your accountant. It works without a login and stops working in 7 days.
             </p>
             <div className="mt-3">
               <CopyLink url={createdUrl} />

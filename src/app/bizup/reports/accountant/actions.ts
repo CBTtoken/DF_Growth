@@ -10,10 +10,13 @@ import { capabilitiesFor, type BizUpPlan } from "@/lib/bizup/entitlements";
 import { resolvePeriod } from "@/lib/bizup/period";
 import { bizupLoginPath, isKatisoBizHost } from "@/lib/bizup/product";
 
-// How long an export link lasts. Long enough for an accountant to get to
-// it in a busy week, short enough that a forwarded link does not stay live
-// for months. Sec 12 requires expiry but does not pick a number.
-const LINK_DAYS = 14;
+// How long an export link lasts.
+//
+// Seven days, not fourteen, because the approved terms of service say
+// seven in clause A5.2. Where the published terms and the code disagree,
+// the code moves: a term we do not honour is worse than no term, and this
+// one costs nothing to keep.
+const LINK_DAYS = 7;
 
 export async function createAccountantExportLink(formData: FormData): Promise<void> {
   const supabase = await createServerClient();

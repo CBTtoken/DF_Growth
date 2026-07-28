@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
+import { KatisoBizPrivacy } from "@/components/legal/KatisoBizPrivacy";
 
 // Sprint 1, Build Item 9. Base content is final, provided by Dewald
 // 2026-07-11 — rendered verbatim, not edited. Only the two bracketed
@@ -207,6 +208,12 @@ export default function PrivacyPolicyPage() {
             Braamfontein, Johannesburg, 2017.
           </p>
         </section>
+
+        {/* One privacy policy for the whole company, with a KatisoBiz
+            section rather than a second policy. Two policies drift apart
+            within a year, and a contradiction between two documents we
+            published ourselves is worse than either being imperfect. */}
+        <KatisoBizPrivacy />
       </div>
     </main>
   );
