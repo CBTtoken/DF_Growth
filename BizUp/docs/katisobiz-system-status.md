@@ -41,6 +41,24 @@ The database was deliberately emptied on 28 July. Every test account, test docum
 
 All four are fixed. The last was found the day before spending started.
 
+### Since this document was first handed over
+
+Eight further changes shipped on 28 July, after the version already sent to the business agent. Grouped by what they affect.
+
+**Money, and the most serious of the eight.** Paystack sends a subscription renewal as an ordinary charge with none of the custom data attached at checkout, and the KatisoBiz handler keyed on exactly that data. Every renewal was therefore being discarded. Nothing broke for the member, since their plan was already active, but no record of the payment was written: revenue would have been understated and **every paying member would have appeared to churn after a single month**. Renewals are now matched on the Paystack plan code, which is exact, and recorded distinctly from new sales so a repeat payment is never mistaken for growth.
+
+**Advertising.** The domain is now verified with Meta, which was the last item blocking honest campaign reporting; without it conversions from iPhone users are under-counted and a campaign reads worse than it performs. The pixel was confirmed live on the landing and signup pages, loading only after a visitor accepts cookies, and confirmed to be sending to the correct dataset of the four in the account.
+
+**Commercial copy, found by an external audit of the live site.** Two errors worth naming. KatisoBiz was described on the main pricing page and in the FAQ as "in-chat messaging and payments", which is an earlier concept that never shipped, on the page every prospective member reads before paying. And the KatisoBiz bullet read identically on the R100 Foundation card and the R180 Growth card while the entitlement genuinely differs, so a Foundation member would have hit the ten-document cap and reasonably asked for a refund. Both corrected.
+
+**Presentation.** Six pages, including Growth's own home page and the KatisoBiz signup page, produced no image when shared. Since WhatsApp sharing is the main way both products spread, a bare link was costing reach every time anyone forwarded one. All now carry a correctly sized card.
+
+**Addresses.** The old hostnames served a full duplicate of the site rather than redirecting, which split advertising data across three addresses and let people sign up on a hostname that was not the verified one. They now redirect, carrying the ad click identifier across. Separately, every visible URL on the KatisoBiz domain lost its legacy `/bizup` prefix, which also removed a redirect from the most important click in the funnel.
+
+**Disclosure.** The privacy policy's cookie clause described tracking on client pages only. That became inaccurate the moment the pixel went onto the KatisoBiz funnel, so it was widened the same day. The behaviour was always correct and consent gated; only the description had fallen behind.
+
+**One correction worth recording about the audit itself.** Its headline finding was that the campaign was losing advertising identifiers on a redirect and therefore wasting money in real time. Tested against the live site, that was not happening: the identifiers survive intact. Two further findings were also already correct before the audit ran. Four of its findings were real and are listed above.
+
 ---
 
 ## 3. What a member can do
