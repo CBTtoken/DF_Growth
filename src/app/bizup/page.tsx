@@ -17,11 +17,35 @@ import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 // The signed-out view of this route is the public landing page, so it must
 // be indexable. The signed-in dashboard below renders no member data to a
 // crawler, since a crawler is never signed in.
+const KATISO_DESCRIPTION =
+  "A professional quote with your logo and banking details, from your phone, in under a minute. Turn it into an invoice when the job is done. Free to start, no card needed.";
+
 export const metadata: Metadata = {
-  title: "KatisoBiz: send a quote that wins the job",
-  description:
-    "A professional quote with your logo and banking details, from your phone, in under a minute. Turn it into an invoice when the job is done. Free to start, no card needed.",
+  // Absolute, so the root layout's "| DigitalFlyer Growth" suffix is not
+  // appended. On KatisoBiz's own domain the product's name should be the
+  // whole title, and a suffix naming a different product reads as a
+  // mistake in a search result.
+  title: { absolute: "KatisoBiz: send a quote that wins the job" },
+  description: KATISO_DESCRIPTION,
   alternates: { canonical: "https://katisobiz.co.za" },
+  // Without these, the root layout's Growth tags were inherited, so a
+  // member sharing katisobiz.co.za on WhatsApp got a preview titled
+  // "DigitalFlyer Growth" with the Growth logo. WhatsApp sharing is the
+  // main way this product spreads, which made it the worst possible place
+  // to be showing another product's name.
+  openGraph: {
+    type: "website",
+    siteName: "KatisoBiz",
+    title: "KatisoBiz: send a quote that wins the job",
+    description: KATISO_DESCRIPTION,
+    url: "https://katisobiz.co.za",
+    locale: "en_ZA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "KatisoBiz: send a quote that wins the job",
+    description: KATISO_DESCRIPTION,
+  },
 };
 
 // KatisoBiz's signed-in home, and the destination resolveLandingPath sends

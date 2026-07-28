@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { isKatisoBizHost } from "@/lib/bizup/product";
 
 // Next.js special file — serves this at /robots.txt automatically.
 //
@@ -12,8 +13,18 @@ import type { MetadataRoute } from "next";
 // actual security boundary is server-side auth on each route, not
 // obscuring the path list here. /preview stays listed since it's just a
 // crawl-budget hint for low-value duplicate content, not a sensitive path.
-export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://df-growth.vercel.app";
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  // Host-aware, because two products share this app and this file is
+  // served on both. Pointing katisobiz.co.za at Growth's sitemap would
+  // hand a crawler a list of pages on a different domain, which is worse
+  // than having no sitemap at all.
+  const { headers } = await import("next/headers");
+  const host = (await headers()).get("host") ?? "";
+  const bare = host.split(":")[0].toLowerCase();
+
+  const siteUrl = isKatisoBizHost(host)
+    ? `https://${bare}`
+    : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://df-growth.vercel.app");
 
   return {
     rules: {

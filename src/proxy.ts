@@ -29,6 +29,17 @@ const BIZUP_PREFIX = "/bizup";
 // canonical tag on each page pointing at one host.
 const SHARED_LEGAL_PATHS = new Set(["/terms", "/privacy", "/paia"]);
 
+// Crawler files. Next serves these from src/app/robots.ts and sitemap.ts,
+// and rewriting them into /bizup meant katisobiz.co.za/robots.txt returned
+// a 404 page: a crawler arriving on the new domain could read neither.
+// Both files are host-aware, so passing them through gives each domain its
+// own rules and its own page list.
+const SHARED_CRAWLER_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);
+
+// Next generates these without a file extension, so they need naming
+// explicitly rather than being caught by the dot test below.
+const METADATA_IMAGE_SEGMENTS = ["opengraph-image", "twitter-image", "icon", "apple-icon"];
+
 export function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
 
@@ -55,6 +66,7 @@ export function proxy(request: NextRequest) {
 
     // The shared legal pages, served as-is on this hostname too.
     if (SHARED_LEGAL_PATHS.has(pathname)) return NextResponse.next();
+    if (SHARED_CRAWLER_PATHS.has(pathname)) return NextResponse.next();
 
     // On KatisoBiz's own hostname the /bizup prefix is redundant, so it is
     // redirected away rather than merely tolerated. Previously both forms
@@ -73,6 +85,15 @@ export function proxy(request: NextRequest) {
       // the WebP conversion. A dot in the last segment is the tell: page
       // routes never have one.
       if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
+        return NextResponse.next();
+      }
+
+      // Next's generated metadata images have no file extension, so the dot
+      // test above misses them and they were being redirected. A social
+      // preview fetcher does not follow redirects reliably, and the one
+      // place that matters is the WhatsApp card for a link a member just
+      // shared, so these pass through untouched too.
+      if (METADATA_IMAGE_SEGMENTS.some((seg) => pathname.endsWith(`/${seg}`))) {
         return NextResponse.next();
       }
 

@@ -18,10 +18,22 @@ import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 // Rule for maintaining this: never describe something the product does not
 // do. An out-of-date help page costs more support than no help page.
 
+const HELP_DESCRIPTION =
+  "How to send your first quote, turn it into an invoice, get paid, and hand everything to your accountant.";
+
 export const metadata: Metadata = {
-  title: "How KatisoBiz works",
-  description:
-    "How to send your first quote, turn it into an invoice, get paid, and hand everything to your accountant.",
+  title: { absolute: "How KatisoBiz works" },
+  description: HELP_DESCRIPTION,
+  alternates: { canonical: "https://katisobiz.co.za/help" },
+  openGraph: {
+    type: "article",
+    siteName: "KatisoBiz",
+    title: "How KatisoBiz works",
+    description: HELP_DESCRIPTION,
+    url: "https://katisobiz.co.za/help",
+    locale: "en_ZA",
+  },
+  twitter: { card: "summary_large_image", title: "How KatisoBiz works", description: HELP_DESCRIPTION },
 };
 
 const STEPS = [

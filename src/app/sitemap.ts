@@ -1,11 +1,32 @@
 import type { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isKatisoBizHost } from "@/lib/bizup/product";
 
 // Next.js special file — serves this at /sitemap.xml automatically. Every
 // active client's page gets listed so Google actually knows it exists to
 // crawl, not just the marketing pages — the whole point of this file, since
 // a client page has no other page linking to it for a crawler to discover.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Two products share this app and this file is served on both hostnames.
+  // Listing Growth's client pages under katisobiz.co.za would be telling a
+  // crawler that pages exist on a domain where they do not, so KatisoBiz
+  // gets its own short list and nothing else.
+  const { headers } = await import("next/headers");
+  const host = (await headers()).get("host") ?? "";
+  const bare = host.split(":")[0].toLowerCase();
+
+  if (isKatisoBizHost(host)) {
+    const katisoUrl = `https://${bare}`;
+    return [
+      { url: katisoUrl, changeFrequency: "weekly", priority: 1 },
+      { url: `${katisoUrl}/help`, changeFrequency: "monthly", priority: 0.8 },
+      { url: `${katisoUrl}/signup`, changeFrequency: "monthly", priority: 0.7 },
+      { url: `${katisoUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${katisoUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${katisoUrl}/paia`, changeFrequency: "yearly", priority: 0.2 },
+    ];
+  }
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://df-growth.vercel.app";
   const admin = createAdminClient();
 
@@ -56,6 +77,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${siteUrl}/events`,
       changeFrequency: "daily",
       priority: 0.8,
+    },
+    // The KatisoBiz Members List lives on the Growth domain and is the one
+    // page whose whole purpose is being found by someone searching for a
+    // trade, so it goes in the sitemap deliberately rather than relying on
+    // a crawler stumbling into it.
+    {
+      url: `${siteUrl}/katisobiz-members`,
+      changeFrequency: "daily",
+      priority: 0.7,
     },
     ...clientEntries,
     ...eventEntries,
