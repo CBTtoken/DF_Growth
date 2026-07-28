@@ -22,7 +22,22 @@ declare global {
   }
 }
 
-export function MetaConversion({ event, eventId }: { event: string; eventId?: string }) {
+export function MetaConversion({
+  event,
+  eventId,
+  value,
+  currency,
+}: {
+  event: string;
+  eventId?: string;
+  /**
+   * What the conversion was worth, in whole currency units. Meta needs
+   * this to optimise toward revenue rather than toward event count, which
+   * matters for a paid subscription and not at all for a free signup.
+   */
+  value?: number;
+  currency?: string;
+}) {
   const consent = typeof window === "undefined" ? null : getStoredConsent();
   const active = Boolean(PIXEL) && consent === "accepted";
 
@@ -39,10 +54,11 @@ export function MetaConversion({ event, eventId }: { event: string; eventId?: st
         // the browser + server events into one conversion. Without an id
         // there's nothing to dedupe against and a signup could be counted
         // twice once CAPI is live.
+        const params = value !== undefined ? { value, currency: currency ?? "ZAR" } : {};
         if (eventId) {
-          window.fbq("track", event, {}, { eventID: eventId });
+          window.fbq("track", event, params, { eventID: eventId });
         } else {
-          window.fbq("track", event);
+          window.fbq("track", event, params);
         }
         clearInterval(id);
       } else if (++tries > 25) {
@@ -50,7 +66,7 @@ export function MetaConversion({ event, eventId }: { event: string; eventId?: st
       }
     }, 200);
     return () => clearInterval(id);
-  }, [active, event, eventId]);
+  }, [active, event, eventId, value, currency]);
 
   if (!active) return null;
 

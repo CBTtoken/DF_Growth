@@ -116,6 +116,34 @@ export async function POST(request: Request) {
       reason: isTopup ? `${TOPUP_DOCUMENTS} documents, ${reference}` : `${plan}, ${reference}`,
     });
 
+    // Meta conversion tracking for a paid KatisoBiz plan.
+    //
+    // Only subscriptions, not topups. A topup is bought by a member who is
+    // already here, so attributing it to an acquisition campaign would
+    // overstate what the ads actually produced.
+    //
+    // event_id is Paystack's reference, which the browser pixel on the
+    // return page uses too, so Meta dedupes the two into one conversion
+    // rather than counting the sale twice. The value is sent so the
+    // campaign can optimise toward revenue rather than event count.
+    if (!isTopup) {
+      const { data: acct } = await admin
+        .from("bizup_accounts")
+        .select("email")
+        .eq("id", accountId)
+        .maybeSingle();
+
+      await sendDigitalFlyerCapiEvent({
+        eventName: "Subscribe",
+        email: acct?.email ?? customer?.email ?? null,
+        eventId: reference,
+        eventSourceUrl: "https://katisobiz.co.za/upgrade",
+        value: (amount ?? 0) / 100,
+        currency: "ZAR",
+        contentName: `bizup_${plan}`,
+      });
+    }
+
     return NextResponse.json({ received: true });
   }
 

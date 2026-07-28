@@ -5,6 +5,7 @@ import { bizupLoginPath } from "@/lib/bizup/product";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { recentBillingCutoff } from "@/lib/bizup/billing";
+import { MetaConversion } from "@/components/analytics/MetaConversion";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -38,7 +39,7 @@ export default async function BizUpUpgradeDonePage() {
   // the comparison.
   const { data: recent } = await admin
     .from("bizup_billing_events")
-    .select("kind, plan, created_at")
+    .select("kind, plan, created_at, paystack_reference, amount_cents")
     .eq("account_id", account.id)
     .gte("created_at", recentBillingCutoff())
     .order("created_at", { ascending: false })
@@ -47,6 +48,20 @@ export default async function BizUpUpgradeDonePage() {
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
+      {/* The browser half of the Subscribe conversion. Same event_id as the
+          webhook used, which is Paystack own reference, so Meta dedupes the
+          two into one sale instead of counting it twice. Consent-gated
+          inside the component, so nothing fires for a visitor who declined
+          cookies. Only for a plan, never a topup: a topup comes from a
+          member who is already here. */}
+      {recent?.kind === "subscription" && recent.paystack_reference && (
+        <MetaConversion
+          event="Subscribe"
+          eventId={recent.paystack_reference}
+          value={(recent.amount_cents ?? 0) / 100}
+          currency="ZAR"
+        />
+      )}
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-5 p-6">
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           {recent ? (
