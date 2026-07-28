@@ -100,6 +100,12 @@ export default async function AdminPage() {
                 </span>
               )}
             </LinkButton>
+            {/* KatisoBiz is a separate product with its own numbers, so it
+                gets its own page rather than being squeezed into this one,
+                which is about Growth clients. */}
+            <LinkButton href="/admin/bizup" variant="secondary" lift>
+              KatisoBiz
+            </LinkButton>
             <LinkButton href="/admin/reviews" variant="secondary" lift>
               Flagged Reviews
               {!!flaggedReviewCount && (
