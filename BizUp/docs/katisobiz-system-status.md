@@ -1,6 +1,6 @@
 # KatisoBiz: System Status
 
-**Prepared 29 July 2026. Updated 28 July 2026 at close of the launch sprint.** Written for a business update, so it says what exists, how it works, and what does not exist yet. Every figure was read from the live database on the date above, not estimated.
+**Updated 28 July 2026, the day the paid campaign went live.** Written for a business update, so it says what exists, how it works, and what does not exist yet. Every figure was read from the live database, not estimated, and the database was cleared of test data first so the figures mean something.
 
 ---
 
@@ -18,22 +18,28 @@ It is a module inside the existing DigitalFlyer Growth application: same codebas
 
 ## 2. Where it stands today
 
+**The paid campaign is live and has produced its first member.** The product is out of pilot and into acquisition.
+
 | | |
 |---|---|
-| Members | 7 |
-| Paying members | 2 |
-| Members who have issued a document | 5 |
-| Documents issued | 11 |
-| Payments recorded | 5, totalling R20,775 |
+| Real members | 3 |
+| Of those, from the paid campaign | 1 |
+| Product owner's own account | 1 |
 | Subscription revenue collected | R49 |
-| Customers captured | 5 |
-| Members opted into the Members List | 1 |
+| Documents in the system | 0, cleared for launch |
 
-These are test and pilot accounts. The product has been run end to end by the product owner, including the correction flow, and one real R49 subscription has been paid and correctly credited.
+The database was deliberately emptied on 28 July. Every test account, test document and test customer was removed so the numbers from here are real. What survived was chosen rather than defaulted: the record of money actually taken was kept, and one account was kept out of the deletion because it carries a live Paystack subscription that deleting the account would not have cancelled.
 
-**A working plumber is now testing it in the field.** That has already produced two defects worth more than any internal review: banking details printed masked on invoices, so no customer could pay one, and a straight invoice appearing impossible because only one screen offered it. Both are fixed.
+**Two real businesses are now on it.** A working plumber, recruited directly, and a second business that arrived through the campaign without being spoken to. The plumber has run a full job through the system end to end.
 
-**The first paid acquisition campaign is built and awaiting Meta approval**, pointed at the KatisoBiz landing page and optimising for completed signups.
+**Field testing has been worth more than any internal review.** It has produced four defects in two days, each one found by use rather than inspection:
+
+- Banking details printed masked on invoices, so no customer could actually pay one
+- A straight invoice appeared impossible, because only one screen offered it and another screen said the opposite
+- Four footer links returned 404 on the KatisoBiz domain
+- No page in the signup funnel loaded the advertising pixel, so paid traffic would have been unattributable
+
+All four are fixed. The last was found the day before spending started.
 
 ---
 
@@ -55,9 +61,15 @@ These are test and pilot accounts. The product has been run end to end by the pr
 - Record a deposit taken **before** the invoice was written, shown as a deduction with the balance due
 - Chase overdue invoices: the dashboard lists them worst first with a prepared WhatsApp message
 
+### Continuing an existing numbering sequence
+A business arriving from a paper book or another product is usually mid-sequence. A tax invoice has to carry a number in an unbroken series, so restarting at 1 when the old book reached 450 reads to an auditor as missing invoices. The member sets their starting number before issuing anything, and it locks afterwards, because changing it later would either repeat a number a customer already holds or leave a gap. Raised by a real member, built the same day.
+
 ### Fixing mistakes
 - "Fix this invoice" handles all three cases correctly: a detail-only correction keeping the same number and date, a full credit note and cancellation, or a credit note and a replacement
 - Issued documents are never silently altered; both versions are kept
+
+### Being told what the customer did
+Three emails, each one prompting a specific action rather than reporting news: the customer has opened it, so phone them; a quote is about to lapse, so follow it up; an invoice is late, so chase it. All go to the member and never to the member's customer, which is the same rule the reminder feature follows. On by default, with a switch. A fourth, "your quote was accepted", was deliberately dropped: the member records acceptance themselves, so it would have emailed them what they had just clicked.
 
 ### VAT
 - A member with no VAT number never sees VAT anywhere
@@ -95,6 +107,10 @@ An opt-in spot on the KatisoBiz Members List at DigitalFlyer's Growth site: busi
 
 **Banking details are encrypted at rest**, decrypted only to print on a document, and changing them requires a code emailed to the member. That last part exists because an attacker who takes over an account changes the banking details, and a clicked-link confirmation can be consumed by a mail scanner before the owner sees it.
 
+**Notifications cannot fire twice.** Each of the three claims a guard column before sending rather than after, so a retry, a duplicate scheduled run or a deploy mid-batch cannot email the same member about the same document again. Proven live: a first run sent, an immediate second run sent nothing, and opening a document link three more times produced no further email.
+
+**Sending reputation is treated as an asset.** A customer's email address is checked before a document is sent to it, because a member's typo becomes a bounce against DigitalFlyer's domain rather than theirs, and a throttled domain stops login codes arriving for everybody. The check catches malformed addresses and domains that do not exist. It does not catch a typo that happens to be a registered domain, which is a limitation recorded honestly rather than papered over.
+
 ---
 
 ## 5. Commercial mechanics
@@ -120,7 +136,6 @@ Stated plainly so nobody promises it.
 
 - **Multi-user accounts.** Parked, not scheduled. Every account is one user today, enforced in code. The realistic case is an owner plus one admin person rather than a crew, and it would need a membership table, two roles, and banking details restricted to the owner. Because account scoping runs through a single function rather than being repeated in every query, it stays a contained change when demand appears. Nobody has asked yet, including the field tester.
 - **Recurring invoices.** Deliberately refused rather than deferred. Tradesmen invoice per job, not per month, and the History tab plus the saved price list already make repeat work fast.
-- **Transactional emails to members.** Nothing emails a member when a quote is opened or accepted. Agreed as the next build, scoped below.
 - **Online card payment on an invoice.** A customer pays by EFT, not by clicking the invoice. Raised as an idea worth doing later: helping members open their own Paystack account so every invoice carries a Pay Now link. It shares an unresolved commercial decision with Growth's own payments question, and the published terms currently state DigitalFlyer is not a party to a member's transaction, so it would need those terms revisited.
 - **DigitalFlyer's own financial reporting.** Requested, agreed as not a priority.
 
@@ -128,11 +143,13 @@ Stated plainly so nobody promises it.
 
 ## 7. Open items
 
-**Closed since the last version.** The seven documents carrying a masked account number were all on test accounts and all already settled, so no real customer was ever affected and no backfill was needed. The attorney-reviewed operator clause and privacy schedule are published on the terms and privacy pages. The accountant has confirmed the VAT treatment and it is live.
+**Closed since the last version.** The masked account numbers needed no decision: all were on test accounts and already settled. The attorney-reviewed clauses are published. The accountant has confirmed the VAT treatment. Customer email addresses are now validated before sending. All three transactional emails are built and running.
 
-**Needs watching, not deciding:** customer email addresses are not validated before a document is emailed to them, so a member's typo becomes a bounce against DigitalFlyer's sending reputation. Harmless at seven members, and the single largest deliverability risk at a thousand. Being fixed as part of the transactional email work.
+**Needs doing by the product owner:** verifying the katisobiz.co.za domain inside Meta. Until that is done, conversions from iPhone users are under-reported, so the campaign's real performance will look worse than it is. Everything on the product side is in place and tested.
 
 **Needs doing before roughly eighty members:** the email provider's free tier allows one hundred sends a day, and that daily ceiling fails silently before the monthly one is reached. Moving up a plan costs around R370 a month and stays under three percent of revenue at a thousand members, so this is an operational reminder rather than a commercial question.
+
+**Needs cancelling in Paystack:** one test account was kept out of the database clear-out because it carries a live R49 subscription. Deleting the account would not have stopped Paystack charging the card. Once the subscription is cancelled the account can go.
 
 **Watch from launch:** the build spec commits to tracking how many members hit the free cap and go quiet versus how many upgrade. If more than half go quiet, the volume cap is the wrong model. This is measured and visible on the admin page.
 
@@ -142,9 +159,9 @@ Stated plainly so nobody promises it.
 
 In order of what actually changes the business.
 
-1. **Transactional emails.** Now the agreed next build. The product goes silent between a member sending a quote and remembering to check it. Three messages only, each capped at one per document so it never becomes noise: quote opened, quote accepted, invoice overdue, with a member toggle and customer address validation attached. Volume impact is roughly one email per document, which stays comfortably inside a plan costing around R370 a month even at a thousand members.
-2. **Activation.** A signup who never sends a document is worth nothing. The setup path has been shortened but has not been measured against real signups. The paid campaign will be the first honest test of it.
-3. **The accountant channel.** One accountant carries fifty to two hundred small businesses. The export is built and designed as a referral, and has never been sent to a real accountant.
-4. **The Members List.** Live and opt-in, with one member listed so far. It is worth nothing to a customer until there are enough trades on it to be worth searching.
+1. **Activation, and it is now measurable.** A signup who never sends a document is worth nothing. Two real members are on the system and neither has issued a document yet. That single number, signups who go on to send something, is the one to watch this week, and the campaign is what finally makes it a real measurement instead of a guess.
+2. **The Meta domain verification.** Ten minutes of the product owner's time, and until it is done the campaign's reported results will understate what it is actually producing. Nothing else about the campaign is blocked.
+3. **The accountant channel.** One accountant carries fifty to two hundred small businesses. The export is built and designed as a referral, and has never been sent to a real accountant. It is the cheapest route to volume that does not cost per click.
+4. **The Members List.** Live and opt-in, with nobody listed since the clear-out. It is worth nothing to a customer until enough trades are on it to be worth searching, so it needs members before it needs promotion.
 
-**The deliberate non-priority is more features.** The product does the job. One working plumber found two significant defects in a single morning, which is a better build list than any internal guess, and the constraint now is that almost nobody knows KatisoBiz exists.
+**The deliberate non-priority is more features.** The product does the job. In two days a working plumber and a live campaign produced four defects between them, every one found by use rather than by inspection, and that is a better build list than any internal guess. The constraint is not what KatisoBiz can do. It is that almost nobody knows it exists.
