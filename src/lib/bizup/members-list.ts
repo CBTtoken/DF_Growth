@@ -19,6 +19,16 @@ export interface ListedMember {
   serviceLabel: string;
   town: string | null;
   whatsapp: string;
+  /**
+   * Their DigitalFlyer Growth page, when they have one.
+   *
+   * This is the upsell made visible rather than argued. A member browsing
+   * the list sees that some entries carry a full page and theirs does not,
+   * which says more than any amount of copy about what Growth adds. It
+   * also makes the listing genuinely more useful to a customer, who can
+   * look at photos and reviews before phoning a stranger.
+   */
+  growthPageSlug: string | null;
 }
 
 export interface ListedGroup {
@@ -47,7 +57,9 @@ export async function loadMembersList(): Promise<ListedGroup[]> {
 
   const { data: accounts } = await admin
     .from("bizup_accounts")
-    .select("id, business_name, trading_name, service_type, city, whatsapp, phone")
+    .select(
+      "id, business_name, trading_name, service_type, city, whatsapp, phone, growth_clients(slug, status)",
+    )
     .eq("listed_publicly", true)
     .not("service_type", "is", null)
     .order("business_name");
@@ -76,6 +88,12 @@ export async function loadMembersList(): Promise<ListedGroup[]> {
     const whatsapp = whatsappOrNull(a.whatsapp ?? a.phone);
     if (!whatsapp) continue;
 
+    // Only an active Growth page is linked. Linking a cancelled or
+    // suspended one would send a customer to a page that no longer
+    // represents the business, which is worse for them than no link.
+    const growth = a.growth_clients as unknown as { slug: string | null; status: string } | null;
+    const growthPageSlug = growth?.status === "active" && growth.slug ? growth.slug : null;
+
     members.push({
       id: a.id,
       // The trading name is what customers know them by when it differs.
@@ -84,6 +102,7 @@ export async function loadMembersList(): Promise<ListedGroup[]> {
       serviceLabel: servicePlural(a.service_type),
       town: a.city?.trim() || null,
       whatsapp,
+      growthPageSlug,
     });
   }
 
