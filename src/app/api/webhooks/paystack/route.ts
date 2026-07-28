@@ -43,6 +43,89 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
+  // A KatisoBiz subscription renewing.
+  //
+  // Paystack sends a renewal as an ordinary charge.success whose metadata
+  // is a bare 0, not the custom bag set at checkout, so the branch below
+  // that keys on metadata.product never saw one and every renewal was
+  // silently dropped. Nothing broke for the member, since their plan was
+  // already set and nothing downgrades them; what was lost was the record
+  // of the money, which made every paying member look like they churned
+  // after a single month. The identical gap was found and fixed on the
+  // Growth side on 17 July, for the same reason.
+  //
+  // Resolved by plan code rather than by the customer's email. A renewal
+  // does carry the plan object, and matching on the plan is exact: an
+  // email could belong to somebody holding both a Growth subscription and
+  // a KatisoBiz one, and guessing between them would put the money in the
+  // wrong place.
+  const planCode = event.data?.plan?.plan_code as string | undefined;
+  const bizupPlanForCode =
+    planCode && planCode === process.env.PAYSTACK_PLAN_BIZUP_UNLIMITED
+      ? "unlimited"
+      : planCode && planCode === process.env.PAYSTACK_PLAN_BIZUP
+        ? "paid"
+        : null;
+
+  if (metadata?.product !== "bizup" && bizupPlanForCode && reference) {
+    const { data: account } = await admin
+      .from("bizup_accounts")
+      .select("id, plan")
+      .eq("email", customer?.email ?? "")
+      .maybeSingle();
+
+    if (!account) {
+      Sentry.captureMessage("KatisoBiz renewal for an unknown account", {
+        extra: { reference, email: customer?.email, planCode },
+      });
+      return NextResponse.json({ received: true });
+    }
+
+    // The insert is the idempotency check, exactly as for the first
+    // charge: paystack_reference is unique, so a redelivered renewal loses
+    // the race and stops here rather than being counted twice.
+    const { error: renewalError } = await admin.from("bizup_billing_events").insert({
+      account_id: account.id,
+      paystack_reference: reference,
+      kind: "renewal",
+      plan: bizupPlanForCode,
+      amount_cents: amount ?? 0,
+    });
+
+    if (renewalError) {
+      // 23505 is the unique violation, which is the redelivery case and
+      // entirely expected. Anything else is a real failure to record money.
+      if (renewalError.code !== "23505") {
+        console.error("Failed to record KatisoBiz renewal", renewalError, { reference });
+        Sentry.captureMessage("Failed to record KatisoBiz renewal", {
+          extra: { error: renewalError, reference, accountId: account.id },
+        });
+      }
+      return NextResponse.json({ received: true });
+    }
+
+    // Re-asserted rather than assumed. A member whose plan was reverted by
+    // the grant-expiry job, or changed by hand, is paying for a plan they
+    // are no longer on, and the payment is the authority on that.
+    if (account.plan !== bizupPlanForCode) {
+      await admin
+        .from("bizup_accounts")
+        .update({ plan: bizupPlanForCode, plan_source: "self_paid", updated_at: new Date().toISOString() })
+        .eq("id", account.id);
+    }
+
+    await admin.from("bizup_audit_log").insert({
+      account_id: account.id,
+      action: "subscription_renewed",
+      reason: `${bizupPlanForCode}, ${reference}`,
+    });
+
+    // Deliberately no Meta conversion event. A renewal is not an
+    // acquisition, and reporting one would tell the ad platform it had
+    // won a customer it did not win.
+    return NextResponse.json({ received: true });
+  }
+
   // KatisoBiz upgrades and topups. Handled first and returns immediately:
   // this endpoint is shared by three unrelated flows because a Paystack
   // account only supports one webhook URL, and everything below this is
