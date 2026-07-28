@@ -40,6 +40,10 @@ export function SiteFooter({
           Marketplace
         </Link>
         <span aria-hidden> · </span>
+        <Link href="/katisobiz-members" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          Find a Trade
+        </Link>
+        <span aria-hidden> · </span>
         <Link href="/shop" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Shop
         </Link>

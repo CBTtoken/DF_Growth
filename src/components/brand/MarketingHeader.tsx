@@ -70,6 +70,18 @@ export function MarketingHeader() {
           >
             Marketplace
           </Link>
+          {/* The KatisoBiz Members List. Next to Marketplace because that
+              is the mental slot it occupies for a visitor: somewhere to
+              find a business. Kept a separate entry rather than folded into
+              Marketplace, because the two are deliberately different
+              things and a Growth member pays for the one that is not
+              this. */}
+          <Link
+            href="/katisobiz-members"
+            className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
+          >
+            Find a Trade
+          </Link>
           <Link
             href="/shop"
             className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
