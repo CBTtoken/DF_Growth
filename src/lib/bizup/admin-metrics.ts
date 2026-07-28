@@ -31,6 +31,8 @@ export interface AdminMemberRow {
   plan: BizUpPlan;
   planSource: string;
   createdAt: string;
+  planGrantedUntil: string | null;
+  planGrantedReason: string | null;
   documentsThisMonth: number;
   documentsTotal: number;
   lastDocumentAt: string | null;
@@ -44,6 +46,8 @@ export interface BizUpAdminMetrics {
     byPlan: Record<BizUpPlan, number>;
     /** Plan is included with a Growth subscription rather than bought here. */
     bundled: number;
+    /** Given free of charge by an admin. Never counted as revenue. */
+    granted: number;
   };
   activation: {
     /** Signed up and issued at least one real document. The number that matters. */
@@ -87,7 +91,7 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
   const [{ data: accounts }, { data: docs }, { data: billing }] = await Promise.all([
     admin
       .from("bizup_accounts")
-      .select("id, business_name, email, plan, plan_source, vat_number, created_at")
+      .select("id, business_name, email, plan, plan_source, vat_number, created_at, plan_granted_until, plan_granted_reason")
       .order("created_at", { ascending: false }),
     // Issued documents only. A draft is not usage: it is someone who opened
     // the builder and stopped, which is the opposite of the signal wanted.
@@ -117,6 +121,7 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
 
   const byPlan: Record<BizUpPlan, number> = { free: 0, paid: 0, unlimited: 0 };
   let bundled = 0;
+  let grantedCount = 0;
   let newThisMonth = 0;
   let mrrCents = 0;
   let activated = 0;
@@ -131,7 +136,11 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
     byPlan[plan] = (byPlan[plan] ?? 0) + 1;
 
     const selfPaid = a.plan_source === "self_paid";
-    if (!selfPaid && plan !== "free") bundled += 1;
+    const granted = a.plan_source === "granted";
+    // A comp is neither revenue nor a bundled Growth subscription. Counting
+    // it as bundled would claim a Growth plan that does not exist.
+    if (!selfPaid && !granted && plan !== "free") bundled += 1;
+    if (granted && plan !== "free") grantedCount += 1;
     // Only money that reaches us through KatisoBiz counts as KatisoBiz
     // revenue. A bundled member is real revenue, but it is Growth's, and
     // counting it here would flatter this number and hide whether the R49
@@ -163,6 +172,8 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
       plan,
       planSource: a.plan_source,
       createdAt: a.created_at.slice(0, 10),
+      planGrantedUntil: a.plan_granted_until,
+      planGrantedReason: a.plan_granted_reason,
       documentsThisMonth: tally.thisMonth,
       documentsTotal: tally.total,
       lastDocumentAt: tally.last,
@@ -186,6 +197,7 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
       newThisMonth,
       byPlan,
       bundled,
+      granted: grantedCount,
     },
     activation: {
       activated,

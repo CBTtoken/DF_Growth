@@ -251,6 +251,202 @@ export async function loadReports(
 }
 
 // ============================================================
+// Drilling into a figure
+// ============================================================
+
+export type ReportMetric =
+  | "quotes_sent"
+  | "quotes_won"
+  | "invoiced"
+  | "received"
+  | "outstanding"
+  | "aged_0_30"
+  | "aged_31_60"
+  | "aged_61_90"
+  | "aged_90_plus"
+  | "pipeline";
+
+export interface ReportDocumentRow {
+  id: string;
+  href: string;
+  number: string | null;
+  customerName: string | null;
+  date: string | null;
+  amountCents: number;
+  note: string | null;
+}
+
+export const METRIC_TITLES: Record<ReportMetric, string> = {
+  quotes_sent: "Quotes sent",
+  quotes_won: "Quotes won",
+  invoiced: "Invoices issued",
+  received: "Payments received",
+  outstanding: "Still owed to you",
+  aged_0_30: "Owing, 0 to 30 days",
+  aged_31_60: "Owing, 31 to 60 days",
+  aged_61_90: "Owing, 61 to 90 days",
+  aged_90_plus: "Owing, over 90 days",
+  pipeline: "Open quotes",
+};
+
+export function isReportMetric(value: unknown): value is ReportMetric {
+  return typeof value === "string" && value in METRIC_TITLES;
+}
+
+/**
+ * The documents behind a figure on the reports screen.
+ *
+ * Deliberately built from the same filters loadReports uses rather than
+ * re-queried a second way. A total and the list behind it disagreeing is
+ * the fastest way to make a member stop trusting both, and two independent
+ * queries drift the moment either is edited.
+ */
+export async function loadReportDocuments(
+  accountId: string,
+  period: Period,
+  metric: ReportMetric,
+  today: string = new Date().toISOString().slice(0, 10),
+): Promise<ReportDocumentRow[]> {
+  const admin = createAdminClient();
+
+  const customerName = (r: { bizup_customers?: unknown }) =>
+    (r.bizup_customers as { name?: string } | null)?.name ?? null;
+
+  if (metric === "received") {
+    const { data } = await admin
+      .from("bizup_payments")
+      .select(
+        "id, paid_at, amount_cents, method, reference, bizup_documents!inner(id, number, account_id, bizup_customers(name))",
+      )
+      .eq("bizup_documents.account_id", accountId)
+      .gte("paid_at", period.from)
+      .lte("paid_at", period.to)
+      .order("paid_at", { ascending: false });
+
+    return (data ?? []).map((p) => {
+      const doc = p.bizup_documents as unknown as {
+        id: string;
+        number: string | null;
+        bizup_customers?: { name?: string } | null;
+      };
+      return {
+        id: p.id,
+        href: `/bizup/invoices/${doc.id}`,
+        number: doc.number,
+        customerName: doc.bizup_customers?.name ?? null,
+        date: p.paid_at,
+        amountCents: p.amount_cents,
+        note: `${p.method}${p.reference ? ` · ${p.reference}` : ""}`,
+      };
+    });
+  }
+
+  if (metric === "quotes_sent" || metric === "quotes_won" || metric === "pipeline") {
+    let query = admin
+      .from("bizup_documents")
+      .select("id, number, status, issue_date, valid_until, total_incl_cents, bizup_customers(name)")
+      .eq("account_id", accountId)
+      .eq("doc_type", "quote")
+      .not("number", "is", null);
+
+    // Pipeline is "open right now", so it is not period-scoped, exactly as
+    // the tile is not.
+    if (metric === "pipeline") {
+      query = query.eq("status", "sent");
+    } else {
+      query = query.gte("issue_date", period.from).lte("issue_date", period.to);
+      if (metric === "quotes_won") query = query.in("status", ["accepted", "converted"]);
+    }
+
+    const { data } = await query.order("issue_date", { ascending: false });
+
+    return (data ?? [])
+      .filter((q) => metric !== "pipeline" || !q.valid_until || q.valid_until >= today)
+      .map((q) => ({
+        id: q.id,
+        href: `/bizup/quotes/${q.id}`,
+        number: q.number,
+        customerName: customerName(q),
+        date: q.issue_date,
+        amountCents: q.total_incl_cents,
+        note:
+          metric === "pipeline" && q.valid_until ? `Valid until ${q.valid_until}` : q.status,
+      }));
+  }
+
+  // Everything else is invoices.
+  let query = admin
+    .from("bizup_documents")
+    .select("id, number, status, issue_date, due_date, total_incl_cents, bizup_customers(name)")
+    .eq("account_id", accountId)
+    .eq("doc_type", "invoice");
+
+  if (metric === "invoiced") {
+    query = query
+      .in("status", ISSUED_INVOICE_STATUSES)
+      .gte("issue_date", period.from)
+      .lte("issue_date", period.to);
+  } else {
+    // Outstanding and the aged buckets are "as at today", not period
+    // scoped, matching the tiles they came from.
+    query = query.in("status", OPEN_INVOICE_STATUSES);
+  }
+
+  const { data } = await query.order("due_date", { ascending: true });
+  const rows = data ?? [];
+
+  if (metric === "invoiced") {
+    return rows.map((r) => ({
+      id: r.id,
+      href: `/bizup/invoices/${r.id}`,
+      number: r.number,
+      customerName: customerName(r),
+      date: r.issue_date,
+      amountCents: r.total_incl_cents,
+      note: r.status,
+    }));
+  }
+
+  // Outstanding needs payments subtracted per invoice, same as the tile.
+  const ids = rows.map((r) => r.id);
+  const { data: payments } = ids.length
+    ? await admin.from("bizup_payments").select("document_id, amount_cents").in("document_id", ids)
+    : { data: [] };
+
+  const paidByDoc = new Map<string, number>();
+  for (const p of payments ?? []) {
+    paidByDoc.set(p.document_id, (paidByDoc.get(p.document_id) ?? 0) + p.amount_cents);
+  }
+
+  const bucketFor = (days: number): ReportMetric =>
+    days <= 30 ? "aged_0_30" : days <= 60 ? "aged_31_60" : days <= 90 ? "aged_61_90" : "aged_90_plus";
+
+  return rows
+    .map((r) => {
+      const owing = r.total_incl_cents - (paidByDoc.get(r.id) ?? 0);
+      const reference = r.due_date ?? r.issue_date;
+      const days = reference
+        ? Math.floor((Date.parse(today) - Date.parse(reference)) / 86400000)
+        : 0;
+      return { row: r, owing, days };
+    })
+    .filter(({ owing, days }) => {
+      if (owing <= 0) return false;
+      if (metric === "outstanding") return true;
+      return bucketFor(days) === metric;
+    })
+    .map(({ row, owing, days }) => ({
+      id: row.id,
+      href: `/bizup/invoices/${row.id}`,
+      number: row.number,
+      customerName: customerName(row),
+      date: row.due_date,
+      amountCents: owing,
+      note: days > 0 ? `${days} days past due` : "Not due yet",
+    }));
+}
+
+// ============================================================
 // Sec 12 report 7: the client statement
 // ============================================================
 

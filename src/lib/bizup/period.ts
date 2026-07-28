@@ -108,3 +108,14 @@ export function hasPassed(isoTimestamp: string): boolean {
 export function nowMillis(): number {
   return Date.now();
 }
+
+/**
+ * A date this many days in the past, as YYYY-MM-DD.
+ *
+ * Same reason as nowMillis and hasPassed: reading the clock inside a
+ * component body is impure and React's lint rules reject it, even in a
+ * Server Component that renders once per request.
+ */
+export function daysAgoIso(days: number): string {
+  return new Date(Date.now() - days * 86400000).toISOString().slice(0, 10);
+}

@@ -3,6 +3,8 @@ import Link from "next/link";
 import { forbidden } from "next/navigation";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { loadBizUpAdminMetrics } from "@/lib/bizup/admin-metrics";
+import { grantBizUpPlan } from "@/app/admin/bizup/actions";
+import { daysAgoIso } from "@/lib/bizup/period";
 import { formatZar } from "@/lib/bizup/money";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { Table, TableHeadRow, Th, Tr, Td } from "@/components/ui/Table";
@@ -37,11 +39,52 @@ function Tile({
   );
 }
 
-export default async function BizUpAdminPage() {
+// Dewald: "be able to see who is on free, R49 and so on... I also want to
+// upsell those who started never converted or hasn't use the system at all
+// in 30 days". Filters rather than separate pages, so the numbers above
+// stay in view while the list narrows underneath them.
+const FILTERS = [
+  { id: "all", label: "Everyone" },
+  { id: "free", label: "Free" },
+  { id: "paid", label: "R49" },
+  { id: "unlimited", label: "R89" },
+  { id: "granted", label: "Comped" },
+  { id: "never_activated", label: "Never sent anything" },
+  { id: "dormant", label: "Quiet 30 days" },
+] as const;
+
+export default async function BizUpAdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ filter?: string }>;
+}) {
   const admin_ = await requireAdminEmail();
   if ("error" in admin_) forbidden();
 
   const m = await loadBizUpAdminMetrics();
+  const params = await searchParams;
+  const filter = FILTERS.some((f) => f.id === params.filter) ? params.filter! : "all";
+
+  const thirtyDaysAgo = daysAgoIso(30);
+  const rows = m.members_list.filter((r) => {
+    switch (filter) {
+      case "free":
+      case "paid":
+      case "unlimited":
+        return r.plan === filter;
+      case "granted":
+        return r.planSource === "granted";
+      case "never_activated":
+        return r.documentsTotal === 0;
+      case "dormant":
+        // Used it at least once, then stopped. Someone who never started is
+        // a different problem with a different message, so they are not
+        // mixed into this list.
+        return r.documentsTotal > 0 && (!r.lastDocumentAt || r.lastDocumentAt < thirtyDaysAgo);
+      default:
+        return true;
+    }
+  });
 
   // Sec 16's stated trigger for abandoning the volume cap model: more than
   // half of cap-hitters going dormant rather than upgrading. Surfaced as a
@@ -123,7 +166,7 @@ export default async function BizUpAdminPage() {
             <Tile
               label="Included with Growth"
               value={String(m.members.bundled)}
-              sub="Not counted in the recurring figure"
+              sub={m.members.granted > 0 ? `Plus ${m.members.granted} comped` : "Not counted in the recurring figure"}
             />
           </div>
         </section>
@@ -165,7 +208,7 @@ export default async function BizUpAdminPage() {
         <section>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-ink">
-              Members ({m.members.total}, {m.members.newThisMonth} new this month)
+              Members ({rows.length} shown of {m.members.total}, {m.members.newThisMonth} new this month)
             </h2>
             {/* A plain anchor on purpose. This points at a route handler
                 that returns a file, not a page. next/link would try to
@@ -179,6 +222,30 @@ export default async function BizUpAdminPage() {
             </a>
           </div>
 
+          <div className="mt-3 flex flex-wrap gap-2">
+            {FILTERS.map((f) => (
+              <Link
+                key={f.id}
+                href={f.id === "all" ? "/admin/bizup" : `/admin/bizup?filter=${f.id}`}
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                  filter === f.id
+                    ? "bg-brand text-white"
+                    : "border border-gray-200 bg-white text-gray-700 hover:border-brand"
+                }`}
+              >
+                {f.label}
+              </Link>
+            ))}
+          </div>
+
+          {(filter === "never_activated" || filter === "dormant") && rows.length > 0 && (
+            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              {filter === "never_activated"
+                ? "These signed up and never sent a document. Ask what stopped them, rather than selling: something in the setup is usually the reason."
+                : "These used it and then stopped. Worth a message asking whether the work dried up or the product did."}
+            </p>
+          )}
+
           <div className="mt-3 overflow-x-auto">
             <Table>
               <TableHeadRow>
@@ -188,9 +255,10 @@ export default async function BizUpAdminPage() {
                 <Th>Docs, month</Th>
                 <Th>Docs, total</Th>
                 <Th>Last sent</Th>
+                <Th>Change plan</Th>
               </TableHeadRow>
               <tbody>
-                {m.members_list.map((row) => (
+                {rows.map((row) => (
                   <Tr key={row.id}>
                     <Td>
                       <span className="block font-medium text-ink">{row.businessName}</span>
@@ -215,15 +283,55 @@ export default async function BizUpAdminPage() {
                         <span className="text-amber-700">Never</span>
                       )}
                     </Td>
+                    <Td>
+                      {/* A comp, with an end date. Expiring by design: a
+                          plan set by hand and never taken away is revenue
+                          lost without anyone deciding to lose it, so the
+                          daily cron reverts it. */}
+                      <details>
+                        <summary className="cursor-pointer list-none text-sm font-semibold text-brand marker:content-none hover:underline">
+                          {row.planSource === "granted" ? "Comped" : "Change"}
+                        </summary>
+                        <form action={grantBizUpPlan} className="mt-2 flex flex-col gap-2">
+                          <input type="hidden" name="accountId" value={row.id} />
+                          <select name="plan" defaultValue={row.plan} className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm">
+                            <option value="free">Free</option>
+                            <option value="paid">R49</option>
+                            <option value="unlimited">R89</option>
+                          </select>
+                          <input
+                            type="date"
+                            name="until"
+                            defaultValue={row.planGrantedUntil ?? ""}
+                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+                            aria-label="Granted until"
+                          />
+                          <input
+                            name="reason"
+                            defaultValue={row.planGrantedReason ?? ""}
+                            placeholder="Why"
+                            className="rounded-lg border border-gray-200 px-2 py-1.5 text-sm"
+                          />
+                          <button className="rounded-full bg-brand px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-dark">
+                            Save
+                          </button>
+                        </form>
+                      </details>
+                      {row.planGrantedUntil && (
+                        <span className="mt-1 block text-xs text-gray-500">
+                          until {row.planGrantedUntil}
+                        </span>
+                      )}
+                    </Td>
                   </Tr>
                 ))}
               </tbody>
             </Table>
           </div>
 
-          {m.members_list.length === 0 && (
+          {rows.length === 0 && (
             <p className="mt-3 rounded-2xl border border-gray-100 bg-white p-6 text-center text-sm text-gray-500">
-              No KatisoBiz members yet.
+              Nobody matches this filter.
             </p>
           )}
         </section>

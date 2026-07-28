@@ -25,17 +25,39 @@ function Tile({
   label,
   value,
   hint,
+  href,
 }: {
   label: string;
   value: string;
   hint?: string | null;
+  /**
+   * Dewald: "can we make the analytics clickable so they can see which
+   * invoices are outstanding and so forth?" Given a href, the tile leads
+   * to the documents behind the figure.
+   */
+  href?: string;
 }) {
-  return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+  const body = (
+    <>
       <p className="text-sm text-gray-500">{label}</p>
       <p className="mt-1 text-xl font-bold tracking-tight text-ink">{value}</p>
       {hint && <p className="mt-1 text-xs text-gray-500">{hint}</p>}
-    </div>
+    </>
+  );
+
+  // A figure with no list behind it stays a plain box rather than becoming
+  // a link to an empty page.
+  if (!href) {
+    return <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">{body}</div>;
+  }
+
+  return (
+    <Link
+      href={href}
+      className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-brand"
+    >
+      {body}
+    </Link>
   );
 }
 
@@ -101,6 +123,8 @@ export default async function BizUpReportsPage({
   const vendor = !!account.vat_number;
   const tracker = vatTrackerState(r.vatTracker.rollingTotalCents, settings);
 
+  const drill = (metric: string) => `/bizup/reports/list?metric=${metric}&period=${period.id}&from=${period.from}&to=${period.to}`;
+
   const qs = (id: string) => `/bizup/reports?period=${id}`;
   const exportQs = `period=${period.id}&from=${period.from}&to=${period.to}`;
 
@@ -153,14 +177,15 @@ export default async function BizUpReportsPage({
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-ink">Quotes</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Tile label="Sent" value={String(r.quotes.sent)} />
+            <Tile label="Sent" value={String(r.quotes.sent)} href={drill("quotes_sent")} />
             <Tile
               label="Won"
               value={r.quotes.winRatePct === null ? "No quotes yet" : `${r.quotes.winRatePct}%`}
               hint={`${r.quotes.accepted} of ${r.quotes.sent}`}
+              href={drill("quotes_won")}
             />
-            <Tile label="Value sent" value={formatZar(r.quotes.totalValueCents)} />
-            <Tile label="Value won" value={formatZar(r.quotes.acceptedValueCents)} />
+            <Tile label="Value sent" value={formatZar(r.quotes.totalValueCents)} href={drill("quotes_sent")} />
+            <Tile label="Value won" value={formatZar(r.quotes.acceptedValueCents)} href={drill("quotes_won")} />
           </div>
         </section>
 
@@ -168,8 +193,8 @@ export default async function BizUpReportsPage({
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-ink">Invoiced</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Tile label="Invoices issued" value={String(r.invoiced.count)} />
-            <Tile label="Total invoiced" value={formatZar(r.invoiced.totalInclCents)} />
+            <Tile label="Invoices issued" value={String(r.invoiced.count)} href={drill("invoiced")} />
+            <Tile label="Total invoiced" value={formatZar(r.invoiced.totalInclCents)} href={drill("invoiced")} />
             {vendor && <Tile label="Excluding VAT" value={formatZar(r.invoiced.totalExclCents)} />}
             {vendor && <Tile label="VAT charged" value={formatZar(r.invoiced.vatCents)} />}
           </div>
@@ -179,11 +204,12 @@ export default async function BizUpReportsPage({
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-ink">Money in</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Tile label="Received this period" value={formatZar(r.moneyIn.receivedCents)} />
+            <Tile label="Received this period" value={formatZar(r.moneyIn.receivedCents)} href={drill("received")} />
             <Tile
               label="Still owed to you"
               value={formatZar(r.moneyIn.outstandingCents)}
               hint={`${r.moneyIn.outstandingCount} unpaid ${r.moneyIn.outstandingCount === 1 ? "invoice" : "invoices"}, as at today`}
+              href={drill("outstanding")}
             />
           </div>
         </section>
@@ -196,20 +222,27 @@ export default async function BizUpReportsPage({
             as late.
           </p>
           <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
-            {r.agedDebtors.map((b, i) => (
-              <div
-                key={b.label}
-                className={`flex items-center justify-between gap-3 px-4 py-3 text-sm ${i > 0 ? "border-t border-gray-100" : ""}`}
-              >
-                <span className="text-gray-600">
-                  {b.label}
-                  {b.count > 0 && <span className="ml-2 text-xs text-gray-400">{b.count}</span>}
-                </span>
-                <span className={`font-semibold ${i === 3 && b.cents > 0 ? "text-red-700" : "text-ink"}`}>
-                  {formatZar(b.cents)}
-                </span>
-              </div>
-            ))}
+            {/* Each bucket opens the invoices inside it. This is the one
+                Dewald specifically asked for: seeing R14,000 over 90 days
+                is only useful if the next tap tells you whose it is. */}
+            {r.agedDebtors.map((b, i) => {
+              const metric = ["aged_0_30", "aged_31_60", "aged_61_90", "aged_90_plus"][i];
+              return (
+                <Link
+                  key={b.label}
+                  href={drill(metric)}
+                  className={`flex items-center justify-between gap-3 px-4 py-3 text-sm transition hover:bg-gray-50 ${i > 0 ? "border-t border-gray-100" : ""}`}
+                >
+                  <span className="text-gray-600">
+                    {b.label}
+                    {b.count > 0 && <span className="ml-2 text-xs text-gray-400">{b.count}</span>}
+                  </span>
+                  <span className={`font-semibold ${i === 3 && b.cents > 0 ? "text-red-700" : "text-ink"}`}>
+                    {formatZar(b.cents)}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </section>
 
@@ -217,8 +250,8 @@ export default async function BizUpReportsPage({
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-ink">Still out there</h2>
           <div className="grid grid-cols-2 gap-3">
-            <Tile label="Open quotes" value={String(r.pipeline.count)} hint="Sent, not yet expired" />
-            <Tile label="At face value" value={formatZar(r.pipeline.faceValueCents)} />
+            <Tile label="Open quotes" value={String(r.pipeline.count)} hint="Sent, not yet expired" href={drill("pipeline")} />
+            <Tile label="At face value" value={formatZar(r.pipeline.faceValueCents)} href={drill("pipeline")} />
           </div>
         </section>
 
