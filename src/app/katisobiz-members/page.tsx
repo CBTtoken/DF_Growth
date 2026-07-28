@@ -46,28 +46,34 @@ export default async function KatisoBizMembersPage() {
     <main className="flex flex-1 flex-col bg-white">
       <MarketingHeader />
 
-      {/* The brand band. Colour and the logo, per Dewald, so the page reads
-          as a KatisoBiz thing rather than an unstyled list, and so a
-          visitor who arrived from a search meets the product name. */}
-      <section className="border-b border-neutral-border bg-gradient-to-br from-[#1081b8] to-[#0c6690] px-4 py-14 sm:px-6">
+      {/* Off-black rather than the brand blue.
+
+          The first version put the logo on a blue gradient and forced it
+          white with a brightness filter, which flattened a two-colour mark
+          into a silhouette and lost the tagline entirely. Dewald supplied
+          a proper dark-background version of the logo, whose tagline is
+          set in white, so it can now be used as drawn: blue and orange
+          letterforms against near-black, which is what the mark was made
+          for. No filter, no silhouette. */}
+      <section className="border-b border-neutral-border bg-[#111418] px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-3xl">
           <Image
-            src="/bizup/logo.png"
+            src="/bizup/logo-on-dark.png"
             alt="KatisoBiz"
-            width={520}
-            height={119}
+            width={560}
+            height={128}
             priority
-            className="h-9 w-auto brightness-0 invert sm:h-11"
+            className="h-12 w-auto sm:h-14"
           />
-          <h1 className="mt-6 text-3xl font-extrabold leading-tight tracking-tight text-white lg:text-4xl">
+          <h1 className="mt-7 text-3xl font-extrabold leading-tight tracking-tight text-white lg:text-4xl">
             Find a trade near you
           </h1>
-          <p className="mt-3 max-w-2xl text-lg text-white/90">
+          <p className="mt-3 max-w-2xl text-lg text-white/70">
             Every business here runs their quotes and invoices on KatisoBiz, so you get a proper
             written quote rather than a number over the phone. Message them straight on WhatsApp.
           </p>
           {total > 0 && (
-            <p className="mt-4 inline-block rounded-full bg-white/15 px-4 py-1.5 text-sm font-semibold text-white">
+            <p className="mt-5 inline-block rounded-full bg-[#e8821a] px-4 py-1.5 text-sm font-bold text-white">
               {total} {total === 1 ? "business" : "businesses"} listed
             </p>
           )}
