@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { issueQuote, emailQuote } from "@/app/bizup/quotes/send-actions";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 9, sending.
@@ -91,6 +92,19 @@ export function ShareQuote({
           className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 outline-none"
         />
       </label>
+
+      {/* Dewald: "once invoice is sent, it should either take them back
+          home or ask if they complete and go back home". A way out, offered
+          rather than forced: WhatsApp sending leaves the member on this
+          page with nothing obviously finished, and the job is done at that
+          point. Not an automatic redirect, because a member may want to
+          send by email as well, or copy the link. */}
+      <Link
+        href="/bizup"
+        className="text-center text-sm font-semibold text-brand underline-offset-2 hover:underline"
+      >
+        Done, back to home
+      </Link>
     </div>
   );
 }

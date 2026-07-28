@@ -77,7 +77,7 @@ export async function convertToInvoice(formData: FormData): Promise<void> {
     .eq("parent_document_id", documentId)
     .eq("doc_type", "invoice")
     .maybeSingle();
-  if (existing) redirect(`/bizup/invoices/${existing.id}`);
+  if (existing) redirect(`/bizup/invoices/${existing.id}#next-step`);
 
   const { data: invoice, error } = await admin
     .from("bizup_documents")
@@ -147,5 +147,5 @@ export async function convertToInvoice(formData: FormData): Promise<void> {
   });
 
   revalidatePath("/bizup/invoices");
-  redirect(`/bizup/invoices/${invoice.id}`);
+  redirect(`/bizup/invoices/${invoice.id}#next-step`);
 }

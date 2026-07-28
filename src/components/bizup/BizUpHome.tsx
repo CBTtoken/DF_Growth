@@ -303,12 +303,46 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
                 )}
 
                 {d.docType === "invoice" && (d.status === "issued" || d.status === "partially_paid") && (
-                  <form action={markInvoicePaid} className="shrink-0">
-                    <input type="hidden" name="documentId" value={d.id} />
-                    <button className="rounded-full bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700">
+                  /* Dewald: "should it not prompt with how did the client
+                     pay and what was on the statement?" It should. A
+                     payment with no method and no reference cannot be
+                     reconciled against a bank statement later, which is
+                     what the accountant export exists for.
+
+                     A <details> rather than a dialog, so it costs one tap,
+                     needs no JavaScript, and still leaves the whole thing
+                     as one action. */
+                  <details className="shrink-0">
+                    <summary className="cursor-pointer list-none rounded-full bg-green-600 px-4 py-2 text-xs font-bold text-white marker:content-none hover:bg-green-700">
                       Mark paid
-                    </button>
-                  </form>
+                    </summary>
+                    <form
+                      action={markInvoicePaid}
+                      className="mt-2 flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-3"
+                    >
+                      <input type="hidden" name="documentId" value={d.id} />
+                      <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+                        How did they pay?
+                        <select name="method" defaultValue="eft" className="rounded-lg border border-gray-200 px-3 py-2 text-base">
+                          <option value="eft">EFT</option>
+                          <option value="cash">Cash</option>
+                          <option value="card">Card</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </label>
+                      <label className="flex flex-col gap-1 text-xs font-medium text-gray-600">
+                        What is on your statement?
+                        <input
+                          name="reference"
+                          placeholder="Optional"
+                          className="rounded-lg border border-gray-200 px-3 py-2 text-base"
+                        />
+                      </label>
+                      <button className="rounded-full bg-green-600 px-4 py-2 text-xs font-bold text-white hover:bg-green-700">
+                        Confirm paid in full
+                      </button>
+                    </form>
+                  </details>
                 )}
               </li>
             ))}

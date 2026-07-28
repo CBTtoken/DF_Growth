@@ -291,6 +291,11 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
           </>
         )}
 
+        {/* Dewald: converting a quote landed him at the top of a long page
+            and he had to scroll to find what to do next. The conversion now
+            redirects to this anchor, so a member arrives at the button they
+            came here to press. scroll-mt keeps it clear of the sticky nav. */}
+        <div id="next-step" className="scroll-mt-24" />
         {editable && <IssueInvoiceButton documentId={doc.id} ready={rows.length > 0} />}
 
         {/* Sec 7: one button, on any issued invoice, and it is the only way

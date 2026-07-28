@@ -300,11 +300,21 @@ export async function markInvoicePaid(formData: FormData): Promise<void> {
   const outstanding = doc.total_incl_cents - paid;
   if (outstanding <= 0) return;
 
+  // Dewald: "should it not prompt with something like how did the client
+  // pay and what was on the statement?" He is right. A payment recorded
+  // with no method and no reference cannot be reconciled against a bank
+  // statement later, which is exactly what the accountant export exists to
+  // support. The dashboard now asks for both, and still defaults to EFT so
+  // it stays a fast action rather than a form.
+  const method = String(formData.get("method") ?? "eft");
+  const reference = String(formData.get("reference") ?? "").trim();
+
   await admin.from("bizup_payments").insert({
     document_id: documentId,
     amount_cents: outstanding,
     paid_at: new Date().toISOString().slice(0, 10),
-    method: "eft",
+    method: ["eft", "cash", "card", "other"].includes(method) ? method : "eft",
+    reference: reference || null,
   });
 
   await admin.from("bizup_documents").update({ status: "paid" }).eq("id", documentId);
@@ -315,7 +325,7 @@ export async function markInvoicePaid(formData: FormData): Promise<void> {
     action: "invoice_marked_paid",
     from_status: doc.status,
     to_status: "paid",
-    reason: "Marked paid in full from the dashboard",
+    reason: `Marked paid in full from the dashboard, ${method}${reference ? `, ref ${reference}` : ""}`,
   });
 
   revalidatePath("/bizup");
