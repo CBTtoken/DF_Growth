@@ -1,6 +1,6 @@
 # KatisoBiz: System Status
 
-**Prepared 29 July 2026.** Written for a business update, so it says what exists, how it works, and what does not exist yet. Every figure was read from the live database on the date above, not estimated.
+**Prepared 29 July 2026. Updated 28 July 2026 at close of the launch sprint.** Written for a business update, so it says what exists, how it works, and what does not exist yet. Every figure was read from the live database on the date above, not estimated.
 
 ---
 
@@ -12,7 +12,7 @@ It is a module inside the existing DigitalFlyer Growth application: same codebas
 
 **Live at katisobiz.co.za.** Also answers on www.katisobiz.co.za, katisobiz.digitalflyer.co.za and the older bizup.digitalflyer.co.za, so nothing already sent to a customer breaks.
 
-**Commercially, it is a funnel into Growth, not a revenue line of its own.** Free tier proves the product, R49 makes a solo operator better, R89 handles a small team. A member who starts getting calls from their free listing is the easiest conversation about a Growth page there is.
+**Commercially, it is a funnel into Growth, not a revenue line of its own.** Free tier proves the product, R49 makes a solo operator better, R89 handles a small team. A member who starts getting calls from their free spot on the Members List is the easiest conversation about a Growth page there is.
 
 ---
 
@@ -20,16 +20,20 @@ It is a module inside the existing DigitalFlyer Growth application: same codebas
 
 | | |
 |---|---|
-| Members | 6 |
+| Members | 7 |
 | Paying members | 2 |
 | Members who have issued a document | 5 |
 | Documents issued | 11 |
 | Payments recorded | 5, totalling R20,775 |
 | Subscription revenue collected | R49 |
 | Customers captured | 5 |
-| Saved prices | 7 |
+| Members opted into the Members List | 1 |
 
 These are test and pilot accounts. The product has been run end to end by the product owner, including the correction flow, and one real R49 subscription has been paid and correctly credited.
+
+**A working plumber is now testing it in the field.** That has already produced two defects worth more than any internal review: banking details printed masked on invoices, so no customer could pay one, and a straight invoice appearing impossible because only one screen offered it. Both are fixed.
+
+**The first paid acquisition campaign is built and awaiting Meta approval**, pointed at the KatisoBiz landing page and optimising for completed signups.
 
 ---
 
@@ -71,7 +75,7 @@ One button produces a link containing every invoice, credit note and payment as 
 Five document templates, the member's own logo on paid plans, and a fraud notice on banking details.
 
 ### Getting found
-An opt-in listing on the KatisoBiz Members List at digitalflyer's Growth site: business name, trade, town, WhatsApp button. Taps are counted.
+An opt-in spot on the KatisoBiz Members List at DigitalFlyer's Growth site: business name, trade, town, WhatsApp button. Taps are counted.
 
 ---
 
@@ -114,22 +118,21 @@ Payment runs through Paystack. Upgrading and topping up both work and have been 
 
 Stated plainly so nobody promises it.
 
-- **Multi-user accounts.** Sprint 2. Every account is one user today, enforced in code.
-- **Recurring invoices.** Sprint 2.
-- **Transactional emails to members.** Nothing emails a member when a quote is opened or accepted.
-- **Online card payment on an invoice.** A customer pays by EFT, not by clicking the invoice.
-- **The /terms and /privacy restructure.** The PAIA manual and the legal disclosure block are published; the two main policy pages are still in their old shape.
+- **Multi-user accounts.** Parked, not scheduled. Every account is one user today, enforced in code. The realistic case is an owner plus one admin person rather than a crew, and it would need a membership table, two roles, and banking details restricted to the owner. Because account scoping runs through a single function rather than being repeated in every query, it stays a contained change when demand appears. Nobody has asked yet, including the field tester.
+- **Recurring invoices.** Deliberately refused rather than deferred. Tradesmen invoice per job, not per month, and the History tab plus the saved price list already make repeat work fast.
+- **Transactional emails to members.** Nothing emails a member when a quote is opened or accepted. Agreed as the next build, scoped below.
+- **Online card payment on an invoice.** A customer pays by EFT, not by clicking the invoice. Raised as an idea worth doing later: helping members open their own Paystack account so every invoice carries a Pay Now link. It shares an unresolved commercial decision with Growth's own payments question, and the published terms currently state DigitalFlyer is not a party to a member's transaction, so it would need those terms revisited.
 - **DigitalFlyer's own financial reporting.** Requested, agreed as not a priority.
 
 ---
 
 ## 7. Open items
 
-**Needs a decision:** seven documents were issued before a defect was fixed and carry a masked account number, so a customer holding one cannot pay it. Backfilling the number would alter issued documents, which the design deliberately prevents. The counter-argument is that those documents were always meant to carry it and are useless without it. This needs an explicit yes.
+**Closed since the last version.** The seven documents carrying a masked account number were all on test accounts and all already settled, so no real customer was ever affected and no backfill was needed. The attorney-reviewed operator clause and privacy schedule are published on the terms and privacy pages. The accountant has confirmed the VAT treatment and it is live.
 
-**Needs an attorney:** the KatisoBiz operator clause in the terms of service. The product stores personal information about members' own customers, which DigitalFlyer has no relationship with.
+**Needs watching, not deciding:** customer email addresses are not validated before a document is emailed to them, so a member's typo becomes a bounce against DigitalFlyer's sending reputation. Harmless at seven members, and the single largest deliverability risk at a thousand. Being fixed as part of the transactional email work.
 
-**Needs the accountant:** South African time of supply is the earlier of invoice or payment, so a registered member who took a deposit before invoicing technically triggered the VAT at the deposit. The product records it correctly either way; the reporting treatment needs confirming.
+**Needs doing before roughly eighty members:** the email provider's free tier allows one hundred sends a day, and that daily ceiling fails silently before the monthly one is reached. Moving up a plan costs around R370 a month and stays under three percent of revenue at a thousand members, so this is an operational reminder rather than a commercial question.
 
 **Watch from launch:** the build spec commits to tracking how many members hit the free cap and go quiet versus how many upgrade. If more than half go quiet, the volume cap is the wrong model. This is measured and visible on the admin page.
 
@@ -139,7 +142,9 @@ Stated plainly so nobody promises it.
 
 In order of what actually changes the business.
 
-1. **Activation.** A signup who never sends a document is worth nothing. The setup path has been shortened but has not been measured against real signups.
-2. **The accountant channel.** One accountant carries fifty to two hundred small businesses. The export is built and designed as a referral, and has never been sent to a real accountant.
-3. **Transactional emails.** The product currently goes silent between a member sending a quote and remembering to check it.
-4. **The Members List.** Live, opt-in, and empty until members switch it on.
+1. **Transactional emails.** Now the agreed next build. The product goes silent between a member sending a quote and remembering to check it. Three messages only, each capped at one per document so it never becomes noise: quote opened, quote accepted, invoice overdue, with a member toggle and customer address validation attached. Volume impact is roughly one email per document, which stays comfortably inside a plan costing around R370 a month even at a thousand members.
+2. **Activation.** A signup who never sends a document is worth nothing. The setup path has been shortened but has not been measured against real signups. The paid campaign will be the first honest test of it.
+3. **The accountant channel.** One accountant carries fifty to two hundred small businesses. The export is built and designed as a referral, and has never been sent to a real accountant.
+4. **The Members List.** Live and opt-in, with one member listed so far. It is worth nothing to a customer until there are enough trades on it to be worth searching.
+
+**The deliberate non-priority is more features.** The product does the job. One working plumber found two significant defects in a single morning, which is a better build list than any internal guess, and the constraint now is that almost nobody knows KatisoBiz exists.
