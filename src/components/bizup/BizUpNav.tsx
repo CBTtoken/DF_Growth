@@ -28,6 +28,7 @@ const LINKS: NavLink[] = [
   { href: "/bizup/invoices", label: "Invoices" },
   { href: "/bizup/customers", label: "Customers" },
   { href: "/bizup/price-list", label: "Price list" },
+  { href: "/bizup/reports", label: "Reports" },
   { href: "/bizup/history", label: "History" },
 ];
 
