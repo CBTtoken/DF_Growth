@@ -32,7 +32,12 @@ const LINKS: NavLink[] = [
   { href: "/bizup/history", label: "History" },
 ];
 
-const SETTINGS: NavLink[] = [{ href: "/bizup/settings", label: "Settings" }];
+// Help sits beside Settings rather than in the main row: it is something
+// a member reaches for when stuck, not part of the daily work.
+const SETTINGS: NavLink[] = [
+  { href: "/bizup/help", label: "Help" },
+  { href: "/bizup/settings", label: "Settings" },
+];
 
 // Log out lives in the menu with everything else now, rather than only at
 // the bottom of the home screen. Dewald: "move all menus including logout
@@ -75,9 +80,18 @@ export function BizUpNav({ businessName }: { businessName: string }) {
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
           <span className="max-w-[12rem] truncate text-sm text-gray-500">{businessName}</span>
-          <Link href="/bizup/settings" className="text-sm font-medium text-gray-500 hover:text-brand">
-            Settings
-          </Link>
+          {/* Rendered from SETTINGS rather than hardcoded, so anything added
+              there appears on the phone menu and here both. Help was added
+              and reached only the phone menu until this changed. */}
+          {SETTINGS.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="text-sm font-medium text-gray-500 hover:text-brand"
+            >
+              {l.label}
+            </Link>
+          ))}
           <form action={logOutOfBizUp}>
             <button type="submit" className="text-sm font-medium text-gray-500 hover:text-brand">
               Log out

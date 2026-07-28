@@ -63,6 +63,64 @@ const STEPS = [
   },
 ];
 
+// Dewald asked for "every feature and how it works and how to operate the
+// system", which is a different thing from a FAQ. A FAQ answers a question
+// someone already knows to ask; this answers "what is this screen for",
+// which is what a member wonders on day one and what generates the call.
+//
+// One entry per screen in the top menu, in menu order, so a member can read
+// it with the app open next to them.
+const SCREENS = [
+  {
+    name: "Home",
+    what: "Where you stand today, and the four things you do most.",
+    detail:
+      "Three numbers across the top: what you have been paid this month, what you are owed, and what is sitting with a customer waiting for an answer. Below that, a counter showing how many documents you have used this month. Then buttons for a new quote, a new invoice, a new customer and your price list. If any invoice has gone past its due date, a chasing section appears above everything else with a Send a reminder button on each one. Anything still open shows in the list at the bottom, and drops off it once it is accepted, declined or paid.",
+  },
+  {
+    name: "Quotes",
+    what: "Everything you have quoted, and where you build a new one.",
+    detail:
+      "A quote is what you send before the job to win it. Building one takes three things: who it is for, what you are charging, and how long it stands. Add lines by searching your price list or typing them in. Press Issue to give it a number, which locks the amounts, then send it on WhatsApp or by email. Once the customer says yes, press Turn into invoice and nothing is retyped.",
+  },
+  {
+    name: "Invoices",
+    what: "Everything you have invoiced, and what is still owed.",
+    detail:
+      "An invoice is what you send after the job to get paid. It can come from a quote or be raised on its own. Your banking details print on it automatically, with your invoice number as the payment reference so you can match the money when it arrives. Record payments as they come in, in full or in part. Once issued the amounts cannot be edited, which is what SARS expects, so corrections go through Fix this invoice instead.",
+  },
+  {
+    name: "Customers",
+    what: "The people you invoice.",
+    detail:
+      "Only a name is required. Add a phone number to send on WhatsApp, an email to send by email, and an address if you are VAT registered and the job is over R5,000, because SARS asks for it at that point. You can add a customer in the middle of building a quote without losing the quote.",
+  },
+  {
+    name: "Price list",
+    what: "The things you charge for often, so you never type them twice.",
+    detail:
+      "Save your callout fee, your hourly rate, the parts you fit most. Each one has a name, how it is charged (per hour, per job, each) and a price. You can add a markup as a percentage or a flat rand amount for things you buy in and sell on, and it shows you what it will actually bill at. Anything you type onto a quote can be saved here with one tap, so the list builds itself while you work.",
+  },
+  {
+    name: "Reports",
+    what: "What the business is actually doing, for any period you choose.",
+    detail:
+      "Six reports on one screen: what you quoted and how much you won, what you invoiced, what has actually been paid, who is behind and by how long, what is still sitting out there unanswered, and how close you are to having to register for VAT. Every figure is clickable and opens the documents behind it. From here you also reach a customer statement and the export for your accountant.",
+  },
+  {
+    name: "History",
+    what: "Everything you have finished with.",
+    detail:
+      "Quotes and invoices that are done, split into two tabs and searchable by number or customer name. Anything still open stays on the Quotes and Invoices screens, so those stay about work in progress and this stays about looking something up.",
+  },
+  {
+    name: "Settings",
+    what: "Your business, your bank, your look, and your plan.",
+    detail:
+      "Business details are what print at the top of every document, including your VAT number if you have one. Banking details are where your customers pay you, and changing them later needs a code from your email on purpose. How your documents look is where you pick a template and upload your logo. Insurance work turns on a second price on every item. Your plan is where you upgrade or buy a topup.",
+  },
+] as const;
+
 const FAQ_GROUPS = [
   {
     heading: "Quotes and invoices",
@@ -228,6 +286,81 @@ const FAQ_GROUPS = [
     ],
   },
   {
+    heading: "Chasing money",
+    items: [
+      {
+        q: "How do I remind someone who has not paid?",
+        a: "Once an invoice passes its due date it appears in a chasing section on your home screen with a Send a reminder button. Press it and WhatsApp opens with the message already written, including what they owe and a link to the invoice. You press send. KatisoBiz never messages your customers by itself.",
+      },
+      {
+        q: "What does the reminder say?",
+        a: "It is polite and short, because most people find asking for money awkward and that is why they put it off. It greets them by name, says which invoice and how much, mentions the due date, gives them the link, and says that if they have already paid they should ignore it. You can edit it in WhatsApp before sending.",
+      },
+      {
+        q: "Does it chase the full amount if they part paid?",
+        a: "No. It chases what is actually still owing. Reminding someone for the full amount after they have paid half makes you look disorganised.",
+      },
+      {
+        q: "Will it nag my customer?",
+        a: "Never on its own. It also shows you when you last reminded them, so you do not accidentally chase the same person twice in a morning.",
+      },
+      {
+        q: "How do I know who is worst?",
+        a: "Reports shows who is behind, grouped by how overdue: inside terms, over 30 days, over 60, over 90. Tap any group to see exactly which invoices are in it.",
+      },
+    ],
+  },
+  {
+    heading: "Reports and what they mean",
+    items: [
+      {
+        q: "What does the win rate mean?",
+        a: "How many of the quotes you sent in that period were accepted. If you sent ten and won four, it says 40%. It stays blank rather than showing 0% when you have not sent any, because 0% would be a lie.",
+      },
+      {
+        q: "Why does the outstanding figure not change when I change the period?",
+        a: "Because what you are owed is what you are owed today, not what you were owed in March. The same is true of the aged groups and of open quotes. Those figures say As things stand today when you open them.",
+      },
+      {
+        q: "What does 61 to 90 days mean exactly?",
+        a: "How far past the due date it is, not how old the invoice is. An invoice sent last week on 30 day terms is not late, so it sits in the first group rather than being counted against you.",
+      },
+      {
+        q: "Why does the VAT report ignore the period I picked?",
+        a: "Because SARS measures your turnover over any twelve months in a row, so that figure always covers twelve months no matter what period you are looking at. Changing the period would give you a number SARS does not use.",
+      },
+      {
+        q: "Can I get the numbers into a spreadsheet?",
+        a: "Yes. Download as CSV on the reports screen, and on any customer statement. They open in Excel.",
+      },
+    ],
+  },
+  {
+    heading: "Your information and your customers' information",
+    items: [
+      {
+        q: "Who can see my customer list?",
+        a: "Nobody else using KatisoBiz. Your data is separated from every other business on the platform and is never shared with them. Our staff do not access it in the course of normal support.",
+      },
+      {
+        q: "Are my banking details safe?",
+        a: "They are encrypted, and reading them is restricted and logged. Changing them needs a code sent to your email, which exists so that somebody who gets into your account cannot quietly swap in their own account number.",
+      },
+      {
+        q: "Why does my invoice show my full account number?",
+        a: "Because your customer has to be able to pay you. It is on the document you chose to send them, the same as it would be on a printed invoice.",
+      },
+      {
+        q: "What happens to my customers' details?",
+        a: "They are yours. We hold them so the product can work, and we act on your instructions with them, not on our own. If one of your customers asks us to delete their information we refer them to you, because it is your relationship, not ours.",
+      },
+      {
+        q: "How long is everything kept?",
+        a: "Financial records are kept for five years, because SARS requires it. You can download everything at any time.",
+      },
+    ],
+  },
+  {
     heading: "When something is not working",
     items: [
       {
@@ -302,7 +435,34 @@ export default function BizUpHelpPage() {
         </div>
       </section>
 
+      {/* Every screen, in menu order, so a member can read this with the
+          app open beside them. This is the half a FAQ cannot do: a FAQ
+          answers a question you already knew to ask. */}
       <section className="border-t border-neutral-border bg-neutral-surface px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-2xl font-extrabold tracking-tight text-neutral-ink">
+            Every screen, and what it is for
+          </h2>
+          <p className="mt-2 text-neutral-mid">
+            In the same order as the menu at the top of KatisoBiz.
+          </p>
+
+          <div className="mt-8 flex flex-col gap-4">
+            {SCREENS.map((s) => (
+              <div
+                key={s.name}
+                className="rounded-xl border border-neutral-border bg-white p-5"
+              >
+                <h3 className="text-lg font-bold text-neutral-ink">{s.name}</h3>
+                <p className="mt-1 font-semibold text-neutral-mid">{s.what}</p>
+                <p className="mt-2 leading-relaxed text-neutral-mid">{s.detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-neutral-border px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-2xl font-extrabold tracking-tight text-neutral-ink">
             How do I ...
