@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -178,12 +178,20 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
   // this deployment.
   const eventId = crypto.randomUUID();
   const host = h.get("host") ?? "katisobiz.co.za";
+  // The Meta click cookies, same as Growth's pricing action sends. Without
+  // these Meta has only an email to match on and cannot connect the signup
+  // to the ad click that produced it, which is what a paid campaign is
+  // being charged for. Null when the visitor declined the pixel, which the
+  // API accepts.
+  const jar = await cookies();
   await sendDigitalFlyerCapiEvent({
     eventName: "CompleteRegistration",
     email,
     eventId,
     eventSourceUrl: `https://${host}/bizup/signup`,
     clientUserAgent: h.get("user-agent"),
+    fbc: jar.get("_fbc")?.value ?? null,
+    fbp: jar.get("_fbp")?.value ?? null,
     contentName: "bizup_free",
   });
 

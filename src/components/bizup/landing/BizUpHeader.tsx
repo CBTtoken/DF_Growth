@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 
 // KatisoBiz's top navigation, matching MarketingHeader's pattern on Growth:
 // brand on the left, quiet text links that collapse away on small screens,
@@ -10,6 +11,7 @@ import Image from "next/image";
 // the work, which is the same trade Growth's own header makes.
 export function BizUpHeader() {
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-neutral-border bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
         {/* The real logo. It is transparent, so it sits on the white header
@@ -68,5 +70,15 @@ export function BizUpHeader() {
         </nav>
       </div>
     </header>
+    {/* The Meta pixel, mounted here for the same reason MarketingHeader
+        mounts it on Growth: the header is on every page of the funnel, so
+        one placement covers the landing page and the signup page both.
+        Without it the conversion events still reached Meta server-side but
+        carried no _fbc or _fbp cookie, because nothing had ever set one, so
+        Meta could not tie a signup back to the ad click that caused it.
+        Consent-gated, which is POPIA and not a preference: nothing loads
+        until the visitor presses Accept. */}
+    <PixelConsentGate pixelId={process.env.NEXT_PUBLIC_DIGITALFLYER_META_PIXEL_ID ?? null} />
+    </>
   );
 }
