@@ -103,7 +103,32 @@ export const PRODUCT_LOGIN: Record<Product, string> = {
  * as a bug. Emitting the right path first removes the hop entirely.
  */
 export async function bizupLoginPath(): Promise<string> {
+  return katisoPath("/login");
+}
+
+/**
+ * Any KatisoBiz path, written the way the current hostname should see it.
+ *
+ * Dewald, 28 July 2026: "we should keep our URL's as clean as possible,
+ * nothing duplicate or there that has no purpose, so please remove the slug
+ * /bizup/ and bizup should never be used anywhere."
+ *
+ * The route folder itself has to keep a distinct name, because Growth owns
+ * /login at the application root and two products in one Next app cannot
+ * both answer there. What can go is every /bizup a person or a crawler ever
+ * sees, which is what this does: on katisobiz.co.za it emits /signup, and
+ * on the Growth hostname, where the prefix is what makes the route
+ * reachable at all, it emits /bizup/signup.
+ *
+ * It also removes a redirect. Links were hardcoded to /bizup/signup and the
+ * proxy then bounced them to /signup, so the single most important click in
+ * the funnel cost an extra round trip on prepaid mobile data.
+ *
+ * Pass the clean path, always with a leading slash: katisoPath("/signup").
+ */
+export async function katisoPath(path: string): Promise<string> {
   const { headers } = await import("next/headers");
   const host = (await headers()).get("host") ?? "";
-  return isKatisoBizHost(host) ? "/login" : "/bizup/login";
+  if (!isKatisoBizHost(host)) return path === "/" ? "/bizup" : `/bizup${path}`;
+  return path;
 }

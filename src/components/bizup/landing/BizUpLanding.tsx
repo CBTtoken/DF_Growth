@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { katisoPath } from "@/lib/bizup/product";
 import { HeroDocument } from "./HeroDocument";
 
 // KatisoBiz landing page. Copy is from the approved deck and is reproduced as
@@ -19,11 +20,21 @@ import { HeroDocument } from "./HeroDocument";
 // work with zero JavaScript. On a mid-range Android on prepaid data that is
 // the difference between a page that works and one that does not.
 
-const SIGNUP = "/bizup/signup";
-
-function Cta({ children, size = "lg" }: { children: React.ReactNode; size?: "lg" | "sm" }) {
+// Resolved per request rather than hardcoded, so katisobiz.co.za emits
+// /signup and the Growth hostname still emits /bizup/signup. Previously
+// every call to action pointed at /bizup/signup and the proxy bounced it,
+// which put a redirect on the most important click in the funnel.
+function Cta({
+  href,
+  children,
+  size = "lg",
+}: {
+  href: string;
+  children: React.ReactNode;
+  size?: "lg" | "sm";
+}) {
   return (
-    <Link href={SIGNUP} className={size === "lg" ? "btn-accent-lg" : "btn-accent"}>
+    <Link href={href} className={size === "lg" ? "btn-accent-lg" : "btn-accent"}>
       {children}
     </Link>
   );
@@ -235,7 +246,9 @@ const FAQS = [
   },
 ];
 
-export function BizUpLanding() {
+export async function BizUpLanding() {
+  const signup = await katisoPath("/signup");
+
   return (
     <main className="flex flex-1 flex-col bg-white pb-24 lg:pb-0">
       {/* ============ 1. HERO ============ */}
@@ -258,7 +271,7 @@ export function BizUpLanding() {
               </p>
 
               <div className="mt-7 flex flex-row flex-wrap items-center gap-3">
-                <Cta>Create your first quote free</Cta>
+                <Cta href={signup}>Create your first quote free</Cta>
                 <a href="#how-it-works" className="btn-outline px-5 py-3 text-sm">
                   See how it works
                 </a>
@@ -435,7 +448,7 @@ export function BizUpLanding() {
                     tier, which is the same misleading representation this
                     table was careful to avoid one screen earlier. */}
                 <Link
-                  href={p.planId ? `${SIGNUP}?plan=${p.planId}` : SIGNUP}
+                  href={p.planId ? `${signup}?plan=${p.planId}` : signup}
                   className={`mt-6 ${p.highlight ? "btn-accent" : "btn-outline"} w-full`}
                 >
                   {p.cta}
@@ -491,14 +504,14 @@ export function BizUpLanding() {
             Free to start. No card. About two minutes to set up.
           </p>
           <div className="mt-7 flex justify-center">
-            <Cta>Create your first quote free</Cta>
+            <Cta href={signup}>Create your first quote free</Cta>
           </div>
         </div>
       </section>
 
       {/* Sticky bottom CTA on mobile, from the moment the hero scrolls away. */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-neutral-border bg-white/95 p-3 backdrop-blur lg:hidden">
-        <Link href={SIGNUP} className="btn-accent w-full">
+        <Link href={signup} className="btn-accent w-full">
           Create your first quote free
         </Link>
       </div>

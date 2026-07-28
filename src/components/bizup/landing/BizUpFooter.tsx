@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { katisoPath } from "@/lib/bizup/product";
 
 // BizUp/docs landing copy, Section 10.
 //
@@ -20,7 +21,9 @@ import Link from "next/link";
 // error before confirming) must also be reachable from the checkout
 // screen, which is built with the subscription flow, not here.
 
-export function BizUpFooter() {
+export async function BizUpFooter() {
+  const help = await katisoPath("/help");
+
   return (
     <footer className="border-t border-neutral-border bg-neutral-light">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
@@ -56,7 +59,7 @@ export function BizUpFooter() {
           <span className="font-extrabold text-neutral-ink">KatisoBiz</span>
           <a href="#pricing" className="hover:text-brand-blue">Pricing</a>
           <a href="#how-it-works" className="hover:text-brand-blue">How it works</a>
-          <Link href="/bizup/help" className="hover:text-brand-blue">Help</Link>
+          <Link href={help} className="hover:text-brand-blue">Help</Link>
           <a href="#faq" className="hover:text-brand-blue">FAQ</a>
           <Link href="/terms" className="hover:text-brand-blue">Terms</Link>
           <Link href="/privacy" className="hover:text-brand-blue">Privacy</Link>

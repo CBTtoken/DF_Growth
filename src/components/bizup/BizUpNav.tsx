@@ -56,7 +56,7 @@ export function BizUpNav({ businessName }: { businessName: string }) {
         <Link href="/bizup" className="shrink-0">
           {/* Dimensions must match the file's real proportions, see the note
               in landing/BizUpHeader.tsx. */}
-          <Image src="/bizup/logo.png" alt="KatisoBiz" width={520} height={119} priority className="h-8 w-auto" />
+          <Image src="/katisobiz/logo.png" alt="KatisoBiz" width={520} height={119} priority className="h-8 w-auto" />
         </Link>
 
         {/* Desktop and tablet: everything visible, nothing hidden behind a

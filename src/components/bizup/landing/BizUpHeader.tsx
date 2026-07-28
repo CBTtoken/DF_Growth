@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
+import { katisoPath } from "@/lib/bizup/product";
 
 // KatisoBiz's top navigation, matching MarketingHeader's pattern on Growth:
 // brand on the left, quiet text links that collapse away on small screens,
@@ -9,7 +10,14 @@ import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 // The links are in-page anchors rather than routes, because this is a
 // single-page landing. On a phone they hide and the sticky bottom CTA does
 // the work, which is the same trade Growth's own header makes.
-export function BizUpHeader() {
+export async function BizUpHeader() {
+  const [home, help, login, signup] = await Promise.all([
+    katisoPath("/"),
+    katisoPath("/help"),
+    katisoPath("/login"),
+    katisoPath("/signup"),
+  ]);
+
   return (
     <>
     <header className="sticky top-0 z-40 border-b border-neutral-border bg-white/95 backdrop-blur">
@@ -20,9 +28,9 @@ export function BizUpHeader() {
             hard 1MB budget. The dimensions below must match the file's real
             proportions: w-auto derives the rendered width from them, so a
             stale pair squashes the artwork rather than erroring. */}
-        <Link href="/bizup" className="flex shrink-0 items-center gap-2">
+        <Link href={home} className="flex shrink-0 items-center gap-2">
           <Image
-            src="/bizup/logo.png"
+            src="/katisobiz/logo.png"
             alt="KatisoBiz"
             width={520}
             height={119}
@@ -41,7 +49,7 @@ export function BizUpHeader() {
           {/* A real page, not a section anchor: it is also the thing to
               send someone who is stuck, so it needs its own address. */}
           <Link
-            href="/bizup/help"
+            href={help}
             className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"
           >
             Help
@@ -59,12 +67,12 @@ export function BizUpHeader() {
             FAQ
           </a>
           <Link
-            href="/bizup/login"
+            href={login}
             className="whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:text-sm"
           >
             Log in
           </Link>
-          <Link href="/bizup/signup" className="btn-accent px-4 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm">
+          <Link href={signup} className="btn-accent px-4 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm">
             Start free
           </Link>
         </nav>

@@ -67,7 +67,7 @@ export default async function KatisoBizMembersPage() {
       <section className="border-b border-neutral-border bg-[#111418] px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-3xl">
           <Image
-            src="/bizup/logo-on-dark.png"
+            src="/katisobiz/logo-on-dark.png"
             alt="KatisoBiz"
             width={560}
             height={128}
