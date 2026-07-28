@@ -15,6 +15,20 @@ import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 const SIGNUP_DESCRIPTION =
   "Four things and you are in. No card, and you can send your first quote straight away.";
 
+// The same generated card the homepage uses, from src/app/bizup/
+// opengraph-image.tsx. Named explicitly because overriding openGraph below
+// replaces the inherited block wholesale, images included: the first
+// version of this fix corrected the title and silently left the page with
+// no share picture at all, which a WhatsApp preview shows as a bare link.
+// Relative, so it resolves against the metadataBase set below rather than
+// against Growth's domain.
+const SHARE_IMAGE = {
+  url: "/bizup/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: "KatisoBiz",
+};
+
 export const metadata: Metadata = {
   // Overrides the root layout's metadataBase, which is Growth's domain.
   // Without it the share image resolves to growth.digitalflyersa.co.za.
@@ -31,11 +45,13 @@ export const metadata: Metadata = {
     description: SIGNUP_DESCRIPTION,
     url: "https://katisobiz.co.za/signup",
     locale: "en_ZA",
+    images: [SHARE_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Start free on KatisoBiz",
     description: SIGNUP_DESCRIPTION,
+    images: [SHARE_IMAGE.url],
   },
 };
 
