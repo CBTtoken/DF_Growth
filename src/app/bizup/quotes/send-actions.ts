@@ -14,6 +14,7 @@ import {
 } from "@/lib/bizup/documents";
 import { getCapState } from "@/lib/bizup/cap";
 import { isKatisoBizHost } from "@/lib/bizup/product";
+import { toWhatsAppNumber } from "@/lib/bizup/whatsapp";
 import { sendEmail } from "@/lib/email/resend";
 import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, isVatVendor } from "@/lib/bizup/vat";
@@ -251,11 +252,11 @@ export async function whatsappLinkFor(
     url,
   ].join("\n");
 
-  // A South African number typed as 082... becomes 2782... for wa.me.
   // Left off entirely when unknown, which opens WhatsApp's own contact
-  // picker rather than guessing at a recipient.
-  const digits = (customerWhatsapp ?? "").replace(/[^0-9]/g, "");
-  const international = digits.startsWith("0") ? `27${digits.slice(1)}` : digits;
+  // picker rather than guessing at a recipient. See lib/bizup/whatsapp.ts,
+  // shared with payment reminders so the two cannot format a number
+  // differently.
+  const international = toWhatsAppNumber(customerWhatsapp);
 
   return international
     ? `https://wa.me/${international}?text=${encodeURIComponent(message)}`

@@ -5,6 +5,8 @@ import { createInvoice } from "@/app/bizup/invoices/actions";
 import { setQuoteOutcome } from "@/app/bizup/quotes/convert-actions";
 import { markInvoicePaid } from "@/app/bizup/invoices/actions";
 import { capWarning } from "@/lib/bizup/cap";
+import { remindAboutInvoice } from "@/app/bizup/invoices/reminder-actions";
+import { daysOverdue, overdueLabel, remindedAgoLabel } from "@/lib/bizup/reminders";
 import { ShareBizUp } from "@/components/bizup/ShareBizUp";
 import type { HomeSummary } from "@/lib/bizup/home";
 
@@ -60,6 +62,9 @@ function Stat({
 export function BizUpHome({ summary }: { summary: HomeSummary }) {
   const warning = capWarning(summary.cap);
   const { cap } = summary;
+  // Read from the summary rather than the clock: a component body must stay pure.
+  const now = summary.nowMs;
+  const today = summary.today;
 
   return (
     <div className="flex flex-col gap-6">
@@ -88,17 +93,67 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
       {/* Only when there is something to chase. A permanent "Overdue: R0"
           teaches the member to ignore the row it lives in. */}
       {summary.overdueCount > 0 && (
-        <Stat
-          label="Needs chasing"
-          value={formatZar(summary.overdueCents)}
-          sub={
-            summary.overdueCount === 1
-              ? "1 invoice is past its due date"
-              : `${summary.overdueCount} invoices are past their due date`
-          }
-          href="/bizup/invoices"
-          tone="alert"
-        />
+        <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-base font-bold text-amber-900">Needs chasing</h2>
+            <span className="text-base font-bold text-amber-900">
+              {formatZar(summary.overdueCents)}
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-amber-900">
+            {summary.overdueCount === 1
+              ? "1 invoice is past its due date."
+              : `${summary.overdueCount} invoices are past their due date.`}{" "}
+            Most people pay when reminded once.
+          </p>
+
+          {/* The invoices themselves, with the action attached. Showing a
+              total and sending the member off to a list was the old
+              behaviour, and it meant the product could tell you that you
+              were owed money and then leave you to it. Chasing is the job. */}
+          <div className="mt-3 flex flex-col gap-2">
+            {summary.overdue.slice(0, 4).map((inv) => {
+              const ago = remindedAgoLabel(inv.lastRemindedAt, now);
+              return (
+                <div
+                  key={inv.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-white p-3"
+                >
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-ink">
+                      {inv.customerName ?? "No customer"}
+                    </span>
+                    <span className="block text-xs text-gray-500">
+                      {formatZar(inv.outstandingCents)} ·{" "}
+                      {overdueLabel(daysOverdue(inv.dueDate, today))}
+                      {ago ? ` · ${ago}` : ""}
+                    </span>
+                  </span>
+                  {/* A form, not a link: this records the reminder before
+                      handing off to WhatsApp, and Next prefetches links. */}
+                  <form action={remindAboutInvoice} className="shrink-0">
+                    <input type="hidden" name="documentId" value={inv.id} />
+                    <button
+                      type="submit"
+                      className="rounded-full bg-[#25D366] px-4 py-2 text-sm font-bold text-white transition hover:brightness-95"
+                    >
+                      {ago ? "Remind again" : "Send a reminder"}
+                    </button>
+                  </form>
+                </div>
+              );
+            })}
+          </div>
+
+          {summary.overdue.length > 4 && (
+            <Link
+              href="/bizup/invoices"
+              className="mt-2 inline-block text-sm font-semibold text-amber-900 underline-offset-2 hover:underline"
+            >
+              See all {summary.overdue.length}
+            </Link>
+          )}
+        </section>
       )}
 
       {/* 2. Sec 15: "A permanently visible counter is the primary defence,

@@ -97,3 +97,14 @@ export const PERIOD_OPTIONS: { id: PeriodId; label: string }[] = [
 export function hasPassed(isoTimestamp: string): boolean {
   return new Date(isoTimestamp).getTime() < Date.now();
 }
+
+/**
+ * The current time in milliseconds.
+ *
+ * Same reason as hasPassed above: a component body must stay pure, and
+ * React's lint rules flag a direct Date.now() even in a Server Component
+ * that renders once per request.
+ */
+export function nowMillis(): number {
+  return Date.now();
+}

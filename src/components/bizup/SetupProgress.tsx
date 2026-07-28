@@ -23,19 +23,26 @@ const STEPS = [
     href: "/bizup/settings/business",
     action: "Add your details",
   },
-  {
-    key: "bank" as const,
-    title: "Your banking details",
-    why: "So your customers know where to pay you.",
-    href: "/bizup/settings/banking",
-    action: "Add your banking details",
-  },
+  // Quote before banking, deliberately reordered.
+  //
+  // A quote does not need banking details; only an invoice does. Asking for
+  // a bank account before a member has seen the product do anything put a
+  // form between signup and the one moment that proves this thing works.
+  // Banking is still required, and is still asked for at the point it
+  // actually matters, which is when they raise their first invoice.
   {
     key: "quote" as const,
     title: "Send your first quote",
-    why: "Build it, then send it on WhatsApp from your own number.",
+    why: "Build it, then send it on WhatsApp from your own number. This is the whole point.",
     href: "/bizup/quotes",
     action: "Create a quote",
+  },
+  {
+    key: "bank" as const,
+    title: "Your banking details",
+    why: "Where your customers pay you. Needed before you send an invoice, not before a quote.",
+    href: "/bizup/settings/banking",
+    action: "Add your banking details",
   },
 ];
 

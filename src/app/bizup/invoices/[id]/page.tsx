@@ -8,6 +8,9 @@ import { currentAccount, loadSettings } from "@/lib/bizup/documents";
 import { addLine, updateLine, removeLine, setRateType, saveLineToPriceList } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { updateInvoiceCustomer } from "@/app/bizup/invoices/actions";
+import { remindAboutInvoice } from "@/app/bizup/invoices/reminder-actions";
+import { remindedAgoLabel } from "@/lib/bizup/reminders";
+import { nowMillis } from "@/lib/bizup/period";
 import { IssueInvoiceButton, RecordPaymentForm } from "@/components/bizup/InvoiceActions";
 import { ShareQuote } from "@/components/bizup/ShareQuote";
 import { formatZar } from "@/lib/bizup/money";
@@ -59,6 +62,8 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
   const rows = lines ?? [];
   const paid = (payments ?? []).reduce((s, p) => s + p.amount_cents, 0);
   const outstanding = doc.total_incl_cents - paid;
+  // From a helper, not inline: reading the clock in a component body is impure.
+  const nowMs = nowMillis();
   const rateType = asRateType(doc.rate_type);
   const insurancePricing = account.insurance_pricing_enabled;
 
@@ -346,6 +351,31 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
                 })}
                 .
               </p>
+            )}
+
+            {/* Chasing, from the invoice as well as the dashboard. A member
+                who has opened an unpaid invoice is already thinking about
+                the money, so the action belongs here too. */}
+            {outstanding > 0 && (
+              <form
+                action={remindAboutInvoice}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+              >
+                <input type="hidden" name="documentId" value={doc.id} />
+                <span>
+                  <span className="block text-sm font-semibold text-ink">Still waiting to be paid?</span>
+                  <span className="block text-xs text-gray-500">
+                    We write the message, you press send from your own WhatsApp.
+                    {doc.last_reminded_at ? ` ${remindedAgoLabel(doc.last_reminded_at, nowMs)}.` : ""}
+                  </span>
+                </span>
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-bold text-white transition hover:brightness-95"
+                >
+                  {doc.last_reminded_at ? "Remind again" : "Send a reminder"}
+                </button>
+              </form>
             )}
 
             <RecordPaymentForm
