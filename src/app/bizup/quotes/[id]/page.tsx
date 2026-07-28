@@ -328,6 +328,8 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
               customerRow?.name ?? null,
               doc.total_incl_cents,
               customerRow?.whatsapp ?? null,
+              "quote",
+              doc.number,
             )}
             publicUrl={publicUrl}
             defaultEmail={customerRow?.email ?? ""}

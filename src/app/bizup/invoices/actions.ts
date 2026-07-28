@@ -11,6 +11,7 @@ import {
   buildIssuerSnapshot,
   buildCustomerSnapshot,
   buildBankSnapshot,
+  loadBankForDocument,
   loadSettings,
   type CustomerRow,
 } from "@/lib/bizup/documents";
@@ -99,11 +100,7 @@ export async function issueInvoice(_prev: InvoiceState, formData: FormData): Pro
     return { error: "Choose a customer before issuing this invoice." };
   }
 
-  const { data: bank } = await admin
-    .from("bizup_bank_details")
-    .select("bank_name, account_holder, account_number_last4, branch_code, account_type")
-    .eq("account_id", account.id)
-    .maybeSingle();
+  const bank = await loadBankForDocument(account.id);
 
   const now = new Date();
   const due = new Date(now);
@@ -122,7 +119,7 @@ export async function issueInvoice(_prev: InvoiceState, formData: FormData): Pro
       public_token: generatePublicToken(),
       issuer_snapshot: buildIssuerSnapshot(account),
       customer_snapshot: buildCustomerSnapshot(customer as CustomerRow),
-      bank_snapshot: buildBankSnapshot(bank ?? null, account.bank_notice_style, account.phone),
+      bank_snapshot: buildBankSnapshot(bank, account.bank_notice_style, account.phone),
     })
     .eq("id", documentId)
     // Guards a double click: a racing second request finds no numberless

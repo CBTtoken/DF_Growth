@@ -10,6 +10,7 @@ import {
   buildIssuerSnapshot,
   buildCustomerSnapshot,
   buildBankSnapshot,
+  loadBankForDocument,
   type CustomerRow,
 } from "@/lib/bizup/documents";
 import { getCapState } from "@/lib/bizup/cap";
@@ -17,7 +18,7 @@ import { isKatisoBizHost } from "@/lib/bizup/product";
 import { toWhatsAppNumber } from "@/lib/bizup/whatsapp";
 import { sendEmail } from "@/lib/email/resend";
 import { formatZar } from "@/lib/bizup/money";
-import { documentTitle, isVatVendor } from "@/lib/bizup/vat";
+import { documentTitle, isVatVendor, type DocType } from "@/lib/bizup/vat";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 15.7, sending.
 
@@ -108,11 +109,7 @@ export async function issueQuote(_prevState: SendState, formData: FormData): Pro
         .maybeSingle()
     : { data: null };
 
-  const { data: bank } = await admin
-    .from("bizup_bank_details")
-    .select("bank_name, account_holder, account_number_last4, branch_code, account_type")
-    .eq("account_id", account.id)
-    .maybeSingle();
+  const bank = await loadBankForDocument(account.id);
 
   const year = new Date().getFullYear();
   const number = await allocateNumber(account.id, "QUO", year);
@@ -129,7 +126,7 @@ export async function issueQuote(_prevState: SendState, formData: FormData): Pro
       // Sec 4 rule 1: frozen here and never re-read.
       issuer_snapshot: buildIssuerSnapshot(account),
       customer_snapshot: buildCustomerSnapshot((customer as CustomerRow) ?? null),
-      bank_snapshot: buildBankSnapshot(bank ?? null, account.bank_notice_style, account.phone),
+      bank_snapshot: buildBankSnapshot(bank, account.bank_notice_style, account.phone),
     })
     .eq("id", documentId)
     // Guards against two clicks racing: the second finds no numberless row
@@ -174,13 +171,15 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   const admin = createAdminClient();
   const { data: doc } = await admin
     .from("bizup_documents")
-    .select("id, number, public_token, total_incl_cents, valid_until, customer_snapshot, bizup_customers(email, name)")
+    .select(
+      "id, doc_type, number, public_token, total_incl_cents, valid_until, due_date, customer_snapshot, bizup_customers(email, name)",
+    )
     .eq("id", documentId)
     .eq("account_id", account.id)
     .maybeSingle();
 
-  if (!doc) return { error: "That quote could not be found." };
-  if (!doc.number || !doc.public_token) return { error: "Issue the quote before sending it." };
+  if (!doc) return { error: "That document could not be found." };
+  if (!doc.number || !doc.public_token) return { error: "Issue it before sending it." };
 
   const snapshot = doc.customer_snapshot as { name?: string } | null;
   const customer = doc.bizup_customers as unknown as { email: string | null; name: string } | null;
@@ -192,19 +191,52 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   const vendor = isVatVendor(account.vat_number);
   const name = snapshot?.name ?? customer?.name ?? "there";
 
+  // Dewald, on a real send: "an invoice is showing Quotation Invoice and
+  // email body also not right". This action is used by the invoice page as
+  // well as the quote page, and it hardcoded "quote" in both the subject
+  // and the body, so every invoice went out titled as a quotation and
+  // described as one. The document knows what it is; the email now asks it.
+  const docType = doc.doc_type as DocType;
+  const title = documentTitle(docType, vendor);
+  const amount = `${formatZar(doc.total_incl_cents)}${vendor ? " including VAT" : ""}`;
+
+  const body =
+    docType === "invoice"
+      ? `
+      <p>Good day ${name},</p>
+      <p>Please find ${title.toLowerCase()} <strong>${doc.number}</strong> from ${account.business_name}, for ${amount}.</p>
+      <p><a href="${url}">View and download ${title.toLowerCase()} ${doc.number}</a></p>
+      ${doc.due_date ? `<p>Payment is due by <strong>${doc.due_date}</strong>.</p>` : ""}
+      <p>When you pay, please use <strong>${doc.number}</strong> as your payment reference so we can match it to your account.</p>
+      <p>Reply to this email if you have any questions.</p>
+      <p>${account.business_name}</p>
+    `
+      : docType === "credit_note"
+        ? `
+      <p>Good day ${name},</p>
+      <p>Please find ${title.toLowerCase()} <strong>${doc.number}</strong> from ${account.business_name}, for ${amount}.</p>
+      <p><a href="${url}">View and download ${title.toLowerCase()} ${doc.number}</a></p>
+      <p>This credits an amount previously invoiced to you. No payment is needed for this document.</p>
+      <p>Reply to this email if you have any questions.</p>
+      <p>${account.business_name}</p>
+    `
+        : `
+      <p>Good day ${name},</p>
+      <p>Here is quotation <strong>${doc.number}</strong> from ${account.business_name}, for ${amount}.</p>
+      <p><a href="${url}">View and download quotation ${doc.number}</a></p>
+      ${doc.valid_until ? `<p>This quotation is valid until <strong>${doc.valid_until}</strong>.</p>` : ""}
+      <p>Reply to this email if you would like to go ahead, or if you have any questions.</p>
+      <p>${account.business_name}</p>
+    `;
+
+  const docTypeAuditAction = docType === "invoice" ? "invoice_emailed" : docType === "credit_note" ? "credit_note_emailed" : "quote_emailed";
+
   const sent = await sendEmail({
     to,
     fromName: account.business_name,
     replyTo: account.email,
-    subject: `${documentTitle("quote", vendor)} ${doc.number} from ${account.business_name}`,
-    html: `
-      <p>Good day ${name},</p>
-      <p>Here is your quote from ${account.business_name}, for ${formatZar(doc.total_incl_cents)}${vendor ? " including VAT" : ""}.</p>
-      <p><a href="${url}">View and download the quote</a></p>
-      ${doc.valid_until ? `<p>This quote is valid until ${doc.valid_until}.</p>` : ""}
-      <p>Reply to this email if you have any questions.</p>
-      <p>${account.business_name}</p>
-    `,
+    subject: `${title} ${doc.number} from ${account.business_name}`,
+    html: body,
   });
 
   if (!sent.ok) {
@@ -220,11 +252,12 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   await admin.from("bizup_audit_log").insert({
     account_id: account.id,
     document_id: documentId,
-    action: "quote_emailed",
+    action: docTypeAuditAction,
     reason: to,
   });
 
   revalidatePath(`/bizup/quotes/${documentId}`);
+  revalidatePath(`/bizup/invoices/${documentId}`);
   return { ok: `Sent to ${to}.` };
 }
 
@@ -243,13 +276,32 @@ export async function whatsappLinkFor(
   customerName: string | null,
   totalCents: number,
   customerWhatsapp: string | null,
+  // Same fault as the email had: this is used by the invoice page too and
+  // said "your quote" regardless. Optional with a quote default so the
+  // existing quote call site is unchanged.
+  docType: DocType = "quote",
+  documentNumber?: string | null,
 ): Promise<string> {
   const url = await publicUrlFor(token);
+
+  const ref = documentNumber ? ` ${documentNumber}` : "";
+  const line =
+    docType === "invoice"
+      ? `Here is your invoice${ref} from ${businessName} for ${formatZar(totalCents)}.`
+      : docType === "credit_note"
+        ? `Here is credit note${ref} from ${businessName} for ${formatZar(totalCents)}.`
+        : `Here is your quote${ref} from ${businessName} for ${formatZar(totalCents)}.`;
+
   const message = [
     `Good day${customerName ? " " + customerName : ""},`,
     ``,
-    `Here is your quote from ${businessName} for ${formatZar(totalCents)}.`,
+    line,
     url,
+    // Standard practice, and the thing that lets a member match a payment
+    // in their bank statement back to the job.
+    ...(docType === "invoice" && documentNumber
+      ? ["", `Please use ${documentNumber} as your payment reference.`]
+      : []),
   ].join("\n");
 
   // Left off entirely when unknown, which opens WhatsApp's own contact

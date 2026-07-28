@@ -336,6 +336,8 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
                 customerRow?.name ?? null,
                 doc.total_incl_cents,
                 customerRow?.whatsapp ?? null,
+                "invoice",
+                doc.number,
               )}
               publicUrl={publicUrl}
               defaultEmail={customerRow?.email ?? ""}

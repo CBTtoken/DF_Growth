@@ -135,7 +135,14 @@ export type BankNoticeStyle = (typeof BANK_NOTICE_STYLES)[number];
 export function bankNoticeText(style: BankNoticeStyle, phone: string | null): string | null {
   switch (style) {
     case "no_change":
-      return "Our banking details never change. If you receive a message asking you to pay into a different account, please do not pay it and contact us.";
+      // Dewald's rewording, and it is better. The old line told the
+      // customer what not to do; this one invites them to check, which is
+      // the behaviour that actually stops invoice fraud. It also reads as
+      // helpful rather than as an accusation, on a document a member is
+      // sending to someone they want to keep working with.
+      return phone
+        ? `Our banking details never change. If you are ever unsure whether these details are correct, please phone us on ${phone} before paying.`
+        : "Our banking details never change. If you are ever unsure whether these details are correct, please contact us directly before paying.";
     case "phone_to_confirm":
       return phone
         ? `Please phone us on ${phone} to confirm these banking details before making payment.`

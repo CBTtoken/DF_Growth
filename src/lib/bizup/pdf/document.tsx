@@ -67,6 +67,8 @@ export interface PdfDocumentData {
   bank: {
     bank_name: string;
     account_holder: string;
+    /** The full number, so the customer can actually pay. Older documents predate this and fall back to the masked form. */
+    account_number?: string | null;
     account_number_masked: string;
     branch_code: string;
     account_type: string;
@@ -307,9 +309,24 @@ function BankBlock({ data, serif = false }: { data: PdfDocumentData; serif?: boo
       <Text style={{ marginTop: 3 }}>
         {data.bank.account_holder}, {data.bank.bank_name}, {data.bank.account_type}
       </Text>
+      {/* The full account number. It was printed masked, which meant a
+          customer holding the invoice had no way to pay it. Masking is
+          right on our own screens and wrong on the document: banking
+          details a customer cannot use defeat the only reason they are
+          here at all. */}
       <Text>
-        Account {data.bank.account_number_masked}, branch {data.bank.branch_code}
+        Account {data.bank.account_number ?? data.bank.account_number_masked}, branch{" "}
+        {data.bank.branch_code}
       </Text>
+      {/* Standard practice, and the thing that makes a bank statement
+          reconcilable back to an invoice. Without it a member gets a
+          payment they cannot match to a job. Quotes have no number to
+          reference yet, so it only appears once there is one. */}
+      {data.number && data.docType !== "quote" ? (
+        <Text style={[serif ? base.boldSerif : base.bold, { marginTop: 3 }]}>
+          Reference: {data.number}
+        </Text>
+      ) : null}
       {notice ? <Text style={base.notice}>{notice}</Text> : null}
     </View>
   );

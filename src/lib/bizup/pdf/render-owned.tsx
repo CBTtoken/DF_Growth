@@ -1,6 +1,6 @@
 import { renderToBuffer } from "@react-pdf/renderer";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { currentAccount, buildIssuerSnapshot, buildBankSnapshot } from "@/lib/bizup/documents";
+import { currentAccount, buildIssuerSnapshot, buildBankSnapshot, loadBankForDocument } from "@/lib/bizup/documents";
 import { BizUpDocument, type PdfDocumentData } from "@/lib/bizup/pdf/document";
 
 // The member's own copy of a document as a PDF, shared by the quote and
@@ -40,14 +40,10 @@ export async function renderOwnedDocumentPdf(id: string): Promise<Response> {
 
   let bank = doc.bank_snapshot ?? null;
   if (!bank) {
-    const { data: bankRow } = await admin
-      .from("bizup_bank_details")
-      // Deliberately never selects account_number_encrypted: only the
-      // masked form is printed, so the decrypt path stays unused here.
-      .select("bank_name, account_holder, account_number_last4, branch_code, account_type")
-      .eq("account_id", account.id)
-      .maybeSingle();
-    bank = buildBankSnapshot(bankRow ?? null, account.bank_notice_style, account.phone);
+    // Same decrypting helper the issue actions use, so a draft preview
+    // shows the member exactly what their customer will receive.
+    const bankRow = await loadBankForDocument(account.id);
+    bank = buildBankSnapshot(bankRow, account.bank_notice_style, account.phone);
   }
 
   const customerRow = doc.bizup_customers as unknown as {

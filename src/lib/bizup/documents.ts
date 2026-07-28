@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { calculateTotals, isVatVendor, type BizUpSettings } from "./vat";
 import { lineTotalCents } from "./money";
 import { bizupLogoUrl } from "./logo";
+import { decrypt } from "@/lib/crypto";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 4, 5 and 6. Shared document logic,
 // kept out of the Server Actions so totals are computed in exactly one
@@ -178,13 +179,66 @@ export function buildCustomerSnapshot(customer: CustomerRow | null) {
 }
 
 /**
- * Sec 8: the bank snapshot carries the masked number and a display string
- * only. The full account number is decrypted at one point, when the PDF is
- * rendered, and never written into a document row where a later query
- * could pick it up.
+ * The member's banking details, with the account number decrypted, ready to
+ * print on a document.
+ *
+ * One function for all three places that build a bank snapshot, so the
+ * decrypt cannot be wired into two of them and forgotten in the third.
+ * Returns null when the member has not set banking details up, which is a
+ * normal state for a quote and blocks nothing.
  */
+export async function loadBankForDocument(accountId: string) {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("bizup_bank_details")
+    .select(
+      "bank_name, account_holder, account_number_last4, account_number_encrypted, branch_code, account_type",
+    )
+    .eq("account_id", accountId)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  // A decrypt failure must not take the whole document down. Falling back
+  // to the masked form keeps the invoice renderable and visibly wrong,
+  // which a member will report, rather than throwing and leaving them with
+  // no document at all.
+  let accountNumber = `••••••${data.account_number_last4}`;
+  try {
+    if (data.account_number_encrypted) accountNumber = decrypt(data.account_number_encrypted);
+  } catch (err) {
+    console.error("Failed to decrypt KatisoBiz bank account number", err);
+  }
+
+  return { ...data, account_number: accountNumber };
+}
+
 export function buildBankSnapshot(
-  bank: { bank_name: string; account_holder: string; account_number_last4: string; branch_code: string; account_type: string } | null,
+  bank: {
+    bank_name: string;
+    account_holder: string;
+    account_number_last4: string;
+    branch_code: string;
+    account_type: string;
+    /**
+     * The full number, already decrypted by the caller.
+     *
+     * Dewald, on a real invoice: "the account number has *** in it, no way
+     * a client will be able to pay now". He is right, and this was my
+     * mistake. Masking is correct on our own screens and completely wrong
+     * on the document itself: printing banking details a customer cannot
+     * pay into defeats the only reason they are on an invoice at all.
+     *
+     * Held in the snapshot rather than decrypted at render time because
+     * the customer's copy renders from snapshots only and has no session.
+     * The trade-off is deliberate: bizup_bank_details stays encrypted at
+     * rest as the source of truth, and the snapshot records what the
+     * document actually said, which necessarily included the number. A
+     * document already shared on an unauthenticated link is not made more
+     * exposed by holding the figure it printed.
+     */
+    account_number: string;
+  } | null,
   noticeStyle: string,
   phone: string | null,
 ) {
@@ -192,6 +246,7 @@ export function buildBankSnapshot(
   return {
     bank_name: bank.bank_name,
     account_holder: bank.account_holder,
+    account_number: bank.account_number,
     account_number_masked: `••••••${bank.account_number_last4}`,
     branch_code: bank.branch_code,
     account_type: bank.account_type,
