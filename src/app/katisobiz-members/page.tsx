@@ -34,14 +34,14 @@ export const metadata: Metadata = {
     url: `${LEGAL_CANONICAL_HOST}/katisobiz-members`,
     locale: "en_ZA",
     // Overriding this block replaces the root layout's, images included.
-    images: [{ url: "/brand/logo-blue.png", width: 1200, height: 630, alt: "DigitalFlyer SA" }],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "DigitalFlyer SA" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Find a trade near you",
     description:
       "Plumbers, electricians, handymen and other trades across South Africa. Message them straight on WhatsApp.",
-    images: ["/brand/logo-blue.png"],
+    images: ["/opengraph-image"],
   },
 };
 

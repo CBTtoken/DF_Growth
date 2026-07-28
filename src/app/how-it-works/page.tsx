@@ -17,13 +17,13 @@ export const metadata: Metadata = {
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
     url: "/how-it-works",
-    images: [{ url: "/brand/logo-blue.png", width: 1200, height: 630, alt: "DigitalFlyer SA" }],
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "DigitalFlyer SA" }],
   },
   twitter: {
     card: "summary_large_image",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
-    images: ["/brand/logo-blue.png"],
+    images: ["/opengraph-image"],
   },
 };
 
