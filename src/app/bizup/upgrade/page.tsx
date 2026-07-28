@@ -35,7 +35,11 @@ const PLANS = [
     name: "Unlimited",
     price: "R89",
     per: "per month",
-    features: ["Unlimited documents", "Everything in KatisoBiz", "Up to 5 users", "Recurring invoices"],
+    features: [
+      "Unlimited documents",
+      "Everything in KatisoBiz",
+      "No monthly document limit to watch",
+    ],
   },
 ];
 

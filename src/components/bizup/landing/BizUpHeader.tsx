@@ -36,6 +36,14 @@ export function BizUpHeader() {
           >
             How it works
           </a>
+          {/* A real page, not a section anchor: it is also the thing to
+              send someone who is stuck, so it needs its own address. */}
+          <Link
+            href="/bizup/help"
+            className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"
+          >
+            Help
+          </Link>
           <a
             href="#pricing"
             className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"

@@ -55,6 +55,12 @@ export default async function BizUpSettingsPage() {
     // says "you choose a paid plan later, from inside KatisoBiz", and this
     // is the inside.
     {
+      href: "/bizup/help",
+      title: "How it works",
+      body: "Step by step setup, and answers to the things people actually ask.",
+      warn: null,
+    },
+    {
       href: "/bizup/upgrade",
       title: "Your plan",
       body: "What you are on now, what the paid plans include, and topups.",

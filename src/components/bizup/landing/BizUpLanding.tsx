@@ -168,7 +168,18 @@ const PLANS = [
     per: "/month",
     highlight: false,
     badge: null,
-    features: ["Unlimited documents", "Everything in KatisoBiz", "Up to 5 users", "Recurring invoices"],
+    // "Up to 5 users" and "Recurring invoices" were listed here and neither
+    // exists: both are Sprint 2 by Dewald's own written decision, and the
+    // code hard-clamps every account to one user. That was tolerable while
+    // nobody could buy this tier. It stopped being tolerable the day the
+    // Pay button started working, because someone can now pay R89 a month
+    // for two features that are not there. They go back on this card when
+    // they ship, not before.
+    features: [
+      "Unlimited documents",
+      "Everything in KatisoBiz",
+      "No monthly document limit to watch",
+    ],
     cta: "Start today",
     planId: "unlimited",
   },

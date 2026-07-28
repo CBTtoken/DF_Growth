@@ -56,6 +56,7 @@ export function BizUpFooter() {
           <span className="font-extrabold text-neutral-ink">KatisoBiz</span>
           <a href="#pricing" className="hover:text-brand-blue">Pricing</a>
           <a href="#how-it-works" className="hover:text-brand-blue">How it works</a>
+          <Link href="/bizup/help" className="hover:text-brand-blue">Help</Link>
           <a href="#faq" className="hover:text-brand-blue">FAQ</a>
           <Link href="/terms" className="hover:text-brand-blue">Terms</Link>
           <Link href="/privacy" className="hover:text-brand-blue">Privacy</Link>
