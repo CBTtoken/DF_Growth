@@ -21,6 +21,11 @@ const KATISO_DESCRIPTION =
   "A professional quote with your logo and banking details, from your phone, in under a minute. Turn it into an invoice when the job is done. Free to start, no card needed.";
 
 export const metadata: Metadata = {
+  // Overrides the root layout metadataBase, which is Growth's domain.
+  // Without this the generated share image resolved to
+  // growth.digitalflyersa.co.za, so a WhatsApp preview for a KatisoBiz
+  // link fetched its picture from another product's domain.
+  metadataBase: new URL("https://katisobiz.co.za"),
   // Absolute, so the root layout's "| DigitalFlyer Growth" suffix is not
   // appended. On KatisoBiz's own domain the product's name should be the
   // whole title, and a suffix naming a different product reads as a

@@ -22,6 +22,11 @@ const HELP_DESCRIPTION =
   "How to send your first quote, turn it into an invoice, get paid, and hand everything to your accountant.";
 
 export const metadata: Metadata = {
+  // Overrides the root layout metadataBase, which is Growth's domain.
+  // Without this the generated share image resolved to
+  // growth.digitalflyersa.co.za, so a WhatsApp preview for a KatisoBiz
+  // link fetched its picture from another product's domain.
+  metadataBase: new URL("https://katisobiz.co.za"),
   title: { absolute: "How KatisoBiz works" },
   description: HELP_DESCRIPTION,
   alternates: { canonical: "https://katisobiz.co.za/help" },
