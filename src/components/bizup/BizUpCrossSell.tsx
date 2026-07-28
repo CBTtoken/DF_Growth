@@ -70,8 +70,8 @@ export function GrowthFromBizUp() {
       <h2 className="text-base font-bold text-ink">Getting found by new customers</h2>
       <p className="mt-2 text-sm leading-relaxed text-gray-600">
         KatisoBiz helps you win the jobs you are already quoting for. DigitalFlyer Growth is the other
-        half: a professional page for your business, a marketplace listing so local customers can
-        find you, and reviews from the work you have done.
+        half: a professional page for your business, a place on the marketplace so local customers
+        can find you, and reviews from the work you have done.
       </p>
       <p className="mt-2 text-sm text-gray-500">
         KatisoBiz is included when you join, so you keep everything you have set up here.

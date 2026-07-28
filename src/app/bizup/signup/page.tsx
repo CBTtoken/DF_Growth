@@ -6,9 +6,37 @@ import { SignupForm } from "@/components/bizup/landing/SignupForm";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
 import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 
+// Site audit, 28 July 2026: this page inherited the root layout's tags, so
+// a signup link shared on WhatsApp previewed as "DigitalFlyer Growth" with
+// Growth's logo, fetched from Growth's domain. The homepage was fixed for
+// exactly this reason and the signup page was missed, which is the worse
+// miss of the two: it is the link an early member actually forwards to a
+// friend, and it is the destination of every ad.
+const SIGNUP_DESCRIPTION =
+  "Four things and you are in. No card, and you can send your first quote straight away.";
+
 export const metadata: Metadata = {
-  title: "Start free on KatisoBiz",
-  description: "Four fields and you are in. No card needed.",
+  // Overrides the root layout's metadataBase, which is Growth's domain.
+  // Without it the share image resolves to growth.digitalflyersa.co.za.
+  metadataBase: new URL("https://katisobiz.co.za"),
+  // Absolute, so the root layout's "| DigitalFlyer Growth" suffix is not
+  // appended to a KatisoBiz page.
+  title: { absolute: "Start free on KatisoBiz" },
+  description: SIGNUP_DESCRIPTION,
+  alternates: { canonical: "https://katisobiz.co.za/signup" },
+  openGraph: {
+    type: "website",
+    siteName: "KatisoBiz",
+    title: "Start free on KatisoBiz",
+    description: SIGNUP_DESCRIPTION,
+    url: "https://katisobiz.co.za/signup",
+    locale: "en_ZA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Start free on KatisoBiz",
+    description: SIGNUP_DESCRIPTION,
+  },
 };
 
 // Landing copy, conversion note 1: every button on the page does the same

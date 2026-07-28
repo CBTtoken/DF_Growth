@@ -40,8 +40,8 @@ export function BizUpFooter() {
             Already on DigitalFlyer Growth? KatisoBiz is included.
           </p>
           <p className="mt-1.5 text-sm leading-relaxed text-neutral-mid">
-            Growth gets your business found by local customers with a professional page, a
-            marketplace listing and reviews. KatisoBiz comes with it, so quoting and invoicing are
+            Growth gets your business found by local customers with a professional page, a place on
+            the marketplace and reviews. KatisoBiz comes with it, so quoting and invoicing are
             already paid for.
           </p>
           <a

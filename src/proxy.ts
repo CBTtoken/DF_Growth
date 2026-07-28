@@ -46,6 +46,15 @@ const SHARED_CRAWLER_PATHS = new Set(["/robots.txt", "/sitemap.xml"]);
 // Growth product pages, a KatisoBiz member clicking Marketplace wants
 // Growth, and serving them on both hostnames would put the same content on
 // two domains with no canonical tag to say which one counts.
+// KatisoBiz's own brand domain, and the target every older hostname is
+// sent to.
+const KATISOBIZ_ORIGIN = "https://katisobiz.co.za";
+
+// The hostnames KatisoBiz used before it had its own domain. Kept working
+// so nothing already sent to a customer breaks, but redirected rather than
+// served, so there is only ever one live copy of the site.
+const LEGACY_HOSTS = new Set(["bizup.digitalflyer.co.za", "katisobiz.digitalflyer.co.za"]);
+
 const GROWTH_ONLY_PATHS = ["/marketplace", "/katisobiz-members", "/shop", "/agents"];
 const GROWTH_ORIGIN = process.env.NEXT_PUBLIC_SITE_URL ?? "https://growth.digitalflyersa.co.za";
 
@@ -76,6 +85,48 @@ export function proxy(request: NextRequest) {
     // Resend and WhatsApp webhooks all post to absolute /api paths, and a
     // rewrite here would silently break them.
     if (pathname.startsWith("/api/")) return NextResponse.next();
+
+    // The old hostnames send visitors to the brand domain instead of
+    // serving a second copy of the site.
+    //
+    // Site audit, 28 July 2026: both of these answered 200 with the full
+    // landing page. Search consolidation was already safe, because every
+    // page carries a canonical tag, but three things were not. Every
+    // internal link on a duplicate points back at the duplicate, so
+    // somebody arriving on an old link signed up on a hostname that is not
+    // the one verified with Meta. Pixel and analytics data split across
+    // hostnames. And the address bar showed the old product name.
+    //
+    // Assets are deliberately excluded. Next's image optimizer fetches a
+    // source image back through this proxy, and a redirect there makes it
+    // return the redirect rather than an optimized image, which is a bug
+    // this file has already had once.
+    //
+    // www.katisobiz.co.za is absent because Vercel's own domain
+    // configuration already redirects it, verified against the live site.
+    if (LEGACY_HOSTS.has(host)) {
+      const lastSegment = pathname.slice(pathname.lastIndexOf("/"));
+      const isAsset =
+        lastSegment.includes(".") ||
+        METADATA_IMAGE_SEGMENTS.some((seg) => pathname.endsWith(`/${seg}`));
+
+      if (!isAsset) {
+        // The prefix is stripped here too, so an old /bizup/signup link
+        // lands on the canonical /signup in one hop rather than two.
+        const target =
+          pathname === BIZUP_PREFIX || pathname.startsWith(`${BIZUP_PREFIX}/`)
+            ? pathname.slice(BIZUP_PREFIX.length) || "/"
+            : pathname;
+
+        // Query string carried across: an ad click arriving on an old
+        // hostname must keep its fbclid and UTM parameters, or the signup
+        // it produces cannot be attributed to the ad that paid for it.
+        return NextResponse.redirect(
+          new URL(`${target}${request.nextUrl.search}`, KATISOBIZ_ORIGIN),
+          301
+        );
+      }
+    }
 
     // The shared legal pages, served as-is on this hostname too.
     if (SHARED_LEGAL_PATHS.has(pathname)) return NextResponse.next();
@@ -135,8 +186,8 @@ export function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // No slug at all (someone visits the bare subdomain) — nothing to
-  // attribute, send them straight to the main site rather than a 404.
+  // No slug at all (someone visits the bare subdomain), so there is
+  // nothing to attribute. Send them straight to the main site, not a 404.
   if (pathname === "/" || pathname === "") {
     return NextResponse.redirect(new URL("/", process.env.NEXT_PUBLIC_SITE_URL));
   }
@@ -147,8 +198,8 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Excludes Next.js internals and static assets — this only ever needs to
-  // inspect real page/route requests, and the agent subdomain has no
+  // Excludes Next.js internals and static assets, because this only ever
+  // needs to inspect real page and route requests. The agent subdomain has no
   // static assets of its own to worry about excluding separately.
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
