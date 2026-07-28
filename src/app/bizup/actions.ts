@@ -24,6 +24,7 @@ function fieldsFrom(formData: FormData) {
     businessName: formData.get("businessName"),
     tradingName: formData.get("tradingName"),
     registrationNumber: formData.get("registrationNumber"),
+    serviceType: formData.get("serviceType"),
     vatNumber: formData.get("vatNumber"),
     addressLine1: formData.get("addressLine1"),
     addressLine2: formData.get("addressLine2"),
@@ -99,6 +100,7 @@ export async function createBizUpAccount(
       business_name: values.businessName,
       trading_name: orNull(values.tradingName),
       registration_number: orNull(values.registrationNumber),
+      service_type: orNull(values.serviceType),
       vat_number: orNull(values.vatNumber),
       // Sec 3.1: a document's VAT treatment follows the status that
       // applied when it was issued, so the date the member became a vendor
@@ -175,6 +177,7 @@ export async function updateBizUpAccount(
       business_name: values.businessName,
       trading_name: orNull(values.tradingName),
       registration_number: orNull(values.registrationNumber),
+      service_type: orNull(values.serviceType),
       vat_number: orNull(values.vatNumber),
       // Stamped on the transition into being a vendor, and preserved
       // otherwise. Never cleared by an edit: a member who removes their
@@ -338,6 +341,56 @@ export async function updateBizUpLogo(
 
   revalidatePath("/bizup/settings/business");
   return { ok: "Logo saved. It will appear on documents you send from now on." };
+}
+
+/**
+ * Puts a member on, or takes them off, the public KatisoBiz Members List.
+ *
+ * Off by default and only ever changed here, by the member themselves.
+ * They signed up for quoting software, and publishing their business name
+ * and phone number is processing their information for a purpose they
+ * never agreed to. That is a POPIA problem, and practically it is the kind
+ * of surprise that makes a tradesman delete the app.
+ *
+ * Refuses to list anyone without a trade and a WhatsApp number, because a
+ * listing missing either is not a listing: nobody can find them and nobody
+ * can contact them.
+ */
+export async function setBizUpListing(formData: FormData): Promise<void> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const admin = createAdminClient();
+  const { data: account } = await admin
+    .from("bizup_accounts")
+    .select("id, service_type, whatsapp, phone")
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+  if (!account) return;
+
+  const wantsListing = formData.get("listed") === "true";
+
+  if (wantsListing && (!account.service_type || !(account.whatsapp || account.phone))) {
+    revalidatePath("/bizup/settings/business");
+    return;
+  }
+
+  await admin
+    .from("bizup_accounts")
+    .update({ listed_publicly: wantsListing, updated_at: new Date().toISOString() })
+    .eq("id", account.id);
+
+  await admin.from("bizup_audit_log").insert({
+    account_id: account.id,
+    actor_user_id: user.id,
+    action: wantsListing ? "listing_opted_in" : "listing_opted_out",
+  });
+
+  revalidatePath("/bizup/settings/business");
+  revalidatePath("/katisobiz-members");
 }
 
 /**

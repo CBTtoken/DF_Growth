@@ -4,7 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updateBizUpAccount, setInsurancePricing } from "@/app/bizup/actions";
+import { updateBizUpAccount, setInsurancePricing, setBizUpListing } from "@/app/bizup/actions";
 import { TemplatePicker } from "@/components/bizup/TemplatePicker";
 import { LogoUpload } from "@/components/bizup/LogoUpload";
 import { bizupLogoUrl } from "@/lib/bizup/logo";
@@ -29,7 +29,7 @@ export default async function BizUpBusinessSettingsPage() {
   const { data: account } = await admin
     .from("bizup_accounts")
     .select(
-      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id, insurance_pricing_enabled, logo_path, plan"
+      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id, insurance_pricing_enabled, logo_path, plan, service_type, listed_publicly"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
@@ -40,6 +40,10 @@ export default async function BizUpBusinessSettingsPage() {
   const templateId = account.template_id;
   const insurancePricing = account.insurance_pricing_enabled;
   const capabilities = capabilitiesFor(account.plan as BizUpPlan);
+  const listed = account.listed_publicly;
+  // A listing needs a trade so people can find them and a number so people
+  // can reach them. Without both it is not a listing.
+  const canBeListed = !!account.service_type && !!(account.whatsapp || account.phone);
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -67,6 +71,7 @@ export default async function BizUpBusinessSettingsPage() {
                 businessName: account.business_name,
                 tradingName: account.trading_name,
                 registrationNumber: account.registration_number,
+                serviceType: account.service_type,
                 vatNumber: account.vat_number,
                 addressLine1: account.address_line1,
                 addressLine2: account.address_line2,
@@ -105,6 +110,45 @@ export default async function BizUpBusinessSettingsPage() {
           <div className="mt-5">
             <LogoUpload logoUrl={bizupLogoUrl(account.logo_path)} allowed={capabilities.ownLogo} />
           </div>
+        </section>
+
+        {/* The KatisoBiz Members List. Opt in, off by default, and the
+            copy says exactly what gets published, because a member
+            agreeing to this needs to know precisely what a stranger will
+            see. Nothing here is inferred or assumed. */}
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight text-ink">
+            Get found on the KatisoBiz Members List
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            A free listing on DigitalFlyer where people looking for your trade can find you. It
+            shows four things and nothing else: your business name, what you do, your town, and a
+            WhatsApp button.
+          </p>
+
+          {canBeListed ? (
+            <form action={setBizUpListing} className="mt-4">
+              <input type="hidden" name="listed" value={listed ? "false" : "true"} />
+              <p className="text-sm font-semibold text-ink">
+                {listed ? "You are on the list" : "You are not on the list"}
+              </p>
+              <button
+                type="submit"
+                className="mt-2 text-sm font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                {listed ? "Take me off the list" : "Add me to the list"}
+              </button>
+              <p className="mt-2 text-xs text-gray-500">
+                Your customers, your prices and your documents are never shown. You can take
+                yourself off at any time and you disappear immediately.
+              </p>
+            </form>
+          ) : (
+            <p className="mt-4 rounded-xl bg-gray-50 p-3 text-sm text-gray-600">
+              Before you can be listed, fill in <strong>what you do</strong> above and a{" "}
+              <strong>WhatsApp number</strong>. Without both, nobody could find you or contact you.
+            </p>
+          )}
         </section>
 
         {/* Insurance rates. From a plumber testing the product: insurance

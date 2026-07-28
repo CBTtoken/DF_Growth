@@ -27,6 +27,13 @@ export const businessProfileSchema = z.object({
   tradingName: optionalText,
   registrationNumber: optionalText,
 
+  // What the member actually does. Dewald called this critical, and he is
+  // right: nothing else we store tells us whether someone is a plumber or
+  // a painter, and it is the field the Members List is organised around.
+  // Optional in the schema so an existing member is never blocked from
+  // saving their profile by a field that did not exist when they signed up.
+  serviceType: optionalText,
+
   // Sec 3.1. Blank means "not a VAT vendor", which is the correct and
   // common case, not an incomplete profile. Sec 3.4: format check only, 10
   // digits beginning with 4, and we never claim to have verified it

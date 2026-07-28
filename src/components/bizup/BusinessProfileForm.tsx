@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { MONTHS, SA_PROVINCES } from "@/lib/bizup/schemas";
+import { SERVICE_TYPES } from "@/lib/bizup/services";
 import { isValidVatNumberFormat, VAT_NUMBER_HELP, VAT_ACTIVATION_CONFIRMATION } from "@/lib/bizup/vat";
 import type { BizUpFormState } from "@/app/bizup/actions";
 
@@ -10,6 +11,7 @@ export interface BusinessProfileDefaults {
   businessName?: string | null;
   tradingName?: string | null;
   registrationNumber?: string | null;
+  serviceType?: string | null;
   vatNumber?: string | null;
   addressLine1?: string | null;
   addressLine2?: string | null;
@@ -127,6 +129,30 @@ export function BusinessProfileForm({
           errors={state?.error?.registrationNumber}
           optional
         />
+
+        {/* What the member actually does. A fixed list rather than free
+            text, because the Members List is browsed by trade and
+            "Plumber", "plumbing" and "Plumbing & Drains" would otherwise
+            be three categories within a week. */}
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
+          What do you do?
+          <select
+            name="serviceType"
+            defaultValue={defaults.serviceType ?? ""}
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
+          >
+            <option value="">Choose your trade</option>
+            {SERVICE_TYPES.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <span className="text-xs font-normal text-gray-500">
+            Used if you choose to appear on the KatisoBiz Members List. It is not printed on your
+            documents.
+          </span>
+        </label>
       </fieldset>
 
       <fieldset className="flex flex-col gap-4">
