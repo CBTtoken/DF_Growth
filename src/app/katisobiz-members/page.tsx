@@ -118,7 +118,7 @@ export default async function KatisoBizMembersPage() {
 
                         <span className="flex shrink-0 items-center gap-2">
                           {/* Only for members who have paid for a Growth
-                              page. It makes the listing more useful to a
+                              page. It makes the entry more useful to a
                               customer, who can see photos and reviews
                               before phoning a stranger, and it shows every
                               other member exactly what they are missing. */}
@@ -163,8 +163,8 @@ export default async function KatisoBizMembersPage() {
                 Run a business? Get listed free.
               </h2>
               <p className="mt-2 flex-1 text-neutral-mid">
-                Send professional quotes and invoices from your phone with KatisoBiz, and your
-                listing here comes with it. Free to start, no card needed.
+                Send professional quotes and invoices from your phone with KatisoBiz, and your spot
+                here comes with it. Free to start, no card needed.
               </p>
               <Link href="/bizup" className="mt-4 btn-accent self-start">
                 See how KatisoBiz works

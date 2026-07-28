@@ -121,9 +121,9 @@ export default async function BizUpBusinessSettingsPage() {
             Get found on the KatisoBiz Members List
           </h2>
           <p className="mt-1 text-sm text-gray-500">
-            A free listing on DigitalFlyer where people looking for your trade can find you. It
-            shows four things and nothing else: your business name, what you do, your town, and a
-            WhatsApp button.
+            A free spot on the KatisoBiz Members List, where people looking for your trade can find
+            you. It shows four things and nothing else: your business name, what you do, your town,
+            and a WhatsApp button.
           </p>
 
           {canBeListed ? (
