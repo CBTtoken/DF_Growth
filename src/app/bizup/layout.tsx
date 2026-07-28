@@ -1,6 +1,28 @@
+import type { Metadata } from "next";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BizUpNav } from "@/components/bizup/BizUpNav";
+
+// Meta's proof that katisobiz.co.za belongs to DigitalFlyer, supplied by
+// Dewald from Business Manager on 28 July 2026.
+//
+// Not a secret. It is a public token whose entire purpose is to be readable
+// in the page source, which is why it is written here rather than held in an
+// environment variable.
+//
+// Without it Meta under-reports conversions from iOS users, so a campaign
+// looks like it is performing worse than it is and the temptation is to
+// switch off ads that were actually working.
+//
+// Placed on the layout rather than the landing page so every KatisoBiz page
+// carries it. Verification only checks the domain root today, but a tag that
+// exists on one page and not the rest is the kind of thing that quietly
+// breaks when that one page is restructured.
+//
+// Growth's own domain is verified separately and does not use this value.
+export const metadata: Metadata = {
+  other: { "facebook-domain-verification": "4xxcblvnpq67238mlcrpuzxxc3yih0" },
+};
 
 // Mounts the navigation once, for every signed-in member, on every page.
 //
