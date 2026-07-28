@@ -4,6 +4,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { logOutOfBizUp } from "@/app/bizup/actions";
 import { SignupForm } from "@/components/bizup/landing/SignupForm";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
+import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 
 export const metadata: Metadata = {
   title: "Start free on KatisoBiz",
@@ -81,6 +82,12 @@ export default async function BizUpSignupPage({
         </div>
       </main>
       <BizUpFooter />
+      {/* This page carries no header, so it does not inherit the pixel the
+          way the landing page does. It needs its own, because an ad can
+          point straight here: without it such a visitor would sign up
+          having never had a _fbc cookie set, and Meta would never learn
+          which ad earned them. */}
+      <PixelConsentGate pixelId={process.env.NEXT_PUBLIC_DIGITALFLYER_META_PIXEL_ID ?? null} />
     </>
   );
 }
