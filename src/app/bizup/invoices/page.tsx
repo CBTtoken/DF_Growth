@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentAccount } from "@/lib/bizup/documents";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createInvoice } from "@/app/bizup/invoices/actions";
 import { formatZar } from "@/lib/bizup/money";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -53,7 +54,22 @@ export default async function BizUpInvoicesPage() {
           Back to KatisoBiz
         </Link>
 
-        <h1 className="text-xl font-bold tracking-tight text-ink">Invoices</h1>
+        {/* Dewald, 2026-07-28: "sometimes they skip quotations and do a
+            straight invoice, this is not possible". It was possible, but
+            only from the home dashboard, and this page said the opposite.
+            A form rather than a link because Next prefetches links on
+            hover and would create empty drafts against their cap. */}
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-xl font-bold tracking-tight text-ink">Invoices</h1>
+          <form action={createInvoice}>
+            <button
+              type="submit"
+              className="inline-flex shrink-0 items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+            >
+              New invoice
+            </button>
+          </form>
+        </div>
 
         {outstanding > 0 && (
           <p className="rounded-2xl border border-gray-100 bg-white p-4 text-sm shadow-sm">
@@ -64,9 +80,20 @@ export default async function BizUpInvoicesPage() {
 
         {rows.length === 0 ? (
           <div className="rounded-2xl border border-gray-100 bg-white p-8 text-center shadow-sm">
+            {/* The old copy named only the quote route, which is why a
+                real tester concluded a straight invoice could not be done.
+                Both routes now, invoice first. */}
             <p className="text-sm text-gray-500">
-              No invoices yet. Accept a quote and turn it into one, and it will appear here.
+              No invoices yet. Start one straight away, or turn an accepted quote into an invoice.
             </p>
+            <form action={createInvoice} className="mt-4">
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+              >
+                New invoice
+              </button>
+            </form>
             <Link href="/bizup/quotes" className="mt-3 inline-block text-sm font-semibold text-brand underline-offset-2 hover:underline">
               Go to your quotes
             </Link>

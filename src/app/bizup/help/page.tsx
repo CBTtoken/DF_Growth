@@ -122,7 +122,8 @@ const STEPS = [
         Customer says yes and the job is done, so open the quote and press{" "}
         <Btn>Turn into invoice</Btn>. Nothing is retyped. Send it the same way. When the money
         lands, press <BtnPaid>Mark paid</BtnPaid> and say how they paid, or record a part payment
-        if they only paid some of it.
+        if they only paid some of it. No quote for this job? Press <Btn>New invoice</Btn> on your
+        home screen or on Invoices and bill straight away.
       </>
     ),
     time: "Seconds",
