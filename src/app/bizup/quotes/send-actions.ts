@@ -17,6 +17,7 @@ import { getCapState } from "@/lib/bizup/cap";
 import { isKatisoBizHost } from "@/lib/bizup/product";
 import { toWhatsAppNumber } from "@/lib/bizup/whatsapp";
 import { sendEmail } from "@/lib/email/resend";
+import { verifyEmailAddress } from "@/lib/email/verify-address";
 import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, isVatVendor, type DocType } from "@/lib/bizup/vat";
 
@@ -186,6 +187,23 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   const to = String(formData.get("email") ?? "").trim() || customer?.email || "";
 
   if (!to) return { error: "No email address for this customer. Add one, or send on WhatsApp." };
+
+  // A member typing their customer's address by hand is the one place a
+  // dead address enters the system, and every bounce lands on
+  // DigitalFlyer's sending reputation rather than theirs. At a thousand
+  // members that is what gets the domain throttled, and once that happens
+  // even login codes stop arriving.
+  //
+  // Syntax plus a DNS check, which catches the real-world case (gmial.com,
+  // a typo'd domain) without a paid verification vendor. The message names
+  // the address so the member can see the typo, and offers WhatsApp,
+  // because being blocked from sending at all would be worse than a bounce.
+  const address = await verifyEmailAddress(to);
+  if (!address.valid) {
+    return {
+      error: `${to} does not look like a working email address. Check the spelling, or send it on WhatsApp instead.`,
+    };
+  }
 
   const url = await publicUrlFor(doc.public_token);
   const vendor = isVatVendor(account.vat_number);

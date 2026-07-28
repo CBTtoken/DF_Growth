@@ -394,6 +394,45 @@ export async function setBizUpListing(formData: FormData): Promise<void> {
 }
 
 /**
+ * Turns the member's own email notifications on or off.
+ *
+ * On by default, because these are the messages that bring a member back
+ * to the product. Switching them off never affects the documents a member
+ * sends their own customers, which is a separate thing entirely, so the
+ * copy on the settings page says so plainly.
+ */
+export async function setBizUpNotifications(formData: FormData): Promise<void> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const admin = createAdminClient();
+  const { data: account } = await admin
+    .from("bizup_accounts")
+    .select("id")
+    .eq("owner_user_id", user.id)
+    .maybeSingle();
+  if (!account) return;
+
+  const wantsEmail = formData.get("notify") === "true";
+
+  await admin
+    .from("bizup_accounts")
+    .update({ notify_by_email: wantsEmail, updated_at: new Date().toISOString() })
+    .eq("id", account.id);
+
+  await admin.from("bizup_audit_log").insert({
+    account_id: account.id,
+    actor_user_id: user.id,
+    action: wantsEmail ? "notifications_on" : "notifications_off",
+  });
+
+  revalidatePath("/bizup/settings/business");
+}
+
+/**
  * Log out of KatisoBiz.
  *
  * There was no way out of KatisoBiz at all until Dewald tried to sign up a

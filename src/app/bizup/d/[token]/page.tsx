@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, type DocType } from "@/lib/bizup/vat";
 import { bankNoticeText, type BankNoticeStyle } from "@/lib/bizup/bank";
+import { notifyDocumentOpened } from "@/lib/bizup/notifications";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 9, the public document link.
 //
@@ -70,6 +71,15 @@ export default async function PublicDocumentPage({
       .update({ first_viewed_at: new Date().toISOString() })
       .eq("id", doc.id)
       .is("first_viewed_at", null);
+
+    // And tell the member, because knowing their customer is reading it
+    // right now is the most useful thing this product can say to them.
+    // Awaited rather than fired and forgotten: bare promises do not
+    // reliably complete on this deployment, the same reason the signup
+    // conversion is awaited. It claims its own guard row before sending,
+    // so this cannot email twice, and it never throws, so a customer's
+    // view of the document can never break on a mail failure.
+    await notifyDocumentOpened(doc.id);
   }
 
   const { data: lines } = await admin

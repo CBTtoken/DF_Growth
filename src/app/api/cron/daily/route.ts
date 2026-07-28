@@ -4,6 +4,7 @@ import { GET as onboardingNudge } from "../onboarding-nudge/route";
 import { GET as trialReminders } from "../trial-reminders/route";
 import { GET as refreshScreenshots } from "../refresh-screenshots/route";
 import { GET as expirePlanGrants } from "../expire-plan-grants/route";
+import { GET as bizupNotifications } from "../bizup-notifications/route";
 
 // All three jobs now share one invocation instead of the three separate
 // function budgets they had as individual endpoints, and two of them loop
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
     ["onboardingNudge", onboardingNudge],
     ["trialReminders", trialReminders],
     ["expirePlanGrants", expirePlanGrants],
+    ["bizupNotifications", bizupNotifications],
   ];
   // Screenshot refresh only needs to run weekly — real pages don't change
   // often enough to justify a daily capture, and running it daily would

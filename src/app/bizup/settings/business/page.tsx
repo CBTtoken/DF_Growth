@@ -4,7 +4,12 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { updateBizUpAccount, setInsurancePricing, setBizUpListing } from "@/app/bizup/actions";
+import {
+  updateBizUpAccount,
+  setInsurancePricing,
+  setBizUpListing,
+  setBizUpNotifications,
+} from "@/app/bizup/actions";
 import { TemplatePicker } from "@/components/bizup/TemplatePicker";
 import { LogoUpload } from "@/components/bizup/LogoUpload";
 import { bizupLogoUrl } from "@/lib/bizup/logo";
@@ -29,7 +34,7 @@ export default async function BizUpBusinessSettingsPage() {
   const { data: account } = await admin
     .from("bizup_accounts")
     .select(
-      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id, insurance_pricing_enabled, logo_path, plan, service_type, listed_publicly"
+      "business_name, trading_name, registration_number, vat_number, address_line1, address_line2, city, province, postal_code, email, phone, whatsapp, financial_year_end_month, template_id, insurance_pricing_enabled, logo_path, plan, service_type, listed_publicly, notify_by_email"
     )
     .eq("owner_user_id", user.id)
     .maybeSingle();
@@ -41,6 +46,7 @@ export default async function BizUpBusinessSettingsPage() {
   const insurancePricing = account.insurance_pricing_enabled;
   const capabilities = capabilitiesFor(account.plan as BizUpPlan);
   const listed = account.listed_publicly;
+  const notifyByEmail = account.notify_by_email;
   // A listing needs a trade so people can find them and a number so people
   // can reach them. Without both it is not a listing.
   const canBeListed = !!account.service_type && !!(account.whatsapp || account.phone);
@@ -179,6 +185,39 @@ export default async function BizUpBusinessSettingsPage() {
                 just not used.
               </p>
             )}
+          </form>
+        </section>
+
+        {/* Email notifications. On by default, because the product's real
+            weakness was going silent between a member sending a quote and
+            remembering to check it.
+
+            The copy separates these from the documents a member sends
+            their own customers, because "turn off emails" reads like it
+            might stop those too, and a member who believes that will not
+            risk switching it off even when the notifications annoy them. */}
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold tracking-tight text-ink">Email me about my documents</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            We email you when a customer opens a quote or invoice, when a quote is about to run
+            out, and when an invoice goes past its due date. Three emails, and only ever about
+            your own documents.
+          </p>
+          <form action={setBizUpNotifications} className="mt-4">
+            <input type="hidden" name="notify" value={notifyByEmail ? "false" : "true"} />
+            <p className="text-sm font-semibold text-ink">
+              {notifyByEmail ? "Email notifications are on" : "Email notifications are off"}
+            </p>
+            <button
+              type="submit"
+              className="mt-2 text-sm font-semibold text-brand underline-offset-2 hover:underline"
+            >
+              {notifyByEmail ? "Turn email notifications off" : "Turn email notifications on"}
+            </button>
+            <p className="mt-2 text-xs text-gray-500">
+              This only changes what we send <strong>you</strong>. Quotes and invoices you send
+              your own customers are not affected either way.
+            </p>
           </form>
         </section>
       </div>
