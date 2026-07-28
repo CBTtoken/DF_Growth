@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BizUpHeader } from "@/components/bizup/landing/BizUpHeader";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
+import { Btn, BtnOutline, BtnWhatsApp, BtnPaid, MenuItem, FieldBox } from "@/components/bizup/help/UiBits";
 
 // Dewald: "needs to be super clear and easy, I am lazy, I don't want to
 // manage lazy support."
@@ -41,41 +42,89 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: "How KatisoBiz works", description: HELP_DESCRIPTION },
 };
 
+// The buttons are drawn inline rather than described, so a member reads
+// "press [Issue this quote]" and already knows what they are looking for
+// on the screen. See components/bizup/help/UiBits.tsx for why these are
+// rendered controls rather than screenshots.
 const STEPS = [
   {
     n: "1",
     title: "Put in your business details",
-    body: "Settings, then Business details. Your business name, address and phone go on every document. If you are registered for VAT, put your VAT number in here too and every invoice becomes a proper Tax Invoice by itself. If you are not registered, leave it blank and KatisoBiz never mentions VAT again.",
+    body: (
+      <>
+        Go to <MenuItem>Settings</MenuItem> then <BtnOutline>Business details</BtnOutline>. Your
+        business name, address and phone go on every document. If you are registered for VAT, put
+        your number in the <FieldBox label="VAT number" /> box and every invoice becomes a proper
+        Tax Invoice by itself. If you are not registered, leave it blank and KatisoBiz never
+        mentions VAT again.
+      </>
+    ),
     time: "About 2 minutes",
   },
   {
     n: "2",
     title: "Add your banking details",
-    body: "Settings, then Banking details. This is how your customer pays you, so nothing gets paid until it is done. You enter it once and it prints on every invoice. Changing it later needs a code from your email, on purpose, so that nobody who gets into your account can quietly swap in their own account number.",
+    body: (
+      <>
+        <MenuItem>Settings</MenuItem> then <BtnOutline>Banking details</BtnOutline>. This is how
+        your customer pays you, so nothing gets paid until it is done. You enter it once and it
+        prints on every invoice with your invoice number as the reference. Changing it later needs
+        a code from your email, on purpose, so nobody who gets into your account can quietly swap
+        in their own account number.
+      </>
+    ),
     time: "About 2 minutes",
   },
   {
     n: "3",
     title: "Save the prices you charge most",
-    body: "Price list, then Add a price. Your callout fee, your hourly rate, the parts you fit most often. You do not have to do this first, and you can skip it entirely, but every price you save here is one you never type again. You can also save a price straight off a quote later, so the list builds itself while you work.",
+    body: (
+      <>
+        <MenuItem>Price list</MenuItem> then <Btn>Add a price</Btn>. Your callout fee, your hourly
+        rate, the parts you fit most often. You can skip this entirely and come back, but every
+        price saved here is one you never type again. You can also save a price straight off a
+        quote later with <BtnOutline>Save to price list</BtnOutline>, so the list builds itself
+        while you work.
+      </>
+    ),
     time: "As long as you like, and you can come back",
   },
   {
     n: "4",
     title: "Build your first quote",
-    body: "New quote on the home screen. Choose the customer, or add them right there if they are new. Tap prices from your list, or type a one-off line. The total works itself out as you go.",
+    body: (
+      <>
+        Press <Btn>New quote</Btn> on your home screen. Choose the customer, or press{" "}
+        <BtnOutline>Add a new customer</BtnOutline> right there if they are new. Search your price
+        list or type a one-off line. The total works itself out as you go.
+      </>
+    ),
     time: "Under a minute once your prices are in",
   },
   {
     n: "5",
     title: "Send it",
-    body: "Press Issue, which gives the quote its number, then Send on WhatsApp. It opens WhatsApp on your own phone with the message already written and a link to the quote. It comes from your number, so your customer sees a name they know. You can see when they open it.",
+    body: (
+      <>
+        Press <Btn>Issue this quote</Btn>, which gives it a number and locks the amounts, then{" "}
+        <BtnWhatsApp>Send on WhatsApp</BtnWhatsApp>. Your own WhatsApp opens with the message
+        already written and a link to the quote, so it arrives from a number your customer
+        recognises. You can see when they open it.
+      </>
+    ),
     time: "Seconds",
   },
   {
     n: "6",
     title: "Turn it into an invoice and get paid",
-    body: "Customer says yes and the job is done, so open the quote and press Turn into invoice. Nothing is retyped. Send it the same way. When the money lands, press Mark as paid, or record a part payment if they paid some of it.",
+    body: (
+      <>
+        Customer says yes and the job is done, so open the quote and press{" "}
+        <Btn>Turn into invoice</Btn>. Nothing is retyped. Send it the same way. When the money
+        lands, press <BtnPaid>Mark paid</BtnPaid> and say how they paid, or record a part payment
+        if they only paid some of it.
+      </>
+    ),
     time: "Seconds",
   },
 ];

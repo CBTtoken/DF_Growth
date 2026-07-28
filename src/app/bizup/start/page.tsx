@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { bizupLoginPath } from "@/lib/bizup/product";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { createBizUpAccount } from "@/app/bizup/actions";
+import { createBizUpAccount, logOutOfBizUp } from "@/app/bizup/actions";
 import { getMyBizUpAccount } from "@/lib/bizup/account";
 import { BusinessProfileForm } from "@/components/bizup/BusinessProfileForm";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -19,14 +19,16 @@ export default async function BizUpStartPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect(await bizupLoginPath());
 
-  // Signup creates the account row the moment the emailed code is
-  // confirmed, so by the time a new member taps "Set up my business" the
-  // account always exists. This used to redirect them to the dashboard,
-  // which meant the setup screen became unreachable the moment it was
-  // needed, and the checklist button pointed at a page that bounced.
-  // Sends them to the same form they came for instead.
+  // A member who already has an account goes home, not to a setup screen.
+  //
+  // This used to send them to /bizup/settings/business, from a time when
+  // the setup checklist's first step pointed here and needed somewhere to
+  // land. That checklist now links straight to the settings page, so the
+  // redirect had outlived its reason and was doing harm: Dewald's browser
+  // autocompletes to /start, and being bounced onto a setup form makes a
+  // finished account look like an unfinished registration every time.
   const existing = await getMyBizUpAccount();
-  if (existing) redirect("/bizup/settings/business");
+  if (existing) redirect("/bizup");
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -52,6 +54,26 @@ export default async function BizUpStartPage() {
             />
           </div>
         </div>
+
+        {/* A way out. This page carries no navigation on purpose, because a
+            member with no account yet has nowhere in KatisoBiz to navigate
+            to, but that made it a screen with no exit at all. Logging out is
+            the honest escape: the business name genuinely is required
+            before anything else works, so offering "skip" would be a button
+            that bounced straight back here. */}
+        <p className="text-center text-sm text-gray-500">
+          Not ready yet?{" "}
+          <span className="inline-block">
+            <form action={logOutOfBizUp} className="inline">
+              <button
+                type="submit"
+                className="font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                Log out and come back later
+              </button>
+            </form>
+          </span>
+        </p>
       </div>
       <SiteFooter />
     </main>
