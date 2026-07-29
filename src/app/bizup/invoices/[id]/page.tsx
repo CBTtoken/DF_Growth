@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
 import { addLine, updateLine, removeLine, setRateType, saveLineToPriceList } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
-import { updateInvoiceCustomer } from "@/app/bizup/invoices/actions";
+import { updateInvoiceCustomer, addCustomerToInvoice } from "@/app/bizup/invoices/actions";
 import { remindAboutInvoice } from "@/app/bizup/invoices/reminder-actions";
 import { remindedAgoLabel } from "@/lib/bizup/reminders";
 import { nowMillis } from "@/lib/bizup/period";
@@ -115,6 +115,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
               customers={customers ?? []}
               selectedId={doc.customer_id}
               label="Who is this invoice for?"
+              addAction={addCustomerToInvoice}
             />
             <div className="flex flex-wrap items-center gap-3">
               <button

@@ -410,3 +410,57 @@ export async function updateInvoiceCustomer(formData: FormData): Promise<void> {
   await admin.from("bizup_documents").update({ customer_id: customerId }).eq("id", documentId);
   revalidatePath(`/bizup/invoices/${documentId}`);
 }
+
+/**
+ * The same fast path the quote screen has: a customer created from a name
+ * typed into the invoice, without a trip to a separate page.
+ *
+ * Both screens get it because both hit the same wall. The full customer
+ * form stays where it is for anyone who wants the detail.
+ */
+export async function addCustomerToInvoice(formData: FormData): Promise<void> {
+  const documentId = String(formData.get("documentId") ?? "");
+  const name = String(formData.get("newCustomerName") ?? "").trim();
+  if (!name) return;
+
+  const account = await currentAccount();
+  if (!account) return;
+
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("bizup_documents")
+    .select("id, number")
+    .eq("id", documentId)
+    .eq("account_id", account.id)
+    .eq("doc_type", "invoice")
+    .maybeSingle();
+
+  // Same rule as above: an issued invoice's customer is frozen on it.
+  if (!doc || doc.number) return;
+
+  const { data: existing } = await admin
+    .from("bizup_customers")
+    .select("id")
+    .eq("account_id", account.id)
+    .ilike("name", name)
+    .maybeSingle();
+
+  let customerId = existing?.id ?? null;
+
+  if (!customerId) {
+    const { data: created, error } = await admin
+      .from("bizup_customers")
+      .insert({ account_id: account.id, name })
+      .select("id")
+      .single();
+    if (error || !created) {
+      console.error("Failed to add a customer from the invoice screen", error);
+      return;
+    }
+    customerId = created.id;
+  }
+
+  await admin.from("bizup_documents").update({ customer_id: customerId }).eq("id", documentId);
+  revalidatePath(`/bizup/invoices/${documentId}`);
+  revalidatePath("/bizup/customers");
+}

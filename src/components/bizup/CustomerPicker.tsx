@@ -22,11 +22,26 @@ export function CustomerPicker({
   selectedId,
   name = "customerId",
   label = "Who is this for?",
+  addAction,
 }: {
   customers: PickerCustomer[];
   selectedId: string | null;
   name?: string;
   label?: string;
+  /**
+   * Creates a customer from whatever name has been typed, without leaving
+   * the screen. Passed in from the server component that owns the form.
+   *
+   * Dewald, 30 July: "they should have an option from there to Add
+   * customer, most people and systems do that and are used to that flow,
+   * one screen that can have multiple action points." The live drafts
+   * agreed with him: ten of eleven unfinished quotes had no customer on
+   * them, and the only way to add one was a trip to a separate page.
+   *
+   * Optional, so the invoice screen and anywhere else using this picker are
+   * unchanged until they want it.
+   */
+  addAction?: (formData: FormData) => void | Promise<void>;
 }) {
   const [chosen, setChosen] = useState<string>(selectedId ?? "");
   const [query, setQuery] = useState("");
@@ -74,9 +89,34 @@ export function CustomerPicker({
             aria-label="Search your customers"
           />
 
+          {/* The fast path: whatever they have typed becomes a customer on
+              this quote, here, with no second screen. Shown as soon as
+              there is no exact match, so it is available while they are
+              still typing rather than only after the list empties.
+
+              A formAction on this button submits the surrounding form to a
+              different Server Action, which is why no nested form is
+              needed. The hidden input carries the typed name, because it
+              otherwise lives only in React state. */}
+          {addAction && q.length > 1 && !customers.some((c) => c.name.toLowerCase() === q) && (
+            <>
+              <input type="hidden" name="newCustomerName" value={query.trim()} />
+              <button
+                type="submit"
+                formAction={addAction}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-base font-bold text-white transition hover:bg-brand-dark"
+              >
+                <span aria-hidden className="text-lg leading-none">+</span>
+                Add &ldquo;{query.trim()}&rdquo; as the customer
+              </button>
+            </>
+          )}
+
           {shown.length === 0 ? (
             <p className="text-sm font-normal text-gray-500">
-              No customer matches that. Add them as a new customer below.
+              {q.length > 1
+                ? "No saved customer matches that, so use the button above."
+                : "Start typing to search, or to add someone new."}
             </p>
           ) : (
             <div className="flex flex-col gap-1">

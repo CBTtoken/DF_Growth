@@ -340,6 +340,65 @@ export async function updateQuoteMeta(formData: FormData): Promise<void> {
 }
 
 /**
+ * Creates a customer from a name typed straight into the quote, and
+ * attaches them, without leaving the screen.
+ *
+ * The live drafts are what asked for this. Of eleven unfinished quotes on
+ * 30 July, ten had no customer on them and seven had nothing typed at all.
+ * The only route to adding someone was a link to a separate page carrying a
+ * full form: name, business or person, registration number, VAT number,
+ * email, phone, address. That is a lot to walk into when the customer is
+ * standing in front of you and you want to write down a price.
+ *
+ * The full form stays exactly where it was, because Dewald is right that
+ * people expect it and some customers genuinely need the detail. This is a
+ * fast path alongside it, not a replacement.
+ *
+ * A name is all a quote actually needs. Everything else can be added later
+ * from the customer's own page.
+ */
+export async function addCustomerToQuote(formData: FormData): Promise<void> {
+  const documentId = String(formData.get("documentId") ?? "");
+  const name = String(formData.get("newCustomerName") ?? "").trim();
+  if (!name) return;
+
+  const owned = await ownedDocument(documentId);
+  if (!owned) return;
+  const { account, doc, admin } = owned;
+  if (!isEditable(doc)) return;
+
+  // Reuses an existing customer of the same name rather than making a
+  // second one. A member typing "Mrs Naidoo" twice means the same person,
+  // and a duplicated customer list is its own small mess.
+  const { data: existing } = await admin
+    .from("bizup_customers")
+    .select("id")
+    .eq("account_id", account.id)
+    .ilike("name", name)
+    .maybeSingle();
+
+  let customerId = existing?.id ?? null;
+
+  if (!customerId) {
+    const { data: created, error } = await admin
+      .from("bizup_customers")
+      .insert({ account_id: account.id, name })
+      .select("id")
+      .single();
+    if (error || !created) {
+      console.error("Failed to add a customer from the quote screen", error);
+      return;
+    }
+    customerId = created.id;
+  }
+
+  await admin.from("bizup_documents").update({ customer_id: customerId }).eq("id", documentId);
+
+  revalidatePath(`/bizup/quotes/${documentId}`);
+  revalidatePath("/bizup/customers");
+}
+
+/**
  * Sec 7: "Drafts have no number and can be deleted freely." The number
  * check is what stops this ever becoming the ability to delete an issued
  * document, so it is enforced here rather than by hiding the button.

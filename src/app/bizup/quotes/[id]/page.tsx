@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
-import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote, setRateType, saveLineToPriceList } from "@/app/bizup/quotes/actions";
+import { addLine, updateLine, removeLine, updateQuoteMeta, deleteDraftQuote, setRateType, saveLineToPriceList, addCustomerToQuote } from "@/app/bizup/quotes/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { setQuoteOutcome, convertToInvoice } from "@/app/bizup/quotes/convert-actions";
 import { IssueQuoteButton, ShareQuote } from "@/components/bizup/ShareQuote";
@@ -117,6 +117,7 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
               customers={customers ?? []}
               selectedId={doc.customer_id}
               label="Customer"
+              addAction={addCustomerToQuote}
             />
           ) : (
             <div className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
