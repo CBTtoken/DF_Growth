@@ -70,7 +70,7 @@ export const customPageMeta: Record<string, CustomPageMeta> = {
       "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together — for everyone still standing in the middle of the hard thing.",
   },
   "rebiz-nomads": {
-    title: "KatisoBiz Nomads — A Private Business Community",
+    title: "KatisoBiz Nomads: A Private Business Community",
     description:
       "Included with every DigitalFlyer membership: a private business network, a real deal room, and monthly founder sessions for South African business owners.",
   },
