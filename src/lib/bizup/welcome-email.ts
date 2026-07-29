@@ -60,31 +60,46 @@ export async function sendKatisoBizWelcomeEmail({
       Good day ${businessName},
     </p>
 
-    <p style="font-size:16px;line-height:1.6;color:${INK};margin:0 0 6px;font-weight:700;">
-      Right, let us get your quoting and invoicing looking like a champion.
+    <p style="font-size:16px;line-height:1.6;color:${INK};margin:0 0 12px;font-weight:700;">
+      Super excited to have you on board.
+    </p>
+
+    <p style="font-size:15px;line-height:1.6;color:#4a5b6b;margin:0 0 18px;">
+      Let us get you quoting and invoicing like a champ, and keep both your customers and your
+      accountant happy while we are at it. You are in already. No card needed, nothing to install,
+      and ten free documents every month.
     </p>
 
     <p style="font-size:15px;line-height:1.6;color:#4a5b6b;margin:0 0 22px;">
-      You are in. No card, nothing to install, and ten free documents a month to prove it works
-      before you spend a cent. Here is the whole thing in three steps, and the two bits that trip
-      people up so they do not trip you up.
+      Below is your first quote from start to finish. Follow it exactly and you will have one sent
+      in about a minute. Every button we mention is written the way you will see it on your screen.
     </p>
 
     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
       ${step(
         "1",
-        "Build the quote where you are standing",
-        "Tap in the labour, the parts, the callout. Anything you type can be saved to your price list, so the second quote is faster than the first."
+        "Press New quote",
+        "It is the big blue button on your home screen, under <strong>Get to work</strong>."
       )}
       ${step(
         "2",
-        "Add the customer, and this is the one that catches people",
-        "A quote needs a name on it before it can go out, because a document with nobody on it is not a document. If they are not on your list yet, press <strong>Add a new customer</strong> right there in the quote. You will not lose your work and you will not have to start again."
+        "Enter what you are charging for",
+        "Under <strong>What you are charging for</strong>, enter the job in your own words, for example <em>Replace geyser</em>. Enter the price next to it and press <strong>Add</strong>. Do that again for each item: labour, parts, callout, whatever the job needs. Anything you enter can be saved to your price list, so next time it is already there."
       )}
       ${step(
         "3",
-        "Send it on WhatsApp, from your own number",
-        "One tap opens WhatsApp with the message ready. Your customer sees a name they recognise, not a stranger. When they open it, we will tell you."
+        "Say who the quote is for",
+        "Scroll to <strong>Who is this quote for?</strong> If the customer is already saved, press <strong>Choose someone</strong> and pick them. If this is a new customer, press <strong>Add a new customer</strong>, enter their name, and press <strong>Save customer</strong>. You come straight back to your quote with their name on it and nothing lost."
+      )}
+      ${step(
+        "4",
+        "Press Issue this quote",
+        "This gives the quote its number and locks the amounts. Until you do this it is only a draft and cannot be sent. Nothing is emailed to anyone at this point."
+      )}
+      ${step(
+        "5",
+        "Press Send on WhatsApp",
+        "Your own WhatsApp opens with the message already written and a link to the quote. You press send yourself, so it comes from your number and your customer sees a name they know. When they open it, we email you to let you know."
       )}
     </table>
 
@@ -93,10 +108,16 @@ export async function sendKatisoBizWelcomeEmail({
         One thing to do before your first invoice
       </p>
       <p style="margin:0;font-size:14px;line-height:1.55;color:#4a5b6b;">
-        Add your banking details under Settings. They print on every invoice automatically, with
-        your invoice number as the payment reference, so the money that lands in your account is
-        money you can actually match to a job. Without them your customer gets an invoice and no
-        way to pay it, which helps nobody. You only ever do this once.
+        Press <strong>Settings</strong> in the menu, then <strong>Banking details</strong>, and
+        enter your bank, account number and branch code. You only ever do this once. After that
+        they print on every invoice automatically, with your invoice number as the reference, so
+        the money landing in your account is money you can match to a job. Without them your
+        customer receives an invoice with no way to pay you.
+      </p>
+      <p style="margin:10px 0 0;font-size:14px;line-height:1.55;color:#4a5b6b;">
+        While you are in <strong>Settings</strong>, press <strong>Business details</strong> and
+        enter your business name, address and phone number. That is what prints at the top of
+        every quote and invoice you send.
       </p>
     </div>
 
@@ -107,16 +128,45 @@ export async function sendKatisoBizWelcomeEmail({
     </p>
 
     <p style="font-size:15px;line-height:1.6;color:#4a5b6b;margin:0 0 8px;">
-      Two more things worth knowing. If you are not registered for VAT, KatisoBiz never mentions
-      VAT at all, so there is nothing to get wrong. And if you send an invoice with a mistake on
-      it, there is a <strong>Fix this invoice</strong> button that sorts it out properly in the
-      background, the way SARS expects, without you needing to know what a credit note is.
+      Two more things worth knowing, and then we will leave you alone. If you are not registered
+      for VAT, KatisoBiz never mentions VAT at all, so there is nothing for you to get wrong. And
+      if you send an invoice with a mistake on it, press <strong>Fix this invoice</strong> and
+      answer one question. It sorts the rest out properly behind the scenes, the way SARS expects,
+      without you needing to know what a credit note is.
     </p>
 
-    <p style="font-size:15px;line-height:1.6;color:${INK};margin:22px 0 0;">
-      If something does not make sense, or does not work, reply to this email and tell us. A real
-      person reads it, and at this stage we would genuinely rather hear it than not.
+    <p style="font-size:15px;line-height:1.6;color:${INK};margin:22px 0 8px;font-weight:700;">
+      Stuck at any point? Please ask.
     </p>
+    <p style="font-size:15px;line-height:1.6;color:#4a5b6b;margin:0 0 22px;">
+      The <a href="${origin}/help" style="color:${BRAND_BLUE};font-weight:700;">Help page</a> walks
+      through every screen with the buttons named, and answers the questions we get asked most. If
+      it does not cover what you need, just hit reply to this email, or write to
+      <a href="mailto:info@digitalflyer.co.za" style="color:${BRAND_BLUE};">info@digitalflyer.co.za</a>,
+      or WhatsApp us on <strong>072 311 0570</strong>. A real person reads it and we would honestly
+      rather hear from you than have you give up on something small.
+    </p>
+
+    <div style="border-top:1px solid #e5e7eb;padding-top:18px;">
+      <p style="margin:0 0 8px;font-size:15px;font-weight:700;color:${INK};">
+        When ten documents a month is not enough
+      </p>
+      <p style="margin:0 0 6px;font-size:14px;line-height:1.6;color:#4a5b6b;">
+        <strong>R49 a month</strong> gives you 75 documents, your own logo on every quote and
+        invoice, all five document styles, your customer list, reports, and a one tap export for
+        your accountant.
+      </p>
+      <p style="margin:0 0 14px;font-size:14px;line-height:1.6;color:#4a5b6b;">
+        <strong>R89 a month</strong> is the same thing with no limit on documents at all.
+      </p>
+      <p style="margin:0;font-size:14px;line-height:1.6;color:#4a5b6b;">
+        And if you also need a proper web page so that new customers can find you in the first
+        place, have a look at
+        <a href="https://growth.digitalflyersa.co.za/pricing" style="color:${BRAND_BLUE};font-weight:700;">DigitalFlyer Growth</a>.
+        It builds you a professional page, puts your business on our marketplace, and the R49
+        KatisoBiz plan is included in it at no extra cost.
+      </p>
+    </div>
   </div>`;
 
   const result = await sendEmail({
@@ -124,6 +174,10 @@ export async function sendKatisoBizWelcomeEmail({
     subject: "Welcome to KatisoBiz, let us get your first quote out",
     html,
     fromName: "KatisoBiz",
+    // Without this, a reply goes to the sending subdomain, which nobody
+    // reads. The email invites people to reply and tells them a real
+    // person sees it, so that has to be true.
+    replyTo: "info@digitalflyer.co.za",
   });
 
   if (!result.ok) {
