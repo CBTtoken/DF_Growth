@@ -9,6 +9,7 @@ import { remindAboutInvoice } from "@/app/bizup/invoices/reminder-actions";
 import { daysOverdue, overdueLabel, remindedAgoLabel } from "@/lib/bizup/reminders";
 import { ShareBizUp } from "@/components/bizup/ShareBizUp";
 import { InstallApp } from "@/components/bizup/InstallApp";
+import { SubmitButton } from "@/components/bizup/SubmitButton";
 import type { HomeSummary } from "@/lib/bizup/home";
 
 // Rebuilt to Dewald's own running order, which is better than mine was:
@@ -102,13 +103,13 @@ export function BizUpHome({
           </p>
 
           <form action={createQuote} className="mt-5 block">
-            <button
-              type="submit"
-              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark"
+            <SubmitButton
+              pendingLabel="Opening your quote..."
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-70"
             >
               <span aria-hidden className="text-2xl leading-none">+</span>
               Start a quote
-            </button>
+            </SubmitButton>
           </form>
 
           <p className="mt-4 text-xs text-gray-500">
@@ -174,24 +175,24 @@ export function BizUpHome({
         <h2 className="text-sm font-semibold text-ink">What do you want to do?</h2>
 
         <form action={createQuote} className="mt-2 block">
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark"
+          <SubmitButton
+            pendingLabel="Opening your quote..."
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark disabled:opacity-70"
           >
             <span aria-hidden className="text-2xl leading-none">+</span>
             Start a quote
-          </button>
+          </SubmitButton>
         </form>
 
         <div className="mt-3 grid grid-cols-3 gap-3">
           <form action={createInvoice} className="contents">
-            <button
-              type="submit"
-              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+            <SubmitButton
+              pendingLabel="Opening..."
+              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand disabled:opacity-70"
             >
               <span aria-hidden className="text-lg leading-none">+</span>
               Invoice
-            </button>
+            </SubmitButton>
           </form>
 
           <Link
