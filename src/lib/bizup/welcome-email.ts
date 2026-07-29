@@ -142,9 +142,9 @@ export async function sendKatisoBizWelcomeEmail({
       The <a href="${origin}/help" style="color:${BRAND_BLUE};font-weight:700;">Help page</a> walks
       through every screen with the buttons named, and answers the questions we get asked most. If
       it does not cover what you need, just hit reply to this email, or write to
-      <a href="mailto:info@digitalflyer.co.za" style="color:${BRAND_BLUE};">info@digitalflyer.co.za</a>,
-      or WhatsApp us on <strong>072 311 0570</strong>. A real person reads it and we would honestly
-      rather hear from you than have you give up on something small.
+      <a href="mailto:info@digitalflyer.co.za" style="color:${BRAND_BLUE};">info@digitalflyer.co.za</a>.
+      A real person reads it and we would honestly rather hear from you than have you give up on
+      something small.
     </p>
 
     <div style="border-top:1px solid #e5e7eb;padding-top:18px;">
