@@ -100,11 +100,13 @@ export async function createCustomer(
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
 
   const admin = createAdminClient();
-  const { error } = await admin
+  const { data: created, error } = await admin
     .from("bizup_customers")
-    .insert({ account_id: accountId, ...toRow(parsed.data) });
+    .insert({ account_id: accountId, ...toRow(parsed.data) })
+    .select("id")
+    .single();
 
-  if (error) {
+  if (error || !created) {
     console.error("Failed to create KatisoBiz customer", error);
     return { error: { _form: ["We couldn't save that. Please try again."] } };
   }
@@ -115,7 +117,40 @@ export async function createCustomer(
   // middle of an invoice does not lose the invoice. Only ever an internal
   // path: an absolute URL here would be an open redirect.
   const next = field(formData, "next");
-  redirect(next.startsWith("/bizup/") ? next : "/bizup/customers");
+  const safeNext = next.startsWith("/bizup/") ? next : "/bizup/customers";
+
+  // And attaches them to that document, which is the whole point of having
+  // come here from it.
+  //
+  // Found in the live data on 29 July 2026: ten accounts, eight drafts,
+  // seven of them stopped on "no customer" with real money already typed
+  // in, one of R55,020. The link back existed but the attachment did not,
+  // so a member added the customer, landed back on a quote still saying
+  // "Not chosen yet", and had no reason to guess that a further two steps
+  // were needed. This is the wall the whole product was standing behind.
+  const documentMatch = safeNext.match(/^\/bizup\/(quotes|invoices)\/([0-9a-f-]{36})/i);
+  if (documentMatch) {
+    const { error: attachError } = await admin
+      .from("bizup_documents")
+      .update({ customer_id: created.id })
+      .eq("id", documentMatch[2])
+      // Scoped to the account, because the id came off a URL. Without this
+      // a crafted next parameter would attach a customer to a stranger's
+      // document.
+      .eq("account_id", accountId)
+      // Only a draft. An issued document's customer is frozen on it and
+      // must never change.
+      .eq("status", "draft");
+
+    if (attachError) {
+      // Not fatal: the customer exists and the member can still pick them
+      // by hand, which is strictly better than losing the customer too.
+      console.error("Failed to attach new KatisoBiz customer to document", attachError);
+    }
+    revalidatePath(safeNext);
+  }
+
+  redirect(safeNext);
 }
 
 export async function updateCustomer(

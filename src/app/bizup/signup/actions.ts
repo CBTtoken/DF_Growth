@@ -10,6 +10,7 @@ import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { verifyEmailAddress } from "@/lib/email/verify-address";
+import { sendKatisoBizWelcomeEmail } from "@/lib/bizup/welcome-email";
 
 // KatisoBiz signup, in two steps.
 //
@@ -167,6 +168,26 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
     if (accountError) {
       console.error("Failed to create KatisoBiz account after confirmation", accountError);
       return { error: { _form: ["We couldn't finish setting that up. Please try again."] }, awaitingCode: email };
+    }
+  }
+
+  // The welcome email, sent only to a member who has actually confirmed
+  // their address, so a mistyped signup never generates a bounce against
+  // our sending reputation. Awaited for the same reason as the conversion
+  // event below: bare promises do not reliably complete on this deployment.
+  //
+  // Failure here must never block the signup. A member who is in but did
+  // not get an email is a far better outcome than one who is bounced back
+  // to the form because a mail server was slow.
+  if (!existing) {
+    const welcomeHost = h.get("host") ?? "katisobiz.co.za";
+    const welcomeOrigin = welcomeHost.startsWith("localhost")
+      ? `http://${welcomeHost}/bizup`
+      : "https://katisobiz.co.za";
+    try {
+      await sendKatisoBizWelcomeEmail({ businessName, email, origin: welcomeOrigin });
+    } catch (err) {
+      console.error("KatisoBiz welcome email threw", err);
     }
   }
 
