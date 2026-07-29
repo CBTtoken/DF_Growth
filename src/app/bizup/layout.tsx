@@ -20,8 +20,33 @@ import { BizUpNav } from "@/components/bizup/BizUpNav";
 // breaks when that one page is restructured.
 //
 // Growth's own domain is verified separately and does not use this value.
+// The appleWebApp block below is what makes an iPhone treat this as an
+// installed app rather than a Safari bookmark. Apple ignores the web
+// manifest almost entirely: it reads its own tags for the icon, the title
+// under the icon, and whether to open without the browser bar. Android
+// reads the manifest and ignores these. Both are needed.
 export const metadata: Metadata = {
   other: { "facebook-domain-verification": "4xxcblvnpq67238mlcrpuzxxc3yih0" },
+  appleWebApp: {
+    capable: true,
+    title: "KatisoBiz",
+    // Draws the page behind the clock and battery, tinted by the theme
+    // colour, instead of leaving a grey strip above the header.
+    statusBarStyle: "black-translucent",
+  },
+  icons: {
+    // Apple does not read the manifest's icon list. Without this it
+    // screenshots the page and uses that as the home screen icon, which
+    // looks like a mistake.
+    apple: [{ url: "/katisobiz/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+};
+
+// Colours the phone's own status bar to match the header, so the app does
+// not open with a white band above it. Separate from metadata because Next
+// treats the theme colour as viewport configuration.
+export const viewport = {
+  themeColor: "#1081b8",
 };
 
 // Mounts the navigation once, for every signed-in member, on every page.

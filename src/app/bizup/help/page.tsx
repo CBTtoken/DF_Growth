@@ -200,6 +200,31 @@ const SCREENS = [
 
 const FAQ_GROUPS = [
   {
+    heading: "Putting KatisoBiz on your phone",
+    items: [
+      {
+        q: "Can I get a KatisoBiz icon on my phone like a normal app?",
+        a: "Yes, and it takes about ten seconds. There is nothing to download from the Play Store or the App Store, and it uses almost no space on your phone. Once it is there, KatisoBiz opens full screen with your icon, exactly like any other app.",
+      },
+      {
+        q: "How do I add it on an Android phone?",
+        a: "Open katisobiz.co.za in Chrome and log in. On your home screen you will see a card that says Put KatisoBiz on your phone. Press Add to my phone, then press Install when your phone asks. That is it. If you do not see the card, press the three dots at the top right of Chrome and choose Add to Home screen or Install app.",
+      },
+      {
+        q: "How do I add it on an iPhone?",
+        a: "iPhones do not offer a button for this, so it is done by hand and it is easy once you know. Open katisobiz.co.za in Safari, it must be Safari and not Chrome. Press the Share button at the bottom of the screen, the square with an arrow pointing up out of it. Scroll down the list and press Add to Home Screen. Then press Add at the top right. The KatisoBiz icon is now on your phone with your other apps.",
+      },
+      {
+        q: "Does it cost data or take up space?",
+        a: "Almost none. It is not a download like a normal app, so there is nothing to install and no big file. It uses about the same data as opening the website, because that is what it is.",
+      },
+      {
+        q: "Will I still get my documents if I remove the icon?",
+        a: "Yes. Nothing is stored only on your phone. Removing the icon is like deleting a bookmark, your account, your quotes and your invoices are all still there when you log in again from anywhere.",
+      },
+    ],
+  },
+  {
     heading: "Quotes and invoices",
     items: [
       {

@@ -8,6 +8,7 @@ import { capWarning } from "@/lib/bizup/cap";
 import { remindAboutInvoice } from "@/app/bizup/invoices/reminder-actions";
 import { daysOverdue, overdueLabel, remindedAgoLabel } from "@/lib/bizup/reminders";
 import { ShareBizUp } from "@/components/bizup/ShareBizUp";
+import { InstallApp } from "@/components/bizup/InstallApp";
 import type { HomeSummary } from "@/lib/bizup/home";
 
 // Rebuilt to Dewald's own running order, which is better than mine was:
@@ -349,6 +350,12 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
           </ul>
         )}
       </section>
+
+      {/* Below the work, not above it. A member opening this to send a
+          quote should see the quote buttons first; an install prompt at the
+          top of the screen is the kind of thing people learn to dismiss
+          without reading. It hides itself once installed or once declined. */}
+      <InstallApp />
 
       <ShareBizUp />
 
