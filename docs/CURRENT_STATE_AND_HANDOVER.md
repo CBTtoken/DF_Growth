@@ -8,25 +8,57 @@ Everything below was read from the live system, not remembered.
 
 ## 1. The one number that matters right now
 
-**Eleven KatisoBiz accounts and climbing. Eight drafts. Zero documents have ever been issued.**
+**Fifteen KatisoBiz accounts and climbing, off the paid campaign. Zero documents issued by a real member.**
 
-Not one, by anybody, ever. That is the whole story of the product right now and it outranks every other piece of work.
+The account count moves daily, so treat it as stale and re-read it. The zero is the number that matters, and the day it stops being zero is the day this section can be rewritten. One issued document exists and it belongs to Dewald's own test account, which is not the same thing.
 
-The account count is moving daily off the paid campaign, so treat it as stale and re-read it. The zero is the number that matters, and the day it stops being zero is the day this section can be rewritten.
+### What was blocking them, and what has been done about it
 
-Seven of those eight drafts were stopped on the same thing: line items entered, real money on them, one of **R55,020**, and no customer attached. `Add a new customer` inside a quote created the customer and then did not attach it, so a member came back to a quote still saying "Not chosen yet" with no reason to guess two further steps were needed.
+Reading every unfinished draft on 30 July gave a much sharper picture than the totals did:
 
-**That is fixed and verified on the live site** (commit `0396860`). A customer added from inside a quote now attaches itself.
+- **7 opened a quote and typed nothing at all**
+- **3 entered line items but never attached a customer**, one worth R55,020
+- **1 was complete and simply never issued**
 
-**A welcome email went out to every existing member** on 29 July, naming every button exactly as it appears on screen. It did not exist before; the only message a member had ever received was the six digit login code.
+Everything below came out of that, and all of it is live and verified:
+
+- `Add a new customer` inside a quote created the customer and did not attach it, so a member returned to a quote still saying "Not chosen yet". Fixed.
+- A customer can now be created **by typing a name straight into the quote or invoice**, no second screen. The full customer form stays alongside it.
+- With no saved customers the box **opens ready to type** rather than hiding behind a tap.
+- The home screen leads with **Start a quote**, full width, and a member who has never issued anything gets a first-run screen with one instruction instead of three cards reading R0.00.
+- The setup checklist became **one button** that names the consequence, not the task.
+- A **welcome email** and **three check-in emails** now exist where there was previously only a login code.
 
 ### What to check first, next session
-
-Query how many documents now have a number. If members have started issuing, both fixes worked and the next conversation is about upgrades. **If it is still zero after 48 hours, the wall is somewhere else and it must be found by looking at the data again, not guessed at.**
 
 ```sql
 select count(*) from public.bizup_documents where number is not null;
 ```
+
+If members have started issuing, the fixes worked and the conversation moves to upgrades. **If it is still zero, the wall is somewhere else and it must be found by reading the drafts again, not guessed at.** Reading what each draft is actually missing, rather than counting them, is what produced everything useful in this section.
+
+The check-in emails began going out on the morning of 30 July, so **replies in info@digitalflyer.co.za are the best evidence available** and should be read before building anything.
+
+---
+
+## 1b. Next build: WhatsApp, across both products
+
+Flagged by Dewald on 30 July as the next major piece of work, spanning Growth and KatisoBiz. **Read this before designing anything, because a working skeleton already exists and was never switched on.**
+
+**Already in the repository:**
+
+- `src/app/api/whatsapp/webhook/route.ts`, the inbound webhook, signature verified
+- `src/lib/whatsapp/` with `graph-api.ts`, `parse-webhook.ts`, `signature.ts`, `conversation.ts` and `handle-message.ts`
+- `src/lib/bizup/whatsapp.ts`, which formats a member's number for the wa.me links KatisoBiz already uses
+- Four migrations from 12 July, including the `whatsapp_conversations` table with resumable step state
+
+**What it currently does:** a conversational Growth onboarding, asking a business name and walking through signup over WhatsApp. It is keyed on a stable conversation id rather than the phone number, deliberately, and the reasoning is in the migration comment.
+
+**What it does not do:** anything at all in production. `whatsapp_conversations` has **zero rows**. Of the credentials it needs, only `WHATSAPP_WEBHOOK_VERIFY_TOKEN` is set; `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` and the app secret are all absent, so it can receive nothing and send nothing.
+
+**Two things worth settling before writing code.** First, whether this is one WhatsApp number for both products or one each, because the answer changes the routing at the webhook rather than being a later detail. Second, that KatisoBiz's existing WhatsApp behaviour is deliberately *not* automated: a member presses a button, their own WhatsApp opens with the message ready, and they press send. Documents come from the member's own number, never from ours. That is a stated trust decision, repeated in several places in the code, and an automated sender must not quietly undo it.
+
+There is also a separate WhatsApp backend for Vowie, mentioned in memory as code-complete and waiting on infrastructure funds. Worth asking whether anything there is reusable before rebuilding.
 
 ---
 
@@ -46,9 +78,15 @@ select count(*) from public.bizup_documents where number is not null;
 
 ---
 
-## 4. What shipped on 28 and 29 July
+## 4. What shipped on 28, 29 and 30 July
 
 Grouped so a reader can see the shape rather than a commit list.
+
+**Speed.** The database is in eu-west-1, Ireland, and no Vercel region was pinned, so the serverless functions had been placed in iad1, Washington DC. Every query crossed the Atlantic. Server thinking time measured at 390 to 420ms; pinning `dub1` in `vercel.json` brought it to about 285ms. Separately, the main buttons gave no feedback at all when pressed, which made any latency read as a broken button, so they now say what they are doing and disable while they do it. Cape Town would put the server nearer members but leave every query crossing to Ireland, which is worse whenever a page runs more than one query, and all of them do.
+
+**Installable.** KatisoBiz can be added to a phone's home screen with its own icon, opening full screen with no browser bar and nothing to download. The install prompt is ours rather than the browser's, because Chrome only offers it when it feels like it and iPhones never offer it at all. iPhone users get written steps instead. The manifest is host-aware, so Growth is not made installable by the same code.
+
+**Naming.** RE:Biz Nomads became KatisoBiz Nomads everywhere, including the `/rebiz` slug, which now redirects. The two Facebook groups are still called RE:Biz on Facebook itself and only Dewald can change those.
 
 **Money.** Subscription renewals were being silently discarded, because Paystack sends a renewal with none of the metadata set at checkout and the handler keyed on exactly that. Nothing broke for members but no payment record was written, so revenue was understated and every paying member would have appeared to churn after one month. Now matched on plan code and recorded as a distinct `renewal` kind.
 
