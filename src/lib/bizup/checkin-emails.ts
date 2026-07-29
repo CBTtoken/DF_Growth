@@ -1,0 +1,161 @@
+import { sendEmail } from "@/lib/email/resend";
+import { formatZar } from "@/lib/bizup/money";
+
+// The three check-in emails, one per situation a member can be in a few
+// days after signing up.
+//
+// Dewald's framing, and it is better than the version I proposed. I had one
+// generic nudge; he split it by what the member has actually done, on the
+// grounds that sending "have you tried it yet" to somebody with four
+// unfinished quotes is insulting. He is right.
+//
+//   started   a draft exists and nothing was issued. The job is still warm.
+//             Asks what got in the way rather than telling them what to do,
+//             because at this size the answer is worth more than the nudge.
+//   idle      nothing created at all. Phrased as an offer of help, not a
+//             prompt to try harder.
+//   feedback  they issued something, so it worked. Asks what would make it
+//             better while the experience is still fresh.
+//
+// All three copy info@digitalflyer.co.za visibly, so a reply reaches a
+// person rather than the sending domain, and so the member can see that
+// somebody is on the other end. Deliberately cc rather than bcc.
+//
+// None of them go to a member who has switched email off. That is checked
+// by the caller, and Dewald's position on it is that he will contact those
+// people himself as the founder rather than have the system do it.
+
+const SUPPORT = "info@digitalflyer.co.za";
+const BRAND_BLUE = "#1081b8";
+const INK = "#1c2b3a";
+
+function shell(body: string): string {
+  return `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;font-size:15px;line-height:1.6;color:${INK};">${body}</div>`;
+}
+
+function replyLine(): string {
+  return `
+    <p style="margin:22px 0 0;font-size:15px;line-height:1.6;color:#4a5b6b;">
+      Just hit reply to this email and it comes straight to us, or write to
+      <a href="mailto:${SUPPORT}" style="color:${BRAND_BLUE};font-weight:700;">${SUPPORT}</a>.
+      A real person reads every one.
+    </p>`;
+}
+
+type Account = { id: string; businessName: string; email: string };
+
+async function send(account: Account, subject: string, body: string) {
+  const result = await sendEmail({
+    to: account.email,
+    subject,
+    html: shell(body),
+    fromName: "KatisoBiz",
+    replyTo: SUPPORT,
+    // Visible on purpose: a reply-all reaches a person, and seeing the
+    // address is half the reassurance.
+    cc: SUPPORT,
+  });
+  if (!result.ok) console.error("KatisoBiz check-in email failed", subject, result.error);
+  return result.ok;
+}
+
+/**
+ * They built a quote and never sent it. About 24 hours in.
+ *
+ * Names the amount when there is one, because "your R55,020 quote" makes
+ * somebody look and "your draft quote" does not.
+ */
+export async function sendStartedCheckin(
+  account: Account,
+  draft: { totalCents: number; customerName: string | null }
+): Promise<boolean> {
+  const worth =
+    draft.totalCents > 0
+      ? `a quote for <strong>${formatZar(draft.totalCents)}</strong>${
+          draft.customerName ? ` for ${draft.customerName}` : ""
+        }`
+      : "a quote";
+
+  return send(
+    account,
+    "How did you find it? Your quote is still waiting",
+    `
+      <p style="margin:0 0 14px;">Good day ${account.businessName},</p>
+
+      <p style="margin:0 0 14px;">
+        You started ${worth} on KatisoBiz and it is still sitting in your drafts, so we thought we
+        would check in rather than leave you to it.
+      </p>
+
+      <p style="margin:0 0 14px;">
+        If it is ready to go, open it, press <strong>Issue this quote</strong> to give it a number,
+        then <strong>Send on WhatsApp</strong>. Your customer gets it from your own number.
+      </p>
+
+      <p style="margin:0 0 14px;">
+        <strong>And if something got in the way, we would genuinely love to hear it.</strong> You
+        are one of our first members, so what you tell us now shapes what we build next. Was
+        something confusing, missing, or just more effort than it should have been? No answer is
+        too small or too blunt.
+      </p>
+      ${replyLine()}
+    `
+  );
+}
+
+/** Registered and created nothing. About 48 hours in. */
+export async function sendIdleCheckin(account: Account): Promise<boolean> {
+  return send(
+    account,
+    "Anything we can help with?",
+    `
+      <p style="margin:0 0 14px;">Good day ${account.businessName},</p>
+
+      <p style="margin:0 0 14px;">
+        We noticed you have signed up but not made your first quote yet, and we wanted to ask
+        whether there is anything we can help with rather than assume you are not interested.
+      </p>
+
+      <p style="margin:0 0 14px;">
+        Sometimes it is something small: not sure where to start, unsure whether you need banking
+        details first, or you simply have not had a quiet five minutes. Any of those we can sort
+        out quickly.
+      </p>
+
+      <p style="margin:0 0 14px;">
+        For what it is worth, the whole thing is one screen. Press <strong>Start a quote</strong>,
+        enter what you are charging for, add the customer, and send it on WhatsApp. Under a minute
+        once you have done it once.
+      </p>
+      ${replyLine()}
+    `
+  );
+}
+
+/** They issued something and it worked. About 72 hours in. */
+export async function sendFeedbackCheckin(account: Account): Promise<boolean> {
+  return send(
+    account,
+    "You are up and running, what would make it better?",
+    `
+      <p style="margin:0 0 14px;">Good day ${account.businessName},</p>
+
+      <p style="margin:0 0 14px;">
+        You have sent your first document on KatisoBiz, which is the part most people never get to.
+        Nicely done.
+      </p>
+
+      <p style="margin:0 0 14px;">
+        <strong>We are constantly working on making this easier, and you are in the best position
+        to tell us how.</strong> Now that you have actually used it on a real job, what was
+        awkward? What took longer than it should have? What would you add tomorrow if you could?
+      </p>
+
+      <p style="margin:0 0 14px;">
+        We are still small enough that a suggestion from you can be built the same week, and
+        several things in KatisoBiz today exist because a member asked for them.
+      </p>
+      ${replyLine()}
+    `
+  );
+}

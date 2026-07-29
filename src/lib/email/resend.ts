@@ -14,6 +14,7 @@ export async function sendEmail({
   html,
   fromName,
   replyTo,
+  cc,
 }: {
   to: string;
   subject: string;
@@ -24,6 +25,15 @@ export async function sendEmail({
   // domain, since we cannot send as an address we do not control.
   fromName?: string;
   replyTo?: string;
+  /**
+   * Copies an address the recipient can see, so a reply-all reaches a real
+   * person at DigitalFlyer rather than only the sending domain.
+   *
+   * Added for the check-in emails at Dewald's ask. Deliberately visible
+   * rather than bcc: the point is that the member can see somebody is on
+   * the other end of it.
+   */
+  cc?: string;
 }): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, error: "Missing RESEND_API_KEY" };
@@ -55,6 +65,7 @@ export async function sendEmail({
       subject,
       html: htmlWithFooter,
       ...(replyTo ? { reply_to: replyTo } : {}),
+      ...(cc ? { cc } : {}),
     }),
   });
 
