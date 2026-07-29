@@ -2,7 +2,7 @@
 
 ## 1. Context
 
-DigitalFlyer Growth is live in production at `https://growth.digitalflyersa.co.za`, Paystack in live mode, real transactions flowing. Since go-live, a real Marketplace directory, a second custom page instance (RE:Biz Nomads), a multi-account switcher, and admin visibility/delete controls have all shipped and been verified live. This spec covers the next build cycle, working from the current live functional spec and its backlog.
+DigitalFlyer Growth is live in production at `https://growth.digitalflyersa.co.za`, Paystack in live mode, real transactions flowing. Since go-live, a real Marketplace directory, a second custom page instance (KatisoBiz Nomads), a multi-account switcher, and admin visibility/delete controls have all shipped and been verified live. This spec covers the next build cycle, working from the current live functional spec and its backlog.
 
 This sprint is scoped tight and operational first. Everything in section 3 (do not build yet) stays out of scope regardless of how tempting it is to fold in, since it needs business scoping that has not happened yet.
 
@@ -10,7 +10,7 @@ This sprint is scoped tight and operational first. Everything in section 3 (do n
 
 ### 2.1. Fix first, before anything else in this sprint
 
-**`NEXT_PUBLIC_WHATSAPP_NUMBER` missing from Vercel production.** This is a live bug, not a backlog item. Every WhatsApp CTA button that depends on it, RE:Biz Nomads' "Message us" button and the dashboard's Enterprise upsell, has been silently invisible in production since go-live. Add the environment variable to Vercel's production environment, redeploy, then manually confirm both CTAs render correctly on the live site. This is near zero effort and should not wait for the rest of the sprint.
+**`NEXT_PUBLIC_WHATSAPP_NUMBER` missing from Vercel production.** This is a live bug, not a backlog item. Every WhatsApp CTA button that depends on it, KatisoBiz Nomads' "Message us" button and the dashboard's Enterprise upsell, has been silently invisible in production since go-live. Add the environment variable to Vercel's production environment, redeploy, then manually confirm both CTAs render correctly on the live site. This is near zero effort and should not wait for the rest of the sprint.
 
 At the same time, spot check that `SITE_URL`, `CRON_SECRET`, and `SUPABASE_DB_URL` in the GitHub Actions repo secrets correctly reflect the current production domain, this was flagged as not yet re-confirmed since the domain was fixed, and the scheduled jobs (trial reminders, onboarding nudges, weekly backup) depend on it being correct.
 
@@ -32,7 +32,7 @@ Lightweight to start, a counter plus increment on each client page view, surface
 
 ## 3. Explicitly Deferred, Do Not Build This Sprint
 
-- **Main page plus additional custom page architecture.** Standing 365 and RE:Biz Nomads have now proven the custom page mechanism twice, both under one login via the account switcher, but true dual-page-per-member support needs real routing-layer design that has not happened yet. This needs a business scoping conversation before any engineering starts.
+- **Main page plus additional custom page architecture.** Standing 365 and KatisoBiz Nomads have now proven the custom page mechanism twice, both under one login via the account switcher, but true dual-page-per-member support needs real routing-layer design that has not happened yet. This needs a business scoping conversation before any engineering starts.
 - **Enterprise tier live checkout.** No live checkout button exists yet, low urgency.
 - **Real client showcase pages.** Swapping the 3 honestly-labeled placeholder "See It In Action" pages for real, permission-granted members should wait until there are enough real live members to choose from and their permission has actually been requested.
 - **Mobile performance root cause.** The ~2.3s warm LCP on throttled mobile stays parked, revisit once there is less launch-critical work competing for attention.
@@ -50,7 +50,7 @@ Lightweight to start, a counter plus increment on each client page view, surface
 
 ## 6. Acceptance Checklist For This Sprint
 
-- [ ] WhatsApp CTA buttons visible and functional in production (RE:Biz "Message us", dashboard Enterprise upsell)
+- [ ] WhatsApp CTA buttons visible and functional in production (KatisoBiz Nomads "Message us", dashboard Enterprise upsell)
 - [ ] `SITE_URL`, `CRON_SECRET`, `SUPABASE_DB_URL` confirmed correct against the live domain
 - [ ] UptimeRobot confirmed active and monitoring the right routes, or newly set up
 - [ ] Error monitor installed and confirmed capturing real errors, including webhook handlers

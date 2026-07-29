@@ -29,8 +29,8 @@ Before starting new build work, confirm the status of the following. Several of 
 
 ## 3. Part A: Operational Fixes & Foundations
 
-### 3.1. RE:Biz Nomads should not have a WhatsApp CTA
-RE:Biz Nomads' page currently has a "Message us" WhatsApp CTA. This was not the intended design, WhatsApp is reserved specifically as a Growth onboarding entry channel, and RE:Biz Nomads is a free bundled benefit of Growth membership, not something joined independently. Remove the WhatsApp CTA entirely, replace it with a CTA directing visitors to join DigitalFlyer Growth, framed around what joining unlocks: access to the RE:Biz Deal Room and community activities. Link through to `/pricing` or the signup flow. The existing RE:Biz contact form stays as is, this only affects the WhatsApp-specific button.
+### 3.1. KatisoBiz Nomads should not have a WhatsApp CTA
+KatisoBiz Nomads' page currently has a "Message us" WhatsApp CTA. This was not the intended design, WhatsApp is reserved specifically as a Growth onboarding entry channel, and KatisoBiz Nomads is a free bundled benefit of Growth membership, not something joined independently. Remove the WhatsApp CTA entirely, replace it with a CTA directing visitors to join DigitalFlyer Growth, framed around what joining unlocks: access to the KatisoBiz Nomads Deal Room and community activities. Link through to `/pricing` or the signup flow. The existing KatisoBiz Nomads contact form stays as is, this only affects the WhatsApp-specific button.
 
 ### 3.2. WhatsApp number activation is blocked, not forgotten
 `NEXT_PUBLIC_WHATSAPP_NUMBER` is missing from Vercel's production environment, but the WhatsApp Business number itself is still pending approval on Meta's side. Do not chase this as an urgent task, it is externally blocked. In the meantime, the dashboard's Enterprise upsell CTA, which also depends on this number, should point to a working fallback contact method (email, dewald@digitalflyer.co.za) instead of sitting silently broken while waiting on Meta. Swap it back to WhatsApp once the number is actually approved and live.
@@ -41,7 +41,7 @@ Uptime monitoring is confirmed active, this item now covers error monitoring onl
 ### 3.4. Member-facing analytics, page-view tracking
 Lightweight page-view counter on each client's public page, written asynchronously so it never slows page render. Surface a simple count, ideally a basic trend, on the client dashboard. This also becomes the future ranking signal for Marketplace's "most visited" sort, not building that sort mode itself this sprint, just the underlying tracking.
 
-**Part A is complete when:** RE:Biz's CTA is corrected, the Enterprise upsell fallback is live, an error monitor is capturing real errors and alerting Dewald, and page views are tracked and visible on the client dashboard. Prompt Dewald at this point before continuing to Part B, per Section 0.
+**Part A is complete when:** KatisoBiz Nomads's CTA is corrected, the Enterprise upsell fallback is live, an error monitor is capturing real errors and alerting Dewald, and page views are tracked and visible on the client dashboard. Prompt Dewald at this point before continuing to Part B, per Section 0.
 
 ## 4. Part B: Agent Referral Programme
 
@@ -162,7 +162,7 @@ These are real, still open, and worth Dewald knowing about, but are not engineer
 - No swap of the placeholder "See It In Action" sample pages.
 - No mobile performance root-cause work.
 - No chasing the WhatsApp number activation itself, that is on Meta's timeline.
-- No extension of the Agent Referral programme to RE:Biz Nomads, Stoep, or Core.
+- No extension of the Agent Referral programme to KatisoBiz Nomads, Stoep, or Core.
 - No automated payout via the Transfers API for agents, manual only.
 - No public agent leaderboard or agent-to-agent visibility.
 - No POPIA legal work, flagged for awareness only, per Section 5.
@@ -177,7 +177,7 @@ These are real, still open, and worth Dewald knowing about, but are not engineer
 - [ ] Marketplace URL field behaviour confirmed
 
 **Part A**
-- [ ] RE:Biz Nomads WhatsApp CTA removed, replaced with a Join Growth CTA
+- [ ] KatisoBiz Nomads WhatsApp CTA removed, replaced with a Join Growth CTA
 - [ ] Dashboard Enterprise upsell CTA temporarily points to email, not WhatsApp
 - [ ] Error monitor installed and confirmed capturing real errors, including webhook handlers
 - [ ] Error alerts confirmed reaching Dewald

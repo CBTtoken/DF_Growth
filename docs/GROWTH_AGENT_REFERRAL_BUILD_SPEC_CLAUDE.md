@@ -119,7 +119,7 @@ Shows, scoped to their own data only:
 
 ## 12. Out Of Scope, Do Not Build
 
-- No extension to RE:Biz Nomads, Stoep, or Core commissions in this build, Growth (and Enterprise once live) only, per section 2.
+- No extension to KatisoBiz Nomads, Stoep, or Core commissions in this build, Growth (and Enterprise once live) only, per section 2.
 - No automated payout via the Transfers API, manual only, per section 7.
 - No public leaderboard or agent-to-agent visibility, each agent only ever sees their own data.
 - No changes to Foundation or monthly Growth pricing, they remain permanently ineligible for referral commission.

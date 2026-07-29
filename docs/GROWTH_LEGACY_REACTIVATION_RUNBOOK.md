@@ -20,7 +20,7 @@ batch, since those rules don't change between batches.
   still live on another domain, just a new build. Confirmed once
   (2026-07-16), applies to every future batch of the same source data.
 - **Curate the list first.** Dewald reviews the raw export and removes:
-  anything already handled elsewhere (Vowie, RE:Biz, DigitalFlyer SA
+  anything already handled elsewhere (Vowie, KatisoBiz Nomads, DigitalFlyer SA
   Agents), NPO accounts (handled separately), any business he's already
   decided not to reactivate. Only pass Claude Code the already-curated
   spreadsheet.

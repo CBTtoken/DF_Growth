@@ -52,11 +52,6 @@ export type CustomPageProps = {
 export const customPages: Record<string, ComponentType<CustomPageProps>> = {
   "standing-365": Standing365Page,
   "katisobiz-nomads": KatisoBizNomadsPage,
-  // Legacy key, kept only until the landing_pages row is updated to the
-  // new one. Both point at the same component, so the live page cannot
-  // break in the window between this deploying and the database changing.
-  // Delete once the row says katisobiz-nomads.
-  "rebiz-nomads": KatisoBizNomadsPage,
   buffelskop: BuffelskopPage,
   helplift: HelpliftPage,
 };
@@ -75,12 +70,6 @@ export const customPageMeta: Record<string, CustomPageMeta> = {
       "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together — for everyone still standing in the middle of the hard thing.",
   },
   "katisobiz-nomads": {
-    title: "KatisoBiz Nomads: A Private Business Community",
-    description:
-      "Included with every DigitalFlyer membership: a private business network, a real deal room, and monthly founder sessions for South African business owners.",
-  },
-  // Legacy key, same reason and same lifetime as the one above.
-  "rebiz-nomads": {
     title: "KatisoBiz Nomads: A Private Business Community",
     description:
       "Included with every DigitalFlyer membership: a private business network, a real deal room, and monthly founder sessions for South African business owners.",

@@ -187,16 +187,16 @@ Slightly larger text size than current.
 
 ## 16. Home Page: Restructure Ecosystem Value, Fold Into Packages, Simplify the Rest
 
-**Finding.** The "What you also get access to" section near the bottom currently mentions only the DigitalFlyer Marketplace and RE:Biz Nomads. BizUp is not mentioned anywhere on the page, despite being bundled into every tier at no extra cost.
+**Finding.** The "What you also get access to" section near the bottom currently mentions only the DigitalFlyer Marketplace and KatisoBiz Nomads. BizUp is not mentioned anywhere on the page, despite being bundled into every tier at no extra cost.
 
 **Confirmed restructure.**
-1. Add Marketplace, RE:Biz Nomads, and BizUp as line items directly inside the Foundation and Growth pricing card feature lists, so a prospect sees the full value while looking at the plan they'd sign up for.
+1. Add Marketplace, KatisoBiz Nomads, and BizUp as line items directly inside the Foundation and Growth pricing card feature lists, so a prospect sees the full value while looking at the plan they'd sign up for.
 2. Replace the current "What you also get access to" section with something shorter and factual, a quick-reference "what does this actually do?" answer in one line apiece, not a sales pitch:
    - **DigitalFlyer Marketplace**: a shared directory where customers can discover your business alongside other DigitalFlyer members.
-   - **RE:Biz Nomads**: a private community of South African business owners, deals, support, and real conversations.
+   - **KatisoBiz Nomads**: a private community of South African business owners, deals, support, and real conversations.
    - **BizUp**: in-chat messaging and payments, so you can talk to and get paid by customers in one place.
 3. This section can stay in its current position near the footer, its job changes from persuasion (now handled by the pricing card line items) to quick clarification.
-4. Update "Request your listing" (currently a plain mailto link) once Marketplace auto-provisioning is addressed (see Part 2, RE:Biz Nomads and Marketplace items), it should not read as a manual request process long term.
+4. Update "Request your listing" (currently a plain mailto link) once Marketplace auto-provisioning is addressed (see Part 2, KatisoBiz Nomads and Marketplace items), it should not read as a manual request process long term.
 
 ---
 
@@ -368,7 +368,7 @@ Section 32 touches the Meta WhatsApp Cloud API. Before writing or modifying any 
 
 ## 32. WhatsApp Onboarding Redirect Into Growth
 
-The largest item in this spec. Redirects the existing DigitalFlyer WhatsApp onboarding system, previously built to sign people up for DigitalFlyer Core and RE:Biz Nomads, so that it instead signs people up for Growth directly.
+The largest item in this spec. Redirects the existing DigitalFlyer WhatsApp onboarding system, previously built to sign people up for DigitalFlyer Core and KatisoBiz Nomads, so that it instead signs people up for Growth directly.
 
 ### 32.1 Architecture, confirmed direction
 
@@ -396,7 +396,7 @@ Add `signup_channel` to `growth_clients`, enum of `web` or `whatsapp`, set at ac
 6. Packages: optional, captured as simple text if offered
 7. Payment: send a Paystack payment link (Paystack Initialize Transaction) directly in the conversation. No payment fields collected directly in the WhatsApp conversation itself, consistent with the data-first, payment-last principle confirmed in Section 10.
 
-No fork question anywhere in this flow. Every WhatsApp signup goes to Growth. RE:Biz Nomads access is offered as a free, bundled next step after signup, not a decision point during onboarding.
+No fork question anywhere in this flow. Every WhatsApp signup goes to Growth. KatisoBiz Nomads access is offered as a free, bundled next step after signup, not a decision point during onboarding.
 
 ### 32.4 Resumability
 
@@ -411,16 +411,16 @@ Match the web wizard's resumable behaviour: if a conversation goes idle and the 
 
 ---
 
-## 33. RE:Biz Nomads Bundled Access
+## 33. KatisoBiz Nomads Bundled Access
 
-RE:Biz Nomads private group access is bundled into all DigitalFlyer membership tiers at no extra cost, rather than sold separately.
+KatisoBiz Nomads private group access is bundled into all DigitalFlyer membership tiers at no extra cost, rather than sold separately.
 
 1. Audit the "Also available to you" dashboard component and confirm no payment step, price reference, or paywall exists anywhere in that flow on Growth's side. Remove any that do. Note: the current live "Join the group" link points directly to a public Facebook group with no payment gate already, so this is likely mostly a copy and framing confirmation rather than a logic change, verify and confirm.
 2. Update the copy to explicitly state the access is free and included.
-3. RE:Biz Nomads itself lives on Core's separate Supabase project per the federated architecture, this item is limited to Growth's side: capturing the request cleanly (business email and phone, for cross-product matching) and presenting it as a free benefit.
+3. KatisoBiz Nomads itself lives on Core's separate Supabase project per the federated architecture, this item is limited to Growth's side: capturing the request cleanly (business email and phone, for cross-product matching) and presenting it as a free benefit.
 4. Applies to both web and WhatsApp signup channels.
 
-**Acceptance criteria.** No price, checkout, or payment reference appears anywhere in the RE:Biz Nomads flow within Growth.
+**Acceptance criteria.** No price, checkout, or payment reference appears anywhere in the KatisoBiz Nomads flow within Growth.
 
 ---
 
@@ -454,7 +454,7 @@ Once Dewald has identified two or three of the strongest early client pages and 
 
 1. Section 34 (Pixel consent), compliance item, small scope, ship early
 2. Section 35 (rate limiting), independent, can run in parallel
-3. Section 33 (RE:Biz Nomads audit), mostly an audit and copy fix
+3. Section 33 (KatisoBiz Nomads audit), mostly an audit and copy fix
 4. Section 32 (WhatsApp onboarding redirect), the largest item, sequenced after the smaller items ship. Confirm the template-picker simplification (32.3, step 4) with Dewald before building that step.
 5. Section 36 (real client pages), whenever Dewald has permissions ready, not blocking on the above
 

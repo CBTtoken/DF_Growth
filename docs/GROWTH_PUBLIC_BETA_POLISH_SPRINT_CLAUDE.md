@@ -258,7 +258,7 @@ Never set up per PLATFORM_OVERVIEW.md's own Known Limitations. Set up Better Sta
 
 ## 16. Reconciliation Instruction
 
-PLATFORM_OVERVIEW.md confirms most earlier work genuinely shipped: call/WhatsApp number split, gallery and hero fix, Pexels fallback, package types, payment-at-end for Growth, admin panel with CSV export, RE:Biz Nomads free access, BizUp in tier features, logout, branded emails, rate limiting, Pixel consent, webhook idempotency, and the WhatsApp redirect into Growth. Treat those as done.
+PLATFORM_OVERVIEW.md confirms most earlier work genuinely shipped: call/WhatsApp number split, gallery and hero fix, Pexels fallback, package types, payment-at-end for Growth, admin panel with CSV export, KatisoBiz Nomads free access, BizUp in tier features, logout, branded emails, rate limiting, Pixel consent, webhook idempotency, and the WhatsApp redirect into Growth. Treat those as done.
 
 **Confirm before or during this sprint:**
 - Whether the onboarding wizard has a live preview before its final step, not just preview-on-template-switch from the dashboard.

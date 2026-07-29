@@ -63,7 +63,7 @@ Technically decoupled, commercially linked:
 ## 7. Go-to-market (open, needs more definition before launch)
 
 The DigitalFlyer SA pilot is the planned first real-world test case, but it is not the only channel worth thinking about, and it shouldn't be treated as the whole go-to-market plan. Worth deciding, once the platform exists, whether initial clients also come from:
-- Direct outreach to businesses you already have some relationship with through DigitalFlyer SA or RE:Biz Nomads
+- Direct outreach to businesses you already have some relationship with through DigitalFlyer SA or KatisoBiz Nomads
 - Referral from existing agency retainer clients
 - Local business networks and word of mouth
 

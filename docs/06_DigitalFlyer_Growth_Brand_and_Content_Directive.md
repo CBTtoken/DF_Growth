@@ -35,7 +35,7 @@ Both groups are buying the same thing from a different starting point: proof tha
 
 Two real structural advantages, not manufactured hype, this is what actually separates Growth from a freelancer or a small agency:
 
-1. **You're not just getting a page, you're getting a foothold in a real network.** A Growth client sits inside DigitalFlyer SA's existing business directory and RE:Biz Nomads community, not just a design portfolio somewhere. That's distribution most local agencies simply don't have to offer.
+1. **You're not just getting a page, you're getting a foothold in a real network.** A Growth client sits inside DigitalFlyer SA's existing business directory and KatisoBiz Nomads community, not just a design portfolio somewhere. That's distribution most local agencies simply don't have to offer.
 2. **No budget gatekeeping.** Most agencies only know how to sell what they're built to sell, usually ad management, so a business with no ad budget gets turned away or oversold. Growth's Foundation tier means you start exactly where you are, budget or none, and grow into the rest when you're ready, not before.
 
 ## 5. Draft landing page copy

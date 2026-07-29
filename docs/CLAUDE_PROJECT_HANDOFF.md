@@ -10,7 +10,7 @@
 
 A growth-as-a-service platform for budget-sensitive South African small businesses. It gives a business a professional, conversion-optimised online page, AI-generated branded social media assets, a marketplace listing, reviews, and (for higher tiers) managed Meta ad campaigns with server-side conversion tracking. Sold as a monthly software-with-a-service product, not a traditional agency engagement.
 
-- Runs as its own business, its own domain, its own codebase and infrastructure. Branded under the DigitalFlyer name but **technically separate** from DigitalFlyer SA (the existing platform) and RE:Biz Nomads.
+- Runs as its own business, its own domain, its own codebase and infrastructure. Branded under the DigitalFlyer name but **technically separate** from DigitalFlyer SA (the existing platform) and KatisoBiz Nomads.
 - Live app domain: **growth.digitalflyersa.co.za**. Related domains: digitalflyer.co.za, digitalflyersa.co.za.
 - Owner/operator: **Dewald Rosema** (see Section 8). Solo build; Claude writes all the code.
 

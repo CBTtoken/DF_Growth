@@ -10,7 +10,7 @@ Source list: `DigitalFlyer_Legacy_Reactivation_Candidates.xlsx`, four tabs:
 - **Reactivation Candidates**, 31 rows, this batch, process per this spec.
 - **NPO, Handled Separately**, 4 rows (Cry Our Rhino, Kids Care, Bramley Children's Home, Helplift Network Vaal Triangle). These never pay and should be marked with an active status rather than a trial, but **do not include them in this batch or in the emailer**, Dewald is handling these directly. Not built in this spec, noted here so they aren't accidentally picked up later.
 - **Removed by Dewald**, 13 rows, reviewed and deliberately excluded, do not process.
-- **Excluded, Internal**, 3 rows (Vowie, RE:Biz, DigitalFlyer SA Agents), internal listings under Dewald's own email, not real customers, do not process.
+- **Excluded, Internal**, 3 rows (Vowie, KatisoBiz Nomads, DigitalFlyer SA Agents), internal listings under Dewald's own email, not real customers, do not process.
 
 ## 2. Confirmed Decisions
 
@@ -87,7 +87,7 @@ This is the part worth getting right before anything sends, since a bad bounce r
 - No product, store, or booking setup for any account in this batch.
 - No new password/reset flow, Section 8.1 reuses what already exists.
 - No automatic sending, ever, without an explicit manual trigger per batch, per Section 10.
-- No processing of Vowie, RE:Biz, or DigitalFlyer SA Agents, they're excluded per Section 1.
+- No processing of Vowie, KatisoBiz Nomads, or DigitalFlyer SA Agents, they're excluded per Section 1.
 - No processing of the 4 NPO accounts (Cry Our Rhino, Kids Care, Bramley Children's Home, Helplift Network Vaal Triangle), Dewald is handling these separately, per Section 1.
 - No processing of the 13 businesses Dewald reviewed and removed, per Section 1.
 

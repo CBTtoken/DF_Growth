@@ -11,7 +11,7 @@ A reference for walking through the complete built product — organized by *who
 
 ## 1. What This Is
 
-DigitalFlyer Growth is a growth-as-a-service platform for South African small businesses: a professional landing page, built and hosted for them, with lead capture, Meta ad tracking, and bundled access to the wider DigitalFlyer ecosystem (a real, searchable Marketplace directory, a public Rate & Review system, a free Events section, RE:Biz Nomads community). A business signs up (web or WhatsApp), answers a short guided flow, and gets a live page with no design or coding required.
+DigitalFlyer Growth is a growth-as-a-service platform for South African small businesses: a professional landing page, built and hosted for them, with lead capture, Meta ad tracking, and bundled access to the wider DigitalFlyer ecosystem (a real, searchable Marketplace directory, a public Rate & Review system, a free Events section, KatisoBiz Nomads community). A business signs up (web or WhatsApp), answers a short guided flow, and gets a live page with no design or coding required.
 
 ---
 
@@ -19,7 +19,7 @@ DigitalFlyer Growth is a growth-as-a-service platform for South African small bu
 
 | Tier | Price | What's included | Payment |
 |---|---|---|---|
-| **Foundation** | Free 7 days, then R100/month or R900/year (annual option added 2026-07-19) | Business page, Marketplace listing, lead page, business profile, 1 digital asset/month, RE:Biz Nomads, BizUp | No card at signup — trial starts when onboarding finishes, converts automatically after 7 days. The billing cycle chosen at signup (`billing_cycle`) is the source of truth at charge time — the trial-conversion link reads it from the account, not from the URL |
+| **Foundation** | Free 7 days, then R100/month or R900/year (annual option added 2026-07-19) | Business page, Marketplace listing, lead page, business profile, 1 digital asset/month, KatisoBiz Nomads, BizUp | No card at signup — trial starts when onboarding finishes, converts automatically after 7 days. The billing cycle chosen at signup (`billing_cycle`) is the source of truth at charge time — the trial-conversion link reads it from the account, not from the URL |
 | **Growth** | R180/month or R1,199/year | Everything in Foundation, plus campaign landing pages, performance tracking, marketing assets, monthly optimisation, growth reporting, Booking & Shop (Section 25) | Paystack, collected at the end of onboarding — **live mode, real transactions** |
 | **Enterprise** | Coming soon | Full Meta + Google ad management | No live checkout yet |
 
@@ -83,7 +83,7 @@ Real email+password login, with magic links as the account-creation and password
 - **Return visits** use `/login` with email+password. If the account predates this rewrite (no password ever set), `/login` transparently falls back to sending a fresh magic link instead of failing.
 - **Forgot password** (`/forgot-password` → `/reset-password`) is a standard reset-link flow, kept distinct from the first-time `/set-password` step.
 - Every account-lifecycle email (invite, magic link, password reset, welcome) follows house style.
-- **Multi-account switcher:** one login can own more than one `growth_client` account (e.g. a member with both a standard business page and a custom page like Standing 365 or RE:Biz Nomads). A small switcher on the dashboard (only visible once a login owns 2+ accounts) lets you jump between them, remembered via a cookie.
+- **Multi-account switcher:** one login can own more than one `growth_client` account (e.g. a member with both a standard business page and a custom page like Standing 365 or KatisoBiz Nomads). A small switcher on the dashboard (only visible once a login owns 2+ accounts) lets you jump between them, remembered via a cookie.
 - **Standing pattern for every new account type built since (Rate & Review's reviewer accounts, List Your Event's organiser accounts): OTP-code email confirmation, not a clickable link.** Adopted after a real incident — Zoho Mail's automatic link-scanning was consuming single-use confirmation tokens before the real recipient ever clicked, silently breaking every clickable-link confirmation. A 6-digit code has no link for a scanner to consume. Every future account/verification flow on this platform should default to OTP unless there's a specific reason not to.
 
 ---
@@ -117,13 +117,13 @@ Every page also ships **`LocalBusiness` JSON-LD** (Section 16) and, once it has 
 ### Standing 365 (`/standing365`)
 A book's dedicated page — hero, about, 12-month framework, order flow, closing. Real order flow: Standard (R299 + R75 delivery, quantity selector) and Personalised (R385 + R75 delivery, recipient name + gift message) editions, one-time Paystack checkout, success/failure return banner, JSON-LD `Book` schema for SEO. **Seller-side order visibility**: any member on a `custom` page type gets an **Orders** section on their own dashboard.
 
-### RE:Biz Nomads (`/rebiz`)
+### KatisoBiz Nomads (`/katisobiz-nomads`)
 A membership-community page. Brand-blue hero band, a real contact form (reuses the same `LeadForm` every templated page already has), and links to both the private Deal Room and public Facebook groups.
 
 ### Buffelskop (`/buffelskop`)
 A real client's premium product page (sundried chilli powder) — its own bulk-pricing and contact-request flow, unrelated to the generic Shop module.
 
-**Booking now reaches custom pages too (2026-07-18):** custom pages render through their own component tree, separate from `ClientLandingPageView.tsx` — Booking data was being fetched but never actually threaded through, a real gap found when Dewald tested real booking slots on Standing 365 and nothing showed. `CustomPageProps` now carries `bookingEnabled`/`bookableUnits`/`bookingRules`; Standing 365 renders `BookingSection` with them (same no-op-until-switched-on gate as the standard template path), verified end-to-end against a real "Meeting requests" slot including real time-slot generation from its actual operating hours. RE:Biz Nomads and Buffelskop receive the same props but don't render Booking today — free to opt in later with no further plumbing needed.
+**Booking now reaches custom pages too (2026-07-18):** custom pages render through their own component tree, separate from `ClientLandingPageView.tsx` — Booking data was being fetched but never actually threaded through, a real gap found when Dewald tested real booking slots on Standing 365 and nothing showed. `CustomPageProps` now carries `bookingEnabled`/`bookableUnits`/`bookingRules`; Standing 365 renders `BookingSection` with them (same no-op-until-switched-on gate as the standard template path), verified end-to-end against a real "Meeting requests" slot including real time-slot generation from its actual operating hours. KatisoBiz Nomads and Buffelskop receive the same props but don't render Booking today — free to opt in later with no further plumbing needed.
 
 All three prove the mechanism works for a real "member requests an additional custom page" feature — see Backlog for the remaining architecture work (today one member = one routable page; true dual-page support per member isn't built yet).
 
@@ -142,11 +142,11 @@ All three prove the mechanism works for a real "member requests an additional cu
 
 **Booking & Shop tab** *(Growth-and-above, only shown once either module is switched on — Section 25)* — Booking setup (bookable units, operational rules, calendar view) and/or Shop inventory (product/coupon CRUD, single or CSV bulk upload), both surfaced here rather than as a 16th flat section.
 
-**Reviews & Testimonials tab** — Reviews (Section 14): every review left on the member's page including flagged ones, reply publicly once (editable after), flag a review for admin review without being able to delete or edit it directly. Testimonials: add one, auto-generates a shareable social image. Leads: every lead-form submission, name/email/phone/timestamp. Orders *(custom pages only, e.g. Standing 365, RE:Biz)*: buyer/delivery/personalisation detail, batch + fulfilment tracking.
+**Reviews & Testimonials tab** — Reviews (Section 14): every review left on the member's page including flagged ones, reply publicly once (editable after), flag a review for admin review without being able to delete or edit it directly. Testimonials: add one, auto-generates a shareable social image. Leads: every lead-form submission, name/email/phone/timestamp. Orders *(custom pages only, e.g. Standing 365, KatisoBiz Nomads)*: buyer/delivery/personalisation detail, batch + fulfilment tracking.
 
 **Marketing tab** — Meta ad tracking *(Growth/Enterprise)*: paste Pixel/Ad Account IDs, encrypted token entry, recent CAPI delivery status. Search & ad platform verification: Google Search Console / Facebook domain verification meta tags. Asset style + Generate social assets: pick the default visual style, pick a content type and a gallery photo, generates a downloadable branded image.
 
-**Account tab** — Your Package (account/plan): current tier, features included, upgrade/cancel. Platform Features: shows what a higher tier unlocks, even if locked. Also available to you: Marketplace, Events (list a free event with the same login, Section 15), and RE:Biz Nomads.
+**Account tab** — Your Package (account/plan): current tier, features included, upgrade/cancel. Platform Features: shows what a higher tier unlocks, even if locked. Also available to you: Marketplace, Events (list a free event with the same login, Section 15), and KatisoBiz Nomads.
 
 `/dashboard/edit` mirrors the core onboarding fields as standalone editable cards — every save is live immediately, no publish step.
 
@@ -184,7 +184,7 @@ Allowlisted by email (`ADMIN_EMAILS`), no separate role system. Lists every clie
 ## 12. Ecosystem Access
 
 - **DigitalFlyer SA Marketplace** — automatic inclusion for every paid membership, real browsable directory (Section 10).
-- **RE:Biz Nomads** — free, bundled, one click to a live private Facebook group, plus its own dedicated info page. No payment gate anywhere in this flow (audited).
+- **KatisoBiz Nomads** — free, bundled, one click to a live private Facebook group, plus its own dedicated info page. No payment gate anywhere in this flow (audited).
 - **BizUp** — bundled feature line on every tier; the standalone product itself is a separate future build (its own repo/Supabase project, per the ecosystem's federated architecture) — not part of Growth's own codebase. A cross-project spec-alignment pass (correcting BizUp's own build spec to match the actual Phase 1 federated architecture, and registering it in the ecosystem's master doc) was scoped in an earlier planning session but hasn't been started — see Backlog.
 
 ---
@@ -281,7 +281,7 @@ A dedicated pass this cycle, on top of what already existed per-page:
 | Foundation trial expired, no payment | "Trial ended, page paused" + reactivate link |
 | Signed up 3-4 days ago, still incomplete/thin | Nudge to finish onboarding |
 | New lead on a client's page | Notification to the business owner |
-| Order placed / batch assigned / shipped (Standing 365, RE:Biz) | Order confirmation, then two fulfilment-status emails |
+| Order placed / batch assigned / shipped (Standing 365, KatisoBiz Nomads) | Order confirmation, then two fulfilment-status emails |
 | Reviewer/event-organiser signup | 6-digit OTP code (not a link — Section 6) |
 | Legacy Reactivation invite | Real one-time outreach send (Section 13) |
 
@@ -309,7 +309,7 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 
 **Domain, resolved this cycle:** `growth.digitalflyersa.co.za` plus the root `digitalflyersa.co.za` and `www.digitalflyersa.co.za` (both redirecting to the `growth` subdomain) are all live, correctly configured in Vercel, and DNS-verified. This took real back-and-forth to land — old conflicting A/CNAME records at the DNS host, and Xneelo's own DNS servers requiring a trailing dot on CNAME target values that the earlier attempt omitted, were both found and corrected.
 
-**Correction to an earlier version of this doc:** `NEXT_PUBLIC_WHATSAPP_NUMBER` was previously logged here as a "missing env var, just needs Vercel + redeploy" gap. That was wrong on investigation. The real state: RE:Biz Nomads never should have had a WhatsApp "join" CTA at all — membership comes bundled with a paid Growth/Foundation plan, not a separate WhatsApp inquiry, and its signup page has now been fixed to match `Closing.tsx`'s existing `/pricing` link. Separately, `PlatformFeatures.tsx` already moved off this env var to a `mailto:` fallback, because the actual blocker there is that DigitalFlyer's own WhatsApp Business number is still pending Meta's approval — not a missing config step. No outstanding WhatsApp CTA gap remains.
+**Correction to an earlier version of this doc:** `NEXT_PUBLIC_WHATSAPP_NUMBER` was previously logged here as a "missing env var, just needs Vercel + redeploy" gap. That was wrong on investigation. The real state: KatisoBiz Nomads never should have had a WhatsApp "join" CTA at all — membership comes bundled with a paid Growth/Foundation plan, not a separate WhatsApp inquiry, and its signup page has now been fixed to match `Closing.tsx`'s existing `/pricing` link. Separately, `PlatformFeatures.tsx` already moved off this env var to a `mailto:` fallback, because the actual blocker there is that DigitalFlyer's own WhatsApp Business number is still pending Meta's approval — not a missing config step. No outstanding WhatsApp CTA gap remains.
 
 **Hosting plan tier, checked 2026-07-18:** Supabase is on the Free plan — checked directly, real usage is nowhere near any real ceiling (Database 29MB/500MB, Storage 3MB/1GB, Egress 78MB), no urgency to upgrade on capacity grounds. **Vercel is currently on the Hobby plan**, whose terms of service restrict it to personal, non-commercial projects — this app processes real Paystack transactions and real customer data, which makes it commercial by any definition, and Vercel does monitor for and can suspend a Hobby project it flags as commercial use. This is a compliance risk, not a capacity one (every Vercel usage metric checked was under ~11% of its Hobby-tier limit). Dewald confirmed he'll upgrade to Vercel Pro.
 
@@ -337,7 +337,7 @@ Not yet live-mode: Enterprise's Paystack plan (no live checkout button exists fo
 - **Error monitoring** (Sentry) — the code is fully wired (`src/sentry.server.config.ts`, `src/sentry.edge.config.ts`, `src/instrumentation-client.ts`, `withSentryConfig` in `next.config.ts`) but was never activated — `NEXT_PUBLIC_SENTRY_DSN` has no real value set, so `Sentry.init()` safely no-ops on every request, same "ships dark, activates on a real credential" pattern GA4 already uses. Corrects earlier versions of this doc, which said this "still not built" — it's built, just not switched on.
 - Meta ad-asset size/spec compliance for generated social images not yet verified against real campaign requirements.
 - The 3 "See It In Action" pages on `/pricing` are honestly-labeled sample businesses, not real clients.
-- One member = one routable page today — Standing 365 and RE:Biz Nomads prove the custom-page mechanism, not dual-page-per-member support.
+- One member = one routable page today — Standing 365 and KatisoBiz Nomads prove the custom-page mechanism, not dual-page-per-member support.
 - **Recurring / multi-session events** — a single multi-day event works today; multiple distinct sessions across different days/times for one listing would need a real recurring-event model, not scoped.
 - **BizUp ecosystem spec alignment** — a cross-project documentation-correction pass was scoped in an earlier planning session (correcting BizUp's own build spec to match the real federated Phase 1 architecture) but never started.
 - **Booking & Shop payment collection is still manual** (Section 25) — a booking or order confirms immediately, but the business and customer arrange payment directly between themselves; in-page Paystack Subaccount checkout is Sprint 4, not yet built.
@@ -352,7 +352,7 @@ Re-ordered to reflect what's actually still open after this cycle's work.
 
 1. **Activate Sentry.** Uptime monitoring is confirmed live (UptimeRobot). Error monitoring's code is already fully wired and shipping dark — just needs a real `NEXT_PUBLIC_SENTRY_DSN` (and `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN` for readable stack traces) from a Sentry account Dewald creates.
 2. **BizUp ecosystem spec alignment.** Correct BizUp's own build spec to match the real Phase 1 federated architecture and register it in the ecosystem's master doc — pure documentation/schema work, no live testing needed, already scoped in an earlier planning session.
-3. **Main page + additional custom page architecture.** Today a member has exactly one routable page. Standing 365 and RE:Biz Nomads proved the custom-page mechanism works, but true dual-page support per member needs real routing-layer work, not yet designed.
+3. **Main page + additional custom page architecture.** Today a member has exactly one routable page. Standing 365 and KatisoBiz Nomads proved the custom-page mechanism works, but true dual-page support per member needs real routing-layer work, not yet designed.
 4. **Enterprise tier live checkout.** Pricing card already exists ("Coming soon"); needs the actual plan, checkout wiring, and feature scope defined.
 5. **Real "See It In Action" sample pages.** Swap the 3 honestly-labeled placeholder businesses on `/pricing` for real, permission-granted client pages.
 6. **Meta ad-asset spec compliance pass.** Verify generated social images actually meet Meta's real campaign size/format requirements.
@@ -393,7 +393,7 @@ Grounded in real friction points and patterns actually observed while building t
 - [ ] Marketplace: search, industry filter, city filter, clear filters, photo thumbnails render correctly
 - [ ] Account switcher: an account with 2+ growth_client logins can switch between them from the dashboard
 - [ ] Standing 365: order flow (both editions, quantity), return banner, dashboard Orders visibility, batch/shipped emails
-- [ ] RE:Biz Nomads: contact form submission, both Facebook group links
+- [ ] KatisoBiz Nomads: contact form submission, both Facebook group links
 - [ ] Login: email+password, forgot-password reset, first-time set-password
 - [ ] **Rate & Review: leave a review as a new reviewer (real Turnstile solve, real OTP code), as a returning reviewer, as an already-logged-in business owner; business reply; business flag action; admin moderation queue keep/remove**
 - [ ] **List Your Event: submit an event as a new organiser, existing organiser, and already-logged-in business owner; browse/search/filter; individual event page with photos (confirm letterbox banner, not a crop); event with no photos (confirm text-only header)**
