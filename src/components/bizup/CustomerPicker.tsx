@@ -77,7 +77,10 @@ export function CustomerPicker({
               chosenCustomer ? "text-gray-900" : "text-gray-400"
             }`}
           >
-            {chosenCustomer?.name ?? "Not chosen yet"}
+            {/* Dewald, 30 July: "Not chosen yet" describes a state. This
+                tells them what to do about it, which is the difference
+                between a label and an instruction. */}
+            {chosenCustomer?.name ?? "Select or Type"}
           </span>
           <button
             type="button"
@@ -87,7 +90,7 @@ export function CustomerPicker({
             }}
             className="text-sm font-semibold text-brand underline-offset-2 hover:underline"
           >
-            {chosenCustomer ? "Change" : nothingSaved ? "Add a customer" : "Choose someone"}
+            {chosenCustomer ? "Change" : nothingSaved ? "Add a customer" : "Select Customer"}
           </button>
         </div>
       ) : (
