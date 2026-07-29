@@ -112,6 +112,9 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
           >
             <input type="hidden" name="documentId" value={doc.id} />
             <CustomerPicker
+              /* See the quote screen: remounts so the inline add is not
+                 undone by the next save. */
+              key={doc.customer_id ?? "none"}
               customers={customers ?? []}
               selectedId={doc.customer_id}
               label="Who is this invoice for?"

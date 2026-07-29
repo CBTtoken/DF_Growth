@@ -114,6 +114,12 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
               would offer a change that the Save button no longer accepts. */}
           {editable ? (
             <CustomerPicker
+              /* Remounts when the customer changes on the server, which is
+                 what the inline add does. Without this the picker keeps the
+                 empty selection it started with, and the next press of Save
+                 details submits that empty value and wipes the customer that
+                 was just added. Found by testing the two together. */
+              key={doc.customer_id ?? "none"}
               customers={customers ?? []}
               selectedId={doc.customer_id}
               label="Customer"
