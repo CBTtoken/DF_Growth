@@ -63,10 +63,18 @@ function Stat({
 export function BizUpHome({
   summary,
   hasSentDocument,
+  setup,
 }: {
   summary: HomeSummary;
   /** Already computed on the account, so this is not queried twice. */
   hasSentDocument: boolean;
+  /**
+   * The setup checklist, rendered by the page and placed here rather than
+   * above, so it sits below the action buttons instead of filling the whole
+   * first screen. Null once there is nothing left to set up, or before the
+   * member has sent anything, when the first-run screen covers it instead.
+   */
+  setup: React.ReactNode;
 }) {
   const warning = capWarning(summary.cap);
   const { cap } = summary;
@@ -142,6 +150,71 @@ export function BizUpHome({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* 3. What do you want to do.
+          Dewald, 29 July 2026: "this guy is at a client, hands dirty,
+          normally thick fingers, so fiddling around on a small menu to find
+          what he wants to do?" He is right, and the live data settled the
+          shape of the answer: of every document members have ever created,
+          ten out of ten were quotes and not one was an invoice started on
+          its own.
+
+          So this is not four equal tiles. Quote is full width and tall
+          because it is, so far, the only thing anyone does. The rest sit
+          underneath at a size that still takes a thumb in sunlight but does
+          not compete for the decision.
+
+          Reports and Settings are deliberately absent. They are office
+          tasks done sitting down, they already live in the menu, and a man
+          standing in someone's kitchen does not want them here.
+
+          Both quote and invoice create a record, so they are forms rather
+          than links: Next prefetches links and would silently create empty
+          drafts against the member's monthly count. */}
+      <section>
+        <h2 className="text-sm font-semibold text-ink">What do you want to do?</h2>
+
+        <form action={createQuote} className="mt-2 block">
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark"
+          >
+            <span aria-hidden className="text-2xl leading-none">+</span>
+            Start a quote
+          </button>
+        </form>
+
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <form action={createInvoice} className="contents">
+            <button
+              type="submit"
+              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+            >
+              <span aria-hidden className="text-lg leading-none">+</span>
+              Invoice
+            </button>
+          </form>
+
+          <Link
+            href="/bizup/customers/new"
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+          >
+            <span aria-hidden className="text-lg leading-none">+</span>
+            Customer
+          </Link>
+
+          <Link
+            href="/bizup/price-list"
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+          >
+            <span aria-hidden className="text-lg leading-none">R</span>
+            Prices
+          </Link>
+        </div>
+      </section>
+
+      {/* Setup reminders, below the work rather than in front of it. */}
+      {setup}
+
       {/* 1. Where do I stand */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Stat
@@ -266,68 +339,6 @@ export function BizUpHome({
           </Link>
         </div>
       )}
-
-      {/* 3. What do you want to do.
-          Dewald, 29 July 2026: "this guy is at a client, hands dirty,
-          normally thick fingers, so fiddling around on a small menu to find
-          what he wants to do?" He is right, and the live data settled the
-          shape of the answer: of every document members have ever created,
-          ten out of ten were quotes and not one was an invoice started on
-          its own.
-
-          So this is not four equal tiles. Quote is full width and tall
-          because it is, so far, the only thing anyone does. The rest sit
-          underneath at a size that still takes a thumb in sunlight but does
-          not compete for the decision.
-
-          Reports and Settings are deliberately absent. They are office
-          tasks done sitting down, they already live in the menu, and a man
-          standing in someone's kitchen does not want them here.
-
-          Both quote and invoice create a record, so they are forms rather
-          than links: Next prefetches links and would silently create empty
-          drafts against the member's monthly count. */}
-      <section>
-        <h2 className="text-sm font-semibold text-ink">What do you want to do?</h2>
-
-        <form action={createQuote} className="mt-2 block">
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark"
-          >
-            <span aria-hidden className="text-2xl leading-none">+</span>
-            Start a quote
-          </button>
-        </form>
-
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          <form action={createInvoice} className="contents">
-            <button
-              type="submit"
-              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
-            >
-              <span aria-hidden className="text-lg leading-none">+</span>
-              Invoice
-            </button>
-          </form>
-
-          <Link
-            href="/bizup/customers/new"
-            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
-          >
-            <span aria-hidden className="text-lg leading-none">+</span>
-            Customer
-          </Link>
-
-          <Link
-            href="/bizup/price-list"
-            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
-          >
-            <span aria-hidden className="text-lg leading-none">R</span>
-            Prices
-          </Link>
-        </div>
-      </section>
 
       {/* 4. What is still open, with the answer one tap away.
           Dewald: "can we have a quick accept or decline option on their

@@ -108,23 +108,31 @@ export default async function BizUpHomePage() {
             added their banking details has a more pressing job than reading
             their numbers. It removes itself once the first document is
             sent. */}
-        {/* Only once they have actually sent something. Before that,
-            BizUpHome shows its own first-run screen which covers the same
-            three things, and stacking both produced a member's first view
-            of the product being two competing checklists and a button.
-            Found by looking at the real screen after deploying, which is
-            the only way this kind of duplication ever shows up. */}
-        {account.hasSentDocument && (
-          <SetupProgress
-            state={{
-              hasBusinessDetails: account.hasBusinessDetails,
-              hasBankDetails: account.hasBankDetails,
-              hasSentDocument: account.hasSentDocument,
-            }}
-          />
-        )}
+        {/* The checklist is passed into BizUpHome rather than rendered
+            above it, because it has to sit below the action buttons.
+            Dewald's photo of his own phone, 29 July: the checklist filled
+            the entire first screen and the buttons he had asked to be first
+            were somewhere below three stat cards. A reminder about banking
+            details is worth keeping, but not at the cost of the one thing
+            he opened the app to do.
 
-        <BizUpHome summary={summary} hasSentDocument={account.hasSentDocument} />
+            Only once they have sent something. Before that, BizUpHome shows
+            a first-run screen that already covers the same three items. */}
+        <BizUpHome
+          summary={summary}
+          hasSentDocument={account.hasSentDocument}
+          setup={
+            account.hasSentDocument ? (
+              <SetupProgress
+                state={{
+                  hasBusinessDetails: account.hasBusinessDetails,
+                  hasBankDetails: account.hasBankDetails,
+                  hasSentDocument: account.hasSentDocument,
+                }}
+              />
+            ) : null
+          }
+        />
 
         {account.growthClientId && (
           <Link
