@@ -6,7 +6,7 @@ import { getMyBizUpAccount } from "@/lib/bizup/account";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BizUpHeader } from "@/components/bizup/landing/BizUpHeader";
 import { GrowthFromBizUp } from "@/components/bizup/BizUpCrossSell";
-import { SetupProgress } from "@/components/bizup/SetupProgress";
+import { SetupButton } from "@/components/bizup/SetupButton";
 import { BizUpHome } from "@/components/bizup/BizUpHome";
 import { getHomeSummary } from "@/lib/bizup/home";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -104,31 +104,28 @@ export default async function BizUpHomePage() {
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 p-5">
-        {/* Setup first while it is unfinished, since a member who has not
-            added their banking details has a more pressing job than reading
-            their numbers. It removes itself once the first document is
-            sent. */}
-        {/* The checklist is passed into BizUpHome rather than rendered
-            above it, because it has to sit below the action buttons.
+        {/* Setup is passed into BizUpHome rather than rendered above it,
+            because it has to sit below the action buttons.
             Dewald's photo of his own phone, 29 July: the checklist filled
             the entire first screen and the buttons he had asked to be first
             were somewhere below three stat cards. A reminder about banking
             details is worth keeping, but not at the cost of the one thing
             he opened the app to do.
 
+            It is now one button rather than the old three-step checklist,
+            at his ask: the detail belongs on the settings page, and the
+            home screen only needs to say that something is outstanding.
+
             Only once they have sent something. Before that, BizUpHome shows
-            a first-run screen that already covers the same three items. */}
+            a first-run screen that already covers the same ground. */}
         <BizUpHome
           summary={summary}
           hasSentDocument={account.hasSentDocument}
           setup={
             account.hasSentDocument ? (
-              <SetupProgress
-                state={{
-                  hasBusinessDetails: account.hasBusinessDetails,
-                  hasBankDetails: account.hasBankDetails,
-                  hasSentDocument: account.hasSentDocument,
-                }}
+              <SetupButton
+                hasBusinessDetails={account.hasBusinessDetails}
+                hasBankDetails={account.hasBankDetails}
               />
             ) : null
           }

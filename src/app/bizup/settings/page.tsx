@@ -82,21 +82,61 @@ export default async function BizUpSettingsPage() {
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 p-5">
+        {/* Dewald's ask: "a clean button top that says home". The menu has
+            a Home link, but a member who came here from the setup button on
+            their home screen wants the way back to be obvious and thumb
+            sized, not a small word in a menu. */}
+        <Link
+          href="/bizup"
+          className="flex items-center justify-center gap-2 rounded-2xl border border-gray-200 bg-white px-5 py-4 text-base font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+        >
+          <span aria-hidden className="text-lg leading-none">&lsaquo;</span>
+          Home
+        </Link>
+
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-ink">Settings</h1>
+          <h1 className="text-xl font-bold tracking-tight text-ink">Set up your business</h1>
           <p className="mt-1 text-sm text-gray-500">{account.businessName}</p>
         </div>
 
+        {/* Big buttons rather than a list to read. Dewald: "nice big
+            buttons for that too instead of this long list to scroll
+            through". Each is a full-width tap target with the outstanding
+            ones marked, so a member can see at a glance what still needs
+            doing without reading every line. */}
         <ul className="flex flex-col gap-3">
           {items.map((i) => (
             <li key={i.href}>
               <Link
                 href={i.href}
-                className="flex flex-col gap-1 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:border-brand"
+                className={`flex items-center justify-between gap-4 rounded-2xl border p-5 shadow-sm transition ${
+                  i.warn
+                    ? "border-amber-200 bg-amber-50 hover:border-amber-300"
+                    : "border-gray-100 bg-white hover:border-brand"
+                }`}
               >
-                <span className="font-semibold text-ink">{i.title}</span>
-                <span className="text-sm text-gray-500">{i.body}</span>
-                {i.warn && <span className="mt-1 text-sm font-medium text-amber-700">{i.warn}</span>}
+                <span className="min-w-0">
+                  <span
+                    className={`block text-base font-bold ${i.warn ? "text-amber-900" : "text-ink"}`}
+                  >
+                    {i.title}
+                  </span>
+                  <span
+                    className={`mt-0.5 block text-sm leading-relaxed ${
+                      i.warn ? "text-amber-900" : "text-gray-500"
+                    }`}
+                  >
+                    {i.warn ?? i.body}
+                  </span>
+                </span>
+                <span
+                  aria-hidden
+                  className={`shrink-0 text-2xl leading-none ${
+                    i.warn ? "text-amber-700" : "text-gray-300"
+                  }`}
+                >
+                  &rsaquo;
+                </span>
               </Link>
             </li>
           ))}
@@ -105,7 +145,7 @@ export default async function BizUpSettingsPage() {
         {account.growthClientId && (
           <Link
             href="/dashboard"
-            className="rounded-2xl border border-gray-100 bg-white p-5 text-sm font-semibold text-brand shadow-sm transition hover:border-brand"
+            className="rounded-2xl border border-gray-100 bg-white p-5 text-base font-bold text-brand shadow-sm transition hover:border-brand"
           >
             Go to DigitalFlyer Growth
           </Link>
