@@ -86,6 +86,21 @@ export function proxy(request: NextRequest) {
     // rewrite here would silently break them.
     if (pathname.startsWith("/api/")) return NextResponse.next();
 
+    // Any file with an extension is served as-is, wherever it lives under
+    // public/. A dot in the last segment is the tell: page routes never
+    // have one.
+    //
+    // This check used to sit inside the /bizup branch below, which meant it
+    // only protected files under public/bizup. Moving the logo to
+    // public/katisobiz on 29 July took it outside that branch, so every
+    // request for it was rewritten to /bizup/katisobiz/logo.png and 404ed:
+    // the header logo vanished from the live landing page during a paid
+    // campaign. Hoisted here so it covers the whole public directory and
+    // this cannot happen again to the next file that moves.
+    if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
+      return NextResponse.next();
+    }
+
     // The old hostnames send visitors to the brand domain instead of
     // serving a second copy of the site.
     //
@@ -147,17 +162,9 @@ export function proxy(request: NextRequest) {
     // actually requested with the prefix; the rewrite below is internal and
     // does not re-enter the proxy.
     if (pathname === BIZUP_PREFIX || pathname.startsWith(`${BIZUP_PREFIX}/`)) {
-      // Static files under public/bizup are the exception: they are served
-      // as-is, neither redirected nor rewritten. Next's image optimizer
-      // fetches the source image back through this proxy, so redirecting
-      // /bizup/logo.png made the optimizer return its 307 instead of an
-      // optimized image, costing the header logo an extra round trip and
-      // the WebP conversion. A dot in the last segment is the tell: page
-      // routes never have one.
-      if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
-        return NextResponse.next();
-      }
-
+      // Files with an extension are already handled above, for every path
+      // rather than just this branch.
+      //
       // Next's generated metadata images have no file extension, so the dot
       // test above misses them and they were being redirected. A social
       // preview fetcher does not follow redirects reliably, and the one
