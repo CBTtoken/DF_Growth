@@ -3,7 +3,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Real limitation found once a login started owning more than one
-// growth_client (Standing 365 + RE:Biz Nomads, both under
+// growth_client (Standing 365 + KatisoBiz Nomads, both under
 // dewald@digitalflyer.co.za): defaulting to "most recent" meant setting up a
 // second page silently made the first one unreachable through a normal
 // login — there was no way back to it short of a database query. This

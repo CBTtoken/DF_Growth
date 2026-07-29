@@ -9,12 +9,12 @@ export function About() {
           Same Platform. Real Community.
         </h2>
         <p className="text-base leading-relaxed text-gray-500 sm:text-lg">
-          DigitalFlyer SA has been building for South African business owners since 2017. RE:Biz
-          is the private community we built on top of it — exclusively for DigitalFlyer members
+          DigitalFlyer SA has been building for South African business owners since 2017. KatisoBiz Nomads
+          is the private community we built on top of it, exclusively for DigitalFlyer members
           who want more than just a page.
         </p>
         <p className="rounded-2xl border border-brand/15 bg-white px-6 py-4 text-sm font-medium text-ink">
-          RE:Biz is included with your DigitalFlyer membership. It&apos;s not sold separately.
+          KatisoBiz Nomads is included with your DigitalFlyer membership. It&apos;s not sold separately.
           When you join DigitalFlyer, you automatically get access to this serious business
           network.
         </p>

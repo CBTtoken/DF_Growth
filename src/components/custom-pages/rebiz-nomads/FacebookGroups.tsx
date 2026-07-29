@@ -21,9 +21,9 @@ export function FacebookGroups() {
           className="group flex flex-col gap-2 rounded-2xl bg-white p-6 text-left shadow-lg shadow-black/10 transition hover:-translate-y-0.5"
         >
           <span className="text-xs font-bold uppercase tracking-wide text-brand">Members Only</span>
-          <h3 className="text-lg font-bold text-ink">RE:Biz Deal Room</h3>
+          <h3 className="text-lg font-bold text-ink">KatisoBiz Nomads Deal Room</h3>
           <p className="text-sm text-gray-500">
-            The private group — real B2B leads and partnerships between DigitalFlyer members.
+            The private group. Real B2B leads and partnerships between DigitalFlyer members.
           </p>
           <span className="mt-2 text-sm font-semibold text-brand group-hover:underline">
             Request to join →
@@ -37,9 +37,9 @@ export function FacebookGroups() {
           className="group flex flex-col gap-2 rounded-2xl bg-white p-6 text-left shadow-lg shadow-black/10 transition hover:-translate-y-0.5"
         >
           <span className="text-xs font-bold uppercase tracking-wide text-brand">Open to Everyone</span>
-          <h3 className="text-lg font-bold text-ink">RE:Biz Nomads</h3>
+          <h3 className="text-lg font-bold text-ink">KatisoBiz Nomads</h3>
           <p className="text-sm text-gray-500">
-            The public group — a wider look at what we&apos;re building, open to anyone interested.
+            The public group. A wider look at what we&apos;re building, open to anyone interested.
           </p>
           <span className="mt-2 text-sm font-semibold text-brand group-hover:underline">
             Join the group →

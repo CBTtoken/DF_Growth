@@ -4,7 +4,7 @@ const BENEFITS = [
     description: "Built and live fast. E-commerce, bookings and payments included.",
   },
   {
-    title: "Private RE:Biz Deal Room",
+    title: "Private KatisoBiz Nomads Deal Room",
     description: "Real B2B opportunities, leads and partnerships with serious business owners only.",
   },
   {
@@ -45,7 +45,7 @@ export function Benefits() {
           </div>
         ))}
 
-        {/* Distinct styling from the four confirmed benefits above — this
+        {/* Distinct styling from the four confirmed benefits above, this
             one is explicitly "Coming Soon" in the source content, a
             different confidence level than the rest, and worth not
             blending in as if it were already live. */}

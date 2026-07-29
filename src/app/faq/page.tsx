@@ -233,14 +233,14 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "What's included besides my own page?",
         answer:
-          "Every membership includes a place on the DigitalFlyer Marketplace and RE:Biz Nomads community access, at no extra cost.",
+          "Every membership includes a place on the DigitalFlyer Marketplace and KatisoBiz Nomads community access, at no extra cost.",
       },
       {
         question: "What is the DigitalFlyer Marketplace?",
         answer: "A shared marketplace where customers can discover your business alongside other DigitalFlyer members.",
       },
       {
-        question: "What is RE:Biz Nomads?",
+        question: "What is KatisoBiz Nomads?",
         answer:
           "A private community of South African business owners for deals, support, and real conversations with people building the same thing you are.",
       },

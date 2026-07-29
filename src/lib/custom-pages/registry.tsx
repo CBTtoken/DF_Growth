@@ -15,7 +15,7 @@ export type CustomPageProps = {
   clientId: string;
   businessName: string;
   metaPixelId: string | null;
-  // Added for RE:Biz Nomads' real contact form (LeadForm.tsx, the same
+  // Added for KatisoBiz Nomads' real contact form (LeadForm.tsx, the same
   // component every templated page already uses) — Standing 365 has no
   // form and doesn't read this, but it's on every custom page's props now
   // rather than adding a second, page-type-specific prop shape.
@@ -70,7 +70,7 @@ export const customPageMeta: Record<string, CustomPageMeta> = {
       "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together — for everyone still standing in the middle of the hard thing.",
   },
   "rebiz-nomads": {
-    title: "RE:Biz Nomads — A Private Business Community",
+    title: "KatisoBiz Nomads — A Private Business Community",
     description:
       "Included with every DigitalFlyer membership: a private business network, a real deal room, and monthly founder sessions for South African business owners.",
   },

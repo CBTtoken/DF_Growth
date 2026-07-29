@@ -30,10 +30,10 @@ export const TIERS: {
       "Monthly Digital Asset",
       "Ready To Share Anywhere",
       // Combined spec Sec 16: bundled into every tier at no extra cost, but
-      // previously only mentioned (Marketplace and RE:Biz Nomads) or not at
+      // previously only mentioned (Marketplace and KatisoBiz Nomads) or not at
       // all (KatisoBiz) in a separate section near the footer — a prospect
       // looking at just this card never saw the full value included.
-      "RE:Biz Nomads Community",
+      "KatisoBiz Nomads Community",
       // Site audit, 28 July 2026: this read as an unqualified bullet on
       // both Foundation and Growth, while the entitlement genuinely
       // differs. bizUpEntitlementForTier gives Foundation the free plan,
@@ -66,7 +66,7 @@ export const TIERS: {
       // comparing tiers side by side never saw these three on the Growth
       // card at all.
       "Marketplace Presence",
-      "RE:Biz Nomads Community",
+      "KatisoBiz Nomads Community",
       // The R49 plan, not the free one. See the note on the Foundation
       // card above for why these two must not read the same.
       "KatisoBiz quoting and invoicing, R49 plan included free",

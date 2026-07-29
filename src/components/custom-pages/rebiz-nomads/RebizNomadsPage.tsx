@@ -10,7 +10,7 @@ import { Closing } from "@/components/custom-pages/rebiz-nomads/Closing";
 import type { CustomPageProps } from "@/lib/custom-pages/registry";
 
 // Second real instance of the custom-page-type mechanism (see
-// Standing365Page.tsx for the first) — pasted content from the existing
+// Standing365Page.tsx for the first), pasted content from the existing
 // rebiz.digitalflyer.co.za page, laid out fresh rather than ported
 // wall-for-wall, per "feel free to edit as you see fit." Uses Growth's own
 // brand tokens directly (no bespoke palette/typeface) since this is
@@ -19,11 +19,11 @@ import type { CustomPageProps } from "@/lib/custom-pages/registry";
 //
 // Real feedback round two: reuses LeadForm.tsx (the exact same contact
 // form every templated client page already has) rather than building a
-// second, custom-page-specific one — a WhatsApp-only CTA with no form was
+// second, custom-page-specific one, a WhatsApp-only CTA with no form was
 // a genuine gap, not a stylistic choice.
 //
 // whatsappPhone is deliberately null here, not
-// process.env.NEXT_PUBLIC_WHATSAPP_NUMBER — RE:Biz membership comes
+// process.env.NEXT_PUBLIC_WHATSAPP_NUMBER, KatisoBiz Nomads membership comes
 // bundled with paid Growth/Foundation membership, not a separate WhatsApp
 // inquiry. Closing.tsx already replaced this page's original "Message Us
 // on WhatsApp to Join" CTAs with a real path to /pricing for exactly that

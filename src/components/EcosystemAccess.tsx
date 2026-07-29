@@ -19,7 +19,7 @@
 // state rather than a stored flag, so it flips the moment a payment
 // succeeds with no separate "activate Marketplace" step needed anywhere.
 //
-// Combined spec Sec 33: audited — RE:Biz Nomads is a live Facebook group,
+// Combined spec Sec 33: audited — KatisoBiz Nomads is a live Facebook group,
 // joining is literally just clicking through and requesting to join, with
 // no price, checkout, or payment reference anywhere in this flow. Business
 // email/phone for cross-product matching is whatever Growth already
@@ -75,7 +75,7 @@ export function EcosystemAccess({
       </div>
 
       <div className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-        <h3 className="text-base font-bold tracking-tight text-ink">RE:Biz Nomads Community</h3>
+        <h3 className="text-base font-bold tracking-tight text-ink">KatisoBiz Nomads Community</h3>
         <p className="text-sm text-gray-500">
           Free and included with every membership — no extra cost. Join our private community of
           South African business owners for deals, support, and real conversations with people

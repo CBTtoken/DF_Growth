@@ -8,7 +8,7 @@ const items = [
   },
   {
     icon: Users,
-    title: "RE:Biz Nomads",
+    title: "KatisoBiz Nomads",
     body: "A private community of South African business owners, deals, support, and real conversations.",
   },
   {

@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 // Real client pages (both the standard templates and custom pages like
-// RE:Biz Nomads/standing365) had literally no navigation at all — a visitor
+// KatisoBiz Nomads/standing365) had literally no navigation at all — a visitor
 // who lands on a business's page has no way back to browse other listings
 // short of the browser's own back button. Deliberately minimal and neutral
 // (not tied to the client's own brand color, which varies per client) so it

@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-// Consolidated Sprint Sec 3.1: same fix as Hero.tsx — this page had two
+// Consolidated Sprint Sec 3.1: same fix as Hero.tsx, this page had two
 // separate "Message Us on WhatsApp to Join" CTAs, both replaced with a
 // real path to actually becoming a member.
 export function Closing() {
@@ -20,7 +20,7 @@ export function Closing() {
       </Link>
 
       <div className="mt-6 flex flex-col items-center gap-1 border-t border-white/15 pt-8 text-xs text-white/60">
-        <p className="text-base font-bold text-white/90">RE:Biz Nomads</p>
+        <p className="text-base font-bold text-white/90">KatisoBiz Nomads</p>
         <p>Powered by DigitalFlyer SA</p>
         <p className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
           <a href="mailto:dewald@digitalflyer.co.za" className="underline-offset-2 hover:text-white hover:underline">
