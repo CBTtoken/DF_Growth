@@ -44,8 +44,17 @@ export function CustomerPicker({
   addAction?: (formData: FormData) => void | Promise<void>;
 }) {
   const [chosen, setChosen] = useState<string>(selectedId ?? "");
+  // A member with nobody saved has nothing to choose from, so the search
+  // box is open from the start rather than hidden behind a tap. Seven of
+  // the eleven stuck drafts on 30 July had no customer and no line items,
+  // which is a screen that did not invite anyone to start.
+  const nothingSaved = customers.length === 0;
   const [query, setQuery] = useState("");
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(nothingSaved && !selectedId);
+  // Only steal focus when the member actually asked for the search. Opening
+  // focused on page load pops the keyboard and scrolls the screen out from
+  // under someone who was reading it.
+  const [askedFor, setAskedFor] = useState(false);
 
   const chosenCustomer = customers.find((c) => c.id === chosen) ?? null;
 
@@ -72,19 +81,22 @@ export function CustomerPicker({
           </span>
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => {
+              setOpen(true);
+              setAskedFor(true);
+            }}
             className="text-sm font-semibold text-brand underline-offset-2 hover:underline"
           >
-            {chosenCustomer ? "Change" : "Choose someone"}
+            {chosenCustomer ? "Change" : nothingSaved ? "Add a customer" : "Choose someone"}
           </button>
         </div>
       ) : (
         <>
           <input
-            autoFocus
+            autoFocus={askedFor}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Start typing a name"
+            placeholder={nothingSaved ? "Type your customer's name" : "Start typing a name"}
             className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-base text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
             aria-label="Search your customers"
           />
@@ -116,7 +128,9 @@ export function CustomerPicker({
             <p className="text-sm font-normal text-gray-500">
               {q.length > 1
                 ? "No saved customer matches that, so use the button above."
-                : "Start typing to search, or to add someone new."}
+                : nothingSaved
+                  ? "Type their name above and press the button that appears. That is all a quote needs."
+                  : "Start typing to search, or to add someone new."}
             </p>
           ) : (
             <div className="flex flex-col gap-1">
