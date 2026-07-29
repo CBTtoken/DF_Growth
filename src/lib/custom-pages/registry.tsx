@@ -1,6 +1,6 @@
 import type { ComponentType } from "react";
 import { Standing365Page } from "@/components/custom-pages/standing365/Standing365Page";
-import { RebizNomadsPage } from "@/components/custom-pages/rebiz-nomads/RebizNomadsPage";
+import { KatisoBizNomadsPage } from "@/components/custom-pages/katisobiz-nomads/KatisoBizNomadsPage";
 import { BuffelskopPage } from "@/components/custom-pages/buffelskop/BuffelskopPage";
 import { HelpliftPage } from "@/components/custom-pages/helplift/HelpliftPage";
 import type { PublicBookableUnit } from "@/components/landing/BookingSection";
@@ -51,7 +51,12 @@ export type CustomPageProps = {
 
 export const customPages: Record<string, ComponentType<CustomPageProps>> = {
   "standing-365": Standing365Page,
-  "rebiz-nomads": RebizNomadsPage,
+  "katisobiz-nomads": KatisoBizNomadsPage,
+  // Legacy key, kept only until the landing_pages row is updated to the
+  // new one. Both point at the same component, so the live page cannot
+  // break in the window between this deploying and the database changing.
+  // Delete once the row says katisobiz-nomads.
+  "rebiz-nomads": KatisoBizNomadsPage,
   buffelskop: BuffelskopPage,
   helplift: HelpliftPage,
 };
@@ -69,6 +74,12 @@ export const customPageMeta: Record<string, CustomPageMeta> = {
     description:
       "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together — for everyone still standing in the middle of the hard thing.",
   },
+  "katisobiz-nomads": {
+    title: "KatisoBiz Nomads: A Private Business Community",
+    description:
+      "Included with every DigitalFlyer membership: a private business network, a real deal room, and monthly founder sessions for South African business owners.",
+  },
+  // Legacy key, same reason and same lifetime as the one above.
   "rebiz-nomads": {
     title: "KatisoBiz Nomads: A Private Business Community",
     description:

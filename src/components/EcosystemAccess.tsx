@@ -25,7 +25,7 @@
 // email/phone for cross-product matching is whatever Growth already
 // captured at onboarding (contact_email, call_phone, whatsapp_phone) —
 // nothing new to collect here, since this is just a link, not a form.
-const REBIZ_GROUP_URL = "https://www.facebook.com/groups/rebiznomadsdealroom";
+const NOMADS_GROUP_URL = "https://www.facebook.com/groups/rebiznomadsdealroom";
 
 export function EcosystemAccess({
   marketplaceUrl,
@@ -82,7 +82,7 @@ export function EcosystemAccess({
           building the same thing you are.
         </p>
         <a
-          href={REBIZ_GROUP_URL}
+          href={NOMADS_GROUP_URL}
           target="_blank"
           rel="noreferrer"
           className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
