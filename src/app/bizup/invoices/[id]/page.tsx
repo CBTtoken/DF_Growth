@@ -117,15 +117,20 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
               key={doc.customer_id ?? "none"}
               customers={customers ?? []}
               selectedId={doc.customer_id}
-              label="Who is this invoice for?"
+              // Same word as the quote screen. Dewald, 30 July: the invoice
+              // "looks different" from the quote. It behaved identically,
+              // but a different heading and a different button label on the
+              // same task is enough to make a member think it is a
+              // different thing that works a different way.
+              label="Customer"
               addAction={addCustomerToInvoice}
             />
             <div className="flex flex-wrap items-center gap-3">
               <button
                 type="submit"
-                className="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-brand hover:text-brand"
+                className="self-start rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-brand hover:text-brand"
               >
-                Save customer
+                Save details
               </button>
               {/* Comes straight back here afterwards, so adding someone new
                   mid-invoice does not lose the invoice. */}
