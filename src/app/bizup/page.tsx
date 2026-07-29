@@ -108,15 +108,23 @@ export default async function BizUpHomePage() {
             added their banking details has a more pressing job than reading
             their numbers. It removes itself once the first document is
             sent. */}
-        <SetupProgress
-          state={{
-            hasBusinessDetails: account.hasBusinessDetails,
-            hasBankDetails: account.hasBankDetails,
-            hasSentDocument: account.hasSentDocument,
-          }}
-        />
+        {/* Only once they have actually sent something. Before that,
+            BizUpHome shows its own first-run screen which covers the same
+            three things, and stacking both produced a member's first view
+            of the product being two competing checklists and a button.
+            Found by looking at the real screen after deploying, which is
+            the only way this kind of duplication ever shows up. */}
+        {account.hasSentDocument && (
+          <SetupProgress
+            state={{
+              hasBusinessDetails: account.hasBusinessDetails,
+              hasBankDetails: account.hasBankDetails,
+              hasSentDocument: account.hasSentDocument,
+            }}
+          />
+        )}
 
-        <BizUpHome summary={summary} />
+        <BizUpHome summary={summary} hasSentDocument={account.hasSentDocument} />
 
         {account.growthClientId && (
           <Link

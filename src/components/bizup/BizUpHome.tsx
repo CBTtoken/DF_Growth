@@ -60,7 +60,14 @@ function Stat({
   );
 }
 
-export function BizUpHome({ summary }: { summary: HomeSummary }) {
+export function BizUpHome({
+  summary,
+  hasSentDocument,
+}: {
+  summary: HomeSummary;
+  /** Already computed on the account, so this is not queried twice. */
+  hasSentDocument: boolean;
+}) {
   const warning = capWarning(summary.cap);
   const { cap } = summary;
   // Read from the summary rather than the clock: a component body must stay pure.
@@ -74,7 +81,7 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
   // They get one screen with one thing on it instead. The money comes back
   // the moment there is any, which is the point at which it starts being
   // information rather than discouragement.
-  if (!summary.hasEverIssued) {
+  if (!hasSentDocument) {
     return (
       <div className="flex flex-col gap-6">
         <section className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
