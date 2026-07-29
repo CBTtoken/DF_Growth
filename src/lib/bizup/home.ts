@@ -49,6 +49,18 @@ export interface HomeSummary {
   today: string;
   nowMs: number;
   /**
+   * Whether this member has ever issued a single document.
+   *
+   * Drives which home screen they get. Someone who has never sent anything
+   * was being shown three cards reading R0.00 and a used-documents counter
+   * at zero, which is four pieces of nothing and no instruction. They get a
+   * screen with one thing on it instead.
+   *
+   * Deliberately "ever", not "this month": a plumber returning in a quiet
+   * February does not need to be taught the product again.
+   */
+  hasEverIssued: boolean;
+  /**
    * The overdue invoices themselves, not just the total.
    *
    * Telling a member they are owed R14,000 and giving them nothing to do
@@ -73,8 +85,14 @@ export async function getHomeSummary(
   const admin = createAdminClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: invoices }, { data: quotes }, { data: payments }, { data: recentRows }, cap] =
-    await Promise.all([
+  const [
+    { data: invoices },
+    { data: quotes },
+    { data: payments },
+    { data: recentRows },
+    cap,
+    { count: issuedEver },
+  ] = await Promise.all([
       admin
         .from("bizup_documents")
         .select("id, number, total_incl_cents, status, due_date, last_reminded_at, bizup_customers(name)")
@@ -105,6 +123,13 @@ export async function getHomeSummary(
         .order("created_at", { ascending: false })
         .limit(8),
       getCapState(accountId, plan, topupBalance),
+      // head:true so this is a count, not a row fetch. A member with two
+      // years of history should not pull all of it to answer one boolean.
+      admin
+        .from("bizup_documents")
+        .select("id", { count: "exact", head: true })
+        .eq("account_id", accountId)
+        .not("number", "is", null),
     ]);
 
   // Payments are subtracted per invoice rather than in aggregate, so a
@@ -161,6 +186,7 @@ export async function getHomeSummary(
     overdueCount,
     today,
     nowMs: Date.now(),
+    hasEverIssued: (issuedEver ?? 0) > 0,
     // Worst first: the one that has been owing longest is the one to phone
     // about, and a member scanning this list will act on the top item.
     overdue: overdue.sort((a, b) => (a.dueDate ?? "").localeCompare(b.dueDate ?? "")),

@@ -6,9 +6,9 @@ import { FaqAccordion } from "@/components/marketing/FaqAccordion";
 import { AGENT_FAQ } from "@/lib/agents/faq";
 
 // UI/UX pass, 2026-07-17: expanded from 10 flat questions into a full,
-// categorised help centre covering every real feature in the platform —
+// categorised help centre covering every real feature in the platform.
 // Dewald's exact ask. Every answer here describes something genuinely
-// built and live, not aspirational — where a feature is still "coming
+// built and live, not aspirational. Where a feature is still "coming
 // soon" (Enterprise, KatisoBiz), the answer says so plainly rather than
 // implying it already works. Grouped into categories (each its own
 // FaqAccordion instance, so open/closed state doesn't leak between
@@ -249,6 +249,16 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
         answer:
           "Mobile quoting and invoicing for your business. Build a quote on your phone while you are standing on the job, send it on WhatsApp from your own number, and turn it into an invoice when the work is done. Foundation includes the free plan, ten documents a month. Growth includes the R49 plan.",
       },
+      {
+        question: "Is there an app I have to download?",
+        answer:
+          "No, and you do not need one. KatisoBiz adds itself to your phone's home screen with its own icon, and opens full screen exactly like an app. There is nothing to download from the Play Store or the App Store, no waiting, and it uses almost no space or data. On Android you press one button. On iPhone it is four taps in Safari and we show you exactly which ones.",
+      },
+      {
+        question: "Does it work on any phone?",
+        answer:
+          "Yes. Any Android or iPhone with a browser, and on a computer too. There is no minimum phone, no version to keep updated, and nothing to reinstall. When we improve something you have it the next time you open it.",
+      },
     ],
   },
   {
@@ -356,7 +366,7 @@ export default function FaqPage() {
             .
           </p>
 
-          {/* Jump list — once expanded to 10 categories, scrolling past
+          {/* Jump list. Once expanded to 10 categories, scrolling past
               everything to find one answer defeats the point of this
               page. A visitor scanning for "how does billing work" should
               land there in one tap, not a scroll. */}

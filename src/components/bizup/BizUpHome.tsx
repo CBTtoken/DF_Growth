@@ -67,6 +67,72 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
   const now = summary.nowMs;
   const today = summary.today;
 
+  // A member who has never issued anything was opening this to three cards
+  // reading R0.00 and a counter at zero: four pieces of nothing, and no
+  // instruction. Eleven members signed up and none of them got past it.
+  //
+  // They get one screen with one thing on it instead. The money comes back
+  // the moment there is any, which is the point at which it starts being
+  // information rather than discouragement.
+  if (!summary.hasEverIssued) {
+    return (
+      <div className="flex flex-col gap-6">
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-sm">
+          <h1 className="text-xl font-extrabold tracking-tight text-ink">
+            Let us get your first quote out
+          </h1>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-gray-600">
+            Enter what you are charging for, add the customer, and send it on WhatsApp from your own
+            number. It takes about a minute and there is nothing to set up first.
+          </p>
+
+          <form action={createQuote} className="mt-5 block">
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark"
+            >
+              <span aria-hidden className="text-2xl leading-none">+</span>
+              Start a quote
+            </button>
+          </form>
+
+          <p className="mt-4 text-xs text-gray-500">
+            Already did the job and just need to invoice?{" "}
+            <Link href="/bizup/invoices" className="font-semibold text-brand hover:underline">
+              Start an invoice instead
+            </Link>
+          </p>
+        </section>
+
+        {/* The two things worth doing once, offered rather than demanded.
+            Neither blocks a quote, and saying so stops a member believing
+            they have to fill in forms before they can work. */}
+        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <h2 className="text-sm font-bold text-ink">When you have a minute</h2>
+          <p className="mt-1 text-sm text-gray-600">
+            Neither is needed to send a quote. Both take a minute and then never again.
+          </p>
+          <div className="mt-3 flex flex-col gap-2">
+            <Link
+              href="/bizup/settings/business"
+              className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-ink transition hover:border-brand hover:text-brand"
+            >
+              Your business details, which print at the top of every document
+            </Link>
+            <Link
+              href="/bizup/settings/banking"
+              className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-ink transition hover:border-brand hover:text-brand"
+            >
+              Your banking details, so customers can actually pay your invoices
+            </Link>
+          </div>
+        </section>
+
+        <InstallApp />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* 1. Where do I stand */}
@@ -194,48 +260,64 @@ export function BizUpHome({ summary }: { summary: HomeSummary }) {
         </div>
       )}
 
-      {/* 3. The four things they actually came to do. Quote is visually
-          first and heaviest because it is the most common by far, but all
-          four are one tap. Two of these create a record, so they are forms
-          rather than links: Next prefetches links on hover and would
-          silently create empty drafts. */}
-      <section>
-        <h2 className="text-sm font-semibold text-ink">Get to work</h2>
-        <div className="mt-2 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <form action={createQuote} className="contents">
-            <button
-              type="submit"
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl bg-brand px-4 py-5 text-sm font-bold text-white shadow-sm transition hover:bg-brand-dark"
-            >
-              <span aria-hidden className="text-xl leading-none">+</span>
-              New quote
-            </button>
-          </form>
+      {/* 3. What do you want to do.
+          Dewald, 29 July 2026: "this guy is at a client, hands dirty,
+          normally thick fingers, so fiddling around on a small menu to find
+          what he wants to do?" He is right, and the live data settled the
+          shape of the answer: of every document members have ever created,
+          ten out of ten were quotes and not one was an invoice started on
+          its own.
 
+          So this is not four equal tiles. Quote is full width and tall
+          because it is, so far, the only thing anyone does. The rest sit
+          underneath at a size that still takes a thumb in sunlight but does
+          not compete for the decision.
+
+          Reports and Settings are deliberately absent. They are office
+          tasks done sitting down, they already live in the menu, and a man
+          standing in someone's kitchen does not want them here.
+
+          Both quote and invoice create a record, so they are forms rather
+          than links: Next prefetches links and would silently create empty
+          drafts against the member's monthly count. */}
+      <section>
+        <h2 className="text-sm font-semibold text-ink">What do you want to do?</h2>
+
+        <form action={createQuote} className="mt-2 block">
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-3 rounded-2xl bg-brand px-6 py-7 text-lg font-bold text-white shadow-sm transition hover:bg-brand-dark"
+          >
+            <span aria-hidden className="text-2xl leading-none">+</span>
+            Start a quote
+          </button>
+        </form>
+
+        <div className="mt-3 grid grid-cols-3 gap-3">
           <form action={createInvoice} className="contents">
             <button
               type="submit"
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
             >
-              <span aria-hidden className="text-xl leading-none">+</span>
-              New invoice
+              <span aria-hidden className="text-lg leading-none">+</span>
+              Invoice
             </button>
           </form>
 
           <Link
             href="/bizup/customers/new"
-            className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
           >
-            <span aria-hidden className="text-xl leading-none">+</span>
-            New customer
+            <span aria-hidden className="text-lg leading-none">+</span>
+            Customer
           </Link>
 
           <Link
             href="/bizup/price-list"
-            className="flex flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-4 py-5 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl border border-gray-200 bg-white px-3 py-4 text-sm font-bold text-ink shadow-sm transition hover:border-brand hover:text-brand"
           >
-            <span aria-hidden className="text-xl leading-none">R</span>
-            Price list
+            <span aria-hidden className="text-lg leading-none">R</span>
+            Prices
           </Link>
         </div>
       </section>

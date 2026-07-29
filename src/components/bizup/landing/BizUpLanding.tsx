@@ -92,6 +92,14 @@ const FEATURES = [
     body: "One tap and the message is ready to send from your own WhatsApp, with a link your customer can open on any phone. You can see when they opened it.",
   },
   {
+    // Added 29 July 2026, once this was actually true. Worth saying on the
+    // landing page because "app" is what this audience expects and the
+    // usual next thought is a download they do not want to pay data for.
+    title: "It sits on your phone like an app",
+    lead: "Without downloading an app.",
+    body: "Add KatisoBiz to your home screen and it gets its own icon next to WhatsApp, opening full screen with no browser bar. Nothing to download from the Play Store, no updates to install, and it uses almost no space. One button on Android, and on iPhone we walk you through the four taps.",
+  },
+  {
     title: "Your prices, saved once",
     lead: "Stop typing the same thing forty times a month.",
     body: "Save your callout fee, your hourly rate, your usual parts. Tap them in next time. Anything you type into a quote can be saved to your price list with one tap, so the list builds itself while you work.",
