@@ -1,5 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { currentVisitor } from "@/lib/board/visitor";
 
 // Reads for the Phase 2 half of the board: who the visitor is, if anyone,
 // and what is on a post.
@@ -19,38 +19,21 @@ export type BoardComment = {
 };
 
 /**
- * The visitor's verified identity, or null.
+ * The person on this device, or null.
  *
- * Null is the normal case and is never an error. The board works completely
- * without one: browsing, reading comments and sharing are all ungated, and
- * only liking and commenting need this to resolve.
- *
- * A Growth member signed into his own dashboard has an auth session but no
- * board identity, so he is null here too until he verifies as a commenter,
- * which is correct: a business owner replying to a comment on his own post
- * is doing something Phase 2 does not have, and pretending otherwise would
- * silently attribute his words to an unverified name.
+ * Now a signed cookie rather than a Supabase session, see lib/board/visitor.
+ * Null is the normal case and is never an error: browsing, reading and
+ * sharing are all ungated, and this only has to resolve for somebody who
+ * has already left a comment or a message on this device before.
  */
 export async function currentBoardIdentity(): Promise<BoardIdentity | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const admin = createAdminClient();
-  const { data } = await admin
-    .from("board_identities")
-    .select("id, display_name, email, quote_consent")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!data) return null;
+  const visitor = await currentVisitor();
+  if (!visitor) return null;
   return {
-    id: data.id,
-    displayName: data.display_name,
-    email: data.email,
-    quoteConsent: data.quote_consent,
+    id: visitor.id,
+    displayName: visitor.displayName,
+    email: visitor.email ?? "",
+    quoteConsent: visitor.quoteConsent,
   };
 }
 

@@ -1,51 +1,41 @@
-// The Board, Phase 1. What a member is actually posting.
+// What a post is, kept to the smallest set that still gives a browse path.
 //
-// Four kinds, one composer. Dewald's decision on 30 July: a member should
-// never have to choose a form before he can start typing, so the kind is a
-// single tap on an already-open form, and it does two jobs afterwards. It
-// labels the post, and it is a browse path ("show me what is for sale"),
-// which is most of why a stranger lands on the board at all.
+// It started as four, each with a hint paragraph explaining when to use it,
+// and Dewald called it complicated the first time he used it. He was right:
+// "Job done" and "Update" made a member answer a question about categories
+// before he could type a word, and the people this is for are used to
+// Facebook, where there is one box and no question at all.
 //
-// Adding a fifth kind means a migration, because the check constraint on
-// board_posts.kind lists them. That is deliberate: a free-text kind would
-// be four spellings of "for sale" inside a month.
-export type PostKind = "offer" | "for_sale" | "update" | "job_done";
+// So the kind is now an optional tag rather than a decision. A member who
+// taps nothing gets "Special", which is what most posts are anyway.
+
+export type PostKind = "special" | "offer" | "for_sale" | "looking_for";
 
 export type PostKindMeta = {
   id: PostKind;
-  /** Shown on the card, in the filter bar and in the page title. */
   label: string;
-  /** Shown next to the choice in the composer, so a member picks the right one without guessing. */
-  hint: string;
+  /** Which side of the board may post it. */
+  author: "member" | "public";
   /** Used in the URL, /board?kind=for-sale, and nowhere else. */
   param: string;
 };
 
 export const POST_KINDS: PostKindMeta[] = [
-  {
-    id: "offer",
-    label: "Offer",
-    hint: "A special, a deal or a price you are running right now",
-    param: "offer",
-  },
-  {
-    id: "for_sale",
-    label: "For sale",
-    hint: "A specific item or stock you want to sell",
-    param: "for-sale",
-  },
-  {
-    id: "update",
-    label: "Update",
-    hint: "News from the business. New hours, a new service, where you will be this week",
-    param: "update",
-  },
-  {
-    id: "job_done",
-    label: "Job done",
-    hint: "Work you have finished. The strongest thing you can post, because it is proof",
-    param: "job-done",
-  },
+  { id: "special", label: "Special", author: "member", param: "special" },
+  { id: "offer", label: "Offer", author: "member", param: "offer" },
+  { id: "for_sale", label: "For sale", author: "member", param: "for-sale" },
+  // The public side. "Looking for" rather than "Need", Dewald's wording, and
+  // the better one: it is what somebody actually types into a group.
+  { id: "looking_for", label: "Looking for", author: "public", param: "looking-for" },
+];
+
+/** What a business may choose from. Three, and one is already selected. */
+export const MEMBER_KINDS = POST_KINDS.filter((k) => k.author === "member");
+
+/** What a member of the public may post. */
+export const PUBLIC_KINDS: PostKindMeta[] = [
+  POST_KINDS.find((k) => k.id === "looking_for")!,
+  POST_KINDS.find((k) => k.id === "for_sale")!,
 ];
 
 export function kindMeta(kind: string): PostKindMeta | null {
@@ -56,7 +46,7 @@ export function kindLabel(kind: string): string {
   return kindMeta(kind)?.label ?? "Post";
 }
 
-/** Resolves ?kind=for-sale back to the stored value. Returns null for anything unrecognised. */
+/** Resolves ?kind=for-sale back to the stored value. Null for anything unrecognised. */
 export function kindFromParam(param: string | undefined): PostKind | null {
   if (!param) return null;
   return POST_KINDS.find((k) => k.param === param)?.id ?? null;

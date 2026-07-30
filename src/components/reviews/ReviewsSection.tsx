@@ -56,7 +56,7 @@ export function ReviewsSection({
 
   if (!anchor) {
     return (
-      <section className="border-b border-gray-100 bg-white">
+      <section id="reviews" className="border-b border-gray-100 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-8 sm:py-24">
           <p
             className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base"
@@ -214,7 +214,7 @@ export function ReviewsSection({
   }
 
   return (
-    <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
+    <section id="reviews" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
           {eyebrowNumber} · Reviews

@@ -1,23 +1,25 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Flag, Heart, MessageSquare } from "lucide-react";
-import { submitComment, verifyBoardOtp, toggleLike, reportContent } from "@/app/board/actions";
+import { Flag, Heart, MessageSquare, Star } from "lucide-react";
+import Link from "next/link";
+import { submitComment, toggleLike, reportContent } from "@/app/board/actions";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 import type { BoardComment } from "@/lib/board/engagement";
 
-// The Board, Phase 2, everything the public can do on a post page.
+// Everything the public does on a post, and none of it leaves the screen.
 //
-// The order of the flow is the design. A person writes the comment first and
-// verifies second, because asking someone to prove an email before they have
-// said anything is how you get no comments. The comment is stored out of
-// sight the moment they submit, and appears when the code is entered.
+// The old version asked for an email, sent a code, and made somebody go and
+// fetch it. Dewald hit that wall himself and called it what it is. The
+// evidence was already on this platform: the review flow asks for a
+// password and has zero reviews after six weeks.
 //
-// The comments arrive as a prop from the server component and are rendered
-// straight into the HTML, never fetched from the browser. So they are real
-// page content for a crawler and for anyone with JavaScript switched off,
-// and they count as content on the page rather than as something that
-// appears later.
+// So: a like is one tap and asks nothing. A comment asks a name. An email is
+// an optional box for somebody who wants to be told when the business
+// replies. The invisible Cloudflare check does the human proving.
+//
+// Comments arrive as a prop and are rendered into the HTML, never fetched
+// from the browser, so they are real page content for a crawler.
 
 const inputClass =
   "w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2.5 text-sm text-neutral-ink outline-none transition-colors focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
@@ -69,40 +71,37 @@ export function BoardComments({
   postSlug,
   comments,
   likeCount,
+  businessSlug,
+  businessName,
 }: {
   postSlug: string;
   comments: BoardComment[];
   likeCount: number;
+  businessSlug: string | null;
+  businessName: string | null;
 }) {
   const [commentState, commentAction, commentPending] = useActionState(submitComment.bind(null, postSlug), null);
-  const [otpState, otpAction, otpPending] = useActionState(verifyBoardOtp.bind(null, postSlug), null);
 
   const [likes, setLikes] = useState(likeCount);
   const [liked, setLiked] = useState(false);
-  const [likeNeedsIdentity, setLikeNeedsIdentity] = useState(false);
-
-  const pendingEmail = commentState && "needsCode" in commentState ? commentState.email : "";
-  const needsCode = Boolean(pendingEmail) && !otpState?.success;
-  const posted = (commentState && "success" in commentState) || otpState?.success;
-  const held =
-    (commentState && "success" in commentState && commentState.held) || Boolean(otpState?.success && otpState.held);
 
   async function onLike() {
+    // Optimistic, because a heart that waits for a server is a heart nobody
+    // taps twice.
+    const next = !liked;
+    setLiked(next);
+    setLikes((count) => count + (next ? 1 : -1));
+
     const result = await toggleLike(postSlug);
-    if (result?.needsIdentity) {
-      setLikeNeedsIdentity(true);
-      return;
-    }
-    if (result?.liked !== undefined) {
-      setLiked(result.liked);
-      setLikes((count) => count + (result.liked ? 1 : -1));
-      setLikeNeedsIdentity(false);
+    if (result?.error) {
+      setLiked(!next);
+      setLikes((count) => count + (next ? -1 : 1));
     }
   }
 
   return (
     <div className="flex flex-col gap-5 border-t border-neutral-border pt-5">
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={onLike}
@@ -115,51 +114,33 @@ export function BoardComments({
           <Heart size={15} className={liked ? "fill-red-500 text-red-500" : ""} />
           {likes > 0 ? likes : "Like"}
         </button>
+
+        {/* Dewald's ask: a star next to the heart. It opens the review flow
+            that already exists on the business page, so a rating lives in
+            one place instead of two systems disagreeing about the same
+            business. */}
+        {businessSlug && (
+          <Link
+            href={`/${businessSlug}#reviews`}
+            className="inline-flex items-center gap-2 rounded-full border border-neutral-border bg-white px-4 py-2 text-sm font-semibold text-neutral-mid transition-colors hover:border-amber-300 hover:text-amber-600"
+          >
+            <Star size={15} />
+            Review {businessName ?? "this business"}
+          </Link>
+        )}
+
         <span className="inline-flex items-center gap-1.5 text-sm text-neutral-muted">
           <MessageSquare size={15} />
           {comments.length} {comments.length === 1 ? "comment" : "comments"}
         </span>
       </div>
 
-      {likeNeedsIdentity && (
-        <p className="rounded-xl border border-brand-blue/20 bg-brand-blue-light px-4 py-3 text-sm text-neutral-mid">
-          Liking needs a verified email, the same as a comment. Leave a comment below once and you are verified for both.
-        </p>
-      )}
-
-      {posted ? (
+      {commentState?.success ? (
         <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          {held
+          {commentState.held
             ? "Thanks. Your comment is with us to check before it appears, because it contains a link."
             : "Thanks, your comment is up."}
         </p>
-      ) : needsCode ? (
-        <form action={otpAction} className="flex flex-col gap-3 rounded-xl border border-neutral-border bg-white p-4">
-          <div>
-            <p className="text-sm font-semibold text-neutral-ink">Check your email</p>
-            <p className="mt-1 text-sm text-neutral-mid">
-              We sent a code to {pendingEmail}. Enter it and your comment goes up. No password, no account.
-            </p>
-          </div>
-          <input type="hidden" name="email" value={pendingEmail} />
-          <input
-            type="text"
-            name="token"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            placeholder="Code from your email"
-            required
-            className={inputClass}
-          />
-          {otpState?.error && <p className="text-xs text-red-600">{otpState.error}</p>}
-          <button
-            type="submit"
-            disabled={otpPending}
-            className="self-start rounded-full bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-dark disabled:opacity-50"
-          >
-            {otpPending ? "Checking..." : "Verify and post"}
-          </button>
-        </form>
       ) : (
         <form action={commentAction} className="flex flex-col gap-3 rounded-xl border border-neutral-border bg-white p-4">
           <p className="text-sm font-semibold text-neutral-ink">Ask a question or leave a comment</p>
@@ -171,44 +152,36 @@ export function BoardComments({
             placeholder="What would this cost for a double garage?"
             className={inputClass}
           />
-          <div className="grid gap-3 sm:grid-cols-2">
-            <input type="text" name="displayName" required placeholder="Your name" className={inputClass} />
-            <input type="email" name="email" required placeholder="Your email" className={inputClass} />
-          </div>
 
-          {/* The only place an address changes hands, and it is a tick box
-              rather than a footnote. Off unless the person turns it on. */}
-          <label className="flex items-start gap-2 text-xs text-neutral-mid">
-            <input type="checkbox" name="quoteConsent" className="mt-0.5" />
-            <span>This business may email me a quote at this address.</span>
-          </label>
+          <input type="text" name="displayName" required placeholder="Your name" className={inputClass} />
 
-          <p className="text-xs text-neutral-muted">
-            Your email is only used to send you a one-time code, so we know you are a real person. It is never shown on
-            the page.
-          </p>
+          {/* Optional, and it says why. Nobody is stopped for want of it. */}
+          <details className="text-sm">
+            <summary className="cursor-pointer text-xs font-semibold text-neutral-muted hover:text-brand-blue">
+              Want to know when they reply? Add your email
+            </summary>
+            <div className="mt-2 flex flex-col gap-2">
+              <input type="email" name="email" placeholder="Your email, optional" className={inputClass} />
+              <label className="flex items-start gap-2 text-xs text-neutral-mid">
+                <input type="checkbox" name="quoteConsent" className="mt-0.5" />
+                <span>This business may email me a quote at this address.</span>
+              </label>
+              <p className="text-xs text-neutral-muted">
+                Never shown on the page, and never given to the business unless you tick the box.
+              </p>
+            </div>
+          </details>
 
           <TurnstileWidget />
 
-          {commentState && "error" in commentState && commentState.error?._form && (
-            <p className="text-xs text-red-600">{commentState.error._form[0]}</p>
-          )}
-          {commentState && "error" in commentState && commentState.error?.body && (
-            <p className="text-xs text-red-600">{commentState.error.body[0]}</p>
-          )}
-          {commentState && "error" in commentState && commentState.error?.email && (
-            <p className="text-xs text-red-600">{commentState.error.email[0]}</p>
-          )}
-          {commentState && "error" in commentState && commentState.error?.displayName && (
-            <p className="text-xs text-red-600">{commentState.error.displayName[0]}</p>
-          )}
+          {commentState?.error && <p className="text-xs text-red-600">{commentState.error}</p>}
 
           <button
             type="submit"
             disabled={commentPending}
             className="self-start rounded-full bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-dark disabled:opacity-50"
           >
-            {commentPending ? "Sending..." : "Post comment"}
+            {commentPending ? "Posting..." : "Post comment"}
           </button>
         </form>
       )}

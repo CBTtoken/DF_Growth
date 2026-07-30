@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { publishBoardPost } from "@/app/dashboard/board/actions";
-import { POST_KINDS } from "@/lib/board/kinds";
+import { MEMBER_KINDS } from "@/lib/board/kinds";
 import { CITIES, OTHER_CITY } from "@/lib/cities";
 
 // The composer. One screen, one form, already open.
@@ -18,10 +18,9 @@ const inputClass =
 
 export function BoardComposer({ needsCity }: { needsCity: boolean }) {
   const [state, formAction, pending] = useActionState(publishBoardPost, null);
-  const [kind, setKind] = useState(POST_KINDS[0].id);
+  const [kind, setKind] = useState(MEMBER_KINDS[0].id);
   const [city, setCity] = useState("");
 
-  const selected = POST_KINDS.find((k) => k.id === kind) ?? POST_KINDS[0];
 
   return (
     <form action={formAction} className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
@@ -32,30 +31,12 @@ export function BoardComposer({ needsCity }: { needsCity: boolean }) {
         </p>
       </div>
 
-      {/* Kind, as one tap on an already-open form rather than a screen the
-          member has to get past first. */}
-      <div className="flex flex-col gap-2">
-        <div className="flex flex-wrap gap-2">
-          {POST_KINDS.map((k) => (
-            <button
-              key={k.id}
-              type="button"
-              onClick={() => setKind(k.id)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                kind === k.id ? "bg-brand text-white" : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {k.label}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-gray-500">{selected.hint}</p>
-        <input type="hidden" name="kind" value={kind} />
-      </div>
-
+      {/* The message box first, the way Facebook does it, because that is
+          what these members are used to and the first version made them
+          answer a category question before they could type a word. */}
       <div className="flex flex-col gap-1.5">
         <label htmlFor="board-title" className="text-sm font-semibold text-gray-700">
-          What is it
+          What do you want to say
         </label>
         <input
           id="board-title"
@@ -70,18 +51,33 @@ export function BoardComposer({ needsCity }: { needsCity: boolean }) {
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="board-body" className="text-sm font-semibold text-gray-700">
-          Tell them more <span className="font-normal text-gray-400">(optional)</span>
-        </label>
         <textarea
           id="board-body"
           name="body"
-          rows={4}
+          rows={3}
           maxLength={1500}
-          placeholder="What is included, how long it takes, what area you cover."
+          placeholder="Anything else they should know. Optional."
           className={inputClass}
         />
         {state?.error?.body && <p className="text-xs text-red-600">{state.error.body[0]}</p>}
+      </div>
+
+      {/* An optional tag now, not a decision. Special is already picked. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-xs font-semibold text-gray-500">Tag it:</span>
+        {MEMBER_KINDS.map((k) => (
+          <button
+            key={k.id}
+            type="button"
+            onClick={() => setKind(k.id)}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+              kind === k.id ? "bg-brand text-white" : "border border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            {k.label}
+          </button>
+        ))}
+        <input type="hidden" name="kind" value={kind} />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

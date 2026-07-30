@@ -291,7 +291,13 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
               <ShareRow url={shareUrl} text={shareText} />
             </div>
 
-            <BoardComments postSlug={post.slug} comments={comments} likeCount={likes.count} />
+            <BoardComments
+              postSlug={post.slug}
+              comments={comments}
+              likeCount={likes.count}
+              businessSlug={post.member.slug}
+              businessName={post.member.businessName}
+            />
 
             <div className="flex justify-end">
               <ReportLink targetType="post" targetId={post.id} postSlug={post.slug} />

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { POST_KINDS } from "@/lib/board/kinds";
+import { MEMBER_KINDS } from "@/lib/board/kinds";
 
 // Validation for the member's board composer.
 //
@@ -8,7 +8,7 @@ import { POST_KINDS } from "@/lib/board/kinds";
 // in a Facebook group. Title and kind are the only things a member must
 // give, and kind arrives pre-selected.
 export const boardPostSchema = z.object({
-  kind: z.enum(POST_KINDS.map((k) => k.id) as [string, ...string[]]),
+  kind: z.enum(MEMBER_KINDS.map((k) => k.id) as [string, ...string[]]),
   title: z
     .string()
     .trim()

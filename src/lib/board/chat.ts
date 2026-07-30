@@ -1,6 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email/resend";
 import { truncateOnWord } from "@/lib/text";
+import { identityToken } from "@/lib/board/visitor";
 
 // Growth Chat. Reads, and the one place a message is written.
 //
@@ -148,7 +149,7 @@ export async function sendChatMessage(options: {
       .select("business_name, slug, contact_email, chat_enabled")
       .eq("id", growthClientId)
       .maybeSingle(),
-    admin.from("board_identities").select("display_name, email").eq("id", identityId).maybeSingle(),
+    admin.from("board_identities").select("id, display_name, email").eq("id", identityId).maybeSingle(),
   ]);
 
   if (!client || !identity) return { error: "That conversation is no longer available." };
@@ -203,7 +204,7 @@ export async function sendChatMessage(options: {
           footer: "You can turn these messages off in your dashboard at any time.",
         }),
       });
-    } else if (sender === "member") {
+    } else if (sender === "member" && identity.email) {
       await sendEmail({
         to: identity.email,
         fromName: client.business_name,
@@ -212,7 +213,11 @@ export async function sendChatMessage(options: {
           heading: `${client.business_name} replied`,
           preview,
           action: "Read it and reply",
-          href: `${SITE_URL}/board/messages`,
+          // A signed link rather than a bare address. This is what makes
+          // the email address real without ever asking anybody to prove it:
+          // clicking it recognises them and opens the conversation. A
+          // made-up address simply never receives one.
+          href: `${SITE_URL}/board/m/${identityToken(identity.id)}`,
           footer: "You are getting this because you messaged this business on DigitalFlyer.",
         }),
       });
