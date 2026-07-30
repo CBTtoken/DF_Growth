@@ -68,14 +68,30 @@ export async function createBoardPost(_prevState: ComposerState, formData: FormD
 
   // Where it is. A business post inherits the business's town, so a business
   // that moves does not leave a trail of posts filed under the old one.
+  //
+  // A member posting as himself also inherits it, because the composer hides
+  // the town box once his account has one and he lives in the same town he
+  // works in. Without this fallback a member could fill in the form, see no
+  // town field, and be told to choose a town.
   let city: string | null = null;
   let businessCity: string | null = null;
-  if (postAsBusiness && member.id) {
-    const { data: client } = await admin.from("growth_clients").select("city").eq("id", member.id).single();
-    businessCity = client?.city ?? null;
+  let accountCity: string | null = null;
+  let accountEmail: string | null = null;
+
+  if (member.id) {
+    const { data: client } = await admin
+      .from("growth_clients")
+      .select("city, contact_email")
+      .eq("id", member.id)
+      .single();
+    accountCity = client?.city ?? null;
+    accountEmail = client?.contact_email ?? null;
+    if (postAsBusiness) businessCity = accountCity;
   }
 
-  if (!businessCity) {
+  if (!postAsBusiness && accountCity) city = accountCity;
+
+  if (!businessCity && !city) {
     const chosen = String(formData.get("city") ?? "");
     const other = String(formData.get("cityOther") ?? "").trim();
     const resolvedCity = chosen === OTHER_CITY ? other : chosen;
@@ -95,13 +111,19 @@ export async function createBoardPost(_prevState: ComposerState, formData: FormD
   let identityId: string | null = null;
   if (!postAsBusiness) {
     const existing = await currentVisitor();
+
+    // A signed-in member posting as himself was never shown an email box,
+    // because his account already has one. Demanding it made a "Looking
+    // for" post impossible for a member, which is exactly how Dewald found
+    // this.
     const displayName = String(formData.get("displayName") ?? "").trim() || existing?.displayName || "";
-    const email = String(formData.get("email") ?? "").trim() || existing?.email || "";
+    const email =
+      String(formData.get("email") ?? "").trim() || existing?.email || accountEmail || "";
 
     if (!displayName) return { error: "Enter the name you want on the post." };
     if (!email) return { error: "We need an email so people can reach you about this." };
 
-    if (!existing) {
+    if (!existing && !member.id) {
       const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
       if (!turnstileOk) {
         return { error: "Could not confirm you are a person, please reload the page and try again." };

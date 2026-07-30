@@ -45,6 +45,7 @@ export function PostComposer({
 }) {
   const [chosen, setChosen] = useState<PostKindMeta | null>(kinds.length === 1 ? kinds[0] : null);
   const [city, setCity] = useState("");
+  const [asMyself, setAsMyself] = useState(false);
   const [state, formAction, pending] = useActionState(action, null);
 
   if (state?.success) {
@@ -180,7 +181,30 @@ export function PostComposer({
         </div>
       )}
 
-      {/* A person says who they are. A signed-in business already has. */}
+      {/* A member posting as himself still needs a name on the post, since
+          "Looking for a plumber" from a company name reads wrong. Only the
+          name: his account email is already on file and is used quietly. */}
+      {businessName && (!chosen.businessByDefault || asMyself) && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="post-person-name" className="text-sm font-semibold text-neutral-ink">
+            Your name, for this post
+          </label>
+          <input
+            id="post-person-name"
+            type="text"
+            name="displayName"
+            required
+            placeholder="Dewald"
+            className={inputClass}
+          />
+          <p className="text-xs text-neutral-muted">
+            This one goes up as you, not as {businessName}. Replies come to the email on your account.
+          </p>
+        </div>
+      )}
+
+      {/* Somebody who is not signed in says who they are and where to reach
+          them. */}
       {needsIdentity && (
         <div className="flex flex-col gap-2 rounded-xl border border-neutral-border bg-neutral-light p-4">
           <div className="grid gap-2 sm:grid-cols-2">
@@ -202,7 +226,13 @@ export function PostComposer({
       )}
       {businessName && chosen.businessByDefault && (
         <label className="flex items-start gap-2 text-xs text-neutral-mid">
-          <input type="checkbox" name="asMyself" className="mt-0.5" />
+          <input
+            type="checkbox"
+            name="asMyself"
+            checked={asMyself}
+            onChange={(event) => setAsMyself(event.target.checked)}
+            className="mt-0.5"
+          />
           <span>This is private, post it as me and not as {businessName}.</span>
         </label>
       )}
