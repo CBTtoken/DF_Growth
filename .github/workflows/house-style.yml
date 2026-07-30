@@ -1,0 +1,39 @@
+name: House style
+
+# Dewald has asked three separate times for em dashes to be kept out of
+# anything a member or a customer reads, and they have crept back in three
+# times, most recently in the Standing 365 buyer emails. Asking me to
+# remember harder has not worked, so this checks instead.
+#
+# Scoped to the strings a real person actually sees: email templates and
+# JSX text. Code comments are not checked, because the rule is about what
+# gets read by a customer and a comment never is, and a check that fails on
+# things nobody cares about gets ignored within a week.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  no-em-dashes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail if an em dash reaches a customer
+        run: |
+          # Email templates: everything inside them is customer facing.
+          hits=$(grep -rn "—" src/lib/email/ src/lib/bizup/welcome-email.ts src/lib/bizup/checkin-emails.ts 2>/dev/null \
+            | grep -vE "^\s*[^:]+:[0-9]+:\s*(//|\*|/\*)" || true)
+
+          if [ -n "$hits" ]; then
+            echo "Em dashes found in customer-facing email copy."
+            echo "House rule: never in anything a member or customer reads."
+            echo "Use a full stop, a comma, or rewrite the sentence."
+            echo ""
+            echo "$hits"
+            exit 1
+          fi
+
+          echo "No em dashes in customer-facing email copy."

@@ -52,7 +52,7 @@ export async function sendAgentApprovedEmail({
       <p>Your referral link is ready to use right away:</p>
       <p><a href="${referralLink}">${referralLink}</a></p>
       <p>Share it with your network. Anyone who signs up for Growth or Enterprise on an annual plan through your link earns you commission, 25% on your first 10 referrals, 40% from your 11th referral onward.</p>
-      <p>As an approved agent, you also get your own free page to promote your own business — permanent, not a trial, no payment step, ever:</p>
+      <p>As an approved agent, you also get your own free page to promote your own business. Permanent, not a trial, and no payment step, ever:</p>
       <p><a href="${siteUrl}/agents/setup-page">Set up your free page</a></p>
       <p>We'll be in touch separately about your payout details.</p>
     `,
@@ -78,7 +78,7 @@ export async function sendAgentReferralConvertedEmail({
 }): Promise<void> {
   const result = await sendEmail({
     to: email,
-    subject: `${referredBusinessName} just converted — you earned commission`,
+    subject: `${referredBusinessName} just converted, you earned commission`,
     html: `
       <p>Good day ${fullName},</p>
       <p><strong>${referredBusinessName}</strong> just paid for their DigitalFlyer Growth annual plan through your referral link.</p>
@@ -137,7 +137,7 @@ export async function sendAgentTierMilestoneEmail({
     subject: "You've reached the 40% commission tier",
     html: `
       <p>Good day ${fullName},</p>
-      <p>Big news — with your 11th converted referral, you've moved up to the 40% commission tier.</p>
+      <p>Big news. With your 11th converted referral, you've moved up to the 40% commission tier.</p>
       <p>This applies to every referral going forward, and to your existing referrals' renewals too, not just new ones.</p>
       <p>Thanks for everything you've brought to DigitalFlyer Growth so far.</p>
     `,

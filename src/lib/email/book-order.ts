@@ -21,12 +21,11 @@ export async function sendBookOrderConfirmationEmail({
     subject: "Your Standing 365 order is confirmed",
     html: `
       <p>Good day ${buyerName},</p>
-      <p>Thank you for your order — your <strong>${editionLabel}</strong> copy of Standing 365 is confirmed.</p>
+      <p>Thank you for your order. Your <strong>${editionLabel}</strong> copy of Standing 365 is confirmed.</p>
       <p>Paperbacks are printed and shipped in batches of 50. We'll email you as soon as your order is
       assigned to a batch, and keep you updated until it ships.</p>
       <p>Questions in the meantime? Reach us at
-      <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a> or WhatsApp
-      <a href="https://wa.me/27723110570">+27 72 311 0570</a>.</p>
+      <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a>.</p>
     `,
   });
 
@@ -54,11 +53,10 @@ export async function sendBatchAssignedEmail({
     subject: "Your Standing 365 order has a batch number",
     html: `
       <p>Good day ${buyerName},</p>
-      <p>Your Standing 365 order has been assigned to <strong>batch ${batchNumber}</strong> — printed and
-      shipped together in batches of 50. We'll email you again the moment it ships.</p>
+      <p>Your Standing 365 order has been assigned to <strong>batch ${batchNumber}</strong>. Batches are printed and
+      shipped together, fifty at a time. We'll email you again the moment it ships.</p>
       <p>Questions in the meantime? Reach us at
-      <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a> or WhatsApp
-      <a href="https://wa.me/27723110570">+27 72 311 0570</a>.</p>
+      <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a>.</p>
     `,
   });
 
@@ -74,9 +72,8 @@ export async function sendShippedEmail({ buyerName, email }: { buyerName: string
     subject: "Your Standing 365 order has shipped",
     html: `
       <p>Good day ${buyerName},</p>
-      <p>Good news — your Standing 365 order is on its way.</p>
-      <p>Questions? Reach us at <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a> or
-      WhatsApp <a href="https://wa.me/27723110570">+27 72 311 0570</a>.</p>
+      <p>Good news, your Standing 365 order is on its way.</p>
+      <p>Questions? Reach us at <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a>.</p>
     `,
   });
 
