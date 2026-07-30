@@ -151,6 +151,21 @@ export default async function BoardPage({
                 Browse the marketplace
               </Link>
             </div>
+
+            {/* Found the hard way, by Dewald, on the first real run through:
+                an empty board is a dead end, and every single thing the
+                board does (share, comment, like, message) lives on a post
+                page, so with nothing posted there is nowhere to go and
+                nothing to try. A visitor gets the marketplace above. A
+                member needs the one link that fixes it, and the board
+                cannot know which one is reading, so both are offered. */}
+            <p className="mt-4 border-t border-neutral-border pt-4 text-xs text-neutral-muted">
+              A DigitalFlyer member?{" "}
+              <Link href="/dashboard/board" className="font-semibold text-brand-blue underline-offset-2 hover:underline">
+                Post the first one
+              </Link>
+              .
+            </p>
           </div>
         ) : (
           <>
