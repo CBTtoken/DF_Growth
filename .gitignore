@@ -63,4 +63,10 @@ supabase/.temp/
 # Vendor API reference kept locally. The Bob Go Postman collection ships
 # with a live bearer token inside it, and a token in a git history is a
 # token that has leaked, even if a later commit removes it.
-BobGo/
+#
+# The leading slash matters and is not decoration. Written as "BobGo/" this
+# matches a directory of that name at ANY depth, and git on Windows compares
+# case-insensitively, so it silently swallowed src/lib/bobgo/ as well. Three
+# production builds failed with "Can't resolve @/lib/bobgo/client" while the
+# file sat happily on my machine and git add reported nothing wrong.
+/BobGo/
