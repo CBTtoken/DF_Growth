@@ -1,8 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
-import { EyeOff, FileText } from "lucide-react";
-import { createQuoteFromComment, memberReportComment } from "@/app/dashboard/board/comment-actions";
+import { useActionState, useState } from "react";
+import { CornerDownRight, EyeOff, FileText } from "lucide-react";
+import {
+  createQuoteFromComment,
+  memberReportComment,
+  replyToCommentAsBusiness,
+} from "@/app/dashboard/board/comment-actions";
 
 // One comment on the member's own post, with the only two things he can do
 // about it. Quote it, or get it out of public view.
@@ -29,6 +33,11 @@ export function BoardCommentRow({
   status: string;
 }) {
   const [quoteState, quoteAction, quotePending] = useActionState(createQuoteFromComment.bind(null, commentId), null);
+  const [replyState, replyAction, replyPending] = useActionState(
+    replyToCommentAsBusiness.bind(null, commentId),
+    null
+  );
+  const [replying, setReplying] = useState(false);
   const held = status !== "published";
 
   return (
@@ -50,7 +59,51 @@ export function BoardCommentRow({
 
       {quoteState?.error && <p className="text-xs text-red-600">{quoteState.error}</p>}
 
+      {/* Answering in public, which was missing entirely. A customer asking
+          what something costs used to get silence in public, or a private
+          quote, and neither is what a board is for. */}
+      {replyState?.success ? (
+        <p className="text-xs text-emerald-700">Replied, and it is on the post now.</p>
+      ) : replying && !held ? (
+        <form action={replyAction} className="flex flex-col gap-2">
+          <textarea
+            name="body"
+            rows={2}
+            required
+            maxLength={1000}
+            placeholder="Answer them here, and it appears under their comment as the business."
+            className="rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
+          />
+          {replyState?.error && <p className="text-xs text-red-600">{replyState.error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={replyPending}
+              className="rounded-full bg-brand px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-dark disabled:opacity-50"
+            >
+              {replyPending ? "Posting..." : "Post reply"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setReplying(false)}
+              className="rounded-full border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-2">
+        {!held && !replying && !replyState?.success && (
+          <button
+            type="button"
+            onClick={() => setReplying(true)}
+            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition hover:border-brand/40 hover:text-brand"
+          >
+            <CornerDownRight size={14} /> Reply in public
+          </button>
+        )}
         <form action={quoteAction}>
           <button
             type="submit"

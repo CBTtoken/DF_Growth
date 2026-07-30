@@ -8,7 +8,7 @@ import { applyReportRules } from "@/lib/board/moderation";
 import { recalcDocumentTotals, computeLineTotal } from "@/lib/bizup/documents";
 import { isVatVendor } from "@/lib/bizup/vat";
 import { katisoPath } from "@/lib/bizup/product";
-import { truncateOnWord } from "@/lib/text";
+import { truncateOnWord, stripEmDashes } from "@/lib/text";
 
 // The member's side of Phase 2: what the business can do about a comment on
 // its own post.
@@ -27,7 +27,9 @@ async function ownedComment(commentId: string, clientId?: string) {
   const admin = createAdminClient();
   const { data } = await admin
     .from("board_comments")
-    .select("id, body, status, post_id, identity_id, board_posts!inner(id, slug, title, price_cents, growth_client_id)")
+    .select(
+      "id, body, status, post_id, identity_id, parent_comment_id, board_posts!inner(id, slug, title, price_cents, growth_client_id)"
+    )
     .eq("id", commentId)
     .maybeSingle();
 
@@ -67,6 +69,52 @@ export async function memberReportComment(commentId: string): Promise<void> {
 
   revalidatePath("/dashboard/board");
   revalidatePath(`/board/post/${owned.post.slug}`);
+}
+
+/**
+ * The business answering a comment, in public, on its own post.
+ *
+ * This was missing entirely, and it was the worst gap in the build: a
+ * customer could ask what something costs in public and the business could
+ * take the question down or quote it privately, but could not simply
+ * answer. Silence in public is the one thing a board cannot do.
+ *
+ * The reply is attributed to the business rather than to a person, and the
+ * page marks it as such, because "the owner answered" carries weight an
+ * anonymous reply does not.
+ */
+export async function replyToCommentAsBusiness(
+  commentId: string,
+  _prevState: CommentActionState,
+  formData: FormData
+): Promise<CommentActionState> {
+  const owned = await ownedComment(commentId);
+  if (!owned) return { error: "That comment is no longer available." };
+
+  const body = stripEmDashes(String(formData.get("body") ?? "").trim());
+  if (body.length < 2) return { error: "Write your reply first." };
+  if (body.length > 1000) return { error: "Keep it under 1000 characters." };
+
+  const { admin, clientId, post, comment } = owned;
+
+  const { error } = await admin.from("board_comments").insert({
+    post_id: post.id,
+    growth_client_id: clientId,
+    // Replying to a reply attaches to the same parent, so the thread stays
+    // one level deep.
+    parent_comment_id: (comment as { parent_comment_id: string | null }).parent_comment_id ?? commentId,
+    body,
+    status: "published",
+  });
+
+  if (error) {
+    console.error("Could not post a business reply", error);
+    return { error: "Could not post that, please try again." };
+  }
+
+  revalidatePath(`/board/post/${post.slug}`);
+  revalidatePath("/dashboard/board");
+  return { success: "Replied" };
 }
 
 /**

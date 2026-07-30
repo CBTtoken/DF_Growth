@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Flag, Heart, MessageSquare, Star } from "lucide-react";
+import { CornerDownRight, Flag, Heart, MessageSquare, Star } from "lucide-react";
 import Link from "next/link";
 import { submitComment, toggleLike, reportContent } from "@/app/board/actions";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
@@ -67,6 +67,100 @@ function ReportLink({ targetType, targetId, postSlug }: { targetType: "post" | "
   );
 }
 
+/**
+ * One comment, and the box to answer it.
+ *
+ * Dewald posted a comment and found nobody could respond to it, which was
+ * true: comments were a flat list with no way in. Replies are one level
+ * deep, the way Facebook does it, and a reply to a reply lands beside it
+ * rather than starting a third level nobody can read.
+ */
+function CommentBlock({
+  comment,
+  postSlug,
+  isReply = false,
+}: {
+  comment: BoardComment;
+  postSlug: string;
+  isReply?: boolean;
+}) {
+  const [replying, setReplying] = useState(false);
+  const [state, formAction, pending] = useActionState(submitComment.bind(null, postSlug, comment.id), null);
+
+  return (
+    <div className={`rounded-xl border bg-white p-4 ${comment.fromBusiness ? "border-brand-blue/30" : "border-neutral-border"}`}>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-sm font-bold text-neutral-ink">
+          {comment.authorName}
+          {/* The owner answering carries weight an anonymous reply does not,
+              so the page says which it is. */}
+          {comment.fromBusiness && (
+            <span className="ml-2 rounded-full bg-brand-blue-light px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand-blue">
+              Owner
+            </span>
+          )}
+        </p>
+        <span className="shrink-0 text-[11px] text-neutral-muted">
+          {new Date(comment.createdAt).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}
+        </span>
+      </div>
+
+      <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-neutral-mid">{comment.body}</p>
+
+      <div className="mt-2 flex flex-wrap items-center gap-3">
+        {!replying && !state?.success && (
+          <button
+            type="button"
+            onClick={() => setReplying(true)}
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-muted transition-colors hover:text-brand-blue"
+          >
+            <CornerDownRight size={11} /> Reply
+          </button>
+        )}
+        <ReportLink targetType="comment" targetId={comment.id} postSlug={postSlug} />
+      </div>
+
+      {state?.success && (
+        <p className="mt-2 text-xs text-emerald-700">
+          {state.held ? "Your reply is with us to check, because it contains a link." : "Reply posted."}
+        </p>
+      )}
+
+      {replying && !state?.success && (
+        <form action={formAction} className="mt-3 flex flex-col gap-2">
+          <textarea
+            name="body"
+            rows={2}
+            required
+            maxLength={1000}
+            placeholder={isReply ? "Add to this" : `Reply to ${comment.authorName}`}
+            className={inputClass}
+          />
+          <input type="text" name="displayName" required placeholder="Your name" className={inputClass} />
+          <TurnstileWidget />
+          {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              disabled={pending}
+              className="rounded-full bg-brand-blue px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-blue-dark disabled:opacity-50"
+            >
+              {pending ? "Posting..." : "Reply"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setReplying(false)}
+              className="rounded-full border border-neutral-border px-4 py-2 text-xs font-semibold text-neutral-mid"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
 export function BoardComments({
   postSlug,
   comments,
@@ -80,7 +174,7 @@ export function BoardComments({
   businessSlug: string | null;
   businessName: string | null;
 }) {
-  const [commentState, commentAction, commentPending] = useActionState(submitComment.bind(null, postSlug), null);
+  const [commentState, commentAction, commentPending] = useActionState(submitComment.bind(null, postSlug, null), null);
 
   const [likes, setLikes] = useState(likeCount);
   const [liked, setLiked] = useState(false);
@@ -189,17 +283,17 @@ export function BoardComments({
       {comments.length > 0 && (
         <ul className="flex flex-col gap-3">
           {comments.map((comment) => (
-            <li key={comment.id} className="rounded-xl border border-neutral-border bg-white p-4">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="text-sm font-bold text-neutral-ink">{comment.authorName}</p>
-                <span className="shrink-0 text-[11px] text-neutral-muted">
-                  {new Date(comment.createdAt).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}
-                </span>
-              </div>
-              <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-neutral-mid">{comment.body}</p>
-              <div className="mt-2">
-                <ReportLink targetType="comment" targetId={comment.id} postSlug={postSlug} />
-              </div>
+            <li key={comment.id}>
+              <CommentBlock comment={comment} postSlug={postSlug} />
+              {comment.replies.length > 0 && (
+                <ul className="mt-2 flex flex-col gap-2 border-l-2 border-neutral-border pl-3 sm:ml-6">
+                  {comment.replies.map((reply) => (
+                    <li key={reply.id}>
+                      <CommentBlock comment={reply} postSlug={postSlug} isReply />
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>

@@ -2,13 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ExternalLink, MapPin, MessageCircle, Zap } from "lucide-react";
+import { ChevronLeft, ExternalLink, MapPin, MessageCircle, MessageSquareText, Zap } from "lucide-react";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BoardPostCard } from "@/components/board/BoardPostCard";
 import { ShareRow } from "@/components/board/ShareRow";
 import { BoardComments, ReportLink } from "@/components/board/BoardComments";
-import { MessageBusiness } from "@/components/board/MessageBusiness";
 import { getPostBySlug, listPostsByMember } from "@/lib/board/queries";
 import { listComments, likeState } from "@/lib/board/engagement";
 import { kindLabel } from "@/lib/board/kinds";
@@ -256,12 +255,19 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
               {/* Phase 3. Next to WhatsApp, never instead of it: section 6
                   keeps both paths live and lets usage decide. Absent
                   entirely when the member has switched chat off. */}
+              {/* A link to the chat screen rather than a form that unfolds
+                  here. Dewald's correction: direct messaging should open
+                  like WhatsApp, its own screen with the business at the top
+                  and the box at the bottom, not a contact form inside a
+                  post. */}
               {post.member.chatEnabled && (
-                <MessageBusiness
-                  growthClientId={post.member.id}
-                  postId={post.id}
-                  businessName={post.member.businessName}
-                />
+                <Link
+                  href={`/board/chat/${post.member.slug}`}
+                  className="inline-flex items-center gap-2 self-start rounded-full border border-brand-blue/30 bg-white px-4 py-2.5 text-sm font-semibold text-brand-blue transition-colors hover:bg-brand-blue-light"
+                >
+                  <MessageSquareText size={15} />
+                  Message here instead
+                </Link>
               )}
             </div>
 

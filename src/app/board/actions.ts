@@ -35,7 +35,13 @@ export type CommentState = { error?: string; success?: boolean; held?: boolean }
  * so, which today means a link in the body, and the person is told which
  * happened either way.
  */
-export async function submitComment(postSlug: string, _prevState: CommentState, formData: FormData): Promise<CommentState> {
+export async function submitComment(
+  postSlug: string,
+  /** Set when this is a reply rather than a new comment. */
+  parentCommentId: string | null,
+  _prevState: CommentState,
+  formData: FormData
+): Promise<CommentState> {
   const h = await headers();
   const ip = clientIpFromHeaders(h);
 
@@ -76,9 +82,26 @@ export async function submitComment(postSlug: string, _prevState: CommentState, 
   const body = stripEmDashes(parsed.data.body);
   const auto = autoRuleForNewComment(body);
 
+  // A reply has to belong to a comment on this same post. Checked rather
+  // than trusted, since the id arrives from a form.
+  let parentId: string | null = null;
+  if (parentCommentId) {
+    const { data: parent } = await admin
+      .from("board_comments")
+      .select("id, parent_comment_id")
+      .eq("id", parentCommentId)
+      .eq("post_id", post.id)
+      .eq("status", "published")
+      .maybeSingle();
+    // Replying to a reply attaches to the same parent rather than starting
+    // a third level nobody can read.
+    parentId = parent ? parent.parent_comment_id ?? parent.id : null;
+  }
+
   const { error } = await admin.from("board_comments").insert({
     post_id: post.id,
     identity_id: resolved.visitor.id,
+    parent_comment_id: parentId,
     body,
     status: auto ? "held" : "published",
     held_reason: auto?.reason ?? null,

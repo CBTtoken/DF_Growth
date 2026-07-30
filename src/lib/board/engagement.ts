@@ -15,7 +15,10 @@ export type BoardComment = {
   id: string;
   body: string;
   authorName: string;
+  /** True when the business whose post this is wrote it. Shown as a badge. */
+  fromBusiness: boolean;
   createdAt: string;
+  replies: BoardComment[];
 };
 
 /**
@@ -37,25 +40,63 @@ export async function currentBoardIdentity(): Promise<BoardIdentity | null> {
   };
 }
 
-/** Published comments on a post, oldest first, which is how a conversation reads. */
+/**
+ * Published comments on a post, oldest first, with their replies nested
+ * under them.
+ *
+ * One level deep, which is what Facebook does and what people can read.
+ * A reply to a reply attaches to the same parent rather than starting a
+ * third level.
+ *
+ * The join is a left join on both possible authors, because a comment now
+ * comes either from a member of the public or from the business whose post
+ * it is, and exactly one of those is set.
+ */
 export async function listComments(postId: string): Promise<BoardComment[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("board_comments")
-    .select("id, body, created_at, board_identities!inner(display_name)")
+    .select(
+      "id, body, created_at, parent_comment_id, board_identities(display_name), growth_clients(business_name)"
+    )
     .eq("post_id", postId)
     .eq("status", "published")
     .order("created_at", { ascending: true });
 
-  return (data ?? []).map((row) => {
-    const identity = (row as unknown as { board_identities: { display_name: string } }).board_identities;
-    return {
-      id: row.id,
-      body: row.body,
-      authorName: identity.display_name,
-      createdAt: row.created_at,
-    };
+  type Row = {
+    id: string;
+    body: string;
+    created_at: string;
+    parent_comment_id: string | null;
+    board_identities: { display_name: string } | null;
+    growth_clients: { business_name: string } | null;
+  };
+
+  const rows = (data ?? []) as unknown as Row[];
+
+  const toComment = (row: Row): BoardComment => ({
+    id: row.id,
+    body: row.body,
+    authorName: row.growth_clients?.business_name ?? row.board_identities?.display_name ?? "Someone",
+    fromBusiness: Boolean(row.growth_clients),
+    createdAt: row.created_at,
+    replies: [],
   });
+
+  const byId = new Map<string, BoardComment>();
+  const top: BoardComment[] = [];
+
+  for (const row of rows) {
+    byId.set(row.id, toComment(row));
+  }
+  for (const row of rows) {
+    const comment = byId.get(row.id)!;
+    const parent = row.parent_comment_id ? byId.get(row.parent_comment_id) : null;
+    if (parent) parent.replies.push(comment);
+    else top.push(comment);
+  }
+
+  return top;
 }
 
 /**
