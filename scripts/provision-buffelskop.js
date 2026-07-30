@@ -189,11 +189,16 @@ async function main() {
 
   console.log("\nDone. Live at:", `${SITE_URL}/${SLUG}`);
   console.log("Trial ends:", trialEndsAtIso());
+  // This used to be a reminder asking whoever read it to correct the ledger
+  // row by hand once Buffelskop paid. That is handled properly now: the
+  // agreed rate lives on growth_clients.commission_rate_override and
+  // lib/agents/commission.ts reads it when the payment lands, so the ledger
+  // row, the amount, and the email Natasha receives all say 40% the first
+  // time. Nothing to remember and nothing to correct afterwards.
   console.log(
-    "\nREMINDER: Natasha's referral is being honored at 40% commission rather than the standard first-referral 25%. " +
-      "When Buffelskop's 14-day trial actually converts to a real payment, the webhook will write a commission_ledger " +
-      "row at the standard 25% rate — that row needs a manual correction to rate_applied=40 and a recalculated " +
-      "amount_due at that point, per Dewald's explicit instruction to honor 40% for this specific referral."
+    "\nNote: Natasha's referral on this client is honoured at 40% rather than the standard " +
+      "first-referral 25%, via commission_rate_override on the growth_clients row. Applied " +
+      "automatically when the payment clears."
   );
 }
 

@@ -69,9 +69,16 @@ export async function recordCommissionIfEligible({
   // 25 or 40, so "rate is not 10" is exactly "this client earned on a
   // yearly plan". One less column to keep in sync with a rule that has
   // already changed once.
+  //
+  // One caveat now that commission_rate_override exists: an override of
+  // exactly 10 on a yearly member would be read back as a monthly row and
+  // would not count towards the ladder. Nobody has one, and 10 is the
+  // monthly rate rather than a number anybody would promise a yearly
+  // referral, but it is the one value not to reach for when hand-setting an
+  // override on an annual plan.
   const yearlyClients = new Set(rows.filter((r) => r.rate_applied !== 10).map((r) => r.referred_client_id));
 
-  let rateApplied: 10 | 25 | 40;
+  let rateApplied: number;
   if (billingCycle === "annual") {
     // The count includes the member converting right now, since this
     // payment is exactly what makes them a yearly member.
@@ -79,6 +86,28 @@ export async function recordCommissionIfEligible({
     rateApplied = yearlyClients.size <= 10 ? 25 : 40;
   } else {
     rateApplied = 10;
+  }
+
+  // A rate promised by hand for this particular referral beats the ladder.
+  //
+  // Dewald agreed to honour Natasha's first referral at 40% rather than the
+  // standard first-referral 25%. The plan before this was a note in a
+  // provisioning script asking whoever read it to correct the ledger row
+  // afterwards, which is a reminder with no owner: the payment fires a
+  // webhook, the webhook writes 25%, nobody is watching at that moment, and
+  // by the time anyone looks the agent has already been emailed a number.
+  //
+  // Read here rather than applied afterwards so the ledger row, the amount,
+  // and the email the agent receives all say the same thing the first time.
+  const { data: overrideRow } = await admin
+    .from("growth_clients")
+    .select("commission_rate_override")
+    .eq("id", clientId)
+    .maybeSingle();
+
+  const override = overrideRow?.commission_rate_override;
+  if (typeof override === "number" && override > 0 && override <= 100) {
+    rateApplied = override;
   }
 
   // Terms 3.6: the rate applies to the amount excluding VAT, not to what

@@ -144,6 +144,18 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
             </p>
           </div>
           <AssignAgentForm clientId={client.id} agents={approvedAgents ?? []} currentAgentId={client.referred_by_agent_id} />
+
+          {/* Only shown where a rate was actually promised by hand, which is
+              almost nowhere. A permanent "Commission rate: standard" row on
+              every client teaches the eye to skip the line it lives on, and
+              this is a line worth noticing. */}
+          {client.commission_rate_override != null && (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <strong>Agreed rate: {client.commission_rate_override}%</strong> on this referral,
+              instead of whatever the standard ladder would give. Applied automatically when this
+              client pays, including in the email the agent receives.
+            </p>
+          )}
         </Card>
 
         <AdminMediaSection clientId={client.id} logoUrl={logoUrl} photosStorageBase={photosStorageBase} photos={photos ?? []} />
