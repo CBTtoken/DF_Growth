@@ -40,10 +40,17 @@ export async function GET(request: Request) {
   // Only members who want email. Dewald's position, and it is the right
   // one: somebody who switched notifications off gets contacted by him
   // personally if at all, never by the system.
+  //
+  // And only addresses that still work. A check-in is exactly the kind of
+  // unprompted mail that turns a dead address into a bounce statistic, and
+  // both products share a sending domain, so the cost of ignoring this
+  // lands on Growth's password resets rather than here.
   const { data: accounts, error } = await admin
     .from("bizup_accounts")
     .select("id, business_name, email, created_at, checkin_started_at, checkin_idle_at, checkin_feedback_at")
     .eq("notify_by_email", true)
+    .is("email_bounced_at", null)
+    .is("email_complained_at", null)
     .not("email", "is", null)
     .lte("created_at", hoursAgo(STARTED_AFTER_HOURS))
     .limit(MAX_PER_RUN);

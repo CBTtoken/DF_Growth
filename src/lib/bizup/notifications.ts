@@ -50,22 +50,34 @@ type NotifiableAccount = {
   business_name: string | null;
   email: string | null;
   notify_by_email: boolean | null;
+  email_bounced_at: string | null;
+  email_complained_at: string | null;
 };
 
 /**
- * Loads the account only if it actually wants email. Returns null when the
- * member has opted out or has no address on file, so every caller gets the
- * opt-out check for free rather than having to remember it.
+ * Loads the account only if it actually wants email and can receive it.
+ * Returns null otherwise, so every caller gets the check for free rather
+ * than having to remember it.
+ *
+ * Three separate reasons to stay quiet, and they are not the same thing:
+ *
+ * - notify_by_email false is the member's own choice, made in settings or
+ *   through the unsubscribe link, and it is reversible by them
+ * - a hard bounce means the address does not work. Continuing to send is
+ *   pointless and actively harmful, because both products share a sending
+ *   domain and the reputation damage lands on Growth's password resets too
+ * - a spam complaint means they marked us. That one is permanent
  */
 async function notifiableAccount(accountId: string): Promise<NotifiableAccount | null> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("bizup_accounts")
-    .select("id, business_name, email, notify_by_email")
+    .select("id, business_name, email, notify_by_email, email_bounced_at, email_complained_at")
     .eq("id", accountId)
     .maybeSingle();
 
   if (!data || !data.email || data.notify_by_email === false) return null;
+  if (data.email_bounced_at || data.email_complained_at) return null;
   return data;
 }
 

@@ -47,14 +47,29 @@ export async function POST(request: Request) {
 
   if (field) {
     const admin = createAdminClient();
-    const { error } = await admin
-      .from("growth_clients")
-      .update({ [field]: new Date().toISOString() })
-      .in("contact_email", recipients);
+    const now = new Date().toISOString();
 
-    if (error) {
-      console.error("Failed to record Resend webhook event", event.type, error);
-      Sentry.captureException(error, { extra: { eventType: event.type, recipients } });
+    // Both products, because both send through the same domain.
+    //
+    // Until now this only wrote to growth_clients, so a bounce for one of
+    // the KatisoBiz members arrived here, matched nothing, and was silently
+    // dropped. The address then kept receiving check-in emails and kept
+    // bouncing. A shared sending domain means that reputation damage lands
+    // on Growth's password resets and lead notifications too, and this
+    // project has already had one bounce-rate warning.
+    //
+    // An address that appears in both products is marked in both, which is
+    // correct: it is the same mailbox failing either way.
+    const results = await Promise.all([
+      admin.from("growth_clients").update({ [field]: now }).in("contact_email", recipients),
+      admin.from("bizup_accounts").update({ [field]: now, updated_at: now }).in("email", recipients),
+    ]);
+
+    for (const { error } of results) {
+      if (error) {
+        console.error("Failed to record Resend webhook event", event.type, error);
+        Sentry.captureException(error, { extra: { eventType: event.type, recipients } });
+      }
     }
   }
 
