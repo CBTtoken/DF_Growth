@@ -23,7 +23,7 @@ import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 import { SocialAssetGenerator } from "@/components/dashboard/SocialAssetGenerator";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
-import { OrdersSection } from "@/components/dashboard/OrdersSection";
+import { OrdersSection, type SellerOrder } from "@/components/dashboard/OrdersSection";
 import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
 import { ReviewsManagement, type DashboardReview } from "@/components/dashboard/ReviewsManagement";
 import { BookingSection } from "@/components/dashboard/BookingSection";
@@ -110,7 +110,6 @@ export default async function DashboardPage() {
     { data: leads },
     { data: photos },
     { data: landingPageType },
-    { data: bookOrders },
     { count: totalPageViews },
     { data: recentPageViews },
     { data: reviews },
@@ -170,13 +169,6 @@ export default async function DashboardPage() {
     // just Standing 365 specifically.
     admin.from("landing_pages").select("page_type").eq("growth_client_id", client.id).maybeSingle(),
     admin
-      .from("book_orders")
-      .select(
-        "id, created_at, edition, quantity, buyer_name, email, phone, delivery_address, recipient_name, gift_message, amount, payment_status, batch_number, fulfilment_status"
-      )
-      .eq("growth_client_id", client.id)
-      .order("created_at", { ascending: false }),
-    admin
       .from("page_views")
       .select("id", { count: "exact", head: true })
       .eq("growth_client_id", client.id),
@@ -228,9 +220,15 @@ export default async function DashboardPage() {
       .select("id, code, discount_type, discount_value, max_uses, uses_count")
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false }),
+    // One orders query, read by two places: the Orders section on Overview
+    // and the summary list inside Shop. It carries the delivery and batch
+    // columns the Orders module needs, since a second query for the same
+    // rows is how two screens start disagreeing about the same order.
     admin
       .from("shop_orders")
-      .select("id, line_items, total_cents, customer_name, customer_email, payment_status, fulfilment_status, created_at")
+      .select(
+        "id, created_at, line_items, total_cents, customer_name, customer_email, customer_phone, delivery_address, payment_status, fulfilment_status, batch_number"
+      )
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false })
       .limit(50),
@@ -367,19 +365,24 @@ export default async function DashboardPage() {
               })}
               {(!leads || leads.length === 0) && (
                 <p className="text-sm text-gray-400">
-                  No leads yet — this fills in as soon as someone contacts you through your page.
+                  No leads yet. This fills in as soon as someone contacts you through your page.
                 </p>
               )}
             </ul>
           </section>
 
           {/* STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sprint 3: only shown
-              for a client whose page can actually take orders — a critical
-              gap found live: orders were being paid for and written to
-              book_orders with no way to ever see them, including the
-              personalisation details (recipient name, gift message) needed
-              to print a cover. */}
-          {landingPageType?.page_type === "custom" && <OrdersSection orders={bookOrders ?? []} />}
+              for a client whose page can actually take orders. A critical
+              gap found live: orders were being paid for with no way to ever
+              see them, including the personalisation details (recipient
+              name, gift message) needed to print a cover.
+
+              Shown for a shop as well as a custom order-taking page, since
+              both now write the same shop_orders rows. A seller who has
+              taken an order always has somewhere to go and read it. */}
+          {(landingPageType?.page_type === "custom" || growthClient?.shop_enabled) && (
+            <OrdersSection orders={(shopOrders ?? []) as unknown as SellerOrder[]} />
+          )}
         </>
       ),
     },
@@ -412,7 +415,7 @@ export default async function DashboardPage() {
                 <li key={t.id} className="rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
                   <p className="text-gray-700">&ldquo;{t.quote}&rdquo;</p>
                   <p className="mt-1.5 text-gray-500">
-                    — {t.author_name}
+                    {t.author_name}
                     {t.rating ? <span className="text-brand"> · {"★".repeat(t.rating)}</span> : ""}
                   </p>
                 </li>
@@ -527,7 +530,7 @@ export default async function DashboardPage() {
 
               {!growthClient?.meta_pixel_id && growthClient?.meta_setup_requested_help && (
                 <p className="rounded-xl border border-brand/20 bg-brand/5 px-4 py-3 text-sm text-gray-700">
-                  You told us during signup you&apos;d like help connecting your Meta account — our
+                  You told us during signup you&apos;d like help connecting your Meta account, and our
                   team will be in touch. If you find your Pixel ID and Ad Account ID before then,
                   add them yourself below and this section will switch on right away.
                 </p>
@@ -562,7 +565,7 @@ export default async function DashboardPage() {
                       ))}
                       {(!capiEvents || capiEvents.length === 0) && (
                         <p className="text-xs text-gray-400">
-                          No events sent yet — this fills in once your landing page starts getting leads.
+                          No events sent yet. This fills in once your landing page starts getting leads.
                         </p>
                       )}
                     </ul>

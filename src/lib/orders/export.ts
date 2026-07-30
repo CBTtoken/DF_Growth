@@ -1,4 +1,13 @@
 import { toCsv, csvAmount } from "@/lib/bizup/csv";
+import {
+  addressParts,
+  describeOrder,
+  personalisedLines,
+  totalItems,
+  variantLabel,
+  type DeliveryAddress,
+  type OrderLine,
+} from "@/lib/orders/line-items";
 
 // The spreadsheet a printer and a courier actually need.
 //
@@ -15,8 +24,10 @@ import { toCsv, csvAmount } from "@/lib/bizup/csv";
 // it, and a guard on any field starting with a formula character so a buyer
 // called "=Smith" displays rather than executes.
 //
-// One row per order, not per book. A courier ships a parcel to an address
-// and a printer reads the quantity from a column.
+// One row per order, not per item. A courier ships one parcel to one
+// address, and a second row for the same address is a second delivery
+// somebody has to pay for. Where an order holds more than one item the
+// Items column carries all of them.
 //
 // Address parts stay in separate columns. Every courier import format wants
 // them apart, joining them later is trivial, and splitting a joined one
@@ -24,23 +35,15 @@ import { toCsv, csvAmount } from "@/lib/bizup/csv";
 
 export type ExportableOrder = {
   created_at: string;
-  buyer_name: string;
-  email: string;
-  phone: string | null;
-  edition: string;
-  quantity: number;
-  amount: number;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  line_items: OrderLine[];
+  total_cents: number;
   payment_status: string;
   fulfilment_status: string;
   batch_number: number | null;
-  recipient_name: string | null;
-  gift_message: string | null;
-  delivery_address: {
-    street?: string;
-    suburb?: string;
-    city?: string;
-    postalCode?: string;
-  } | null;
+  delivery_address: DeliveryAddress;
 };
 
 const HEADERS = [
@@ -48,7 +51,8 @@ const HEADERS = [
   "Buyer",
   "Email",
   "Phone",
-  "Edition",
+  "Items",
+  "Variant",
   "Quantity",
   "Amount (R)",
   "Payment",
@@ -59,33 +63,48 @@ const HEADERS = [
   "Street",
   "Suburb",
   "City",
+  "Province",
   "Postal code",
 ];
 
 export function ordersToCsv(orders: ExportableOrder[]): string {
   const rows = orders.map((o) => {
-    const a = o.delivery_address ?? {};
+    const lines = o.line_items ?? [];
+    const a = addressParts(o.delivery_address);
+    const personalised = personalisedLines(lines);
+
+    // Almost always one. Joined rather than truncated when it is not,
+    // because a name that gets printed on a cover must not be the one the
+    // export decided to drop.
+    const joinPersonalisation = (pick: (p: NonNullable<OrderLine["personalisation"]>) => string | null) =>
+      personalised
+        .map(({ line }) => pick(line.personalisation!) ?? "")
+        .filter(Boolean)
+        .join(" | ");
+
     return [
       // Date only. A courier does not care what time it was placed, and a
       // full timestamp invites Excel to reformat it into something else.
       o.created_at.slice(0, 10),
-      o.buyer_name?.trim() ?? "",
-      o.email ?? "",
-      o.phone ?? "",
-      o.edition === "personalised" ? "Personalised" : "Standard",
-      o.quantity,
-      csvAmount(o.amount),
+      o.customer_name?.trim() ?? "",
+      o.customer_email ?? "",
+      o.customer_phone ?? "",
+      describeOrder(lines),
+      lines.map(variantLabel).filter(Boolean).join(" | "),
+      totalItems(lines),
+      csvAmount(o.total_cents),
       o.payment_status,
       o.fulfilment_status,
       o.batch_number ?? "",
-      // Empty on a standard copy, which is correct: there is nothing to
+      // Empty on an ordinary order, which is correct: there is nothing to
       // print on the cover, and an invented value would get printed.
-      o.recipient_name ?? "",
-      o.gift_message ?? "",
-      a.street ?? "",
-      a.suburb ?? "",
-      a.city ?? "",
-      a.postalCode ?? "",
+      joinPersonalisation((p) => p.recipient_name),
+      joinPersonalisation((p) => p.gift_message),
+      a.line1 + (a.line2 ? `, ${a.line2}` : ""),
+      a.suburb,
+      a.city,
+      a.province,
+      a.postalCode,
     ];
   });
 

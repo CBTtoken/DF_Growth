@@ -3,32 +3,43 @@
 import { useState, useTransition } from "react";
 import { assignBatchNumber, markOrderShipped, markBatchSentForPrinting } from "@/app/dashboard/orders-actions";
 import { Card } from "@/components/ui/Card";
-
-export type BookOrder = {
-  id: string;
-  created_at: string;
-  edition: "standard" | "personalised";
-  quantity: number;
-  buyer_name: string;
-  email: string;
-  phone: string;
-  delivery_address: { street?: string; suburb?: string; city?: string; postalCode?: string } | null;
-  recipient_name: string | null;
-  gift_message: string | null;
-  amount: number;
-  payment_status: string;
-  batch_number: number | null;
-  fulfilment_status: string;
-};
+import {
+  describeLine,
+  formatAddress,
+  hasPersonalisation,
+  personalisedLines,
+  totalItems,
+  variantLabel,
+  type DeliveryAddress,
+  type OrderLine,
+} from "@/lib/orders/line-items";
 
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sprint 3: the one piece missing
-// entirely until now — orders were being paid for and written to
-// book_orders with no way for Dewald to ever see them, assign a batch, or
-// find the personalisation details (recipient name, gift message) needed
-// to actually print a cover. Lives in the dashboard rather than admin-only
-// deliberately: this is scoped to the signed-in client's own
-// growth_client_id, so it works exactly the same way the day a real member
-// requests their own custom order-taking page, not just for Dewald.
+// entirely until now — orders were being paid for with no way for a seller
+// to ever see them, assign a batch, or find the personalisation details
+// (recipient name, gift message) needed to actually print a cover.
+//
+// Reads shop_orders, the same table any member's shop writes to. Dewald,
+// 31 July: "can you bring the book in as if it is one of our own members
+// without breaking our current page?" The book used to have a table of its
+// own, which meant a second orders screen, a second export and a second set
+// of emails, all of which would have had to be built twice forever. It is
+// now a product with two variants like anything else, and this screen is
+// the seller's orders module rather than the book's.
+export type SellerOrder = {
+  id: string;
+  created_at: string;
+  line_items: OrderLine[];
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string | null;
+  delivery_address: DeliveryAddress;
+  total_cents: number;
+  payment_status: string;
+  fulfilment_status: string;
+  batch_number: number | null;
+};
+
 /**
  * The numbers a seller wants before they want anything else.
  *
@@ -44,19 +55,19 @@ export type BookOrder = {
  * overdue row in KatisoBiz: a permanent "Unpaid: R0" teaches the eye to
  * skip the line it lives on.
  */
-function Summary({ orders }: { orders: BookOrder[] }) {
+function Summary({ orders }: { orders: SellerOrder[] }) {
   const paid = orders.filter((o) => o.payment_status === "paid");
   const unpaid = orders.filter((o) => o.payment_status !== "paid");
   const unshipped = paid.filter((o) => o.fulfilment_status !== "shipped");
 
-  const revenue = paid.reduce((sum, o) => sum + o.amount, 0);
-  const books = paid.reduce((sum, o) => sum + o.quantity, 0);
+  const revenue = paid.reduce((sum, o) => sum + o.total_cents, 0);
+  const items = paid.reduce((sum, o) => sum + totalItems(o.line_items ?? []), 0);
   const rands = (cents: number) =>
     `R${(cents / 100).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const stats: [string, string, string][] = [
     ["Paid revenue", rands(revenue), `${paid.length} ${paid.length === 1 ? "order" : "orders"}`],
-    ["Books sold", String(books), "paid copies"],
+    ["Items sold", String(items), "paid items"],
     [
       "Still to ship",
       String(unshipped.length),
@@ -81,14 +92,14 @@ function Summary({ orders }: { orders: BookOrder[] }) {
   );
 }
 
-export function OrdersSection({ orders }: { orders: BookOrder[] }) {
+export function OrdersSection({ orders }: { orders: SellerOrder[] }) {
   return (
     <Card className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold tracking-tight text-ink">Book orders</h2>
+          <h2 className="text-lg font-bold tracking-tight text-ink">Orders</h2>
           <p className="text-sm text-gray-500">
-            Standing 365 paperback orders, including personalisation details.
+            Everything bought through your page, including delivery and personalisation details.
           </p>
         </div>
 
@@ -153,7 +164,7 @@ export function OrdersSection({ orders }: { orders: BookOrder[] }) {
  * for the seller, you can add a button to indicate whether it was completed
  * or not?" So nothing here talks to a printer. It records that he did.
  */
-function BatchPanel({ orders }: { orders: BookOrder[] }) {
+function BatchPanel({ orders }: { orders: SellerOrder[] }) {
   const batches = Array.from(
     new Set(orders.filter((o) => o.batch_number != null).map((o) => o.batch_number as number))
   ).sort((a, b) => a - b);
@@ -185,15 +196,15 @@ function BatchPanel({ orders }: { orders: BookOrder[] }) {
   );
 }
 
-function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: BookOrder[] }) {
+function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: SellerOrder[] }) {
   const [date, setDate] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const paid = orders.filter((o) => o.payment_status === "paid");
-  const books = paid.reduce((s, o) => s + o.quantity, 0);
-  const personalised = paid.filter((o) => o.edition === "personalised").length;
+  const items = paid.reduce((s, o) => s + totalItems(o.line_items ?? []), 0);
+  const personalised = paid.filter((o) => hasPersonalisation(o.line_items ?? [])).length;
 
   function handleSend() {
     setError(null);
@@ -209,8 +220,8 @@ function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: BookOr
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="font-semibold text-ink">Batch {batchNumber}</p>
         <p className="text-sm text-gray-500">
-          {paid.length} paid {paid.length === 1 ? "order" : "orders"}, {books}{" "}
-          {books === 1 ? "book" : "books"}
+          {paid.length} paid {paid.length === 1 ? "order" : "orders"}, {items}{" "}
+          {items === 1 ? "item" : "items"}
           {personalised > 0 ? `, ${personalised} personalised` : ""}
         </p>
       </div>
@@ -265,15 +276,13 @@ function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: BookOr
   );
 }
 
-function OrderRow({ order }: { order: BookOrder }) {
+function OrderRow({ order }: { order: SellerOrder }) {
   const [batchInput, setBatchInput] = useState(order.batch_number?.toString() ?? "");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const address = order.delivery_address;
-  const addressLine = address
-    ? [address.street, address.suburb, address.city, address.postalCode].filter(Boolean).join(", ")
-    : "No delivery address";
+  const lines = order.line_items ?? [];
+  const personalised = personalisedLines(lines);
 
   function handleAssignBatch() {
     const n = Number(batchInput);
@@ -296,38 +305,67 @@ function OrderRow({ order }: { order: BookOrder }) {
     <li className="flex flex-col gap-2 rounded-xl border border-gray-100 bg-gray-50 p-4 text-sm">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <p className="font-semibold text-gray-900">
-            {order.buyer_name}
-            <span className="ml-2 rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-500">
-              {order.edition === "personalised" ? "Personalised" : `Standard × ${order.quantity}`}
-            </span>
-          </p>
+          <p className="font-semibold text-gray-900">{order.customer_name?.trim()}</p>
           <p className="text-gray-500">
-            <a href={`mailto:${order.email}`} className="text-brand underline-offset-2 hover:underline">
-              {order.email}
-            </a>{" "}
-            · {order.phone}
+            <a
+              href={`mailto:${order.customer_email}`}
+              className="text-brand underline-offset-2 hover:underline"
+            >
+              {order.customer_email}
+            </a>
+            {order.customer_phone ? ` · ${order.customer_phone}` : ""}
           </p>
         </div>
         <span className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</span>
       </div>
 
+      {/* What was actually bought. A list rather than a single badge,
+          because an order can hold more than one thing and the person
+          packing the parcel needs all of it. */}
+      <ul className="flex flex-col gap-0.5 text-gray-700">
+        {lines.map((line, i) => (
+          <li key={line.variant_id ?? line.sku ?? i}>
+            {describeLine(line)}
+            <span className="ml-2 text-xs text-gray-500">
+              R{((line.unit_price_cents * line.quantity) / 100).toFixed(2)}
+            </span>
+          </li>
+        ))}
+      </ul>
+
       <p className="text-gray-600">
-        <span className="font-medium text-gray-700">Deliver to:</span> {addressLine}
+        <span className="font-medium text-gray-700">Deliver to:</span>{" "}
+        {formatAddress(order.delivery_address)}
       </p>
 
-      {order.edition === "personalised" && (
-        <div className="rounded-lg border border-brand/20 bg-brand/5 p-3">
-          <p className="font-medium text-gray-800">Print on cover: {order.recipient_name}</p>
-          <p className="mt-1 whitespace-pre-wrap text-gray-600">&ldquo;{order.gift_message}&rdquo;</p>
+      {/* One block per personalised item. The whole reason this screen
+          exists: without it, nobody knows what to print on the cover. */}
+      {personalised.map(({ line, index }) => (
+        <div key={index} className="rounded-lg border border-brand/20 bg-brand/5 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-brand">
+            {line.title}
+            {variantLabel(line) ? ` · ${variantLabel(line)}` : ""}
+          </p>
+          <p className="mt-1 font-medium text-gray-800">
+            Print on cover: {line.personalisation?.recipient_name}
+          </p>
+          {line.personalisation?.gift_message && (
+            <p className="mt-1 whitespace-pre-wrap text-gray-600">
+              &ldquo;{line.personalisation.gift_message}&rdquo;
+            </p>
+          )}
         </div>
-      )}
+      ))}
 
       <div className="flex flex-wrap items-center gap-4 border-t border-gray-200 pt-2 text-xs text-gray-500">
         <span>
-          R{(order.amount / 100).toFixed(2)} ·{" "}
+          R{(order.total_cents / 100).toFixed(2)} ·{" "}
           <span
-            className={order.payment_status === "paid" ? "font-semibold text-green-700" : "font-semibold text-amber-700"}
+            className={
+              order.payment_status === "paid"
+                ? "font-semibold text-green-700"
+                : "font-semibold text-amber-700"
+            }
           >
             {order.payment_status}
           </span>

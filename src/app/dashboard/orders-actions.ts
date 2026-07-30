@@ -23,17 +23,21 @@ export async function assignBatchNumber(orderId: string, batchNumber: number): P
 
   const admin = createAdminClient();
   const { data: order, error } = await admin
-    .from("book_orders")
+    .from("shop_orders")
     .update({ batch_number: batchNumber })
     .eq("id", orderId)
     .eq("growth_client_id", client.id)
-    .select("buyer_name, email")
+    .select("customer_name, customer_email")
     .single();
 
   if (error || !order) return { error: "Could not save, please try again." };
 
   try {
-    await sendBatchAssignedEmail({ buyerName: order.buyer_name, email: order.email, batchNumber });
+    await sendBatchAssignedEmail({
+      buyerName: order.customer_name,
+      email: order.customer_email,
+      batchNumber,
+    });
   } catch (err) {
     console.error("Batch assigned email failed", err);
   }
@@ -75,7 +79,7 @@ export async function markBatchSentForPrinting(
 
   // Upsert, because a batch can exist only as a number written on orders if
   // it was created before batches were real things.
-  const { error: batchError } = await admin.from("book_batches").upsert(
+  const { error: batchError } = await admin.from("order_batches").upsert(
     {
       growth_client_id: client.id,
       number: batchNumber,
@@ -94,8 +98,8 @@ export async function markBatchSentForPrinting(
   // Only paid orders. Somebody who has not paid is not having a book
   // printed, and should certainly not be told one is on its way.
   const { data: orders } = await admin
-    .from("book_orders")
-    .select("buyer_name, email")
+    .from("shop_orders")
+    .select("customer_name, customer_email")
     .eq("growth_client_id", client.id)
     .eq("batch_number", batchNumber)
     .eq("payment_status", "paid");
@@ -112,8 +116,8 @@ export async function markBatchSentForPrinting(
   for (const order of orders ?? []) {
     try {
       await sendSentForPrintingEmail({
-        buyerName: order.buyer_name,
-        email: order.email,
+        buyerName: order.customer_name,
+        email: order.customer_email,
         batchNumber,
         expectedDeliveryDate: readableDate,
       });
@@ -133,17 +137,17 @@ export async function markOrderShipped(orderId: string): Promise<ActionResult> {
 
   const admin = createAdminClient();
   const { data: order, error } = await admin
-    .from("book_orders")
+    .from("shop_orders")
     .update({ fulfilment_status: "shipped" })
     .eq("id", orderId)
     .eq("growth_client_id", client.id)
-    .select("buyer_name, email")
+    .select("customer_name, customer_email")
     .single();
 
   if (error || !order) return { error: "Could not save, please try again." };
 
   try {
-    await sendShippedEmail({ buyerName: order.buyer_name, email: order.email });
+    await sendShippedEmail({ buyerName: order.customer_name, email: order.customer_email });
   } catch (err) {
     console.error("Shipped email failed", err);
   }

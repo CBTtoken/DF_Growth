@@ -27,9 +27,9 @@ export async function GET(request: Request) {
 
   const admin = createAdminClient();
   let query = admin
-    .from("book_orders")
+    .from("shop_orders")
     .select(
-      "created_at, buyer_name, email, phone, edition, quantity, amount, payment_status, fulfilment_status, batch_number, recipient_name, gift_message, delivery_address"
+      "created_at, customer_name, customer_email, customer_phone, line_items, total_cents, payment_status, fulfilment_status, batch_number, delivery_address"
     )
     .eq("growth_client_id", client.id)
     // Unpaid orders are deliberately excluded. Nothing gets printed or
@@ -53,7 +53,7 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    console.error("Book order export failed", error);
+    console.error("Order export failed", error);
     return new Response("Could not build the export", { status: 500 });
   }
 

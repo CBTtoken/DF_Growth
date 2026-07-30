@@ -42,7 +42,7 @@ export function AddTestimonialForm() {
       </select>
 
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
-      {state?.success && <p className="text-xs text-green-600">Added — social image generated below.</p>}
+      {state?.success && <p className="text-xs text-green-600">Added. Social image generated below.</p>}
 
       <button
         type="submit"

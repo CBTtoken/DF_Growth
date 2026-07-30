@@ -29,7 +29,7 @@ function GalleryImagePicker({
   if (photos.length === 0) {
     return (
       <p className="text-xs text-gray-400">
-        No photos in your gallery yet — add some above to use one here, or skip the image for a
+        No photos in your gallery yet. Add some above to use one here, or skip the image for a
         text-only design.
       </p>
     );
@@ -85,7 +85,7 @@ export function SocialAssetGenerator({ photos, storageBase }: { photos: Photo[];
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Create your image ready for Facebook and Instagram posts</h2>
         <p className="mt-1 text-sm text-gray-500">
-          {state?.success ? "Generated — download it below in Generated social assets." : "Pick what you're posting about."}
+          {state?.success ? "Generated. Download it below in Generated social assets." : "Pick what you're posting about."}
         </p>
       </div>
 

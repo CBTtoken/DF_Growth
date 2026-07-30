@@ -7,9 +7,9 @@ import { NextResponse } from "next/server";
 // success/failure check happens client-side instead (OrderReturnBanner
 // reads window.location.search after the static HTML has already loaded),
 // calling this route to do the actual Paystack verification server-side,
-// where the secret key belongs. Read-only — book_orders itself is still
+// where the secret key belongs. This route writes nothing: the order is
 // only ever written by the webhook (the reliable, guaranteed-delivery
-// source of truth), this route exists purely to tell the UI what to show.
+// source of truth), and this exists purely to tell the UI what to show.
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const reference = searchParams.get("reference");

@@ -124,7 +124,7 @@ export function BookingSection({
             <h3 className="text-sm font-semibold text-gray-800">Your booking options</h3>
             {units.length === 0 && (
               <p className="text-sm text-gray-400">
-                No booking options yet — add one below to start taking bookings.
+                No booking options yet. Add one below to start taking bookings.
               </p>
             )}
             <ul className="flex flex-col gap-2">
@@ -511,7 +511,7 @@ function ReservationRow({ reservation, unitName }: { reservation: UpcomingReserv
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-semibold text-gray-900">
-            {unitName} — {reservation.customer_name ?? "Unknown"}
+            {unitName} · {reservation.customer_name ?? "Unknown"}
           </p>
           <p className="text-xs text-gray-500">
             {new Date(reservation.starts_at).toLocaleString()} · R{(reservation.price_cents / 100).toFixed(2)} ·{" "}

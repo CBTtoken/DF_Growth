@@ -93,7 +93,7 @@ export async function saveProduct(
 
   if (productId) {
     const { error } = await admin.from("shop_products").update(productRow).eq("id", productId).eq("growth_client_id", client.id);
-    if (error) return { error: { _form: [error.message.includes("shop_products_growth_client_id_sku_key") ? "You already have a product with this SKU." : "Could not save — please try again."] } };
+    if (error) return { error: { _form: [error.message.includes("shop_products_growth_client_id_sku_key") ? "You already have a product with this SKU." : "Could not save, please try again."] } };
     await admin
       .from("shop_product_variants")
       .update({ stock_quantity: parsed.data.stockQuantity, updated_at: new Date().toISOString() })
@@ -101,7 +101,7 @@ export async function saveProduct(
   } else {
     const { data: product, error } = await admin.from("shop_products").insert(productRow).select("id").single();
     if (error || !product) {
-      return { error: { _form: [error?.message.includes("shop_products_growth_client_id_sku_key") ? "You already have a product with this SKU." : "Could not save — please try again."] } };
+      return { error: { _form: [error?.message.includes("shop_products_growth_client_id_sku_key") ? "You already have a product with this SKU." : "Could not save, please try again."] } };
     }
     await admin.from("shop_product_variants").insert({
       growth_client_id: client.id,
@@ -237,7 +237,7 @@ export async function saveCoupon(_prevState: ActionState, formData: FormData): P
   });
   if (error) {
     return {
-      error: { _form: [error.message.includes("shop_coupons_growth_client_id_code_key") ? "You already have a coupon with this code." : "Could not save — please try again."] },
+      error: { _form: [error.message.includes("shop_coupons_growth_client_id_code_key") ? "You already have a coupon with this code." : "Could not save, please try again."] },
     };
   }
 
@@ -255,16 +255,9 @@ export async function deleteCoupon(couponId: string): Promise<ActionResult> {
   return { success: true };
 }
 
-export async function markOrderFulfilled(orderId: string): Promise<ActionResult> {
-  const client = await requireGrowthClientId();
-  if (client.error !== undefined) return { error: client.error };
-
-  const admin = createAdminClient();
-  await admin
-    .from("shop_orders")
-    .update({ fulfilment_status: "shipped", updated_at: new Date().toISOString() })
-    .eq("id", orderId)
-    .eq("growth_client_id", client.id);
-  await revalidateOwnPage(client.id);
-  return { success: true };
-}
+// markOrderFulfilled used to live here. It set fulfilment_status to
+// "shipped" and told nobody, while markOrderShipped in orders-actions.ts
+// does the same thing and emails the buyer. Two buttons that both say
+// "shipped" and only one of which tells the customer is a trap: whichever
+// one you press second appears to do nothing, and the buyer either hears
+// twice or never. Shipping now goes through orders-actions.ts alone.

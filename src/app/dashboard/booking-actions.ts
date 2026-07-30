@@ -72,7 +72,7 @@ export async function saveBookableUnit(
     : await admin.from("bookable_units").insert(row);
 
   if (error) {
-    return { error: { _form: ["Could not save — please try again."] } };
+    return { error: { _form: ["Could not save, please try again."] } };
   }
 
   await revalidateOwnPage(client.id);
@@ -138,7 +138,7 @@ export async function saveBookingRules(
   });
 
   if (error) {
-    return { error: { _form: ["Could not save — please try again."] } };
+    return { error: { _form: ["Could not save, please try again."] } };
   }
 
   await revalidateOwnPage(client.id);

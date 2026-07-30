@@ -23,7 +23,7 @@ export function AssetStyleSection({ currentStyle }: { currentStyle: string }) {
           <p className="mt-1 text-sm text-gray-500">
             {state?.success
               ? "Saved, new images will use this style."
-              : "How your generated social images look — testimonials and everything below."}
+              : "How your generated social images look. Testimonials and everything below."}
           </p>
         </div>
         <button
