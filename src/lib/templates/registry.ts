@@ -97,7 +97,7 @@ export const templates: TemplateMeta[] = [
     id: "storyteller",
     name: "Storyteller Vertical",
     archetype: "Editorial · long-scroll",
-    description: "A founder's-story feel — your own words take center stage.",
+    description: "A founder's-story feel, where your own words take centre stage.",
     icon: BookOpen,
     hero: "editorial",
     sections: ["story", "about", "services", "packages", "trust", "gallery", "location", "reviews"],
