@@ -341,7 +341,14 @@ export async function cancelSubscription(_prevState: DashboardState, _formData: 
     }
   }
 
-  const { error } = await admin.from("growth_clients").update({ status: "cancelled" }).eq("id", client.id);
+  // ended_at starts the twelve month retention clock the privacy policy
+  // promises. Set here rather than inferred later, because "when did this
+  // account actually end" cannot be reconstructed afterwards, and deleting
+  // real member data on a guessed date is not something to do at all.
+  const { error } = await admin
+    .from("growth_clients")
+    .update({ status: "cancelled", ended_at: new Date().toISOString() })
+    .eq("id", client.id);
   if (error) return { error: { _form: ["Could not update your account, please try again."] } };
 
   revalidatePath("/dashboard");

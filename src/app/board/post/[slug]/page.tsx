@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { BoardPostCard } from "@/components/board/BoardPostCard";
 import { ShareRow } from "@/components/board/ShareRow";
 import { BoardComments, ReportLink } from "@/components/board/BoardComments";
+import { MessageBusiness } from "@/components/board/MessageBusiness";
 import { getPostBySlug, listPostsByMember } from "@/lib/board/queries";
 import { listComments, likeState } from "@/lib/board/engagement";
 import { kindLabel } from "@/lib/board/kinds";
@@ -67,6 +68,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     alternates: { canonical: url },
     openGraph: { title, description, url, images: [image] },
     twitter: { card: "summary_large_image", title, description, images: [image] },
+    // Installable as its own icon, see board/manifest.webmanifest.
+    manifest: "/board/manifest.webmanifest",
+    icons: { apple: "/api/icons/board?size=180" },
     // Unlisted until the board is announced. The share card above still
     // renders, so a tester sharing a link into a group chat gets the real
     // experience, it simply does not reach Google yet.
@@ -248,6 +252,17 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
                   See the business
                 </Link>
               </div>
+
+              {/* Phase 3. Next to WhatsApp, never instead of it: section 6
+                  keeps both paths live and lets usage decide. Absent
+                  entirely when the member has switched chat off. */}
+              {post.member.chatEnabled && (
+                <MessageBusiness
+                  growthClientId={post.member.id}
+                  postId={post.id}
+                  businessName={post.member.businessName}
+                />
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">

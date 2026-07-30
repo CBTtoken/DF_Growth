@@ -34,6 +34,9 @@ export async function generateMetadata({ params }: { params: Promise<{ area: str
     title,
     description,
     alternates: { canonical: `/board/area/${area.slug}` },
+    // Installable as its own icon, see board/manifest.webmanifest.
+    manifest: "/board/manifest.webmanifest",
+    icons: { apple: "/api/icons/board?size=180" },
     ...boardRobots(),
   };
 }

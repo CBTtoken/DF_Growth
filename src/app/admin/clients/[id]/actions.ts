@@ -347,7 +347,16 @@ export async function toggleClientVisibility(clientId: string) {
   if (!client) return { error: "Client not found." };
 
   const nextStatus = client.status === "active" ? "cancelled" : "active";
-  const { error } = await admin.from("growth_clients").update({ status: nextStatus }).eq("id", clientId);
+  // Same retention clock as the member's own cancel button. Reactivating
+  // clears it, so a member who comes back is not deleted twelve months
+  // after the cancellation they reversed.
+  const { error } = await admin
+    .from("growth_clients")
+    .update({
+      status: nextStatus,
+      ended_at: nextStatus === "cancelled" ? new Date().toISOString() : null,
+    })
+    .eq("id", clientId);
   if (error) return { error: "Could not update, please try again." };
 
   revalidatePath(`/admin/clients/${clientId}`);

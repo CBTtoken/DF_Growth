@@ -127,6 +127,9 @@ export default async function AdminPage() {
                 </span>
               )}
             </LinkButton>
+            <LinkButton href="/admin/retention" variant="secondary" lift>
+              Data Retention
+            </LinkButton>
             <LinkButton href="/admin/board" variant="secondary" lift>
               The Board
               {!!boardQueueCount && (

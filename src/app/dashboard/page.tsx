@@ -256,6 +256,20 @@ export default async function DashboardPage() {
   const showMetaSection = growthClient?.plan !== "foundation";
   const pageUrl = growthClient?.slug ? `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/${growthClient.slug}` : null;
 
+  // Unread board messages, for the badge on the Messages button. Counted
+  // from the messages themselves rather than a counter column, so it cannot
+  // drift out of step with what is actually in the thread.
+  const { data: myThreads } = await admin.from("board_threads").select("id").eq("growth_client_id", client.id);
+  const myThreadIds = (myThreads ?? []).map((t) => t.id);
+  const { count: unreadMessageCount } = myThreadIds.length
+    ? await admin
+        .from("board_messages")
+        .select("id", { count: "exact", head: true })
+        .in("thread_id", myThreadIds)
+        .eq("sender", "public")
+        .is("read_at", null)
+    : { count: 0 };
+
   // UI/UX pass, Dewald's ask: the dashboard had grown into one long
   // scrolling page with no way to jump between sections — grouped here into
   // named tabs (DashboardTabs.tsx renders the bar + swaps content), every
@@ -724,6 +738,17 @@ export default async function DashboardPage() {
               className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
             >
               Post to the board
+            </Link>
+            <Link
+              href="/dashboard/messages"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Messages
+              {!!unreadMessageCount && (
+                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {unreadMessageCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>

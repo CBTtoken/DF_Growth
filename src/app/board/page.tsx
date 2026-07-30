@@ -4,6 +4,7 @@ import { MapPin, Store } from "lucide-react";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BoardPostCard } from "@/components/board/BoardPostCard";
+import { AddToPhone } from "@/components/board/AddToPhone";
 import { listAreas, listPosts } from "@/lib/board/queries";
 import { POST_KINDS, kindFromParam } from "@/lib/board/kinds";
 import { BOARD_CATEGORIES } from "@/lib/board/categories";
@@ -19,6 +20,9 @@ export const metadata: Metadata = {
   title: "The Board",
   description:
     "What South African businesses are offering right now, area by area. Real offers, items for sale, and work just finished, posted by the businesses themselves.",
+  // Installable as its own icon on a phone, see board/manifest.webmanifest.
+  manifest: "/board/manifest.webmanifest",
+  icons: { apple: "/api/icons/board?size=180" },
   ...boardRobots(),
 };
 
@@ -116,6 +120,10 @@ export default async function BoardPage({
       )}
 
       <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+        <div className="mb-6 sm:max-w-md">
+          <AddToPhone appName="The Board" dismissKey="board_install_dismissed" />
+        </div>
+
         {posts.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-neutral-border bg-white p-14 text-center">
             <Store size={26} className="text-neutral-muted" />

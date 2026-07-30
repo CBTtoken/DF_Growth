@@ -20,6 +20,8 @@ export type BoardMember = {
   logoUrl: string | null;
   brandColor: string;
   whatsapp: string | null;
+  /** Phase 3: whether this business accepts in-app chat at all. His switch, not ours. */
+  chatEnabled: boolean;
 };
 
 export type BoardPost = {
@@ -51,6 +53,7 @@ type ClientRow = {
   logo_path: string | null;
   brand_primary_color: string | null;
   whatsapp_phone: string | null;
+  chat_enabled: boolean | null;
 };
 
 function toMember(row: ClientRow): BoardMember {
@@ -63,6 +66,7 @@ function toMember(row: ClientRow): BoardMember {
     logoUrl: row.logo_path ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${row.logo_path}` : null,
     brandColor: row.brand_primary_color || "#1081b8",
     whatsapp: row.whatsapp_phone,
+    chatEnabled: row.chat_enabled !== false,
   };
 }
 
@@ -78,7 +82,7 @@ async function listableMembers(): Promise<Map<string, BoardMember>> {
   const { data } = await admin
     .from("growth_clients")
     .select(
-      "id, slug, business_name, industry, city, logo_path, brand_primary_color, whatsapp_phone, landing_pages!inner(published)"
+      "id, slug, business_name, industry, city, logo_path, brand_primary_color, whatsapp_phone, chat_enabled, landing_pages!inner(published)"
     )
     .eq("status", "active")
     .eq("landing_pages.published", true);

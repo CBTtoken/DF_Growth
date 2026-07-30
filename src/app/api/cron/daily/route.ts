@@ -6,6 +6,7 @@ import { GET as refreshScreenshots } from "../refresh-screenshots/route";
 import { GET as expirePlanGrants } from "../expire-plan-grants/route";
 import { GET as bizupNotifications } from "../bizup-notifications/route";
 import { GET as bizupCheckins } from "../bizup-checkins/route";
+import { GET as retentionReport } from "../retention/route";
 
 // Every scheduled job shares one invocation instead of the separate
 // function budgets they had as individual endpoints, and several of them
@@ -49,6 +50,9 @@ export async function GET(request: Request) {
     ["expirePlanGrants", expirePlanGrants],
     ["bizupNotifications", bizupNotifications],
     ["bizupCheckins", bizupCheckins],
+    // Reports what retention is due and writes the evidence row. Never
+    // deletes: that is a button on /admin/retention.
+    ["retentionReport", retentionReport],
   ];
   // Screenshot refresh only needs to run weekly — real pages don't change
   // often enough to justify a daily capture, and running it daily would
