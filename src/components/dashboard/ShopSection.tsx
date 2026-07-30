@@ -406,12 +406,22 @@ function BobGoConnect({
               . Already have one? Skip to step 2.
             </li>
             <li>
-              In Bob Go, choose <strong>Add sales channel</strong>, scroll down to{" "}
-              <strong>API channels</strong>, and pick <strong>Bob Go API</strong>. That gives you an
-              API key.
+              In Bob Go, go to <strong>Settings</strong>, then the <strong>API keys</strong> tab, and
+              create a key. You can also reach it through{" "}
+              <strong>Add sales channel</strong>, under <strong>API channels</strong>.
             </li>
             <li>Paste the key below. We check it works before saving anything.</li>
           </ol>
+          {/* Both routes to a key carry a crown icon in Bob Go's own menus,
+              which normally marks a paid tier. Confirmed unresolved with
+              them as at 2026-07-30. Said here because a member who follows
+              these steps and hits a paywall should know it is Bob Go's
+              pricing rather than something we broke. */}
+          <p className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+            API access may need a paid Bob Go plan. If you reach their menu and the option is
+            locked, that is Bob Go&apos;s own pricing rather than anything on our side. Your shop
+            keeps working on your flat delivery charge in the meantime.
+          </p>
         </>
       )}
 
