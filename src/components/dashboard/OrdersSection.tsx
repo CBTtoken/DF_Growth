@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { assignBatchNumber, markOrderShipped, markBatchSentForPrinting } from "@/app/dashboard/orders-actions";
+import {
+  assignBatchNumber,
+  markOrderShipped,
+  markBatchSentForPrinting,
+  markBatchReadyForCollection,
+} from "@/app/dashboard/orders-actions";
 import { Card } from "@/components/ui/Card";
 import {
   describeLine,
@@ -196,22 +201,46 @@ function BatchPanel({ orders }: { orders: SellerOrder[] }) {
   );
 }
 
+/**
+ * A batch moves through two steps, and only the second one knows a date.
+ *
+ * Dewald, 2026-07-30: the printer packs each book with its buyer's address,
+ * the courier collects from the printer, and "we won't deliver ourselves or
+ * know the exact delivery schedule until the printer has actioned that they
+ * ready for collection."
+ *
+ * The date field therefore lives on the second step only. Before this it
+ * sat next to "sent to the printer", where the honest answer is always "I
+ * do not know yet", and an empty box next to a send button is an invitation
+ * to guess.
+ */
 function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: SellerOrder[] }) {
   const [date, setDate] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
+  const [sentToPrinter, setSentToPrinter] = useState(false);
+  const [readyForCollection, setReadyForCollection] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const paid = orders.filter((o) => o.payment_status === "paid");
   const items = paid.reduce((s, o) => s + totalItems(o.line_items ?? []), 0);
   const personalised = paid.filter((o) => hasPersonalisation(o.line_items ?? [])).length;
+  const buyers = `${paid.length} paid ${paid.length === 1 ? "buyer" : "buyers"}`;
 
   function handleSend() {
     setError(null);
     startTransition(async () => {
-      const result = await markBatchSentForPrinting(batchNumber, date || null);
+      const result = await markBatchSentForPrinting(batchNumber);
       if (result.error) setError(result.error);
-      else setDone(true);
+      else setSentToPrinter(true);
+    });
+  }
+
+  function handleReady() {
+    setError(null);
+    startTransition(async () => {
+      const result = await markBatchReadyForCollection(batchNumber, date || null);
+      if (result.error) setError(result.error);
+      else setReadyForCollection(true);
     });
   }
 
@@ -226,7 +255,9 @@ function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: Seller
         </p>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-center gap-2">
+      {/* Step one. No date here on purpose: the run has only just left and
+          how long it takes is the printer's business, not yours. */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {/* Same reasoning as the downloads above: a route handler returning
             a file, so a plain anchor rather than next/link. */}
         <a
@@ -237,6 +268,28 @@ function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: Seller
           Download for printer
         </a>
 
+        {sentToPrinter ? (
+          <span className="text-sm font-semibold text-green-700">
+            ✓ {buyers} told it is at the printer
+          </span>
+        ) : (
+          <button
+            type="button"
+            onClick={handleSend}
+            disabled={isPending}
+            className="rounded-full border border-gray-300 px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:border-brand hover:text-brand disabled:opacity-60"
+          >
+            {isPending ? "Telling buyers..." : "1. I have sent this to the printer"}
+          </button>
+        )}
+      </div>
+      <p className="mt-1 text-xs text-gray-500">
+        Emails {buyers} in this batch to say it is being printed. No delivery date is given, because
+        there is not an honest one yet.
+      </p>
+
+      {/* Step two, the one the seller learns about from the printer. */}
+      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
         <label className="flex items-center gap-1.5 text-sm text-gray-600">
           Expected delivery
           <input
@@ -247,31 +300,29 @@ function BatchRow({ batchNumber, orders }: { batchNumber: number; orders: Seller
           />
         </label>
 
-        {done ? (
-          <span className="text-sm font-semibold text-green-700">
-            Buyers told it is at the printer
-          </span>
+        {readyForCollection ? (
+          <span className="text-sm font-semibold text-green-700">✓ {buyers} given a date</span>
         ) : (
           <button
             type="button"
-            onClick={handleSend}
+            onClick={handleReady}
             disabled={isPending}
             className="rounded-full bg-brand px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-dark disabled:opacity-60"
           >
-            {isPending ? "Telling buyers..." : "I have sent this to the printer"}
+            {isPending ? "Telling buyers..." : "2. The printer says it is ready for collection"}
           </button>
         )}
       </div>
 
       {/* Said plainly, because pressing it emails real customers a date they
           will hold you to. */}
-      <p className="mt-1.5 text-xs text-gray-500">
+      <p className="mt-1 text-xs text-gray-500">
         {date
-          ? `Emails all ${paid.length} paid ${paid.length === 1 ? "buyer" : "buyers"} in this batch, telling them to expect delivery around that date.`
-          : `Emails all ${paid.length} paid ${paid.length === 1 ? "buyer" : "buyers"} in this batch. Add a date first if you want them to be given one.`}
+          ? `Emails ${buyers} to say their copy is printed, packed and waiting for the courier, and to expect it around that date.`
+          : `Emails ${buyers} to say their copy is printed and waiting for the courier. Add a date first if you want them to be given one.`}
       </p>
 
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 }

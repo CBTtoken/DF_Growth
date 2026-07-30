@@ -190,7 +190,19 @@ function CollectionAddressForm({ address }: { address: ShopCollectionAddress }) 
   return (
     <form action={formAction} className="flex flex-col gap-3 border-b border-gray-100 pb-5 text-sm">
       <h3 className="text-sm font-semibold text-gray-800">Collection address</h3>
-      <p className="text-xs text-gray-500">Where couriers pick up orders from, required for shipping.</p>
+      {/* Dewald, 2026-07-30, on how the book actually ships: "our orders
+          will always be shipped by our printer and will as such use their
+          collections address... Bob Go will pick it up there, always."
+          The old wording said "where couriers pick up orders from", which
+          reads as "your premises" and would have had him typing his own
+          address for parcels that are sitting at a printer in another
+          town. The courier goes where the stock is, which is often not
+          where the seller is. */}
+      <p className="text-xs text-gray-500">
+        Where the courier collects the parcels. This is wherever the stock physically sits, so if a
+        printer, supplier or warehouse packs and holds your orders, use their address rather than
+        your own.
+      </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <input name="line1" defaultValue={address?.line1} placeholder="Address" required className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" />
         <input name="city" defaultValue={address?.city} placeholder="City" required className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" />
@@ -229,9 +241,21 @@ function DeliveryForm({
   return (
     <form action={formAction} className="flex flex-col gap-3 border-b border-gray-100 pb-5 text-sm">
       <h3 className="text-sm font-semibold text-gray-800">Delivery charge</h3>
+      {/* Dewald, 2026-07-30: "The flat rate is what I set, so we need to be
+          careful here, as this could actually be cheaper or more expensive,
+          so we should never force the flat rate?" Correct, and it never
+          was: the column defaults to zero and neither field is required.
+          Said out loud here rather than left as a property of the schema
+          that only I can see. */}
       <p className="text-xs text-gray-500">
-        Added to every order and shown to the buyer before they pay. Set it to cover what your
-        courier actually charges you, otherwise it comes out of your own margin.
+        Optional. Leave it blank and no delivery is added, which is what you want if you quote
+        delivery separately or the buyer collects. Set it and it is added to every order and shown
+        to the buyer before they pay.
+      </p>
+      <p className="text-xs text-gray-500">
+        One number covers every address, so it will over-recover on a nearby delivery and
+        under-recover on a far one. Pick something close to your average. Live courier rates for the
+        buyer&apos;s actual address replace this once your courier account is connected.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="flex flex-col gap-1">

@@ -82,6 +82,50 @@ export async function sendSentForPrintingEmail({
   buyerName,
   email,
   batchNumber,
+}: {
+  buyerName: string;
+  email: string;
+  batchNumber: number;
+}): Promise<void> {
+  // Deliberately carries no date.
+  //
+  // It used to take an optional one, which meant the box existed and a
+  // hopeful number could be typed into it. Dewald, 2026-07-30: "we won't
+  // deliver ourselves or know the exact delivery schedule until the printer
+  // has actioned that they ready for collection." A date given here would
+  // be a guess about somebody else's production queue, sent to fifty people
+  // as a promise. The next email carries it, once it is real.
+  const result = await sendEmail({
+    to: email,
+    subject: "Your Standing 365 order is at the printer",
+    html: `
+      <p>Good day ${buyerName},</p>
+      <p>Your copy of Standing 365 is part of <strong>batch ${batchNumber}</strong>, which has just
+      gone off to the printer.</p>
+      <p>We will email you with a delivery estimate as soon as the printer confirms the batch is
+      ready, and again the moment it ships.</p>
+      <p>Questions in the meantime? Reach us at
+      <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a>.</p>
+    `,
+  });
+
+  if (!result.ok) {
+    console.error("Sent for printing email failed", email, result.error);
+  }
+}
+
+/**
+ * The printer has the run packed and waiting. Now a date means something.
+ *
+ * This is the step that was missing. The books are printed, individually
+ * packed with each buyer's own delivery address, and sitting at the
+ * printer's premises waiting for the courier to collect. It is the first
+ * moment anybody can say when a parcel will arrive without guessing.
+ */
+export async function sendReadyForCollectionEmail({
+  buyerName,
+  email,
+  batchNumber,
   expectedDeliveryDate,
 }: {
   buyerName: string;
@@ -93,16 +137,16 @@ export async function sendSentForPrintingEmail({
   // No date, no promise. Saying "soon" is worse than saying nothing,
   // because it sets an expectation nobody agreed to.
   const dateLine = expectedDeliveryDate
-    ? `<p>We expect it to reach you around <strong>${expectedDeliveryDate}</strong>. We will email you again the moment it ships.</p>`
+    ? `<p>You should have it around <strong>${expectedDeliveryDate}</strong>. We will email you again the moment it ships.</p>`
     : `<p>We will email you again the moment it ships.</p>`;
 
   const result = await sendEmail({
     to: email,
-    subject: "Your Standing 365 order is at the printer",
+    subject: "Your Standing 365 order is printed and on its way",
     html: `
       <p>Good day ${buyerName},</p>
-      <p>Your copy of Standing 365 is part of <strong>batch ${batchNumber}</strong>, which has just
-      gone off to the printer.</p>
+      <p>Good news. <strong>Batch ${batchNumber}</strong> has come off the press, your copy is packed
+      with your delivery address on it, and it is waiting for the courier to collect.</p>
       ${dateLine}
       <p>Questions in the meantime? Reach us at
       <a href="mailto:dewald@digitalflyer.co.za">dewald@digitalflyer.co.za</a>.</p>
@@ -110,7 +154,7 @@ export async function sendSentForPrintingEmail({
   });
 
   if (!result.ok) {
-    console.error("Sent for printing email failed", email, result.error);
+    console.error("Ready for collection email failed", email, result.error);
   }
 }
 
