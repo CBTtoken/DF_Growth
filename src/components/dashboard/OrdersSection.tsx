@@ -32,9 +32,45 @@ export type BookOrder = {
 export function OrdersSection({ orders }: { orders: BookOrder[] }) {
   return (
     <Card className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-lg font-bold tracking-tight text-ink">Book orders</h2>
-        <p className="text-sm text-gray-500">Standing 365 paperback orders, including personalisation details.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-bold tracking-tight text-ink">Book orders</h2>
+          <p className="text-sm text-gray-500">
+            Standing 365 paperback orders, including personalisation details.
+          </p>
+        </div>
+
+        {/* The spreadsheet for the printer and the courier. Plain links
+            rather than buttons, because a download is a navigation and a
+            link is what a browser already knows how to do with one.
+
+            Only paid orders are included, and that is decided server side
+            rather than here: nothing should be printed or couriered for
+            money that has not arrived. */}
+        {orders.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {/* Plain anchors carrying `download`, not next/link. These
+                point at a route handler that returns a file with a
+                Content-Disposition header, and Link would client-side
+                navigate to it and try to render a CSV as a page, which
+                downloads nothing. */}
+            <a
+              href="/dashboard/orders/export?unfulfilled=1"
+              download
+              className="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-dark"
+            >
+              Download unshipped
+            </a>
+            { }
+            <a
+              href="/dashboard/orders/export"
+              download
+              className="rounded-full border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-brand hover:text-brand"
+            >
+              Download all
+            </a>
+          </div>
+        )}
       </div>
 
       {orders.length === 0 ? (
