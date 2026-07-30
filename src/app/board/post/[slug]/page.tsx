@@ -236,7 +236,7 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
                 <div className="min-w-0">
                   <p className="truncate text-sm font-bold text-neutral-ink">{post.authorName}</p>
                   <p className="truncate text-xs text-neutral-muted">
-                    {(member?.industry ?? null) ?? "Local business"}
+                    {member ? member.industry ?? "Local business" : "Posted by a person"}
                     {post.city ? ` · ${post.city}` : ""}
                   </p>
                 </div>
@@ -256,13 +256,20 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
                     Message on WhatsApp
                   </a>
                 )}
+                {member && (
                 <Link
-                  href={`/${(member?.slug ?? "")}`}
+                  href={`/${member.slug}`}
                   className="inline-flex items-center gap-2 rounded-full border border-neutral-border bg-white px-4 py-2.5 text-sm font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
                 >
                   <ExternalLink size={15} />
                   See the business
                 </Link>
+                )}
+                {!member && (
+                  <p className="text-sm text-neutral-mid">
+                    Answer them in the comments below. This one was posted by a person, not a business.
+                  </p>
+                )}
               </div>
 
               {/* Phase 3. Next to WhatsApp, never instead of it: section 6

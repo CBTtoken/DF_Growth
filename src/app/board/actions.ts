@@ -142,6 +142,10 @@ export async function toggleLike(postSlug: string): Promise<LikeState> {
 
   let visitor = await currentVisitor();
   if (!visitor) {
+    // Nameless on purpose. This identity exists only to stop the same
+    // device counting twice, and the placeholder must never end up as the
+    // author of a post or a comment, so anything that shows a name asks
+    // for one.
     const resolved = await resolveVisitor({ displayName: "Someone" });
     if ("error" in resolved) return { error: resolved.error };
     visitor = resolved.visitor;

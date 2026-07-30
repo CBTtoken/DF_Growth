@@ -62,7 +62,7 @@ export default async function NewBoardPostPage() {
             action={createBoardPost}
             businessName={businessName}
             savedCity={member.id ? savedCity : null}
-            needsIdentity={!member.id && !visitor}
+            needsIdentity={!member.id && !visitor?.email}
           />
         </div>
       </div>
