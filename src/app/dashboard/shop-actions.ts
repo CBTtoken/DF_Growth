@@ -10,6 +10,8 @@ import {
   shopCollectionAddressSchema,
   shopDeliverySchema,
 } from "@/lib/schemas/shop";
+import { encrypt } from "@/lib/crypto";
+import { verifyBobGoToken } from "@/lib/bobgo/client";
 
 type ActionState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 type ActionResult = { error?: string; success?: boolean };
@@ -92,6 +94,100 @@ export async function saveShopDelivery(_prevState: ActionState, formData: FormDa
     .eq("id", client.id);
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  await revalidateOwnPage(client.id);
+  return { success: true };
+}
+
+/**
+ * Connects a member's own Bob Go account to their shop.
+ *
+ * Dewald, 2026-07-30: "we will not let members use our account, they will
+ * have to get their own accounts." So this stores the member's own bearer
+ * token, and from then on every rate and every waybill happens on their
+ * account, billed to them, in their name.
+ *
+ * The token is verified by actually using it before anything is saved. A
+ * token that merely looks like a token proves nothing, and the moment to
+ * discover it is wrong is while the member is looking at the screen that
+ * asked for it, not at a stranger's checkout three days later.
+ *
+ * It is never returned to the browser afterwards, not even masked. There is
+ * nothing the dashboard needs it for, and a field that can display a secret
+ * is a field that can leak one.
+ */
+export async function connectBobGo(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined || !client.id) return { error: { _form: [client.error ?? "Not signed in"] } };
+
+  const token = String(formData.get("bobgoToken") ?? "").trim();
+  const sandbox = formData.get("bobgoSandbox") === "on";
+
+  if (!token) return { error: { _form: ["Paste the API token from your Bob Go account."] } };
+
+  const verified = await verifyBobGoToken(token, sandbox);
+  if (!verified.ok) {
+    return {
+      error: {
+        _form: [
+          `${verified.error} Check you copied the whole token, and that it is from ${sandbox ? "your sandbox" : "your live"} Bob Go account.`,
+        ],
+      },
+    };
+  }
+
+  const admin = createAdminClient();
+  const now = new Date().toISOString();
+
+  const { error: secretError } = await admin
+    .from("growth_client_secrets")
+    .upsert(
+      { growth_client_id: client.id, bobgo_token_encrypted: encrypt(token), updated_at: now },
+      { onConflict: "growth_client_id" }
+    );
+
+  if (secretError) {
+    console.error("Could not store Bob Go token", secretError);
+    return { error: { _form: ["Could not save, please try again."] } };
+  }
+
+  await admin
+    .from("growth_clients")
+    .update({
+      bobgo_connected_at: now,
+      bobgo_sandbox: sandbox,
+      bobgo_last_error: null,
+      bobgo_last_error_at: null,
+    })
+    .eq("id", client.id);
+
+  await revalidateOwnPage(client.id);
+  return { success: true };
+}
+
+/**
+ * Disconnects, and actually removes the token rather than just hiding it.
+ *
+ * A member who disconnects has withdrawn permission for us to spend money
+ * on their account. Leaving the credential in the database and merely
+ * flagging the account as disconnected would be keeping a key we were asked
+ * to give back.
+ */
+export async function disconnectBobGo(): Promise<ActionResult> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined || !client.id) return { error: client.error ?? "Not signed in" };
+
+  const admin = createAdminClient();
+
+  await admin
+    .from("growth_client_secrets")
+    .update({ bobgo_token_encrypted: null, updated_at: new Date().toISOString() })
+    .eq("growth_client_id", client.id);
+
+  await admin
+    .from("growth_clients")
+    .update({ bobgo_connected_at: null, bobgo_last_error: null, bobgo_last_error_at: null })
+    .eq("id", client.id);
 
   await revalidateOwnPage(client.id);
   return { success: true };

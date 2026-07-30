@@ -12,6 +12,8 @@ import {
   saveCoupon,
   deleteCoupon,
   saveShopDelivery,
+  connectBobGo,
+  disconnectBobGo,
   type CsvRowError,
 } from "@/app/dashboard/shop-actions";
 import { SHOP_CSV_COLUMNS } from "@/lib/schemas/shop";
@@ -65,6 +67,9 @@ export function ShopSection({
   collectionAddress,
   flatDeliveryCents,
   freeDeliveryOverCents,
+  bobgoConnectedAt,
+  bobgoSandbox,
+  bobgoLastError,
 }: {
   shopEnabled: boolean;
   products: ShopProduct[];
@@ -73,6 +78,9 @@ export function ShopSection({
   collectionAddress: ShopCollectionAddress;
   flatDeliveryCents: number;
   freeDeliveryOverCents: number | null;
+  bobgoConnectedAt: string | null;
+  bobgoSandbox: boolean;
+  bobgoLastError: string | null;
 }) {
   const [enabled, setEnabled] = useState(shopEnabled);
   const [isPending, startTransition] = useTransition();
@@ -109,6 +117,12 @@ export function ShopSection({
 
       {enabled && (
         <div className="flex flex-col gap-6 border-t border-gray-100 pt-4">
+          <BobGoConnect
+            connectedAt={bobgoConnectedAt}
+            sandbox={bobgoSandbox}
+            lastError={bobgoLastError}
+            hasDimensions={products.length === 0 || products.some((p) => p.weight_kg > 0 && p.length_cm > 0)}
+          />
           <CollectionAddressForm address={collectionAddress} />
           <DeliveryForm flatDeliveryCents={flatDeliveryCents} freeOverCents={freeDeliveryOverCents} />
 
@@ -293,6 +307,141 @@ function DeliveryForm({
         {pending ? "Saving..." : "Save delivery charge"}
       </button>
     </form>
+  );
+}
+
+/**
+ * Connecting the member's own Bob Go account.
+ *
+ * Dewald, 2026-07-30, on the two audiences: "we want to guide the new
+ * member to open their own account but ours already is." Same connect step
+ * either way, so the difference is one line of guidance rather than two
+ * separate flows.
+ *
+ * Sandbox is ticked by default and stays visible after connecting, because
+ * the failure mode of forgetting is a real courier arriving at somebody's
+ * door for a test order.
+ */
+function BobGoConnect({
+  connectedAt,
+  sandbox,
+  lastError,
+  hasDimensions,
+}: {
+  connectedAt: string | null;
+  sandbox: boolean;
+  lastError: string | null;
+  hasDimensions: boolean;
+}) {
+  const [state, formAction, pending] = useActionState(connectBobGo, null);
+  const [isPending, startTransition] = useTransition();
+  const connected = Boolean(connectedAt);
+
+  return (
+    <div className="flex flex-col gap-3 border-b border-gray-100 pb-5 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-gray-800">Courier account</h3>
+        {connected && (
+          <span
+            className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+              sandbox ? "bg-amber-100 text-amber-800" : "bg-green-100 text-green-700"
+            }`}
+          >
+            {sandbox ? "Connected, test mode" : "Connected, live"}
+          </span>
+        )}
+      </div>
+
+      {/* The last thing to go wrong, if anything did. An expired token stops
+          quotes appearing at a stranger's checkout, hours after the member
+          last looked at this screen, so it has to be said here. */}
+      {connected && lastError && (
+        <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+          <strong>Delivery quotes are failing:</strong> {lastError} Buyers are being charged your
+          flat delivery amount instead. Reconnect below with a fresh token to fix it.
+        </p>
+      )}
+
+      {connected ? (
+        <>
+          <p className="text-xs text-gray-500">
+            Your Bob Go account is connected. Buyers now see live delivery prices for their own
+            address at checkout, and shipments are booked on your account, in your name.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => startTransition(async () => { await disconnectBobGo(); })}
+              disabled={isPending}
+              className="self-start rounded-full border border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-700 hover:border-gray-400 disabled:opacity-50"
+            >
+              {isPending ? "Disconnecting..." : "Disconnect"}
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-xs text-gray-500">
+            Connect your own Bob Go account and buyers get live delivery prices for their exact
+            address, instead of one flat amount. Shipments are booked on your account and billed to
+            you, so the parcel stays yours end to end.
+          </p>
+          <ol className="flex list-decimal flex-col gap-1 pl-4 text-xs text-gray-600">
+            <li>
+              No account yet? Open one free at{" "}
+              <a
+                href="https://www.bobgo.co.za"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-brand underline-offset-2 hover:underline"
+              >
+                bobgo.co.za
+              </a>
+              . Already have one? Skip to step 2.
+            </li>
+            <li>In Bob Go, go to Settings, then API, and generate an API token.</li>
+            <li>Paste it below. We check it works before saving anything.</li>
+          </ol>
+        </>
+      )}
+
+      {!connected && (
+        <form action={formAction} className="flex flex-col gap-2">
+          <input
+            name="bobgoToken"
+            type="password"
+            autoComplete="off"
+            placeholder="Paste your Bob Go API token"
+            className="rounded-lg border border-gray-300 px-3 py-2 font-mono text-gray-900"
+          />
+          <label className="flex items-center gap-2 text-xs text-gray-600">
+            <input type="checkbox" name="bobgoSandbox" defaultChecked className="size-4" />
+            Test mode, using Bob Go&apos;s sandbox couriers. Leave this ticked until you have seen it
+            working. Nothing real is collected or charged.
+          </label>
+          {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
+          <button
+            type="submit"
+            disabled={pending}
+            className="self-start rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+          >
+            {pending ? "Checking with Bob Go..." : "Connect my Bob Go account"}
+          </button>
+        </form>
+      )}
+
+      {/* Dewald, 2026-07-30: "we will just need to ensure the member is well
+          aware of this part and why it is important if they switch on
+          shipping." Said where it bites, next to the thing that needs it,
+          rather than buried in the product form they have already left. */}
+      {!hasDimensions && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <strong>Add sizes and weights to your products first.</strong> A courier prices a parcel
+          by how big and how heavy it is. Products left at zero will be quoted wrong, which means
+          either you absorb the difference or your buyer is overcharged.
+        </p>
+      )}
+    </div>
   );
 }
 

@@ -123,7 +123,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_flat_delivery_cents, shop_free_delivery_over_cents"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error"
       )
       .eq("id", client.id)
       .single(),
@@ -652,6 +652,9 @@ export default async function DashboardPage() {
                 collectionAddress={(growthClient?.shop_collection_address as { line1: string; city: string; postalCode: string } | null) ?? null}
                 flatDeliveryCents={growthClient?.shop_flat_delivery_cents ?? 0}
                 freeDeliveryOverCents={growthClient?.shop_free_delivery_over_cents ?? null}
+                bobgoConnectedAt={growthClient?.bobgo_connected_at ?? null}
+                bobgoSandbox={growthClient?.bobgo_sandbox !== false}
+                bobgoLastError={growthClient?.bobgo_last_error ?? null}
               />
             </>
           ),

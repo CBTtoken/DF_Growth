@@ -6,6 +6,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { shopCheckoutSchema } from "@/lib/schemas/shop";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { sendEmail } from "@/lib/email/resend";
+import {
+  getBobGoCredentials,
+  getCheckoutRates,
+  recordBobGoError,
+  clearBobGoError,
+  type BobGoAddress,
+} from "@/lib/bobgo/client";
 
 export type CartLine = { productId: string; quantity: number };
 
@@ -57,7 +64,7 @@ export async function createShopOrder(
   const productIds = cart.map((c) => c.productId);
   const { data: products } = await admin
     .from("shop_products")
-    .select("id, title, sku, base_price_cents, status, shop_product_variants(id, stock_quantity)")
+    .select("id, title, sku, base_price_cents, status, weight_kg, length_cm, width_cm, height_cm, shop_product_variants(id, stock_quantity)")
     .in("id", productIds)
     .eq("growth_client_id", growthClientId);
 
@@ -71,6 +78,10 @@ export async function createShopOrder(
     sku: string;
     base_price_cents: number;
     status: string;
+    weight_kg: number | null;
+    length_cm: number | null;
+    width_cm: number | null;
+    height_cm: number | null;
     shop_product_variants: { id: string; stock_quantity: number }[];
   };
 
@@ -130,20 +141,15 @@ export async function createShopOrder(
     }
   }
 
-  // Sec 4.4 wants live Bob Go rates, which need each member's own courier
-  // account (Dewald's decision, 2026-07-30) and are not built yet.
-  //
-  // Until then this reads the flat fee the member set for their own shop
-  // rather than charging zero. Charging zero was not neutral: it quietly
-  // handed the member's courier bill to the member, on a sale where they
-  // had already priced the goods assuming delivery was covered.
+  // The member's own delivery settings, which are the fallback whenever a
+  // live courier quote is not available.
   //
   // Read from the database at checkout, never from the browser, for the
   // obvious reason that a delivery fee posted by the client is a delivery
   // fee the buyer can set to nothing.
   const { data: shopSettings } = await admin
     .from("growth_clients")
-    .select("shop_flat_delivery_cents, shop_free_delivery_over_cents")
+    .select("shop_flat_delivery_cents, shop_free_delivery_over_cents, shop_collection_address")
     .eq("id", growthClientId)
     .maybeSingle();
 
@@ -154,8 +160,47 @@ export async function createShopOrder(
   // buyer actually pays. Judging it on the pre-discount figure would let a
   // coupon buy its way past a free-delivery line the member never offered.
   const payableGoods = subtotalCents - discountCents;
-  const shippingCents = freeOver != null && payableGoods >= freeOver ? 0 : flatDelivery;
+  const flatShipping = freeOver != null && payableGoods >= freeOver ? 0 : flatDelivery;
 
+  // A live quote from the member's own courier account beats the flat rate,
+  // because it is the real price to this buyer's actual address rather than
+  // one number averaged across the country.
+  //
+  // The flat rate stays as the fallback and is never removed. A courier API
+  // is a third party that can be slow, unhappy, or holding a token that
+  // expired last week, and none of that is a reason to stop somebody buying
+  // something. Quoting the member's own stated amount is a worse price than
+  // the live one and a far better outcome than a broken checkout.
+  const liveShipping = await liveShippingCents({
+    growthClientId,
+    collectionAddress: shopSettings?.shop_collection_address as CollectionAddress,
+    deliveryAddress: {
+      street_address: parsed.data.line1,
+      local_area: parsed.data.suburb || undefined,
+      city: parsed.data.city,
+      zone: parsed.data.province || undefined,
+      country: "ZA",
+      code: parsed.data.postalCode,
+    },
+    // Items rather than parcels, which is what rates-at-checkout takes.
+    // Bob Go work the packing out themselves from these dimensions, so
+    // there is no box-fitting problem to solve at checkout.
+    items: cart.map((line) => {
+      const product = (products as ProductRow[]).find((p) => p.id === line.productId)!;
+      return {
+        description: product.title,
+        price: product.base_price_cents / 100,
+        quantity: line.quantity,
+        length_cm: product.length_cm ?? 0,
+        width_cm: product.width_cm ?? 0,
+        height_cm: product.height_cm ?? 0,
+        weight_kg: product.weight_kg ?? 0,
+      };
+    }),
+    declaredValue: payableGoods / 100,
+  });
+
+  const shippingCents = liveShipping ?? flatShipping;
   const totalCents = payableGoods + shippingCents;
 
   const { data: order, error: orderError } = await admin
@@ -237,4 +282,92 @@ export async function createShopOrder(
   }
 
   return { success: true };
+}
+
+type CollectionAddress = { line1?: string; city?: string; postalCode?: string } | null;
+
+/**
+ * A live delivery price from the member's own courier account, or null.
+ *
+ * Null means "use the flat rate", and there are several honest reasons to
+ * get one: the member has not connected Bob Go, they have not set a
+ * collection address, their products have no dimensions, or Bob Go did not
+ * answer. Every one of those returns null rather than throwing, because the
+ * person on the other end of this is trying to buy something and a courier
+ * API is not a good enough reason to stop them.
+ *
+ * Dewald, 2026-07-30: "we will just need to ensure the member is well aware
+ * of this part and why it is important." The dimensions check below is the
+ * enforcement of that. A product with no size would be quoted as if it were
+ * nothing, and the member would eat the difference on every sale.
+ */
+async function liveShippingCents({
+  growthClientId,
+  collectionAddress,
+  deliveryAddress,
+  items,
+  declaredValue,
+}: {
+  growthClientId: string;
+  collectionAddress: CollectionAddress;
+  deliveryAddress: BobGoAddress;
+  items: { description: string; price: number; quantity: number; length_cm: number; width_cm: number; height_cm: number; weight_kg: number }[];
+  declaredValue: number;
+}): Promise<number | null> {
+  const credentials = await getBobGoCredentials(growthClientId);
+  if (!credentials) return null;
+
+  if (!collectionAddress?.line1 || !collectionAddress.city || !collectionAddress.postalCode) {
+    await recordBobGoError(growthClientId, "No collection address is set, so no courier can be quoted.");
+    return null;
+  }
+
+  // A courier prices by size and weight. Quoting a parcel with neither is
+  // not a quote, it is a number that will be corrected later at the
+  // member's expense, so it is not attempted.
+  if (items.some((i) => i.weight_kg <= 0 || i.length_cm <= 0 || i.width_cm <= 0 || i.height_cm <= 0)) {
+    await recordBobGoError(
+      growthClientId,
+      "Some products have no size or weight set, so a courier cannot price them."
+    );
+    return null;
+  }
+
+  const result = await getCheckoutRates({
+    token: credentials.token,
+    sandbox: credentials.sandbox,
+    collectionAddress: {
+      street_address: collectionAddress.line1,
+      city: collectionAddress.city,
+      country: "ZA",
+      code: collectionAddress.postalCode,
+    },
+    deliveryAddress,
+    items,
+    declaredValue,
+  });
+
+  if (!result.ok) {
+    await recordBobGoError(growthClientId, result.error);
+    return null;
+  }
+
+  // Bob Go can legitimately return nothing, which is how a member says "I do
+  // not deliver there" through their own rules. Falling back to the flat
+  // rate is the wrong answer to that, but refusing the sale outright is a
+  // bigger change than this slice should make, so it falls back and the
+  // member is told their rules produced no option.
+  const rates = result.data.filter((r) => typeof r.rate === "number" && r.rate >= 0);
+  if (rates.length === 0) {
+    await recordBobGoError(growthClientId, "Bob Go returned no delivery options for that address.");
+    return null;
+  }
+
+  // The cheapest, until the buyer is offered a choice of service levels.
+  // Picking the cheapest is the option a buyer would pick for themselves far
+  // more often than not, and it never surprises them upward.
+  const cheapest = rates.reduce((low, r) => (r.rate < low.rate ? r : low), rates[0]);
+
+  await clearBobGoError(growthClientId);
+  return Math.round(cheapest.rate * 100);
 }
