@@ -158,17 +158,26 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
     .eq("owner_user_id", data.user.id)
     .maybeSingle();
 
+  // The id is needed for the welcome email's unsubscribe link, which has
+  // to identify exactly one account and nobody else.
+  let newAccountId: string | null = null;
+
   if (!existing) {
-    const { error: accountError } = await admin.from("bizup_accounts").insert({
-      owner_user_id: data.user.id,
-      business_name: businessName,
-      email,
-      phone,
-    });
-    if (accountError) {
+    const { data: created, error: accountError } = await admin
+      .from("bizup_accounts")
+      .insert({
+        owner_user_id: data.user.id,
+        business_name: businessName,
+        email,
+        phone,
+      })
+      .select("id")
+      .single();
+    if (accountError || !created) {
       console.error("Failed to create KatisoBiz account after confirmation", accountError);
       return { error: { _form: ["We couldn't finish setting that up. Please try again."] }, awaitingCode: email };
     }
+    newAccountId = created.id;
   }
 
   // The welcome email, sent only to a member who has actually confirmed
@@ -179,13 +188,13 @@ export async function confirmBizUpSignup(_prev: SignupState, formData: FormData)
   // Failure here must never block the signup. A member who is in but did
   // not get an email is a far better outcome than one who is bounced back
   // to the form because a mail server was slow.
-  if (!existing) {
+  if (!existing && newAccountId) {
     const welcomeHost = h.get("host") ?? "katisobiz.co.za";
     const welcomeOrigin = welcomeHost.startsWith("localhost")
       ? `http://${welcomeHost}/bizup`
       : "https://katisobiz.co.za";
     try {
-      await sendKatisoBizWelcomeEmail({ businessName, email, origin: welcomeOrigin });
+      await sendKatisoBizWelcomeEmail({ businessName, email, origin: welcomeOrigin, accountId: newAccountId });
     } catch (err) {
       console.error("KatisoBiz welcome email threw", err);
     }

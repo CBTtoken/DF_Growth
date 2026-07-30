@@ -1,4 +1,5 @@
 import { sendEmail } from "@/lib/email/resend";
+import { bizupUnsubscribeUrl } from "@/lib/bizup/unsubscribe";
 
 // The welcome email a new KatisoBiz member gets, and until now the only
 // email they would ever have received was the six digit login code.
@@ -49,10 +50,13 @@ export async function sendKatisoBizWelcomeEmail({
   businessName,
   email,
   origin,
+  accountId,
 }: {
   businessName: string;
   email: string;
   origin: string;
+  /** Identifies exactly one account for the unsubscribe link. */
+  accountId: string;
 }): Promise<void> {
   const html = `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:560px;">
@@ -167,6 +171,12 @@ export async function sendKatisoBizWelcomeEmail({
         KatisoBiz plan is included in it at no extra cost.
       </p>
     </div>
+    <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#9ca3af;">
+      Would rather not get emails from us?
+      <a href="${bizupUnsubscribeUrl(accountId)}" style="color:#9ca3af;">Unsubscribe</a>.
+      It only stops emails to you. The quotes and invoices you send your own customers are not
+      affected.
+    </p>
   </div>`;
 
   const result = await sendEmail({

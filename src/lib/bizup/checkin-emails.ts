@@ -1,5 +1,6 @@
 import { sendEmail } from "@/lib/email/resend";
 import { formatZar } from "@/lib/bizup/money";
+import { bizupUnsubscribeUrl } from "@/lib/bizup/unsubscribe";
 
 // The three check-in emails, one per situation a member can be in a few
 // days after signing up.
@@ -44,11 +45,28 @@ function replyLine(): string {
 
 type Account = { id: string; businessName: string; email: string };
 
+/**
+ * One click and they hear from us no more.
+ *
+ * Added once a real unsubscribe page existed for KatisoBiz. Before that
+ * these emails offered only "reply and tell us", which is a valid opt-out
+ * and is what the privacy policy promises, but it relies on somebody
+ * reading the reply and changing a setting by hand. That does not survive
+ * volume.
+ */
+function unsubscribeLine(accountId: string): string {
+  return `
+    <p style="margin:18px 0 0;font-size:12px;line-height:1.6;color:#9ca3af;">
+      Would rather not get these? <a href="${bizupUnsubscribeUrl(accountId)}" style="color:#9ca3af;">Unsubscribe</a>.
+      It only stops emails to you. The quotes and invoices you send your own customers are not affected.
+    </p>`;
+}
+
 async function send(account: Account, subject: string, body: string) {
   const result = await sendEmail({
     to: account.email,
     subject,
-    html: shell(body),
+    html: shell(body + unsubscribeLine(account.id)),
     fromName: "KatisoBiz",
     replyTo: SUPPORT,
     // Visible on purpose: a reply-all reaches a person, and seeing the
