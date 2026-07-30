@@ -26,7 +26,7 @@ export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Reviews ({reviews.length})</h2>
         <p className="mt-1 text-sm text-gray-500">
-          You can reply publicly to any review, but you can&apos;t edit or remove one yourself — if a review looks
+          You can reply publicly to any review, but you can&apos;t edit or remove one yourself. If a review looks
           fake or abusive, flag it and our team will take a look.
         </p>
       </div>
@@ -42,7 +42,7 @@ export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
 
             {r.flagged_by && (
               <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-                Flagged{r.flagged_by === "business" ? " by you" : ""} — pending review by our team.
+                Flagged{r.flagged_by === "business" ? " by you" : ""}. Pending review by our team.
               </p>
             )}
 
@@ -103,7 +103,7 @@ export function ReviewsManagement({ reviews }: { reviews: DashboardReview[] }) {
           </li>
         ))}
         {reviews.length === 0 && (
-          <p className="text-sm text-gray-400">No reviews yet — they&apos;ll show up here as customers leave them.</p>
+          <p className="text-sm text-gray-400">No reviews yet. They&apos;ll show up here as customers leave them.</p>
         )}
       </ul>
     </Card>

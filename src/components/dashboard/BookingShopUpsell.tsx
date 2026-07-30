@@ -10,7 +10,7 @@ export function BookingShopUpsell({ growthClientId }: { growthClientId: string }
     <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Booking & Shop</h2>
-        <p className="mt-1 text-sm text-gray-500">Available on Growth — not part of your Foundation plan yet.</p>
+        <p className="mt-1 text-sm text-gray-500">Available on Growth. Not part of your Foundation plan yet.</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-5">

@@ -41,7 +41,7 @@ export function PhotoUploadInput({ disabled }: { disabled?: boolean }) {
 
     if (failedCount > 0) {
       setError(
-        `${failedCount} photo${failedCount > 1 ? "s" : ""} couldn't be uploaded — try a smaller file or a different format.`
+        `${failedCount} photo${failedCount > 1 ? "s" : ""} couldn't be uploaded. Try a smaller file or a different format.`
       );
     }
     router.refresh();

@@ -22,7 +22,7 @@ export function PlatformFeatures({ plan }: { plan: string | null }) {
     <section className="flex flex-col gap-4 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6">
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Grow further</h2>
-        <p className="mt-1 text-sm text-gray-500">Available on a higher tier — not part of your plan yet.</p>
+        <p className="mt-1 text-sm text-gray-500">Available on a higher tier. Not part of your plan yet.</p>
       </div>
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-5">
         <div>

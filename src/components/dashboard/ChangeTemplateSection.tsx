@@ -19,7 +19,7 @@ export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: st
         <div>
           <h2 className="text-lg font-bold tracking-tight text-ink">Page style</h2>
           <p className="mt-1 text-sm text-gray-500">
-            {state?.success ? "Updated — your live page reflects this now." : "Change your page's layout any time."}
+            {state?.success ? "Updated. Your live page reflects this now." : "Change your page's layout any time."}
           </p>
         </div>
         <button

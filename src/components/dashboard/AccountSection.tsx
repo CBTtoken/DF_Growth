@@ -75,13 +75,13 @@ export function AccountSection({
           <p className="text-xs text-gray-600">Everything in Foundation, plus managed Meta ad tracking.</p>
           <div className="mt-1 flex flex-wrap gap-2">
             <ExternalLinkButton href={`/api/plan/upgrade?client=${growthClientId}&interval=monthly`}>
-              Upgrade — R180/month
+              Upgrade for R180/month
             </ExternalLinkButton>
             <a
               href={`/api/plan/upgrade?client=${growthClientId}&interval=annual`}
               className="inline-flex items-center rounded-full border border-brand px-4 py-2 text-xs font-semibold text-brand transition hover:bg-brand/5"
             >
-              Upgrade — R1,199/year
+              Upgrade for R1,199/year
             </a>
           </div>
         </div>
@@ -100,7 +100,7 @@ export function AccountSection({
           <form action={formAction} className="flex flex-col gap-2">
             <p className="text-sm text-gray-700">
               Cancelling stops billing and takes your page offline right away. This can&apos;t be
-              undone from here — are you sure?
+              undone from here. Are you sure?
             </p>
             {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
             <div className="flex gap-2">

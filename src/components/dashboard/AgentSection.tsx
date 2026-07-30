@@ -42,7 +42,7 @@ export function AgentSection({ data }: { data: AgentDashboardData }) {
 
       {nextTierGap !== null && nextTierGap > 0 && (
         <p className="text-xs font-medium text-brand">
-          {nextTierGap} more converted {nextTierGap === 1 ? "referral" : "referrals"} and you move to 40% —
+          {nextTierGap} more converted {nextTierGap === 1 ? "referral" : "referrals"} and you move to 40%,
           including on your existing referrals&apos; renewals.
         </p>
       )}
@@ -51,7 +51,7 @@ export function AgentSection({ data }: { data: AgentDashboardData }) {
         <h3 className="text-sm font-semibold text-gray-700">Your referrals ({data.referrals.length})</h3>
         {data.referrals.length === 0 ? (
           <p className="text-sm text-gray-500">
-            Nobody&apos;s signed up through your link yet — share it to get started.
+            Nobody&apos;s signed up through your link yet. Share it to get started.
           </p>
         ) : (
           <div className="overflow-x-auto">
@@ -79,7 +79,7 @@ export function AgentSection({ data }: { data: AgentDashboardData }) {
                       </span>
                     </td>
                     <td className="py-2.5 pr-4 text-gray-500">
-                      {r.approxRenewalDate ? new Date(r.approxRenewalDate).toLocaleDateString() : "—"}
+                      {r.approxRenewalDate ? new Date(r.approxRenewalDate).toLocaleDateString() : "Not set"}
                     </td>
                   </tr>
                 ))}

@@ -6,6 +6,7 @@ import { TOPUP_DOCUMENTS } from "@/lib/bizup/billing";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { sendBookOrderConfirmationEmail } from "@/lib/email/book-order";
+import { buildBookShopOrder } from "@/lib/orders/book-order-row";
 import { trackBetaEvent } from "@/lib/metrics/track";
 import { recordCommissionIfEligible } from "@/lib/agents/commission";
 import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
@@ -261,7 +262,7 @@ export async function POST(request: Request) {
   // signup/billing logic that book orders have nothing to do with.
   if (metadata?.order_type === "book_order") {
     const { data: existingOrder } = await admin
-      .from("book_orders")
+      .from("shop_orders")
       .select("id")
       .eq("paystack_reference", reference)
       .maybeSingle();
@@ -269,36 +270,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true });
     }
 
+    const { row, buyerName, email, edition } = await buildBookShopOrder({
+      admin,
+      metadata,
+      customerEmail: customer?.email,
+      amount,
+      reference,
+    });
+
     const { data: order, error } = await admin
-      .from("book_orders")
-      .insert({
-        growth_client_id: metadata.growth_client_id,
-        edition: metadata.edition,
-        buyer_name: metadata.buyer_name,
-        email: customer?.email,
-        phone: metadata.phone,
-        delivery_address: JSON.parse(metadata.delivery_address ?? "{}"),
-        recipient_name: metadata.recipient_name ?? null,
-        gift_message: metadata.gift_message ?? null,
-        quantity: metadata.quantity ? Number(metadata.quantity) : 1,
-        amount,
-        payment_status: "paid",
-        paystack_reference: reference,
-        marketing_consent: metadata.marketing_consent === "true",
-      })
-      .select("id, buyer_name, email, edition")
+      .from("shop_orders")
+      .insert(row)
+      .select("id")
       .single();
 
     if (error || !order) {
-      console.error("Failed to write book_order from webhook", error);
-      Sentry.captureMessage("Failed to write book_order from webhook", { extra: { error, reference } });
+      console.error("Failed to write shop_order from webhook", error);
+      Sentry.captureMessage("Failed to write shop_order from webhook", { extra: { error, reference } });
     } else {
       try {
-        await sendBookOrderConfirmationEmail({
-          buyerName: order.buyer_name,
-          email: order.email,
-          edition: order.edition,
-        });
+        await sendBookOrderConfirmationEmail({ buyerName, email, edition });
       } catch (err) {
         console.error("Book order confirmation email failed", err);
         Sentry.captureException(err, { extra: { orderId: order.id } });

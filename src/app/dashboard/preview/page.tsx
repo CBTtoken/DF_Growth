@@ -102,7 +102,7 @@ export default async function DashboardPreviewPage({
         <div className="flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
           <h1 className="text-xl font-bold tracking-tight text-ink">Not enough to preview yet</h1>
           <p className="text-sm text-gray-500">
-            Add your landing page headline and copy first — once that&apos;s saved, your preview will show up here.
+            Add your landing page headline and copy first. Once that&apos;s saved, your preview will show up here.
           </p>
         </div>
       </main>

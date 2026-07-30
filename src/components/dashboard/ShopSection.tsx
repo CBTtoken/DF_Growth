@@ -11,7 +11,6 @@ import {
   bulkUploadProducts,
   saveCoupon,
   deleteCoupon,
-  markOrderFulfilled,
   type CsvRowError,
 } from "@/app/dashboard/shop-actions";
 import { SHOP_CSV_COLUMNS } from "@/lib/schemas/shop";
@@ -110,7 +109,7 @@ export function ShopSection({
           <div className="flex flex-col gap-3">
             <h3 className="text-sm font-semibold text-gray-800">Inventory</h3>
             <CsvUpload />
-            {products.length === 0 && <p className="text-sm text-gray-400">No products yet — upload a CSV or add one below.</p>}
+            {products.length === 0 && <p className="text-sm text-gray-400">No products yet. Upload a CSV or add one below.</p>}
             <ul className="flex flex-col gap-2">
               {products.map((p) => (
                 <ProductRow key={p.id} product={p} />
@@ -150,16 +149,28 @@ export function ShopSection({
             )}
           </div>
 
+          {/* Recent orders only, and deliberately read-only.
+              The full orders module lives on Overview: summary figures,
+              batches, personalisation details and the CSV exports for the
+              printer and courier. Both read the same shop_orders rows, so
+              a second set of buttons here would be two ways to do the same
+              thing that can disagree about what has shipped. */}
           <div className="flex flex-col gap-3 border-t border-gray-100 pt-4">
-            <h3 className="text-sm font-semibold text-gray-800">Orders</h3>
+            <h3 className="text-sm font-semibold text-gray-800">Recent orders</h3>
             {orders.length === 0 ? (
               <p className="text-sm text-gray-400">No orders yet.</p>
             ) : (
-              <ul className="flex flex-col gap-2">
-                {orders.map((o) => (
-                  <OrderRow key={o.id} order={o} />
-                ))}
-              </ul>
+              <>
+                <ul className="flex flex-col gap-2">
+                  {orders.slice(0, 5).map((o) => (
+                    <OrderRow key={o.id} order={o} />
+                  ))}
+                </ul>
+                <p className="text-xs text-gray-500">
+                  Batches, personalisation details and the spreadsheets for your printer and courier
+                  are under Orders on the Overview tab.
+                </p>
+              </>
             )}
           </div>
         </div>
@@ -173,7 +184,7 @@ function CollectionAddressForm({ address }: { address: ShopCollectionAddress }) 
   return (
     <form action={formAction} className="flex flex-col gap-3 border-b border-gray-100 pb-5 text-sm">
       <h3 className="text-sm font-semibold text-gray-800">Collection address</h3>
-      <p className="text-xs text-gray-500">Where couriers pick up orders from — required for shipping.</p>
+      <p className="text-xs text-gray-500">Where couriers pick up orders from, required for shipping.</p>
       <div className="grid gap-3 sm:grid-cols-3">
         <input name="line1" defaultValue={address?.line1} placeholder="Address" required className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" />
         <input name="city" defaultValue={address?.city} placeholder="City" required className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900" />
@@ -433,13 +444,12 @@ function CouponForm({ onDone }: { onDone: () => void }) {
 }
 
 function OrderRow({ order }: { order: ShopOrder }) {
-  const [isPending, startTransition] = useTransition();
   return (
     <li className="flex flex-col gap-1 rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="font-semibold text-gray-900">
-            {order.customer_name} — R{(order.total_cents / 100).toFixed(2)}
+            {order.customer_name} · R{(order.total_cents / 100).toFixed(2)}
           </p>
           <p className="text-xs text-gray-500">
             {order.line_items.map((i) => `${i.quantity}× ${i.title}`).join(", ")}
@@ -457,18 +467,7 @@ function OrderRow({ order }: { order: ShopOrder }) {
           {order.fulfilment_status === "shipped" ? (
             <span className="font-semibold text-green-700">Shipped</span>
           ) : (
-            <button
-              type="button"
-              onClick={() =>
-                startTransition(async () => {
-                  await markOrderFulfilled(order.id);
-                })
-              }
-              disabled={isPending}
-              className="rounded-full bg-brand px-2.5 py-0.5 font-semibold text-white disabled:opacity-50"
-            >
-              Mark shipped
-            </button>
+            <span className="text-gray-500">Not shipped</span>
           )}
         </div>
       </div>

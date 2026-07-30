@@ -164,7 +164,7 @@ export async function generateSocialAsset(_prevState: DashboardState, formData: 
   // 20/hour comfortably covers real use (several posts across a session)
   // while stopping a scripted loop from running this expensive path.
   if (isRateLimited(`generate-asset:${client.id}`, 20, 60 * 60 * 1000)) {
-    return { error: { _form: ["You've generated a lot of images recently — please wait a bit and try again."] } };
+    return { error: { _form: ["You've generated a lot of images recently. Please wait a bit and try again."] } };
   }
 
   if (parsed.data.contentType === "before-after" && (!parsed.data.beforeImageUrl || !parsed.data.afterImageUrl)) {
