@@ -50,6 +50,14 @@ export function MobileNavMenu() {
             <Link href="/marketplace" onClick={() => setOpen(false)} className={menuLinkClass}>
               Marketplace
             </Link>
+            {/* Same switch as the desktop header. This is a client
+                component, so it reads the public env var directly rather
+                than being handed a prop. */}
+            {process.env.NEXT_PUBLIC_BOARD_LIVE === "true" && (
+              <Link href="/board" onClick={() => setOpen(false)} className={menuLinkClass}>
+                The Board
+              </Link>
+            )}
             <Link href="/katisobiz-members" onClick={() => setOpen(false)} className={menuLinkClass}>
               Find a Trade
             </Link>

@@ -1,6 +1,9 @@
 import type { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isKatisoBizHost } from "@/lib/bizup/product";
+import { listAreas, listPostSlugsForSitemap } from "@/lib/board/queries";
+import { BOARD_CATEGORIES } from "@/lib/board/categories";
+import { isBoardPublic } from "@/lib/board/visibility";
 
 // Next.js special file — serves this at /sitemap.xml automatically. Every
 // active client's page gets listed so Google actually knows it exists to
@@ -67,6 +70,57 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  // The Board, Phase 1. Its whole value is that member activity becomes
+  // indexable pages, so every post, every area and every trade page that
+  // actually has something on it is listed. An area or category page with
+  // nothing on it is not listed, and does not exist, so a crawler is never
+  // sent to a thin page.
+  // While the board is unlisted, none of it goes in here. A sitemap entry is
+  // an invitation to crawl, and the whole point of the quiet launch is that
+  // only the people handed the URL see it.
+  const [boardPosts, boardAreas] = isBoardPublic()
+    ? await Promise.all([listPostSlugsForSitemap(), listAreas()])
+    : [[], []];
+
+  const boardEntries: MetadataRoute.Sitemap = !isBoardPublic() ? [] : [
+    { url: `${siteUrl}/board`, changeFrequency: "daily", priority: 0.9 },
+    ...boardAreas.map((area) => ({
+      url: `${siteUrl}/board/area/${area.slug}`,
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    })),
+    ...boardPosts.map((post) => ({
+      url: `${siteUrl}/board/post/${post.slug}`,
+      lastModified: post.publishedAt,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    })),
+  ];
+
+  // Category pages are a fixed set from the taxonomy, so only the ones a
+  // member is actually in are worth a crawler's time.
+  if (isBoardPublic()) {
+    const industriesInUse = new Set(
+      (
+        await admin
+          .from("growth_clients")
+          .select("industry, landing_pages!inner(published)")
+          .eq("status", "active")
+          .eq("landing_pages.published", true)
+      ).data?.map((row) => row.industry) ?? []
+    );
+
+    for (const category of BOARD_CATEGORIES) {
+      if (category.subcategories.some((sub) => industriesInUse.has(sub))) {
+        boardEntries.push({
+          url: `${siteUrl}/board/category/${category.slug}`,
+          changeFrequency: "weekly",
+          priority: 0.6,
+        });
+      }
+    }
+  }
+
   return [
     {
       url: `${siteUrl}/pricing`,
@@ -89,5 +143,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     ...clientEntries,
     ...eventEntries,
+    ...boardEntries,
   ];
 }

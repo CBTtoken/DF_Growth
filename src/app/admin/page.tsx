@@ -65,6 +65,19 @@ export default async function AdminPage() {
     .select("id", { count: "exact", head: true })
     .not("flagged_by", "is", null);
 
+  // The Board, Phase 2: comments a rule took out of public view and could
+  // not decide about, plus posts somebody reported. Count only, same
+  // reasoning as the badges above.
+  const [{ count: heldCommentCount }, { count: openPostReportCount }] = await Promise.all([
+    admin.from("board_comments").select("id", { count: "exact", head: true }).eq("status", "held"),
+    admin
+      .from("board_reports")
+      .select("id", { count: "exact", head: true })
+      .eq("target_type", "post")
+      .eq("status", "open"),
+  ]);
+  const boardQueueCount = (heldCommentCount ?? 0) + (openPostReportCount ?? 0);
+
   // List Your Event Sprint 2, Sec 6: count only, covers both queues on
   // /admin/events (pending-review and flagged) in one badge number.
   const { count: eventsQueueCount } = await admin
@@ -111,6 +124,14 @@ export default async function AdminPage() {
               {!!flaggedReviewCount && (
                 <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {flaggedReviewCount}
+                </span>
+              )}
+            </LinkButton>
+            <LinkButton href="/admin/board" variant="secondary" lift>
+              The Board
+              {!!boardQueueCount && (
+                <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {boardQueueCount}
                 </span>
               )}
             </LinkButton>

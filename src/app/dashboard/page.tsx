@@ -715,6 +715,16 @@ export default async function DashboardPage() {
             >
               Edit your page
             </Link>
+            {/* The Board, Phase 1. Up here with the two page actions rather
+                than inside a tab, because posting is the thing a member is
+                meant to come back and do, and a tab six across is not a
+                habit anyone forms. */}
+            <Link
+              href="/dashboard/board"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
+            >
+              Post to the board
+            </Link>
           </div>
         </div>
 

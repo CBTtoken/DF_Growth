@@ -3,6 +3,7 @@ import Link from "next/link";
 import { MarketingHeaderAuthLink } from "@/components/brand/MarketingHeaderAuthLink";
 import { MobileNavMenu } from "@/components/brand/MobileNavMenu";
 import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
+import { isBoardPublic } from "@/lib/board/visibility";
 
 // Distinct from BrandHeader (used on the utility pages — dashboard, wizard):
 // this is a real header bar for the marketing page, not a logo floating in
@@ -27,6 +28,8 @@ import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
 // shared localStorage consent key either way (lib/consent.ts), so a
 // visitor's choice on one carries over to the other consistently.
 export function MarketingHeader() {
+  const boardIsPublic = isBoardPublic();
+
   return (
     <>
       <header className="sticky top-0 z-10 flex w-full items-center justify-between border-b border-gray-100 bg-white/90 px-4 py-4 backdrop-blur sm:px-6">
@@ -70,6 +73,19 @@ export function MarketingHeader() {
           >
             Marketplace
           </Link>
+          {/* The Board. Next to Marketplace deliberately: the marketplace is
+              the businesses, the board is what they posted, and a visitor
+              arrives wanting one or the other. Hidden until
+              NEXT_PUBLIC_BOARD_LIVE is true, so testers reach it by URL
+              while nobody else trips over it. */}
+          {boardIsPublic && (
+            <Link
+              href="/board"
+              className="hidden whitespace-nowrap text-xs font-medium text-gray-600 transition hover:text-ink sm:inline sm:text-sm"
+            >
+              The Board
+            </Link>
+          )}
           {/* The KatisoBiz Members List. Next to Marketplace because that
               is the mental slot it occupies for a visitor: somewhere to
               find a business. Kept a separate entry rather than folded into
