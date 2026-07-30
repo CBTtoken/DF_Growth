@@ -386,6 +386,12 @@ function BobGoConnect({
             address, instead of one flat amount. Shipments are booked on your account and billed to
             you, so the parcel stays yours end to end.
           </p>
+          {/* These steps are the real screen, from a screenshot Dewald sent
+              on 2026-07-30, not a guess. The earlier version said "Settings,
+              then API", which does not exist. A wrong instruction here is
+              worse than none: the member goes looking, does not find it, and
+              concludes the feature is broken rather than that we were
+              wrong. */}
           <ol className="flex list-decimal flex-col gap-1 pl-4 text-xs text-gray-600">
             <li>
               No account yet? Open one free at{" "}
@@ -399,8 +405,12 @@ function BobGoConnect({
               </a>
               . Already have one? Skip to step 2.
             </li>
-            <li>In Bob Go, go to Settings, then API, and generate an API token.</li>
-            <li>Paste it below. We check it works before saving anything.</li>
+            <li>
+              In Bob Go, choose <strong>Add sales channel</strong>, scroll down to{" "}
+              <strong>API channels</strong>, and pick <strong>Bob Go API</strong>. That gives you an
+              API key.
+            </li>
+            <li>Paste the key below. We check it works before saving anything.</li>
           </ol>
         </>
       )}
