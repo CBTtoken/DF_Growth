@@ -1,14 +1,19 @@
 name: House style
 
-# Dewald has asked three separate times for em dashes to be kept out of
-# anything a member or a customer reads, and they have crept back in three
-# times, most recently in the Standing 365 buyer emails. Asking me to
-# remember harder has not worked, so this checks instead.
+# Dewald has asked four separate times for em dashes to be kept out of
+# anything a member or a customer reads, and they have crept back in every
+# time. Asking me to remember harder has not worked, so this checks instead.
 #
-# Scoped to the strings a real person actually sees: email templates and
-# JSX text. Code comments are not checked, because the rule is about what
-# gets read by a customer and a comment never is, and a check that fails on
-# things nobody cares about gets ignored within a week.
+# The first version of this only looked at email templates. That was too
+# narrow: a sweep in July found em dashes in the onboarding wizard, the
+# events forms, the review flow, every member page's section headings, and
+# the AI prompt that drafts copy for new members. It now checks everything
+# that ships.
+#
+# Comments are exempt, and so are console and Sentry calls. There are
+# roughly a thousand em dashes in this codebase's comments and none of them
+# reach a person. A check that fails on things nobody cares about gets
+# switched off within a week.
 
 on:
   pull_request:
@@ -21,19 +26,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fail if an em dash reaches a customer
-        run: |
-          # Email templates: everything inside them is customer facing.
-          hits=$(grep -rn "—" src/lib/email/ src/lib/bizup/welcome-email.ts src/lib/bizup/checkin-emails.ts 2>/dev/null \
-            | grep -vE "^\s*[^:]+:[0-9]+:\s*(//|\*|/\*)" || true)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-          if [ -n "$hits" ]; then
-            echo "Em dashes found in customer-facing email copy."
-            echo "House rule: never in anything a member or customer reads."
-            echo "Use a full stop, a comma, or rewrite the sentence."
-            echo ""
-            echo "$hits"
-            exit 1
-          fi
-
-          echo "No em dashes in customer-facing email copy."
+      - name: Fail if an em dash reaches a person
+        run: node scripts/check-house-style.mjs

@@ -15,9 +15,9 @@ const WAYS = [
 
 // Wednesday runs shorter than the other weekdays (Dewald, 2026-07-22).
 const HOURS = [
-  { days: "Mon, Tue, Thu, Fri", time: "09:00 – 15:00" },
-  { days: "Wednesday", time: "09:00 – 13:00" },
-  { days: "Saturday", time: "09:00 – 12:00" },
+  { days: "Mon, Tue, Thu, Fri", time: "09:00 to 15:00" },
+  { days: "Wednesday", time: "09:00 to 13:00" },
+  { days: "Saturday", time: "09:00 to 12:00" },
 ];
 
 export function GetInvolved({

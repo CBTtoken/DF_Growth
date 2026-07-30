@@ -76,7 +76,9 @@ function formatDateRange(startIso: string, endIso: string | null) {
   const endLabel = sameDay
     ? end.toLocaleString("en-ZA", { hour: "2-digit", minute: "2-digit" })
     : end.toLocaleString("en-ZA", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
-  return `${startLabel} – ${endLabel}`;
+  // "to" rather than a dash. Reads plainly, and the house rule covers en
+  // dashes as well as em dashes.
+  return `${startLabel} to ${endLabel}`;
 }
 
 // List Your Event Sec 4: "each event gets its own dedicated, shareable
