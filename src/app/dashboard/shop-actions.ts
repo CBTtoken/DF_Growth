@@ -8,6 +8,7 @@ import {
   shopCsvRowSchema,
   shopCouponSchema,
   shopCollectionAddressSchema,
+  shopDeliverySchema,
 } from "@/lib/schemas/shop";
 
 type ActionState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
@@ -46,6 +47,52 @@ export async function saveCollectionAddress(_prevState: ActionState, formData: F
     .from("growth_clients")
     .update({ shop_collection_address: parsed.data })
     .eq("id", client.id);
+  await revalidateOwnPage(client.id);
+  return { success: true };
+}
+
+/**
+ * Saves what this member charges for delivery.
+ *
+ * Checkout charged R0 before this existed, with a comment promising live
+ * Bob Go rates in a later sprint. That default was not neutral: it handed
+ * the member's own courier bill back to them on every sale, silently.
+ *
+ * Stored in cents, like every other amount in this codebase, so that a
+ * delivery charge cannot be the one place a rounding error lives.
+ */
+export async function saveShopDelivery(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined) return { error: { _form: [client.error] } };
+
+  // An empty box means "no free delivery offer", not zero.
+  const rawFree = String(formData.get("freeDeliveryOver") ?? "").trim();
+
+  const parsed = shopDeliverySchema.safeParse({
+    flatDelivery: formData.get("flatDelivery") || 0,
+    freeDeliveryOver: rawFree === "" ? null : rawFree,
+  });
+  if (!parsed.success) {
+    const issues = parsed.error.flatten();
+    return {
+      error: {
+        _form: [issues.fieldErrors.flatDelivery?.[0] ?? issues.fieldErrors.freeDeliveryOver?.[0] ?? "Could not save, please try again."],
+      },
+    };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("growth_clients")
+    .update({
+      shop_flat_delivery_cents: Math.round(parsed.data.flatDelivery * 100),
+      shop_free_delivery_over_cents:
+        parsed.data.freeDeliveryOver == null ? null : Math.round(parsed.data.freeDeliveryOver * 100),
+    })
+    .eq("id", client.id);
+
+  if (error) return { error: { _form: ["Could not save, please try again."] } };
+
   await revalidateOwnPage(client.id);
   return { success: true };
 }

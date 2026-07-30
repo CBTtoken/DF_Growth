@@ -22,6 +22,20 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 const ROOTS = ["src", "scripts"];
 const EXTENSIONS = /\.(ts|tsx|js|jsx|mjs)$/;
 
+/**
+ * Every way to write a dash that a reader sees as a dash.
+ *
+ * The literal character is only one of them. The first version of this
+ * check looked for that alone and passed, while the Standing 365 page was
+ * live with `&mdash;` in its opening paragraph, rendering exactly the
+ * punctuation the rule forbids. Found by reading the rendered page rather
+ * than the source, which is the whole argument for checking output.
+ *
+ * JSX entities, numeric entities in either base, and JavaScript escapes all
+ * reach the screen identically, so all of them are the same violation.
+ */
+const DASH = /[–—]|&mdash;|&ndash;|&#8212;|&#8211;|&#x201[34];|\\u201[34]/i;
+
 // lib/text.ts converts em dashes to commas on the way in, so it has to be
 // able to name the character it is removing.
 const ALLOWED = new Set(["src/lib/text.ts", "scripts/check-house-style.mjs"]);
@@ -162,13 +176,14 @@ for (const root of ROOTS) {
     if (ALLOWED.has(rel)) continue;
 
     const src = readFileSync(file, "utf8");
-    if (!src.includes("—") && !src.includes("–")) continue;
+    if (!DASH.test(src)) continue;
 
     const stripped = blankComments(src);
     const exempt = diagnosticLines(stripped);
 
     stripped.split("\n").forEach((line, idx) => {
-      if (!line.includes("—") && !line.includes("–")) return;
+      DASH.lastIndex = 0;
+      if (!DASH.test(line)) return;
       if (exempt.has(idx + 1)) return;
       failures.push(`${rel}:${idx + 1}: ${line.trim().slice(0, 120)}`);
     });

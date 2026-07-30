@@ -130,10 +130,33 @@ export async function createShopOrder(
     }
   }
 
-  // Sec 4.4: "shipping tiers... before payment" — Sprint 3 has no live Bob
-  // Go rates yet (Sprint 5), so this stays 0 rather than guessing a number.
-  const shippingCents = 0;
-  const totalCents = subtotalCents - discountCents + shippingCents;
+  // Sec 4.4 wants live Bob Go rates, which need each member's own courier
+  // account (Dewald's decision, 2026-07-30) and are not built yet.
+  //
+  // Until then this reads the flat fee the member set for their own shop
+  // rather than charging zero. Charging zero was not neutral: it quietly
+  // handed the member's courier bill to the member, on a sale where they
+  // had already priced the goods assuming delivery was covered.
+  //
+  // Read from the database at checkout, never from the browser, for the
+  // obvious reason that a delivery fee posted by the client is a delivery
+  // fee the buyer can set to nothing.
+  const { data: shopSettings } = await admin
+    .from("growth_clients")
+    .select("shop_flat_delivery_cents, shop_free_delivery_over_cents")
+    .eq("id", growthClientId)
+    .maybeSingle();
+
+  const flatDelivery = shopSettings?.shop_flat_delivery_cents ?? 0;
+  const freeOver = shopSettings?.shop_free_delivery_over_cents ?? null;
+
+  // The threshold is judged on the discounted subtotal, which is what the
+  // buyer actually pays. Judging it on the pre-discount figure would let a
+  // coupon buy its way past a free-delivery line the member never offered.
+  const payableGoods = subtotalCents - discountCents;
+  const shippingCents = freeOver != null && payableGoods >= freeOver ? 0 : flatDelivery;
+
+  const totalCents = payableGoods + shippingCents;
 
   const { data: order, error: orderError } = await admin
     .from("shop_orders")

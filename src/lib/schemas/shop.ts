@@ -65,6 +65,29 @@ export const shopCollectionAddressSchema = z.object({
   postalCode: z.string().trim().min(1, "Enter a postal code"),
 });
 
+// What the member charges for delivery, until live Bob Go rates exist.
+//
+// Both fields arrive as rands from a form and are stored as cents. Coerced
+// through Number rather than parseFloat so that "12abc" is rejected instead
+// of quietly becoming 12: this figure is added to what a real buyer pays.
+//
+// The free-delivery threshold is blank or a real amount, never zero. Zero
+// would read as "everything ships free", which is the opposite of not
+// offering it, and is the kind of default that only gets noticed once
+// somebody has shipped fifty parcels for nothing.
+export const shopDeliverySchema = z.object({
+  flatDelivery: z.coerce
+    .number({ message: "Enter the delivery charge as a number" })
+    .min(0, "Delivery cannot be less than zero")
+    .max(100000, "That looks too high, enter the amount in rands"),
+  freeDeliveryOver: z.coerce
+    .number({ message: "Enter the free delivery amount as a number" })
+    .positive("Leave this blank rather than entering zero")
+    .max(1000000)
+    .nullable()
+    .optional(),
+});
+
 // Sec 4: a customer's delivery address at checkout — same shape as
 // shop_orders.delivery_address.
 export const shopCheckoutSchema = z.object({

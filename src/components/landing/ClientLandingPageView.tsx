@@ -57,6 +57,8 @@ type ClientData = {
   // client without Booking switched on simply never has it true.
   booking_enabled?: boolean;
   shop_enabled?: boolean;
+  shop_flat_delivery_cents?: number | null;
+  shop_free_delivery_over_cents?: number | null;
   // Quick Sprint: Payments/Geo Sec 2 — fetched once at onboarding time
   // (src/app/onboard/actions.ts, src/lib/whatsapp/conversation.ts), never
   // live here. Optional/nullable for the same reason booking_enabled is:
@@ -195,6 +197,8 @@ export async function ClientLandingPageView({
         businessName={client.business_name}
         primaryColor={primaryColor}
         products={shopProducts}
+        flatDeliveryCents={client.shop_flat_delivery_cents ?? 0}
+        freeDeliveryOverCents={client.shop_free_delivery_over_cents ?? null}
       />
     </ScrollReveal>
   );

@@ -22,12 +22,16 @@ export function ShopSection({
   businessName,
   primaryColor,
   products,
+  flatDeliveryCents = 0,
+  freeDeliveryOverCents = null,
 }: {
   growthClientId: string;
   ownerEmail: string | null;
   businessName: string;
   primaryColor: string;
   products: PublicShopProduct[];
+  flatDeliveryCents?: number;
+  freeDeliveryOverCents?: number | null;
 }) {
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
@@ -40,10 +44,21 @@ export function ShopSection({
     .filter(([, qty]) => qty > 0)
     .map(([productId, quantity]) => ({ productId, quantity }));
   const cartCount = cartLines.reduce((sum, l) => sum + l.quantity, 0);
-  const cartTotalCents = cartLines.reduce((sum, l) => {
+  const goodsCents = cartLines.reduce((sum, l) => {
     const product = products.find((p) => p.id === l.productId);
     return sum + (product?.base_price_cents ?? 0) * l.quantity;
   }, 0);
+
+  // Mirrors the server's calculation in shop-actions.ts. Shown here so the
+  // buyer knows what delivery costs before they start typing an address,
+  // not after. The server decides the real figure, and this only ever has
+  // to agree with it: a coupon is applied server side, so a discount can
+  // push an order over a free-delivery line here without this knowing,
+  // which errs towards quoting more than is charged rather than less.
+  const deliveryCents =
+    freeDeliveryOverCents != null && goodsCents >= freeDeliveryOverCents ? 0 : flatDeliveryCents;
+  const cartTotalCents = goodsCents + deliveryCents;
+  const deliveryIsFree = deliveryCents === 0;
 
   function addToCart(productId: string) {
     setCart((prev) => ({ ...prev, [productId]: (prev[productId] ?? 0) + 1 }));
@@ -80,8 +95,19 @@ export function ShopSection({
 
         {cartCount > 0 && (
           <div className="sticky bottom-4 mt-8 flex items-center justify-between gap-4 rounded-2xl bg-gray-900 px-6 py-4 text-white shadow-xl">
+            {/* Delivery named on the bar itself, not saved for the last
+                screen. A total that grows after someone has committed to
+                buying is the single most common reason a cart gets
+                abandoned, and it is avoidable by saying it here. */}
             <span className="text-sm font-medium">
               {cartCount} item{cartCount > 1 ? "s" : ""} · R{(cartTotalCents / 100).toFixed(2)}
+              {flatDeliveryCents > 0 && (
+                <span className="block text-xs font-normal text-gray-300">
+                  {deliveryIsFree
+                    ? "Delivery included"
+                    : `Includes R${(deliveryCents / 100).toFixed(2)} delivery`}
+                </span>
+              )}
             </span>
             <button
               type="button"
@@ -102,6 +128,8 @@ export function ShopSection({
             primaryColor={primaryColor}
             cartLines={cartLines}
             cartTotalCents={cartTotalCents}
+            goodsCents={goodsCents}
+            deliveryCents={deliveryCents}
             onClose={() => setShowCheckout(false)}
           />
         )}
@@ -149,6 +177,8 @@ function CheckoutForm({
   primaryColor,
   cartLines,
   cartTotalCents,
+  goodsCents,
+  deliveryCents,
   onClose,
 }: {
   growthClientId: string;
@@ -157,6 +187,8 @@ function CheckoutForm({
   primaryColor: string;
   cartLines: CartLine[];
   cartTotalCents: number;
+  goodsCents: number;
+  deliveryCents: number;
   onClose: () => void;
 }) {
   const boundAction = createShopOrder.bind(null, growthClientId, ownerEmail, businessName, cartLines);
@@ -188,6 +220,24 @@ function CheckoutForm({
                 ✕
               </button>
             </div>
+
+            {/* Broken out rather than one number, because "R374" and
+                "R299 plus R75 delivery" are the same amount and only one of
+                them answers the question the buyer is about to ask. */}
+            <dl className="mb-4 flex flex-col gap-1 rounded-xl bg-gray-50 p-3 text-sm">
+              <div className="flex justify-between text-gray-600">
+                <dt>Items</dt>
+                <dd>R{(goodsCents / 100).toFixed(2)}</dd>
+              </div>
+              <div className="flex justify-between text-gray-600">
+                <dt>Delivery</dt>
+                <dd>{deliveryCents === 0 ? "Included" : `R${(deliveryCents / 100).toFixed(2)}`}</dd>
+              </div>
+              <div className="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900">
+                <dt>Total</dt>
+                <dd>R{(cartTotalCents / 100).toFixed(2)}</dd>
+              </div>
+            </dl>
             <form action={formAction} className="flex flex-col gap-3">
               <input name="customerName" placeholder="Name" required className="h-11 rounded-xl border border-gray-300 px-3 text-gray-900 placeholder:text-gray-400" />
               <input name="customerEmail" type="email" placeholder="Email" required className="h-11 rounded-xl border border-gray-300 px-3 text-gray-900 placeholder:text-gray-400" />

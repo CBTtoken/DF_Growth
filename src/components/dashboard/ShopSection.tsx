@@ -11,6 +11,7 @@ import {
   bulkUploadProducts,
   saveCoupon,
   deleteCoupon,
+  saveShopDelivery,
   type CsvRowError,
 } from "@/app/dashboard/shop-actions";
 import { SHOP_CSV_COLUMNS } from "@/lib/schemas/shop";
@@ -62,12 +63,16 @@ export function ShopSection({
   coupons,
   orders,
   collectionAddress,
+  flatDeliveryCents,
+  freeDeliveryOverCents,
 }: {
   shopEnabled: boolean;
   products: ShopProduct[];
   coupons: ShopCoupon[];
   orders: ShopOrder[];
   collectionAddress: ShopCollectionAddress;
+  flatDeliveryCents: number;
+  freeDeliveryOverCents: number | null;
 }) {
   const [enabled, setEnabled] = useState(shopEnabled);
   const [isPending, startTransition] = useTransition();
@@ -105,6 +110,7 @@ export function ShopSection({
       {enabled && (
         <div className="flex flex-col gap-6 border-t border-gray-100 pt-4">
           <CollectionAddressForm address={collectionAddress} />
+          <DeliveryForm flatDeliveryCents={flatDeliveryCents} freeOverCents={freeDeliveryOverCents} />
 
           <div className="flex flex-col gap-3">
             <h3 className="text-sm font-semibold text-gray-800">Inventory</h3>
@@ -193,6 +199,74 @@ function CollectionAddressForm({ address }: { address: ShopCollectionAddress }) 
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
       <button type="submit" disabled={pending} className="self-start rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
         {pending ? "Saving..." : "Save address"}
+      </button>
+    </form>
+  );
+}
+
+/**
+ * What the member charges for delivery, until live courier rates exist.
+ *
+ * Checkout charged R0 before this, which was not a neutral default: it
+ * quietly handed the member's courier bill to the member on a sale where
+ * they had already priced the goods assuming delivery was covered. No
+ * member shop had gone live yet, so this landed before anyone was burned.
+ *
+ * Asked as one number on purpose. A member who does not know their own
+ * average courier cost is not helped by a zone table, and a wrong number in
+ * a zone table is much harder to spot than a wrong single number.
+ */
+function DeliveryForm({
+  flatDeliveryCents,
+  freeOverCents,
+}: {
+  flatDeliveryCents: number;
+  freeOverCents: number | null;
+}) {
+  const [state, formAction, pending] = useActionState(saveShopDelivery, null);
+  const rands = (cents: number | null) => (cents == null ? "" : (cents / 100).toFixed(2));
+
+  return (
+    <form action={formAction} className="flex flex-col gap-3 border-b border-gray-100 pb-5 text-sm">
+      <h3 className="text-sm font-semibold text-gray-800">Delivery charge</h3>
+      <p className="text-xs text-gray-500">
+        Added to every order and shown to the buyer before they pay. Set it to cover what your
+        courier actually charges you, otherwise it comes out of your own margin.
+      </p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-600">Delivery per order (R)</span>
+          <input
+            name="flatDelivery"
+            type="number"
+            min="0"
+            step="0.01"
+            defaultValue={rands(flatDeliveryCents)}
+            placeholder="0.00"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-600">Free delivery over (R, optional)</span>
+          <input
+            name="freeDeliveryOver"
+            type="number"
+            min="1"
+            step="0.01"
+            defaultValue={rands(freeOverCents)}
+            placeholder="Leave blank for none"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+          />
+        </label>
+      </div>
+      {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
+      {state?.success && <p className="text-xs text-green-600">Saved. Buyers see this at checkout now.</p>}
+      <button
+        type="submit"
+        disabled={pending}
+        className="self-start rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+      >
+        {pending ? "Saving..." : "Save delivery charge"}
       </button>
     </form>
   );

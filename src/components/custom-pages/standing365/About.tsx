@@ -11,14 +11,14 @@ export function About() {
 
         <div className="flex flex-col gap-5 font-[family-name:var(--font-s365-serif)] text-lg leading-relaxed text-[#2E2A22]">
           <p>
-            This is not a book for people who have it all together. It&rsquo;s for people in the middle of the mess
-            &mdash; the financial pressure, the broken relationships, the unanswered prayers, the 3am darkness
+            This is not a book for people who have it all together. It&rsquo;s for people in the middle of the mess:
+            the financial pressure, the broken relationships, the unanswered prayers, the 3am darkness
             nobody else sees.
           </p>
           <p>
             It&rsquo;s for the person who was taught not to cry, and has been silently drowning ever since. It&rsquo;s
             for the one who holds everything together for everyone else while quietly falling apart inside. It&rsquo;s
-            for the person who isn&rsquo;t sure God is even real &mdash; and is honest enough to admit it.
+            for the person who isn&rsquo;t sure God is even real, and is honest enough to admit it.
           </p>
           <p>
             The answer, every single day for 365 days, is that you are not alone. And there is always a next step.
