@@ -135,37 +135,44 @@ export default async function BoardPage({
                 ? "Try Everything to see what else members have put up."
                 : "The board fills up as members post. In the meantime, every member business has a page of its own in the marketplace."}
             </p>
-            <div className="mt-1 flex flex-wrap justify-center gap-2">
-              {kind && (
-                <Link
-                  href="/board"
-                  className="rounded-full border border-neutral-border bg-white px-4 py-2 text-xs font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
-                >
-                  Everything
-                </Link>
-              )}
-              <Link
-                href="/marketplace"
-                className="rounded-full bg-brand-blue px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-brand-blue-dark"
-              >
-                Browse the marketplace
-              </Link>
-            </div>
-
-            {/* Found the hard way, by Dewald, on the first real run through:
-                an empty board is a dead end, and every single thing the
-                board does (share, comment, like, message) lives on a post
+            {/* Found the hard way, by Dewald, on the first real run through.
+                An empty board is a dead end: everything the board does,
+                sharing, commenting, liking and messaging, lives on a post
                 page, so with nothing posted there is nowhere to go and
-                nothing to try. A visitor gets the marketplace above. A
-                member needs the one link that fixes it, and the board
-                cannot know which one is reading, so both are offered. */}
-            <p className="mt-4 border-t border-neutral-border pt-4 text-xs text-neutral-muted">
-              A DigitalFlyer member?{" "}
-              <Link href="/dashboard/board" className="font-semibold text-brand-blue underline-offset-2 hover:underline">
-                Post the first one
-              </Link>
-              .
-            </p>
+                nothing to try.
+
+                The first version of this fix put the member's way out in
+                small grey text under the marketplace button, which he found
+                and called hidden, correctly. On an empty board the two
+                things a reader might be are equally likely and neither is a
+                footnote, so both are full-sized buttons. */}
+            <div className="mt-2 flex w-full flex-col items-center gap-3">
+              <div className="flex flex-wrap justify-center gap-2">
+                {kind && (
+                  <Link
+                    href="/board"
+                    className="rounded-full border border-neutral-border bg-white px-5 py-2.5 text-sm font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
+                  >
+                    Everything
+                  </Link>
+                )}
+                <Link
+                  href="/dashboard/board"
+                  className="rounded-full bg-accent px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-accent-hover"
+                >
+                  Post the first one
+                </Link>
+                <Link
+                  href="/marketplace"
+                  className="rounded-full border border-neutral-border bg-white px-5 py-2.5 text-sm font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
+                >
+                  Browse the marketplace
+                </Link>
+              </div>
+              <p className="text-xs text-neutral-muted">
+                Posting is for DigitalFlyer members. Everything else here is open to anyone.
+              </p>
+            </div>
           </div>
         ) : (
           <>
