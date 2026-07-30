@@ -144,7 +144,7 @@ export default async function AdminPage() {
               Waiting on Meta setup help ({needsMetaHelp.length})
             </h2>
             <p className="text-sm text-gray-600">
-              These clients picked &ldquo;I don&apos;t know / need help&rdquo; during onboarding — reach out to connect
+              These clients picked &ldquo;I don&apos;t know / need help&rdquo; during onboarding. Reach out to connect
               their Pixel and Ad Account for them.
             </p>
             <ul className="flex flex-col gap-2">
@@ -192,7 +192,7 @@ export default async function AdminPage() {
                 return (
                   <Tr key={c.id}>
                     <Td className="font-medium text-gray-900">{c.business_name}</Td>
-                    <Td className="text-gray-500">{c.contact_email ?? "—"}</Td>
+                    <Td className="text-gray-500">{c.contact_email ?? "-"}</Td>
                     <Td className="text-gray-500">{c.plan}</Td>
                     <Td>
                       <StatusPill
@@ -209,7 +209,7 @@ export default async function AdminPage() {
                     </Td>
                     <Td className="text-gray-500">
                       {c.plan === "foundation"
-                        ? "—"
+                        ? "-"
                         : c.meta_pixel_id
                           ? "Connected"
                           : c.meta_setup_requested_help

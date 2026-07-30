@@ -32,7 +32,7 @@ export function StorySection({
       <section id="story" className="border-b border-gray-100 bg-gray-50">
         <div className="mx-auto max-w-3xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-            {eyebrowNumber} — Our story
+            {eyebrowNumber} · Our story
           </p>
           <p className="mt-4 whitespace-pre-line text-lg leading-relaxed text-gray-600">{storyText}</p>
         </div>
@@ -57,7 +57,7 @@ export function StorySection({
     >
       <div className={`mx-auto max-w-3xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} — Our story
+          {eyebrowNumber} · Our story
         </p>
         <p className={`mt-4 whitespace-pre-line text-lg leading-relaxed ${SURFACE_BODY_CLASS[anchor.sectionSurface]} ${bodyFontClass}`}>
           {storyText}

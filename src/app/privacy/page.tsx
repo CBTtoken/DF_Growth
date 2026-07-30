@@ -58,7 +58,7 @@ export default function PrivacyPolicyPage() {
           <ul className="list-disc pl-5 text-sm leading-relaxed text-gray-700">
             <li>Name, email address, phone number, and business details</li>
             <li>Business address, description, logo, photos, and social media links</li>
-            <li>Payment information (processed securely by Paystack — we do not store full card details)</li>
+            <li>Payment information (processed securely by Paystack, and we do not store full card details)</li>
           </ul>
           <p className="text-sm font-semibold text-gray-800">
             From Leads (People who enquire through client pages):

@@ -8,7 +8,7 @@ export function BookSchema({ url }: { url: string }) {
     name: "Standing 365",
     author: { "@type": "Person", name: "Dewald Rosema" },
     description:
-      "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together — for everyone still standing in the middle of the hard thing.",
+      "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together, but for everyone still standing in the middle of the hard thing.",
     url,
     workExample: [
       {

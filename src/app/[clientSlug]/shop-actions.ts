@@ -31,7 +31,7 @@ export async function createShopOrder(
 ): Promise<CheckoutState> {
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`shop-checkout:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   if (cart.length === 0) {
@@ -199,12 +199,12 @@ export async function createShopOrder(
         subject: `New order: ${parsed.data.customerName}`,
         html: `
           <p>Good day ${businessName},</p>
-          <p>You've got a new order from your DigitalFlyer SA page. Payment isn't collected automatically yet — please arrange payment directly with the customer before shipping.</p>
+          <p>You've got a new order from your DigitalFlyer SA page. Payment isn't collected automatically yet. Please arrange payment directly with the customer before shipping.</p>
           <p><strong>Items:</strong></p>
           <ul>${lineItems.map((i) => `<li>${i.quantity} × ${i.title} (${i.sku})</li>`).join("")}</ul>
           <p><strong>Total:</strong> R${(totalCents / 100).toFixed(2)}</p>
           <p><strong>Deliver to:</strong> ${parsed.data.line1}, ${parsed.data.city}, ${parsed.data.postalCode}</p>
-          <p><strong>Customer:</strong> ${parsed.data.customerName} — ${parsed.data.customerEmail}${parsed.data.customerPhone ? ` — ${parsed.data.customerPhone}` : ""}</p>
+          <p><strong>Customer:</strong> ${parsed.data.customerName} · ${parsed.data.customerEmail}${parsed.data.customerPhone ? ` · ${parsed.data.customerPhone}` : ""}</p>
           <p>View it in your <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard">dashboard</a>.</p>
         `,
       });

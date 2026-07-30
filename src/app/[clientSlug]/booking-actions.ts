@@ -31,7 +31,7 @@ export async function createBookingHold(
 ): Promise<BookingState> {
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`booking-hold:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many booking attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many booking attempts, please wait a few minutes and try again."] } };
   }
 
   const parsed = bookingHoldSchema.safeParse({
@@ -83,7 +83,7 @@ export async function createBookingHold(
     // already used in src/app/api/webhooks/paystack/route.ts for 23505 on
     // founding_signup_number.
     if (error.code === "23P01") {
-      return { error: { _form: ["That slot was just taken — please pick another time."] } };
+      return { error: { _form: ["That slot was just taken, please pick another time."] } };
     }
     console.error("Failed to create booking", error);
     return { error: { _form: ["Could not complete your booking, please try again."] } };
@@ -98,7 +98,7 @@ export async function createBookingHold(
         subject: `New booking: ${parsed.data.customerName}`,
         html: `
           <p>Good day ${businessName},</p>
-          <p>You've got a new booking from your DigitalFlyer SA page. Payment isn't collected automatically yet — please arrange payment directly with the customer.</p>
+          <p>You've got a new booking from your DigitalFlyer SA page. Payment isn't collected automatically yet. Please arrange payment directly with the customer.</p>
           <p>
             <strong>Name:</strong> ${parsed.data.customerName}<br>
             <strong>Email:</strong> ${parsed.data.customerEmail}<br>

@@ -54,7 +54,7 @@ export default async function OnboardPage() {
           <h1 className="text-xl font-bold tracking-tight text-ink">No account found</h1>
           <p className="text-sm text-gray-500">
             We couldn&apos;t find a business linked to this login. If you just paid, wait a minute
-            and refresh — otherwise, get in touch.
+            and refresh. Otherwise, get in touch.
           </p>
         </div>
         <SiteFooter />

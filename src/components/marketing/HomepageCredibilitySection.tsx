@@ -38,7 +38,7 @@ export function HomepageCredibilitySection({ testimonials }: { testimonials: Fea
                 <blockquote key={t.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-6 text-sm shadow-sm">
                   <p className="text-gray-700">&ldquo;{t.quote}&rdquo;</p>
                   <footer className="mt-3 flex items-center justify-between text-gray-500">
-                    <span>— {t.author_name}</span>
+                    <span>{t.author_name}</span>
                     {t.rating && <span className="text-brand">{"★".repeat(t.rating)}</span>}
                   </footer>
                 </blockquote>

@@ -112,13 +112,13 @@ export default async function ReactivationBatchPage() {
                 return (
                   <Tr key={c.id}>
                     <Td className="font-medium text-gray-900">{c.business_name}</Td>
-                    <Td className="text-gray-500">{c.industry ?? "—"}</Td>
-                    <Td className="text-gray-500">{c.city ?? "—"}</Td>
+                    <Td className="text-gray-500">{c.industry ?? "-"}</Td>
+                    <Td className="text-gray-500">{c.city ?? "-"}</Td>
                     <Td>
                       <StatusPill tone={STATUS_TONES[statusLabel] ?? "neutral"}>{statusLabel}</StatusPill>
                     </Td>
                     <Td className="text-gray-400">
-                      {c.trial_starts_at ? new Date(c.trial_starts_at).toLocaleDateString() : "—"}
+                      {c.trial_starts_at ? new Date(c.trial_starts_at).toLocaleDateString() : "-"}
                     </Td>
                     <Td>
                       <StatusPill tone={emailStatusTone}>{emailStatus}</StatusPill>

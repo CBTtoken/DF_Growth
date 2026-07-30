@@ -14,7 +14,7 @@ export function ReportEventButton({ eventId }: { eventId: string }) {
   const [state, formAction, pending] = useActionState(action, null);
 
   if (state?.success) {
-    return <p className="text-xs text-gray-400">Thanks — our team will take a look.</p>;
+    return <p className="text-xs text-gray-400">Thanks, our team will take a look.</p>;
   }
 
   if (!open) {

@@ -41,7 +41,7 @@ export function AdminPlanControls({
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Plan &amp; free access</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Admin-only controls. Changing the plan here does not touch Paystack — use this for
+          Admin-only controls. Changing the plan here does not touch Paystack. Use this for
           comped/test accounts, not to bypass billing on a real paying client.
         </p>
       </div>
@@ -79,7 +79,7 @@ export function AdminPlanControls({
             <div>
               <p className="text-sm font-semibold text-ink">
                 Free access via Admin{" "}
-                {adminCompUntil ? `until ${new Date(adminCompUntil).toLocaleDateString("en-ZA")}` : "— indefinitely"}
+                {adminCompUntil ? `until ${new Date(adminCompUntil).toLocaleDateString("en-ZA")}` : "indefinitely"}
               </p>
               {adminCompNote && <p className="mt-1 text-sm text-gray-600">&ldquo;{adminCompNote}&rdquo;</p>}
               <p className="mt-1 text-xs text-gray-500">

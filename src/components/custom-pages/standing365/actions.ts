@@ -33,7 +33,7 @@ export async function submitBookOrder(
 ): Promise<OrderState> {
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`book-order:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const raw = {
@@ -109,7 +109,7 @@ export async function submitBookOrder(
   });
 
   if ("error" in result) {
-    return { error: { _form: ["Could not start checkout — please try again."] } };
+    return { error: { _form: ["Could not start checkout, please try again."] } };
   }
 
   redirect(result.authorizationUrl);

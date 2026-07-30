@@ -6,7 +6,7 @@ import { EventSubmissionForm } from "@/components/events/EventSubmissionForm";
 
 export const metadata: Metadata = {
   title: "List Your Event",
-  description: "List your event on DigitalFlyer Growth for free — no account fees, no ticketing step, ever.",
+  description: "List your event on DigitalFlyer Growth for free. No account fees, no ticketing step, ever.",
 };
 
 // List Your Event Sec 2: "anyone... can register a free account and list
@@ -29,7 +29,7 @@ export default async function ListYourEventPage() {
           <span className="font-badge text-xs uppercase tracking-widest text-brand">List Your Event</span>
           <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">Get your event in front of people nearby</h1>
           <p className="max-w-xl text-sm text-gray-500 sm:text-base">
-            Free, always — no account fees, no ticketing step, ever. Fill in the details below and it goes live
+            Free, always. No account fees, no ticketing step, ever. Fill in the details below and it goes live
             immediately.
           </p>
         </div>

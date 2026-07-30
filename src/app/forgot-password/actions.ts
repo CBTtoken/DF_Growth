@@ -24,14 +24,14 @@ export async function requestPasswordReset(
   // per email. Keyed by email (not IP) specifically per that wording —
   // this is the one endpoint where the spec calls out the key explicitly.
   if (isRateLimited(`password-reset:${parsed.data.email.toLowerCase()}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many requests for this email — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many requests for this email, please wait a few minutes and try again."] } };
   }
 
   // Also keyed by IP as a lighter secondary guard against one script
   // working through a list of emails.
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`password-reset-ip:${ip}`, 20, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many requests — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many requests, please wait a few minutes and try again."] } };
   }
 
   const admin = createAdminClient();

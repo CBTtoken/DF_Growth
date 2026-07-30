@@ -43,7 +43,7 @@ export function EventPhotoUpload() {
           ))}
         </div>
       )}
-      {count === 5 && <p className="text-xs text-gray-400">Maximum 5 photos — extra ones you picked were dropped.</p>}
+      {count === 5 && <p className="text-xs text-gray-400">Maximum 5 photos. Extra ones you picked were dropped.</p>}
     </div>
   );
 }

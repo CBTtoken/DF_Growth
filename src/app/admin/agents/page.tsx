@@ -166,15 +166,15 @@ export default async function AdminAgentsPage() {
                       <StatusPill tone={a.status === "approved" ? "success" : "danger"}>{a.status}</StatusPill>
                     </Td>
                     <Td className="text-gray-500">{referralCount}</Td>
-                    <Td className="text-gray-500">{a.status === "approved" ? tier : "—"}</Td>
+                    <Td className="text-gray-500">{a.status === "approved" ? tier : "-"}</Td>
                     <Td className="text-gray-500">
-                      {stats && stats.unpaid > 0 ? `R${stats.unpaid.toFixed(2)}` : "—"}
+                      {stats && stats.unpaid > 0 ? `R${stats.unpaid.toFixed(2)}` : "-"}
                     </Td>
                     <Td className="text-gray-500">
-                      {stats && stats.paid > 0 ? `R${stats.paid.toFixed(2)}` : "—"}
+                      {stats && stats.paid > 0 ? `R${stats.paid.toFixed(2)}` : "-"}
                     </Td>
                     <Td className="text-gray-500">
-                      {a.referral_code ? getAgentReferralLink(a.referral_code) : "—"}
+                      {a.referral_code ? getAgentReferralLink(a.referral_code) : "-"}
                     </Td>
                     <Td className="text-right">
                       <Link href={`/admin/agents/${a.id}`} className="text-xs font-semibold text-brand hover:underline">

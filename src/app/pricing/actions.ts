@@ -70,7 +70,7 @@ export async function startCheckout(
   const cookieStore = await cookies();
   const ip = clientIpFromHeaders(hdrs);
   if (isRateLimited(`checkout:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const parsed = startCheckoutSchema.safeParse({

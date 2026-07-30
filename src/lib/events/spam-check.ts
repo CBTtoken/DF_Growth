@@ -18,7 +18,7 @@ export function detectSpamSignal({
   description: string;
 }): string | null {
   if (URL_PATTERN.test(eventName)) {
-    return "Event name contains a link — organisers don't normally need one there.";
+    return "Event name contains a link, and organisers don't normally need one there.";
   }
 
   const urlMatches = description.match(new RegExp(URL_PATTERN, "gi")) ?? [];
@@ -51,7 +51,7 @@ export function detectThinListing({
   imageCount: number;
 }): string | null {
   if (!description.trim() && imageCount === 0) {
-    return "No description and no photos — thin listing, worth a quick human check before it's indexed.";
+    return "No description and no photos, so a thin entry worth a quick human check before it's indexed.";
   }
   return null;
 }

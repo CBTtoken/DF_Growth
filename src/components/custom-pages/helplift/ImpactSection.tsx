@@ -25,7 +25,7 @@ export function ImpactSection() {
             Real help, measured in real lives
           </h2>
           <p className="mt-4 text-base leading-relaxed text-gray-600">
-            What the Helplift community made possible in 2025/26 — and these numbers keep growing.
+            What the Helplift community made possible in 2025/26, and these numbers keep growing.
           </p>
         </div>
 

@@ -201,7 +201,7 @@ export async function ClientLandingPageView({
 
   const previewBanner = mode === "preview" && (
     <div className="sticky top-0 z-50 bg-ink px-4 py-2.5 text-center text-sm font-semibold text-white">
-      Previewing your page — visitors never see this banner
+      Previewing your page. Visitors never see this banner
     </div>
   );
 

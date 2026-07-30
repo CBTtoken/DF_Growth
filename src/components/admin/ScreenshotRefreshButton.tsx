@@ -24,7 +24,7 @@ export function ScreenshotRefreshButton({
         <p className="mt-1 text-sm text-gray-500">
           {screenshotCapturedAt
             ? `Last captured ${new Date(screenshotCapturedAt).toLocaleString("en-ZA")}. Used on /pricing's "See It In Action" section.`
-            : "No screenshot captured yet — covered automatically once this page is among the top-visited (weekly), or refresh it now."}
+            : "No screenshot captured yet. Covered automatically once this page is among the top-visited (weekly), or refresh it now."}
         </p>
       </div>
       <div>

@@ -30,7 +30,7 @@ export async function resetPassword(_prevState: ResetPasswordState, formData: Fo
 
   if (!user) {
     return {
-      error: { _form: ["That reset link has expired or already been used — request a new one."] },
+      error: { _form: ["That reset link has expired or already been used. Request a new one."] },
     };
   }
 

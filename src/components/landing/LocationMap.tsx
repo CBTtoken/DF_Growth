@@ -33,7 +33,7 @@ export function LocationMap({
           <div className="grid gap-8 md:grid-cols-2 md:items-center md:gap-14">
             <div>
               <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-                {eyebrowNumber} — Where we are
+                {eyebrowNumber} · Where we are
               </p>
               <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
                 Find us
@@ -69,7 +69,7 @@ export function LocationMap({
         <div className="grid gap-8 md:grid-cols-2 md:items-center md:gap-14">
           <div>
             <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-              {eyebrowNumber} — Where we are
+              {eyebrowNumber} · Where we are
             </p>
             <h2
               className={`mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}

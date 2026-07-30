@@ -88,7 +88,7 @@ async function insertEvent(
   data: ReturnType<typeof parseEventFields>["data"],
   formData: FormData
 ): Promise<EventFormState> {
-  if (!data) return { error: { _form: ["Something went wrong — please try again."] } };
+  if (!data) return { error: { _form: ["Something went wrong, please try again."] } };
 
   const images = await uploadEventImages(organizerAccountId, formData);
 
@@ -150,7 +150,7 @@ async function insertEvent(
 
   if (error || !inserted) {
     console.error("Failed to create event", error);
-    return { error: { _form: ["Something went wrong saving your event — please try again."] } };
+    return { error: { _form: ["Something went wrong saving your event, please try again."] } };
   }
 
   return { success: true, eventId: inserted.id, needsReview: !!needsReview };
@@ -207,12 +207,12 @@ export async function submitEventNewOrganizer(_prevState: EventFormState, formDa
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   if (isRateLimited(`event-submit:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
   if (!turnstileOk) {
-    return { error: { _form: ["Verification failed — please try again."] } };
+    return { error: { _form: ["Verification failed, please try again."] } };
   }
 
   const supabase = await createClient();
@@ -223,13 +223,13 @@ export async function submitEventNewOrganizer(_prevState: EventFormState, formDa
 
   if (error) {
     console.error("Event organiser signup failed", error);
-    return { error: { _form: ["Something went wrong — please try again."] } };
+    return { error: { _form: ["Something went wrong, please try again."] } };
   }
   // Documented Supabase anti-enumeration behavior: an already-registered
   // email comes back as a "successful" user with an empty identities array
   // rather than a clear error.
   if (!data.user || data.user.identities?.length === 0) {
-    return { error: { _form: ["That email already has an account — log in instead."] } };
+    return { error: { _form: ["That email already has an account. Log in instead."] } };
   }
 
   const admin = createAdminClient();
@@ -240,7 +240,7 @@ export async function submitEventNewOrganizer(_prevState: EventFormState, formDa
     .single();
   if (insertAccountError || !account) {
     console.error("Failed to create event_organizers row", insertAccountError);
-    return { error: { _form: ["Something went wrong — please try again."] } };
+    return { error: { _form: ["Something went wrong, please try again."] } };
   }
 
   return insertEvent(account.id, eventParsed.data, formData);
@@ -266,12 +266,12 @@ export async function submitEventExistingOrganizer(
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   if (isRateLimited(`event-login:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
   if (!turnstileOk) {
-    return { error: { _form: ["Verification failed — please try again."] } };
+    return { error: { _form: ["Verification failed, please try again."] } };
   }
 
   const supabase = await createClient();
@@ -282,7 +282,7 @@ export async function submitEventExistingOrganizer(
 
   const organizerAccountId = await getOrCreateOrganizerAccount(data.user.id);
   if (!organizerAccountId) {
-    return { error: { _form: ["Something went wrong — please try again."] } };
+    return { error: { _form: ["Something went wrong, please try again."] } };
   }
 
   return insertEvent(organizerAccountId, eventParsed.data, formData);
@@ -299,12 +299,12 @@ export async function submitEventAsLoggedInUser(_prevState: EventFormState, form
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   if (isRateLimited(`event-submit:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
   if (!turnstileOk) {
-    return { error: { _form: ["Verification failed — please try again."] } };
+    return { error: { _form: ["Verification failed, please try again."] } };
   }
 
   const supabase = await createClient();
@@ -312,12 +312,12 @@ export async function submitEventAsLoggedInUser(_prevState: EventFormState, form
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return { error: { _form: ["Your session has expired — please reload and sign in again."] } };
+    return { error: { _form: ["Your session has expired, please reload and sign in again."] } };
   }
 
   const organizerAccountId = await getOrCreateOrganizerAccount(user.id);
   if (!organizerAccountId) {
-    return { error: { _form: ["Something went wrong — please try again."] } };
+    return { error: { _form: ["Something went wrong, please try again."] } };
   }
 
   return insertEvent(organizerAccountId, eventParsed.data, formData);
@@ -338,14 +338,14 @@ export async function verifyEventOrganizerSignupOtp(_prevState: VerifyOtpState, 
 
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`event-organizer-otp:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: "Too many attempts — please wait a few minutes and try again." };
+    return { error: "Too many attempts, please wait a few minutes and try again." };
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "signup" });
 
   if (error || !data.user) {
-    return { error: "That code is incorrect or has expired — check your email for the latest one." };
+    return { error: "That code is incorrect or has expired. Check your email for the latest one." };
   }
 
   return { success: true };
@@ -368,7 +368,7 @@ export async function reportEvent(eventId: string, _prevState: ReportEventState,
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   if (isRateLimited(`event-report:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: "Too many reports — please wait a few minutes and try again." };
+    return { error: "Too many reports, please wait a few minutes and try again." };
   }
 
   const admin = createAdminClient();

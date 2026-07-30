@@ -21,7 +21,7 @@ type InquiryState = { error?: Record<string, string[]> & { _form?: string[] }; s
 export async function submitHomepageInquiry(_prevState: InquiryState, formData: FormData): Promise<InquiryState> {
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`homepage-inquiry:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many submissions — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many submissions, please wait a few minutes and try again."] } };
   }
 
   const parsed = homepageInquirySchema.safeParse({

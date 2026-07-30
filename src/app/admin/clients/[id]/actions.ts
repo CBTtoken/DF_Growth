@@ -512,7 +512,7 @@ export async function adminUploadLogo(_prevState: BuilderState, formData: FormDa
   const { error: uploadError } = await admin.storage
     .from("client-logos")
     .upload(path, logo, { contentType: logo.type, upsert: true });
-  if (uploadError) return { error: "Could not upload logo — try a smaller file (under 2MB) or a different format." };
+  if (uploadError) return { error: "Could not upload logo. Try a smaller file (under 2MB) or a different format." };
 
   const { error } = await admin.from("growth_clients").update({ logo_path: path }).eq("id", clientId);
   if (error) return { error: "Could not save, please try again." };
@@ -539,7 +539,7 @@ export async function adminUploadPhoto(_prevState: BuilderState, formData: FormD
 
   let nextPosition = count ?? 0;
   const room = PHOTO_CAP - nextPosition;
-  if (room <= 0) return { error: `Already at the ${PHOTO_CAP}-photo limit — delete one first.` };
+  if (room <= 0) return { error: `Already at the ${PHOTO_CAP}-photo limit. Delete one first.` };
 
   let failed = 0;
   for (const photo of files.slice(0, room)) {

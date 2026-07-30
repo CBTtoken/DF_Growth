@@ -65,9 +65,9 @@ export type CustomPageMeta = { title: string; description: string };
 
 export const customPageMeta: Record<string, CustomPageMeta> = {
   "standing-365": {
-    title: "Standing 365 — A Book for the Real Life",
+    title: "Standing 365, A Book for the Real Life",
     description:
-      "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together — for everyone still standing in the middle of the hard thing.",
+      "365 Daily Devotions for Real People in Real Hard Seasons. Not for the people who have it all together, but for everyone still standing in the middle of the hard thing.",
   },
   "katisobiz-nomads": {
     title: "KatisoBiz Nomads: A Private Business Community",
@@ -82,7 +82,7 @@ export const customPageMeta: Record<string, CustomPageMeta> = {
   helplift: {
     title: "Helplift Network Vaal Triangle | Inspire and Enable people to help people",
     description:
-      "Helplift Network Vaal Triangle (NPO 152-090) connects donors and volunteers with real community needs — through a voucher giving programme, affordable charity stores, skills development, and emotional support in Vanderbijlpark, South Africa.",
+      "Helplift Network Vaal Triangle (NPO 152-090) connects donors and volunteers with real community needs, through a voucher giving programme, affordable charity stores, skills development, and emotional support in Vanderbijlpark, South Africa.",
   },
 };
 

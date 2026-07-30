@@ -62,7 +62,7 @@ export function ReviewsSection({
             className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base"
             style={{ color: accentColor }}
           >
-            {eyebrowNumber} — Reviews
+            {eyebrowNumber} · Reviews
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-6">
@@ -77,7 +77,7 @@ export function ReviewsSection({
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No reviews yet — be the first.</p>
+              <p className="text-sm text-gray-500">No reviews yet. Be the first.</p>
             )}
             <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
           </div>
@@ -159,7 +159,7 @@ export function ReviewsSection({
             </span>
           </>
         ) : (
-          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet — be the first.</p>
+          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet. Be the first.</p>
         )}
         <div className="mt-2">
           <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
@@ -196,7 +196,7 @@ export function ReviewsSection({
               </div>
             </div>
           ) : (
-            <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet — be the first.</p>
+            <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet. Be the first.</p>
           )}
           <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
         </div>
@@ -217,7 +217,7 @@ export function ReviewsSection({
     <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} — Reviews
+          {eyebrowNumber} · Reviews
         </p>
 
         {body}

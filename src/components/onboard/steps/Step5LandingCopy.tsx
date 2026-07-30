@@ -48,7 +48,7 @@ export function Step5LandingCopy({
             <span aria-hidden className="text-lg">✨</span>
             <p className="text-sm font-medium text-gray-700">
               <span className="font-semibold text-brand">We&apos;ve drafted this for you</span>
-              {" "}based on what you told us in the last step. Nothing&apos;s final — read through each field
+              {" "}based on what you told us in the last step. Nothing&apos;s final, so read through each field
               below and edit anything before continuing.
             </p>
           </div>
@@ -96,7 +96,7 @@ export function Step5LandingCopy({
           defaultValue={initialAboutText}
           required
           maxLength={800}
-          placeholder="A few sentences visitors can trust — who you are, what you actually do, and what makes you worth choosing."
+          placeholder="A few sentences visitors can trust: who you are, what you actually do, and what makes you worth choosing."
           className={inputClass}
           rows={5}
         />

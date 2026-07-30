@@ -11,7 +11,7 @@ export default function AgentSetupStartedPage() {
         <h1 className="text-2xl font-bold tracking-tight text-ink">Your free page is on its way</h1>
         <p className="text-sm text-gray-500">
           Check your email for a link to set up your account. You&apos;ll choose a password, then go straight
-          into your onboarding wizard — no payment step, ever.
+          into your onboarding wizard. No payment step, ever.
         </p>
       </div>
     </main>

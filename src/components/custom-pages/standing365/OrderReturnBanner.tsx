@@ -93,11 +93,11 @@ export function OrderReturnBanner() {
     <section className="flex flex-col items-center gap-4 bg-[#B8832A] px-6 py-14 text-center text-[#16213E]">
       <span className="grid size-14 place-items-center rounded-full bg-[#16213E] text-2xl text-[#D6A857]">✓</span>
       <h2 className="font-[family-name:var(--font-s365-serif)] text-2xl sm:text-3xl">
-        Thank you — you&apos;re part of the Standing 365 family
+        Thank you, you&apos;re part of the Standing 365 family
       </h2>
       <p className="max-w-xl text-sm leading-relaxed sm:text-base">
         We&apos;ll confirm your expected delivery date by email shortly. If this copy is for you, we hope every
-        page meets you exactly where you are. If it&apos;s for someone you love, get ready — they&apos;re about to
+        page meets you exactly where you are. If it&apos;s for someone you love, get ready, they&apos;re about to
         have 365 days that could change everything.
       </p>
     </section>

@@ -18,7 +18,7 @@ export function Hero({ callPhone }: { callPhone: string | null }) {
       <div className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
         <Image
           src="/custom-pages/helplift/logo-full.png"
-          alt="Helplift Network — Inspire and Enable people to help people"
+          alt="Helplift Network: Inspire and Enable people to help people"
           width={520}
           height={160}
           priority
@@ -42,7 +42,7 @@ export function Hero({ callPhone }: { callPhone: string | null }) {
 
         <p className="mt-6 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg">
           Helplift Network links the generosity of donors and volunteers directly to real needs in
-          our community — with dignity, skill, and care. This is how ordinary people change the
+          our community, with dignity, skill, and care. This is how ordinary people change the
           world: by helping each other.
         </p>
 

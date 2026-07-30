@@ -17,7 +17,7 @@ export function DangerZone({ clientId, isActive }: { clientId: string; isActive:
         <p className="mt-1 text-sm text-gray-500">
           {isActive
             ? "This page is currently live and publicly visible."
-            : "This page is currently hidden — it returns a 404 and won't appear in the Marketplace."}
+            : "This page is currently hidden. It returns a 404 and won't appear in the Marketplace."}
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -46,7 +46,7 @@ export function DangerZone({ clientId, isActive }: { clientId: string; isActive:
           onClick={() => {
             if (
               !window.confirm(
-                "This permanently deletes this account and everything attached to it — leads, photos, testimonials, orders. This cannot be undone. Continue?"
+                "This permanently deletes this account and everything attached to it: leads, photos, testimonials, orders. This cannot be undone. Continue?"
               )
             ) {
               return;

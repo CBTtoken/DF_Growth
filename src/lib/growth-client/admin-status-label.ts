@@ -60,5 +60,5 @@ export function describeGrowthClientStatus(input: AdminStatusInput): string {
   }
   const labels = input.plan === "foundation" ? FOUNDATION_STEP_LABELS : NON_FOUNDATION_STEP_LABELS;
   const step = Math.min(lastCompletedStep(input), labels.length);
-  return `Incomplete — step ${step} of ${labels.length}: ${labels[step - 1]}`;
+  return `Incomplete, step ${step} of ${labels.length}: ${labels[step - 1]}`;
 }

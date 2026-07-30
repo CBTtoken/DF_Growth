@@ -645,7 +645,7 @@ export async function advanceConversation(
       }
 
       return {
-        reply: `Almost there! Complete payment here to go live:\n${checkout.authorizationUrl}\n\nCard, Instant EFT, Capitec Pay, or SnapScan — no card needed, pick whichever works for you on that page.\n\nOnce that's done we'll email you a link straight into your dashboard.`,
+        reply: `Almost there! Complete payment here to go live:\n${checkout.authorizationUrl}\n\nCard, Instant EFT, Capitec Pay, or SnapScan. No card needed, pick whichever works for you on that page.\n\nOnce that's done we'll email you a link straight into your dashboard.`,
         nextStep: "done",
         stepData,
         growthClientId: conversation.growth_client_id,

@@ -13,7 +13,7 @@ export function BuffelskopSchema({ url }: { url: string }) {
     offers: [
       {
         "@type": "Offer",
-        name: "Sundried Cayenne Chilli Powder — Fine",
+        name: "Sundried Cayenne Chilli Powder (Fine)",
         price: "80.00",
         priceCurrency: "ZAR",
         priceValidUntil: "2027-07-18",
@@ -22,7 +22,7 @@ export function BuffelskopSchema({ url }: { url: string }) {
       },
       {
         "@type": "Offer",
-        name: "Sundried Cayenne Chilli Powder — Coarse",
+        name: "Sundried Cayenne Chilli Powder (Coarse)",
         price: "80.00",
         priceCurrency: "ZAR",
         priceValidUntil: "2027-07-18",

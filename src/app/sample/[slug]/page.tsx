@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   const { slug } = await params;
   const sample = SHOWCASE_SAMPLES[slug];
   return {
-    title: sample ? `${sample.businessName} — Sample Page | DigitalFlyer SA` : "Sample Page",
+    title: sample ? `${sample.businessName}: Sample Page | DigitalFlyer SA` : "Sample Page",
     // Combined spec Sec 36: a fictional business, not a real listing —
     // never indexed, so it can't show up in search results looking like a
     // real business.

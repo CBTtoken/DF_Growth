@@ -51,7 +51,7 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
   if (rateLimitOnboardStep(client.id)) {
-    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
   const admin = createAdminClient();
@@ -103,7 +103,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
   if (rateLimitOnboardStep(client.id)) {
-    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
   // Quick Sprint: Payments/Geo Sec 2 — fetched here, once, rather than live
@@ -188,7 +188,7 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
   if (rateLimitOnboardStep(client.id)) {
-    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
   const admin = createAdminClient();
@@ -207,7 +207,7 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
       .upload(path, logo, { contentType: logo.type, upsert: true });
 
     if (uploadError) {
-      return { error: { _form: ["Could not upload logo — try a smaller file (under 2MB) or a different format."] } };
+      return { error: { _form: ["Could not upload logo. Try a smaller file (under 2MB) or a different format."] } };
     }
     logoPath = path;
   }
@@ -247,7 +247,7 @@ export async function saveStepTemplate(_prevState: OnboardState, formData: FormD
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
   if (rateLimitOnboardStep(client.id)) {
-    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
   const admin = createAdminClient();
@@ -277,7 +277,7 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
   if (rateLimitOnboardStep(client.id)) {
-    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
   const admin = createAdminClient();
@@ -346,7 +346,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
   if (rateLimitOnboardStep(client.id)) {
-    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
   // A slot only counts as a real package if it has a name — a price or
@@ -438,7 +438,7 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
   const client = await requireGrowthClientId();
   if (client.error) return { error: { _form: [client.error] } };
   if (rateLimitOnboardStep(client.id)) {
-    return { error: { _form: ["Too many attempts — please wait a minute and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
   const admin = createAdminClient();

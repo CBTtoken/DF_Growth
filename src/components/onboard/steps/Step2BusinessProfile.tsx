@@ -83,7 +83,7 @@ export function Step2BusinessProfile({
       <div>
         <h2 className="text-xl font-bold tracking-tight text-ink">Tell us about your business</h2>
         <p className="mt-1 text-sm text-gray-500">
-          The more you give us here, the better we can build your page and your ad campaigns —
+          The more you give us here, the better we can build your page and your ad campaigns, and
           we&apos;ll even draft your landing page copy from this.
         </p>
       </div>
@@ -196,7 +196,7 @@ export function Step2BusinessProfile({
       {!isOnline && (
         <>
           <label className={labelClass}>
-            City / Town <span className="font-normal text-gray-400">(optional — helps customers find you nearby)</span>
+            City / Town <span className="font-normal text-gray-400">(optional, helps customers find you nearby)</span>
             <select
               value={city}
               onChange={(e) => {
@@ -236,7 +236,7 @@ export function Step2BusinessProfile({
           name="businessDescription"
           defaultValue={initialBusinessDescription}
           required
-          placeholder="In your own words — what do you do and who is it for?"
+          placeholder="In your own words: what do you do and who is it for?"
           className={inputClass}
           rows={3}
         />
@@ -264,7 +264,7 @@ export function Step2BusinessProfile({
           name="productsServices"
           defaultValue={initialProductsServices}
           maxLength={600}
-          placeholder="Leave blank if you don't have a fixed list — e.g. you just want people to get in touch"
+          placeholder="Leave blank if you don't have a fixed list, for example you just want people to get in touch"
           className={inputClass}
           rows={3}
         />
@@ -284,7 +284,7 @@ export function Step2BusinessProfile({
           rows={2}
         />
         <span className="text-xs font-normal text-gray-400">
-          Shown on your page as its own &quot;Our Story&quot; section, word for word — specific details like a
+          Shown on your page as its own &quot;Our Story&quot; section, word for word. Specific details like a
           founding year or a personal story belong here, not in the description above.
         </span>
       </label>

@@ -23,12 +23,12 @@ type ApplyState =
 export async function submitAgentApplication(_prevState: ApplyState, formData: FormData): Promise<ApplyState> {
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`agent-apply:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
   if (!turnstileOk) {
-    return { error: { _form: ["Verification failed — please try again."] } };
+    return { error: { _form: ["Verification failed, please try again."] } };
   }
 
   const parsed = agentApplicationSchema.safeParse({

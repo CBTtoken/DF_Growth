@@ -86,7 +86,7 @@ export async function evaluateFraudSignals({
   if ((recentCount ?? 0) + 1 >= VELOCITY_THRESHOLD) {
     return {
       flaggedBy: "system",
-      flaggedReason: `Unusual review velocity — ${(recentCount ?? 0) + 1} reviews on this business in the last 15 minutes.`,
+      flaggedReason: `Unusual review velocity: ${(recentCount ?? 0) + 1} reviews on this business in the last 15 minutes.`,
     };
   }
 

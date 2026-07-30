@@ -31,7 +31,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
 
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`login:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const supabase = await createClient();
@@ -69,7 +69,7 @@ export async function login(_prevState: LoginState, formData: FormData): Promise
       return {
         error: {
           _form: [
-            "We've upgraded how you sign in — check your email for a link to set up a password for your account.",
+            "We've upgraded how you sign in. Check your email for a link to set up a password for your account.",
           ],
         },
       };

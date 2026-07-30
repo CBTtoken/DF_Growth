@@ -22,7 +22,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 const Field = ({ label, value }: { label: string; value: string | null | undefined }) => (
   <div className="flex flex-col gap-0.5">
     <span className="text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</span>
-    <span className="text-sm text-gray-900">{value?.trim() ? value : "—"}</span>
+    <span className="text-sm text-gray-900">{value?.trim() ? value : "-"}</span>
   </div>
 );
 
@@ -124,7 +124,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           <div>
             <h2 className="text-lg font-bold tracking-tight text-ink">Send payment link</h2>
             <p className="mt-1 text-sm text-gray-500">
-              Emails a real checkout link — same one the self-serve flow uses, so it activates the account
+              Emails a real checkout link, the same one the self-serve flow uses, so it activates the account
               identically once they pay.
             </p>
           </div>
@@ -132,7 +132,7 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
         </Card>
 
         {/* Admin-created clients never clicked a referral link or typed an
-            agent's name at signup — this is how admin credits the agent
+            agent's name at signup, and this is how admin credits the agent
             who actually brought them in, so commission still flows once
             they pay. See adminAssignAgent's own comment for the mechanics. */}
         <Card className="flex flex-col gap-3">
@@ -236,8 +236,8 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
                 than reusing the same status badge shown up top. */}
             <p className="mt-1 text-sm text-gray-500">
               {client.paystack_reference || client.is_agent_comped || client.is_admin_comped
-                ? "Unlocked — this account has paid at least once, or has comped access."
-                : "Locked — this account hasn't paid yet (still on a free trial)."}
+                ? "Unlocked. This account has paid at least once, or has comped access."
+                : "Locked. This account hasn't paid yet (still on a free trial)."}
             </p>
           </div>
           <MarketplaceUrlForm clientId={client.id} initialUrl={client.marketplace_url} />

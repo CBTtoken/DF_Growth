@@ -22,7 +22,7 @@ export async function startAgentCompedSignup(
 ): Promise<CompedSignupState> {
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`agent-comped-signup:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const parsed = agentCompedSignupSchema.safeParse({
@@ -50,7 +50,7 @@ export async function startAgentCompedSignup(
   }
 
   if (agent.comped_client_id) {
-    return { error: { _form: ["You've already set up your comped page — check your dashboard."] } };
+    return { error: { _form: ["You've already set up your comped page. Check your dashboard."] } };
   }
 
   const result = await provisionGrowthClient({

@@ -54,7 +54,7 @@ export function OrderForm({
     <div className="mt-4 rounded-2xl border border-[#B8832A]/30 bg-[#FBF8F3] p-6 text-left">
       <div className="mb-4 flex items-center justify-between">
         <h4 className="text-sm font-semibold uppercase tracking-wide text-[#16213E]">
-          {edition === "personalised" ? "Personalised Paperback — your details" : "Standard Paperback — your details"}
+          {edition === "personalised" ? "Personalised Paperback: your details" : "Standard Paperback: your details"}
         </h4>
         {/* Real feedback: this used to be faint, low-contrast text easy to
             miss entirely, reading as "there's no way back" once the form
@@ -216,7 +216,7 @@ export function OrderForm({
         )}
 
         <p className="mt-2 text-xs leading-relaxed text-[#2E2A22]/60">
-          We only use these details to process and ship this order — your delivery address and message are never
+          We only use these details to process and ship this order. Your delivery address and message are never
           shared or sold. See our full{" "}
           <Link href="/privacy" className="underline underline-offset-2">
             Privacy Policy

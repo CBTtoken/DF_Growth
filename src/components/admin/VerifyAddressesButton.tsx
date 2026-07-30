@@ -21,7 +21,7 @@ export function VerifyAddressesButton() {
             const res = await verifyReactivationAddresses();
             setResult(
               res.ok
-                ? `Checked ${res.checked} — ${res.valid} valid, ${res.invalid} invalid`
+                ? `Checked ${res.checked}: ${res.valid} valid, ${res.invalid} invalid`
                 : `Failed: ${res.error}`
             );
           })

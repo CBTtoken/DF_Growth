@@ -51,7 +51,7 @@ export function StepPayment({ tier, billingCycle }: { tier: Tier; billingCycle: 
       {tier === "growth_engine" && cycle === "monthly" && !dismissed && (
         <div className="flex flex-col gap-3 rounded-xl border border-brand/30 bg-brand/5 px-4 py-4">
           <p className="text-sm text-gray-800">
-            <span className="font-semibold text-ink">Please confirm — monthly or yearly?</span> Switching to
+            <span className="font-semibold text-ink">Please confirm: monthly or yearly?</span> Switching to
             annual saves you about <span className="font-semibold text-ink">R960 a year</span> (R1,199/year
             instead of R180 × 12).
           </p>
@@ -90,7 +90,7 @@ export function StepPayment({ tier, billingCycle }: { tier: Tier; billingCycle: 
           actual work that section needed: telling a visitor without a card
           that before they even click through. */}
       <p className="text-center text-xs text-gray-400">
-        Card, Instant EFT, Capitec Pay, or SnapScan — choose whichever works for you on the next screen.
+        Card, Instant EFT, Capitec Pay, or SnapScan. Choose whichever works for you on the next screen.
       </p>
     </div>
   );

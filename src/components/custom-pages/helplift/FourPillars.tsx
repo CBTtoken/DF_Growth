@@ -13,7 +13,7 @@ const PILLARS = [
   {
     icon: ShoppingBag,
     title: "Affordable Charity Stores",
-    body: "Dignified, low-cost retail access to essential items — clothing, household goods and more — for families across the Vaal Triangle.",
+    body: "Dignified, low-cost retail access to essential items: clothing, household goods and more, for families across the Vaal Triangle.",
   },
   {
     icon: GraduationCap,

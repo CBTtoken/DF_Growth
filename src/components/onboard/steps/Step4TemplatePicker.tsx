@@ -23,7 +23,7 @@ export function Step4TemplatePicker({
       <div>
         <h2 className="text-xl font-bold tracking-tight text-ink">Choose your page style</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Real previews, not descriptions — all ten use your own colors, logo, and the details you
+          Real previews, not descriptions. All ten use your own colors, logo, and the details you
           give us next. Tap one to select it. You can change this later from your dashboard.
         </p>
       </div>

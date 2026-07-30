@@ -26,7 +26,7 @@ export async function captureLead(
   // loop, not a real visitor submitting the same business's form twice.
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`lead:${ip}`, 5, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many submissions — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many submissions, please wait a few minutes and try again."] } };
   }
 
   const parsed = leadSchema.safeParse({

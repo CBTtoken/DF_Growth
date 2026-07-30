@@ -16,7 +16,7 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
       <body>
         <main className="flex min-h-screen flex-col items-center justify-center gap-3 bg-gray-50 p-8 text-center">
           <h1 className="text-xl font-bold text-ink">Something went wrong</h1>
-          <p className="text-sm text-gray-500">Please refresh the page — if this keeps happening, let us know.</p>
+          <p className="text-sm text-gray-500">Please refresh the page. If this keeps happening, let us know.</p>
         </main>
       </body>
     </html>

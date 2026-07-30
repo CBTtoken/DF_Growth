@@ -19,7 +19,7 @@ export default function SetPasswordPage() {
       <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border border-gray-100 bg-white p-8 shadow-sm">
         <h1 className="text-xl font-bold tracking-tight text-ink">Set your password</h1>
         <p className="text-sm text-gray-500">
-          One last step — choose a password so you can log back in any time without waiting on an email.
+          One last step, choose a password so you can log back in any time without waiting on an email.
         </p>
         <form action={formAction} className="flex w-full flex-col gap-3 text-left">
           <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">

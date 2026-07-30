@@ -82,7 +82,7 @@ export function Step3BrandKit({
           fake without it. */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-          Preview — not your real content, just showing how these colors will look
+          Preview, not your real content, just showing how these colors will look
         </p>
         <div
           className="flex flex-col items-center gap-2 rounded-2xl p-6 text-center"
@@ -100,7 +100,7 @@ export function Step3BrandKit({
         </div>
         <div className="mt-2 flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-3">
           <span className="font-mono text-xs uppercase tracking-widest" style={{ color: safeAccent }}>
-            01 — About
+            01 · About
           </span>
           <span className="text-xs text-gray-400">on a white section, like most of the page</span>
         </div>
@@ -108,7 +108,7 @@ export function Step3BrandKit({
       {wasAdjusted && (
         <p className="text-xs text-gray-500">
           Your primary color is quite light, so small text on white sections is automatically
-          shown a bit darker (like above) to stay readable — the color itself doesn&apos;t change
+          shown a bit darker (like above) to stay readable, and the color itself doesn&apos;t change
           anywhere else.
         </p>
       )}
@@ -131,7 +131,7 @@ export function Step3BrandKit({
             className="text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-gray-100 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-200"
           />
         </div>
-        <span className="text-xs font-normal text-gray-400">PNG, JPG, WebP, or SVG — under 2MB</span>
+        <span className="text-xs font-normal text-gray-400">PNG, JPG, WebP, or SVG, under 2MB</span>
       </div>
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 

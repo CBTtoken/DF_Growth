@@ -68,7 +68,7 @@ export function EcosystemAccess({
           </>
         ) : (
           <p className="text-sm text-gray-500">
-            Included once you continue past your trial — no action needed, it activates
+            Included once you continue past your trial. No action needed, it activates
             automatically the moment you add payment.
           </p>
         )}
@@ -77,7 +77,7 @@ export function EcosystemAccess({
       <div className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h3 className="text-base font-bold tracking-tight text-ink">KatisoBiz Nomads Community</h3>
         <p className="text-sm text-gray-500">
-          Free and included with every membership — no extra cost. Join our private community of
+          Free and included with every membership, at no extra cost. Join our private community of
           South African business owners for deals, support, and real conversations with people
           building the same thing you are.
         </p>

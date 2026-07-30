@@ -71,7 +71,7 @@ export function ReviewSubmissionForm({ businessId, accentColor }: { businessId: 
           ✓
         </span>
         <p className="font-semibold text-ink">
-          {mode === "new" ? "Thanks — your review is live." : "Thanks for your review."}
+          {mode === "new" ? "Thanks, your review is live." : "Thanks for your review."}
         </p>
       </div>
     );

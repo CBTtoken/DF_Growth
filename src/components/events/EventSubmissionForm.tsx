@@ -83,8 +83,8 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
         </h2>
         <p className="max-w-sm text-sm text-gray-500">
           {needsReview
-            ? "It needs a quick check from our team before it goes public — usually within a day. You'll be able to see it here once it's live."
-            : "It's already visible in the Events section — anyone can find it right now, no waiting."}
+            ? "It needs a quick check from our team before it goes public, usually within a day. You'll be able to see it here once it's live."
+            : "It's already visible in the Events section, and anyone can find it right now, no waiting."}
         </p>
         <div className="mt-2 flex flex-wrap justify-center gap-3">
           {eventId && !needsReview && (
@@ -188,7 +188,7 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
       <section className={sectionClass}>
         <h2 className="text-lg font-bold tracking-tight text-ink">Date &amp; time</h2>
         <p className="text-sm text-gray-500">
-          For an event spanning more than one day, set an end date on a later day — a single overnight or multi-day
+          For an event spanning more than one day, set an end date on a later day. A single overnight or multi-day
           event is fine, just enter each start and end once.
         </p>
         <div>
@@ -304,7 +304,7 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
         </label>
         {fieldError("bookingUrl") && <p className={errorClass}>{fieldError("bookingUrl")}</p>}
         <p className="text-xs text-gray-400">
-          If this is a paid event, add a link where people can book or buy tickets — it&apos;ll show as a &ldquo;Book
+          If this is a paid event, add a link where people can book or buy tickets, and it&apos;ll show as a &ldquo;Book
           now&rdquo; button. Growth itself doesn&apos;t take payment or bookings for events yet.
         </p>
       </section>
@@ -321,7 +321,7 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
         disabled={pending}
         className="self-center rounded-full bg-brand px-8 py-3.5 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark disabled:opacity-50"
       >
-        {pending ? "Publishing…" : "Publish event — it's free"}
+        {pending ? "Publishing…" : "Publish event, it's free"}
       </button>
     </>
   );
@@ -340,8 +340,8 @@ export function EventSubmissionForm({ isLoggedIn }: { isLoggedIn: boolean }) {
       </div>
       <p className="text-sm text-gray-500">
         {mode === "new"
-          ? "Free, forever — no plan, no payment step, ever."
-          : "Log in with your existing DigitalFlyer login — a Growth business account works too."}
+          ? "Free, forever. No plan, no payment step, ever."
+          : "Log in with your existing DigitalFlyer login. A Growth business account works too."}
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className={labelClass}>

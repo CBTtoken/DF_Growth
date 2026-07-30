@@ -45,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   if (!event) return {};
 
   const title = `${event.event_name} · ${event.city}`;
-  const description = event.description?.slice(0, 160) || `${event.event_name} in ${event.city} — DigitalFlyer Events.`;
+  const description = event.description?.slice(0, 160) || `${event.event_name} in ${event.city}. DigitalFlyer Events.`;
   const image = event.images?.[0]
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/event-photos/${event.images[0]}`
     : "/brand/logo-blue.png";

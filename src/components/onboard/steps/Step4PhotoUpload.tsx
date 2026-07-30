@@ -32,7 +32,7 @@ export function Step4PhotoUpload({
       <div>
         <h2 className="text-xl font-bold tracking-tight text-ink">Add your photos</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Real photos of your business help customers trust you faster. Optional — skip this and
+          Real photos of your business help customers trust you faster. Optional, skip this and
           we&apos;ll use a relevant stock photo until you add your own.
         </p>
       </div>

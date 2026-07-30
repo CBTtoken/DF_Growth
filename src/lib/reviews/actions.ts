@@ -38,7 +38,7 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
   const reviewParsed = parseReviewFields(formData);
 
   if (!businessId) {
-    return { error: { _form: ["Something went wrong — please reload and try again."] } };
+    return { error: { _form: ["Something went wrong, please reload and try again."] } };
   }
   if (!signupParsed.success) {
     return { error: signupParsed.error.flatten().fieldErrors };
@@ -50,12 +50,12 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   if (isRateLimited(`review-submit:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
   if (!turnstileOk) {
-    return { error: { _form: ["Verification failed — please try again."] } };
+    return { error: { _form: ["Verification failed, please try again."] } };
   }
 
   const supabase = await createClient();
@@ -66,7 +66,7 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
 
   if (error) {
     console.error("Reviewer signup failed", error);
-    return { error: { _form: ["Something went wrong — please try again."] } };
+    return { error: { _form: ["Something went wrong, please try again."] } };
   }
 
   // Supabase returns a "successful" user with an empty identities array for
@@ -74,7 +74,7 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
   // the documented anti-enumeration behavior, and the standard way to
   // detect it.
   if (!data.user || data.user.identities?.length === 0) {
-    return { error: { _form: ["That email already has an account — log in instead."] } };
+    return { error: { _form: ["That email already has an account. Log in instead."] } };
   }
 
   const admin = createAdminClient();
@@ -86,7 +86,7 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
 
   if (insertAccountError || !account) {
     console.error("Failed to create reviewer_accounts row", insertAccountError);
-    return { error: { _form: ["Something went wrong — please try again."] } };
+    return { error: { _form: ["Something went wrong, please try again."] } };
   }
 
   // Sec 3: fraud signals are checked at submission time regardless of
@@ -117,7 +117,7 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
 
   if (reviewError) {
     console.error("Failed to create review", reviewError);
-    return { error: { _form: ["Something went wrong saving your review — please try again."] } };
+    return { error: { _form: ["Something went wrong saving your review, please try again."] } };
   }
 
   return { success: true };
@@ -144,12 +144,12 @@ export async function submitReviewExistingReviewer(_prevState: ReviewFormState, 
   const h = await headers();
   const ip = clientIpFromHeaders(h);
   if (isRateLimited(`review-login:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: { _form: ["Too many attempts — please wait a few minutes and try again."] } };
+    return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
   const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
   if (!turnstileOk) {
-    return { error: { _form: ["Verification failed — please try again."] } };
+    return { error: { _form: ["Verification failed, please try again."] } };
   }
 
   const supabase = await createClient();
@@ -194,7 +194,7 @@ export async function submitReviewExistingReviewer(_prevState: ReviewFormState, 
       return { error: { _form: ["You've already reviewed this business."] } };
     }
     console.error("Failed to create review", reviewError);
-    return { error: { _form: ["Something went wrong saving your review — please try again."] } };
+    return { error: { _form: ["Something went wrong saving your review, please try again."] } };
   }
 
   return { success: true };
@@ -217,14 +217,14 @@ export async function verifyReviewerSignupOtp(_prevState: VerifyOtpState, formDa
 
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`reviewer-otp:${ip}`, 10, 10 * 60 * 1000)) {
-    return { error: "Too many attempts — please wait a few minutes and try again." };
+    return { error: "Too many attempts, please wait a few minutes and try again." };
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.verifyOtp({ email, token, type: "signup" });
 
   if (error || !data.user) {
-    return { error: "That code is incorrect or has expired — check your email for the latest one." };
+    return { error: "That code is incorrect or has expired. Check your email for the latest one." };
   }
 
   // Publishes any of this reviewer's reviews that were waiting on this

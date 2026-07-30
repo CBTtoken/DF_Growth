@@ -22,7 +22,7 @@ export default function AgentSetupPagePage() {
           <span className="font-badge text-xs uppercase tracking-widest text-brand">Agent Perk</span>
           <h1 className="text-3xl font-bold tracking-tight text-ink sm:text-4xl">Your own free DigitalFlyer page</h1>
           <p className="max-w-xl text-sm text-gray-500 sm:text-base">
-            As an approved agent, you get a genuinely free page to promote your own business — permanent, not a
+            As an approved agent, you get a genuinely free page to promote your own business. Permanent, not a
             trial, no payment step, ever. Takes about 10 minutes.
           </p>
         </div>

@@ -160,7 +160,7 @@ export default async function AdminAgentDetailPage({ params }: { params: Promise
                   {ledger.map((l) => (
                     <tr key={l.id} className="border-b border-gray-50">
                       <td className="py-2.5 pr-4 font-medium text-gray-900">
-                        {clientNameById.get(l.referred_client_id) ?? "—"}
+                        {clientNameById.get(l.referred_client_id) ?? "-"}
                       </td>
                       <td className="py-2.5 pr-4 text-gray-500">{l.period_year}</td>
                       <td className="py-2.5 pr-4 text-gray-500">{l.rate_applied}%</td>

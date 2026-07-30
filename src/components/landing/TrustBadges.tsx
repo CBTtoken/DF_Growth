@@ -44,7 +44,7 @@ export function TrustBadges({
         {testimonials.length > 0 && (
           <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
             <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-              {eyebrowNumber} — What people say
+              {eyebrowNumber} · What people say
             </p>
             <div className="mt-10 flex w-full gap-4 overflow-x-auto pb-2">
               {testimonials.map((t) => (
@@ -54,7 +54,7 @@ export function TrustBadges({
                 >
                   <p className="text-gray-700">&ldquo;{t.quote}&rdquo;</p>
                   <footer className="mt-3 flex items-center justify-between text-gray-500">
-                    <span>— {t.author_name}</span>
+                    <span>{t.author_name}</span>
                     {t.rating && <span style={{ color: accentColor }}>{"★".repeat(t.rating)}</span>}
                   </footer>
                 </blockquote>
@@ -115,7 +115,7 @@ export function TrustBadges({
                   anchor.cardRecipe === "dark-panel" ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                <span className={HEADING_FONT_CLASS[anchor.headingFont]}>— {t.author_name}</span>
+                <span className={HEADING_FONT_CLASS[anchor.headingFont]}>{t.author_name}</span>
                 {t.rating && <span style={{ color: accentColor }}>{"★".repeat(t.rating)}</span>}
               </footer>
             </blockquote>
@@ -133,7 +133,7 @@ export function TrustBadges({
       {testimonials.length > 0 && (
         <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
           <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-            {eyebrowNumber} — What people say
+            {eyebrowNumber} · What people say
           </p>
           {body}
         </div>

@@ -183,7 +183,7 @@ function CheckoutForm({
         ) : (
           <>
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-gray-900">Checkout — R{(cartTotalCents / 100).toFixed(2)}</h3>
+              <h3 className="text-xl font-bold text-gray-900">Checkout: R{(cartTotalCents / 100).toFixed(2)}</h3>
               <button type="button" onClick={onClose} aria-label="Close" className="text-gray-400 hover:text-gray-600">
                 ✕
               </button>

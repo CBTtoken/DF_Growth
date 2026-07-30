@@ -16,7 +16,7 @@ import {
 // "share your details → get a plan → we deliver" is honestly true of any
 // service business rather than a fabricated claim about a specific one.
 const steps = [
-  { title: "Tell us what you need", desc: "Reach out through the form below — no lengthy questionnaires, just the essentials." },
+  { title: "Tell us what you need", desc: "Reach out through the form below. No lengthy questionnaires, just the essentials." },
   { title: "Get a tailored response", desc: "We'll get back to you with next steps, pricing, and a clear idea of timing." },
   { title: "We get it done", desc: "Sit back while we take care of the rest, with updates along the way." },
 ];
@@ -35,7 +35,7 @@ export function HowItWorksSection({
       <section className="border-b border-gray-100 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-            {eyebrowNumber} — How it works
+            {eyebrowNumber} · How it works
           </p>
           <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
             Three simple steps.
@@ -67,7 +67,7 @@ export function HowItWorksSection({
     <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} — How it works
+          {eyebrowNumber} · How it works
         </p>
         <h2
           className={`mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}

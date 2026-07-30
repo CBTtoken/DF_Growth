@@ -40,7 +40,7 @@ export function AboutSection({
           <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
             <div>
               <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-                {eyebrowNumber} — About
+                {eyebrowNumber} · About
               </p>
               <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
                 About {businessName}
@@ -67,7 +67,7 @@ export function AboutSection({
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
           <div>
             <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-              {eyebrowNumber} — About
+              {eyebrowNumber} · About
             </p>
             <h2
               className={`mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}

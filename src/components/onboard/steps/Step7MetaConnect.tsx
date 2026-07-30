@@ -55,7 +55,7 @@ export function Step7MetaConnect({
         >
           <span className="font-semibold text-gray-900">I don&apos;t know / need help with this</span>
           <span className="block text-gray-500">
-            No problem — our team will reach out and set it up with you
+            No problem, our team will reach out and set it up with you
           </span>
         </button>
       </div>

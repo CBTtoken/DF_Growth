@@ -114,7 +114,7 @@ export function Step6Packages({
       <div>
         <h2 className="text-xl font-bold tracking-tight text-ink">Your packages or pricing</h2>
         <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
-          Optional — skip if you don&apos;t have set packages
+          Optional, skip if you don&apos;t have set packages
         </span>
       </div>
 

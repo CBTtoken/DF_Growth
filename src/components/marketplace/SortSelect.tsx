@@ -80,7 +80,7 @@ export function SortSelect({
         setLat("");
         setLng("");
         setLocating(false);
-        setNotice("Couldn't access your location — showing approximate results based on your network instead.");
+        setNotice("Couldn't access your location, so showing approximate results based on your network instead.");
         pushWithSort("near");
       },
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 5 * 60 * 1000 }
