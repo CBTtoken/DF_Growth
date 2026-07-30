@@ -138,6 +138,29 @@ export default function PrivacyPolicyPage() {
           </p>
         </section>
 
+        {/* Added 2026-07-30, when The Board began holding information for
+            people who are not members. Written to describe exactly what the
+            code does rather than to leave room: the retention numbers here
+            are the ones enforced in src/lib/retention/policy.ts, and the
+            "no account, no password, no profile" claim is literally true of
+            board_identities. If either changes, this paragraph changes in
+            the same commit. */}
+        <section className="flex flex-col gap-2">
+          <h2 className="text-lg font-bold tracking-tight text-ink">6b. People Who Are Not Members</h2>
+          <p className="text-sm leading-relaxed text-gray-700">
+            If you verify your email address to comment on, react to, or message a business through The
+            Board, we store that email address, the name you choose to display, and whether you agreed to
+            be sent a quote. We do not create an account for you, we never ask you for a password, and we
+            do not build a profile of you. If you have no activity for 12 months, that information is
+            deleted. You can ask us to delete it sooner at any time, using the contact details below.
+          </p>
+          <p className="text-sm leading-relaxed text-gray-700">
+            Your email address is never shown publicly and is never given to a business unless you
+            specifically agree to it when you write to them. Sharing a page does not require any of this,
+            and we do not record who shares what.
+          </p>
+        </section>
+
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold tracking-tight text-ink">7. Direct Marketing &amp; Communication</h2>
           <p className="text-sm leading-relaxed text-gray-700">
