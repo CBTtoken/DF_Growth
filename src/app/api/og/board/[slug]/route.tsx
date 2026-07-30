@@ -27,7 +27,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 
   const price = boardPrice(post.priceCents);
   const fonts = await loadAssetFonts();
-  const brand = post.member.brandColor;
+  const brand = post.member?.brandColor ?? "#1081b8";
 
   return new ImageResponse(
     (
@@ -71,7 +71,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
                 color: "rgba(255,255,255,0.3)",
               }}
             >
-              {post.member.businessName.slice(0, 2).toUpperCase()}
+              {post.authorName.slice(0, 2).toUpperCase()}
             </div>
           )}
         </div>
@@ -130,10 +130,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: "#1c2b3a" }}>
-              {truncateOnWord(post.member.businessName, 34)}
+              {truncateOnWord(post.authorName, 34)}
             </div>
-            {post.member.city && (
-              <div style={{ display: "flex", fontSize: 24, color: "#4a5568", marginTop: 6 }}>{post.member.city}</div>
+            {post.city && (
+              <div style={{ display: "flex", fontSize: 24, color: "#4a5568", marginTop: 6 }}>{post.city}</div>
             )}
             <div
               style={{

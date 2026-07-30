@@ -6,7 +6,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { BoardComposer } from "@/components/dashboard/BoardComposer";
+import { PostComposer } from "@/components/board/PostComposer";
+import { createBoardPost } from "@/app/board/new/actions";
+import { MEMBER_KINDS } from "@/lib/board/kinds";
 import { BoardCommentRow } from "@/components/dashboard/BoardCommentRow";
 import { hideBoardPost, republishBoardPost } from "@/app/dashboard/board/actions";
 import { boardPhotoUrl } from "@/lib/board/queries";
@@ -48,7 +50,7 @@ export default async function DashboardBoardPage() {
 
   const admin = createAdminClient();
   const [{ data: growthClient }, { data: posts }, { data: comments }] = await Promise.all([
-    admin.from("growth_clients").select("city").eq("id", client.id).single(),
+    admin.from("growth_clients").select("city, business_name").eq("id", client.id).single(),
     admin
       .from("board_posts")
       .select("id, slug, kind, title, price_cents, photo_path, status, published_at")
@@ -109,7 +111,14 @@ export default async function DashboardBoardPage() {
         </div>
 
         <div className="mt-6">
-          <BoardComposer needsCity={!growthClient?.city} />
+          <PostComposer
+            kinds={MEMBER_KINDS}
+            action={createBoardPost}
+            businessName={growthClient?.business_name ?? null}
+            savedCity={growthClient?.city ?? null}
+            needsIdentity={false}
+            backHref="/dashboard/board"
+          />
         </div>
 
         <div className="mt-8">

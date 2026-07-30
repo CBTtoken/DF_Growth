@@ -1,42 +1,107 @@
-// What a post is, kept to the smallest set that still gives a browse path.
+// What a post is, and what a post of that kind actually needs.
 //
-// It started as four, each with a hint paragraph explaining when to use it,
-// and Dewald called it complicated the first time he used it. He was right:
-// "Job done" and "Update" made a member answer a question about categories
-// before he could type a word, and the people this is for are used to
-// Facebook, where there is one box and no question at all.
+// This went through three versions before it was right, and the third one
+// is Dewald's.
 //
-// So the kind is now an optional tag rather than a decision. A member who
-// taps nothing gets "Special", which is what most posts are anyway.
+// Version one asked a member to choose between four kinds, each with a hint
+// paragraph, before he could type a word. Too complicated, and he was right.
+// Version two stripped the form to a heading and a box. Simpler, but it
+// threw away the thing that made each kind useful: a price matters when
+// something is for sale and is meaningless when somebody is looking for a
+// plumber.
+//
+// So the kind is the first question, and it is the only question, because
+// answering it decides the whole rest of the form. Somebody selling a fridge
+// gets a price box. Somebody looking for a plumber does not. Nobody is ever
+// shown a field that does not apply to what they are doing.
 
 export type PostKind = "special" | "offer" | "for_sale" | "looking_for";
 
 export type PostKindMeta = {
   id: PostKind;
+  /** On the card, the filter and the page title. */
   label: string;
-  /** Which side of the board may post it. */
-  author: "member" | "public";
-  /** Used in the URL, /board?kind=for-sale, and nowhere else. */
+  /** On the New post picker, so the choice explains itself. */
+  pickerLabel: string;
+  pickerHint: string;
+  /** Who may post it. */
+  author: "member" | "public" | "both";
+  /** In the URL, /board?kind=for-sale, and nowhere else. */
   param: string;
+  /** The one-line heading, which is also the page title and the share card. */
+  titleLabel: string;
+  titlePlaceholder: string;
+  bodyPlaceholder: string;
+  /** A price box only where a price means something. */
+  showPrice: boolean;
+  /** Whether a business posts this as itself. Looking for is always personal. */
+  businessByDefault: boolean;
 };
 
 export const POST_KINDS: PostKindMeta[] = [
-  { id: "special", label: "Special", author: "member", param: "special" },
-  { id: "offer", label: "Offer", author: "member", param: "offer" },
-  { id: "for_sale", label: "For sale", author: "member", param: "for-sale" },
-  // The public side. "Looking for" rather than "Need", Dewald's wording, and
-  // the better one: it is what somebody actually types into a group.
-  { id: "looking_for", label: "Looking for", author: "public", param: "looking-for" },
+  {
+    id: "special",
+    label: "Special",
+    pickerLabel: "A special",
+    pickerHint: "A deal you are running now",
+    author: "member",
+    param: "special",
+    titleLabel: "What is on special",
+    titlePlaceholder: "Two rooms painted for the price of one",
+    bodyPlaceholder: "The details. What is included, and until when.",
+    showPrice: true,
+    businessByDefault: true,
+  },
+  {
+    id: "offer",
+    label: "Offer",
+    pickerLabel: "Something you offer",
+    pickerHint: "A service you want people to know about",
+    author: "member",
+    param: "offer",
+    titleLabel: "What are you offering",
+    titlePlaceholder: "Same day geyser replacement",
+    bodyPlaceholder: "The details. What is included, how long it takes, which areas you cover.",
+    showPrice: true,
+    businessByDefault: true,
+  },
+  {
+    id: "for_sale",
+    label: "For sale",
+    pickerLabel: "Something for sale",
+    pickerHint: "An item you are selling",
+    author: "both",
+    param: "for-sale",
+    titleLabel: "What are you selling",
+    titlePlaceholder: "Defy double door fridge, working",
+    bodyPlaceholder: "Condition, age, and anything a buyer should know.",
+    showPrice: true,
+    businessByDefault: true,
+  },
+  {
+    id: "looking_for",
+    label: "Looking for",
+    pickerLabel: "Looking for something",
+    pickerHint: "You need somebody, or you are looking to buy",
+    author: "both",
+    param: "looking-for",
+    titleLabel: "What are you looking for",
+    titlePlaceholder: "Plumber for a burst geyser, Centurion",
+    bodyPlaceholder: "Explain what you need, and when you need it.",
+    // Somebody looking for a plumber has no price to give, and asking for
+    // one would only make them guess.
+    showPrice: false,
+    // Always personal. A business looking for a plumber is a person looking
+    // for a plumber.
+    businessByDefault: false,
+  },
 ];
 
-/** What a business may choose from. Three, and one is already selected. */
-export const MEMBER_KINDS = POST_KINDS.filter((k) => k.author === "member");
+/** What a signed-in member may post. All of them. */
+export const MEMBER_KINDS = POST_KINDS.filter((k) => k.author === "member" || k.author === "both");
 
-/** What a member of the public may post. */
-export const PUBLIC_KINDS: PostKindMeta[] = [
-  POST_KINDS.find((k) => k.id === "looking_for")!,
-  POST_KINDS.find((k) => k.id === "for_sale")!,
-];
+/** What somebody who is not signed in may post. */
+export const PUBLIC_KINDS = POST_KINDS.filter((k) => k.author === "public" || k.author === "both");
 
 export function kindMeta(kind: string): PostKindMeta | null {
   return POST_KINDS.find((k) => k.id === kind) ?? null;

@@ -6,7 +6,6 @@ import { ChevronLeft, ExternalLink, MapPin, MessageCircle, MessageSquareText, Za
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BoardPostCard } from "@/components/board/BoardPostCard";
-import { ShareRow } from "@/components/board/ShareRow";
 import { BoardComments, ReportLink } from "@/components/board/BoardComments";
 import { getPostBySlug, listPostsByMember } from "@/lib/board/queries";
 import { listComments, likeState } from "@/lib/board/engagement";
@@ -42,10 +41,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!post) return {};
 
   const price = boardPrice(post.priceCents);
-  const title = `${post.title} · ${post.member.businessName}`;
+  const title = `${post.title} · ${post.authorName}`;
   const description = truncateOnWord(
     post.body ||
-      `${kindLabel(post.kind)} from ${post.member.businessName}${post.member.city ? ` in ${post.member.city}` : ""}${
+      `${kindLabel(post.kind)} from ${post.authorName}${post.city ? ` in ${post.city}` : ""}${
         price ? `. ${price}` : ""
       }.`,
     160
@@ -73,7 +72,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     // Unlisted until the board is announced. The share card above still
     // renders, so a tester sharing a link into a group chat gets the real
     // experience, it simply does not reach Google yet.
-    ...boardRobots(),
+    // A person's post is real content for a person and thin content for
+    // Google, so it is never indexed even once the board itself is public.
+    ...(post.member ? boardRobots() : { robots: { index: false, follow: false } }),
   };
 }
 
@@ -83,22 +84,23 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
   if (!post) notFound();
 
   const price = boardPrice(post.priceCents);
-  const whatsapp = toWhatsAppNumber(post.member.whatsapp);
-  const category = categoryForIndustry(post.member.industry);
+  const member = post.member;
+  const whatsapp = toWhatsAppNumber(member?.whatsapp ?? null);
+  const category = categoryForIndustry(member?.industry ?? null);
   // Phase 2. Read with no identity argument on purpose: this page is
   // statically rendered, and asking who the visitor is would read cookies
   // and turn the whole page dynamic. Whether this particular person has
   // already liked the post is settled in the browser after the first tap,
   // which is a fair trade for keeping the page in the cache.
   const [more, comments, likes] = await Promise.all([
-    listPostsByMember(post.member.id, post.id),
+    member ? listPostsByMember(member.id, post.id) : Promise.resolve([]),
     listComments(post.id),
     likeState(post.id, null),
   ]);
   const shareUrl = `${SITE_URL}/board/post/${post.slug}`;
   const shareText = price
-    ? `${post.title}, ${price}, from ${post.member.businessName}`
-    : `${post.title}, from ${post.member.businessName}`;
+    ? `${post.title}, ${price}, from ${post.authorName}`
+    : `${post.title}, from ${post.authorName}`;
 
   // Breadcrumbs always, and a real Offer only when there is a real price.
   // A priced Offer with no price would be the kind of structured data that
@@ -108,17 +110,17 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "The Board", item: `${SITE_URL}/board` },
-      ...(post.member.city
+      ...(post.city
         ? [
             {
               "@type": "ListItem",
               position: 2,
-              name: post.member.city,
-              item: `${SITE_URL}/board/area/${areaSlug(post.member.city)}`,
+              name: post.city,
+              item: `${SITE_URL}/board/area/${areaSlug(post.city)}`,
             },
           ]
         : []),
-      { "@type": "ListItem", position: post.member.city ? 3 : 2, name: post.title, item: shareUrl },
+      { "@type": "ListItem", position: post.city ? 3 : 2, name: post.title, item: shareUrl },
     ],
   };
 
@@ -135,10 +137,10 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
           url: shareUrl,
           image: post.photoUrl ?? undefined,
           offeredBy: {
-            "@type": schemaTypeForIndustry(post.member.industry),
-            name: post.member.businessName,
-            url: `${SITE_URL}/${post.member.slug}`,
-            ...(post.member.city ? { address: { "@type": "PostalAddress", addressLocality: post.member.city } } : {}),
+            "@type": schemaTypeForIndustry((member?.industry ?? null)),
+            name: post.authorName,
+            url: `${SITE_URL}/${(member?.slug ?? "")}`,
+            ...(post.city ? { address: { "@type": "PostalAddress", addressLocality: post.city } } : {}),
           },
         }
       : null;
@@ -197,14 +199,25 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
               <p className="whitespace-pre-line text-sm leading-relaxed text-neutral-mid sm:text-base">{post.body}</p>
             )}
 
+            <BoardComments
+              postSlug={post.slug}
+              comments={comments}
+              likeCount={likes.count}
+              businessSlug={member?.slug ?? null}
+              businessName={member?.businessName ?? null}
+              shareUrl={shareUrl}
+              shareText={shareText}
+            />
+
+
             {/* The business, and the two ways to reach it. Both work without
                 an account on either side. */}
             <div className="mt-1 flex flex-col gap-3 rounded-xl border border-neutral-border bg-neutral-light p-4">
               <div className="flex items-center gap-3">
                 <div className="size-11 shrink-0 overflow-hidden rounded-xl border border-neutral-border bg-white">
-                  {post.member.logoUrl ? (
+                  {member?.logoUrl ? (
                     <Image
-                      src={post.member.logoUrl}
+                      src={member?.logoUrl}
                       alt=""
                       width={44}
                       height={44}
@@ -213,18 +226,18 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
                   ) : (
                     <span
                       className="flex size-full items-center justify-center text-sm font-bold text-white"
-                      style={{ backgroundColor: post.member.brandColor }}
+                      style={{ backgroundColor: (member?.brandColor ?? "#4a5568") }}
                       aria-hidden
                     >
-                      {post.member.businessName.slice(0, 2).toUpperCase()}
+                      {post.authorName.slice(0, 2).toUpperCase()}
                     </span>
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-neutral-ink">{post.member.businessName}</p>
+                  <p className="truncate text-sm font-bold text-neutral-ink">{post.authorName}</p>
                   <p className="truncate text-xs text-neutral-muted">
-                    {post.member.industry ?? "Local business"}
-                    {post.member.city ? ` · ${post.member.city}` : ""}
+                    {(member?.industry ?? null) ?? "Local business"}
+                    {post.city ? ` · ${post.city}` : ""}
                   </p>
                 </div>
               </div>
@@ -244,7 +257,7 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
                   </a>
                 )}
                 <Link
-                  href={`/${post.member.slug}`}
+                  href={`/${(member?.slug ?? "")}`}
                   className="inline-flex items-center gap-2 rounded-full border border-neutral-border bg-white px-4 py-2.5 text-sm font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
                 >
                   <ExternalLink size={15} />
@@ -260,24 +273,24 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
                   like WhatsApp, its own screen with the business at the top
                   and the box at the bottom, not a contact form inside a
                   post. */}
-              {post.member.chatEnabled && (
+              {Boolean(member?.chatEnabled) && (
                 <Link
-                  href={`/board/chat/${post.member.slug}`}
+                  href={`/board/chat/${(member?.slug ?? "")}`}
                   className="inline-flex items-center gap-2 self-start rounded-full border border-brand-blue/30 bg-white px-4 py-2.5 text-sm font-semibold text-brand-blue transition-colors hover:bg-brand-blue-light"
                 >
                   <MessageSquareText size={15} />
-                  Message here instead
+                  Message {post.authorName} directly
                 </Link>
               )}
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {post.member.city && (
+              {post.city && (
                 <Link
-                  href={`/board/area/${areaSlug(post.member.city)}`}
+                  href={`/board/area/${areaSlug(post.city)}`}
                   className="inline-flex items-center gap-1.5 rounded-full border border-neutral-border bg-white px-3.5 py-2 text-xs font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
                 >
-                  <MapPin size={12} /> More in {post.member.city}
+                  <MapPin size={12} /> More in {post.city}
                 </Link>
               )}
               {category && (
@@ -290,20 +303,7 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
               )}
             </div>
 
-            <div className="border-t border-neutral-border pt-4">
-              <p className="mb-2.5 text-xs font-bold uppercase tracking-wide text-neutral-muted">
-                Know someone who needs this
-              </p>
-              <ShareRow url={shareUrl} text={shareText} />
-            </div>
 
-            <BoardComments
-              postSlug={post.slug}
-              comments={comments}
-              likeCount={likes.count}
-              businessSlug={post.member.slug}
-              businessName={post.member.businessName}
-            />
 
             <div className="flex justify-end">
               <ReportLink targetType="post" targetId={post.id} postSlug={post.slug} />
@@ -313,7 +313,7 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
 
         {more.length > 0 && (
           <div className="mt-8">
-            <h2 className="mb-4 text-sm font-bold text-neutral-ink">More from {post.member.businessName}</h2>
+            <h2 className="mb-4 text-sm font-bold text-neutral-ink">More from {post.authorName}</h2>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {more.map((other) => (
                 <BoardPostCard key={other.id} post={other} />
