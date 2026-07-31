@@ -263,6 +263,9 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
     replyTo: account.email,
     subject: `${title} ${doc.number} from ${account.business_name}`,
     html: body,
+    // The member's document, sent under their own name, so it carries the
+    // small KatisoBiz line rather than our team sign-off and marketplace link.
+    footer: "document",
   });
 
   if (!sent.ok) {

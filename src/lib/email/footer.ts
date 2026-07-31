@@ -12,6 +12,33 @@
 // Email remains the contact route and is genuinely read. The full company
 // disclosure required by ECTA lives in the site footer, not here, so
 // nothing legally required is lost by this.
+// Which sign-off an email carries.
+//
+// "platform" is anything DigitalFlyer SA sends in its own name. "document" is
+// a quote, invoice or credit note a KatisoBiz member sends to their OWN
+// customer under their own business name.
+//
+// Found live on 31 July 2026: every KatisoBiz document was going out with the
+// platform footer, so a member's invoice to their customer was signed "Your
+// DigitalFlyer SA Team", carried our email address and linked to our
+// marketplace. The customer could reasonably have replied to us about their
+// own payment, or wondered who they were dealing with. Reply-To was always
+// correct, this was purely the sign-off.
+//
+// The document footer is what the spec always specified: one small line,
+// "Generated via KatisoBiz, DigitalFlyer SA", which is the acquisition loop
+// (every document a member sends is seen by another business owner) without
+// pretending we are party to their invoice.
+export type EmailFooterKind = "platform" | "document";
+
+export const DOCUMENT_FOOTER_HTML = `
+  <hr style="margin-top:32px;margin-bottom:16px;border:none;border-top:1px solid #e5e7eb;" />
+  <p style="font-size:11px;line-height:1.5;color:#9ca3af;margin:0;">
+    Generated via <a href="https://katisobiz.co.za" style="color:#9ca3af;">KatisoBiz</a>, DigitalFlyer SA.
+    Quotes and invoices from your phone.
+  </p>
+`;
+
 export const EMAIL_FOOTER_HTML = `
   <hr style="margin-top:32px;margin-bottom:16px;border:none;border-top:1px solid #e5e7eb;" />
   <p style="font-size:13px;line-height:1.6;color:#4b5563;margin:0 0 12px;">

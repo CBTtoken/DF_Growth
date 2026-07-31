@@ -1,4 +1,4 @@
-import { EMAIL_FOOTER_HTML } from "@/lib/email/footer";
+import { EMAIL_FOOTER_HTML, DOCUMENT_FOOTER_HTML, type EmailFooterKind } from "@/lib/email/footer";
 
 // Plain fetch against Resend's HTTP API, same minimal-dependency approach
 // used for Meta's Conversions API (lib/meta/capi.ts) — no SDK needed for a
@@ -15,6 +15,7 @@ export async function sendEmail({
   fromName,
   replyTo,
   cc,
+  footer = "platform",
 }: {
   to: string;
   subject: string;
@@ -34,6 +35,15 @@ export async function sendEmail({
    * the other end of it.
    */
   cc?: string;
+  /**
+   * Which sign-off to append. Defaults to "platform", so nothing that exists
+   * today changes and nothing added later can accidentally ship without one.
+   *
+   * "document" is for a quote, invoice or credit note a KatisoBiz member
+   * sends to their own customer. Those must not be signed by us: see
+   * lib/email/footer.ts for the live defect that prompted this.
+   */
+  footer?: EmailFooterKind;
 }): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, error: "Missing RESEND_API_KEY" };
@@ -51,7 +61,7 @@ export async function sendEmail({
   // Public Beta Polish Sprint Sec 12: appended here, not at each call site
   // — every email sent through this one function gets it automatically,
   // including anything added later.
-  const htmlWithFooter = `${html}${EMAIL_FOOTER_HTML}`;
+  const htmlWithFooter = `${html}${footer === "document" ? DOCUMENT_FOOTER_HTML : EMAIL_FOOTER_HTML}`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
