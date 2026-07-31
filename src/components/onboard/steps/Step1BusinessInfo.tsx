@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { saveStep1, type OnboardState } from "@/app/onboard/actions";
+import { PhoneNumberFields } from "@/components/onboard/PhoneNumberFields";
 
 export function Step1BusinessInfo({
   initialBusinessName,
@@ -59,39 +60,17 @@ export function Step1BusinessInfo({
         <p className="text-xs text-red-600">{state.error.contactEmail[0]}</p>
       )}
 
-      {/* Combined spec Sec 20: split from one shared number into two — a
-          business may want calls to ring a different line than WhatsApp.
-          Neither is ever shown on the page itself before a visitor
-          submits the lead form (Sec 20 item 2 / Sec 21). */}
-      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-        Call number <span className="font-normal text-gray-400">(optional)</span>
-        <input
-          type="tel"
-          name="callPhone"
-          defaultValue={initialCallPhone}
-          placeholder="e.g. 082 123 4567"
-          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-        />
-        <span className="text-xs font-normal text-gray-400">
-          Shown to a visitor after they contact you, as a faster way to reach you than email
-        </span>
-      </label>
-      {state?.error?.callPhone && <p className="text-xs text-red-600">{state.error.callPhone[0]}</p>}
+      {/* Handoff 02 B: both numbers are required member data now, and the
+          two fields, the auto-populate rule and the landline exception live
+          in one shared component so onboarding and the dashboard can never
+          disagree about them. */}
+      <PhoneNumberFields
+        initialCallPhone={initialCallPhone}
+        initialWhatsappPhone={initialWhatsappPhone}
+        callError={state?.error?.callPhone?.[0]}
+        whatsappError={state?.error?.whatsappPhone?.[0]}
+      />
 
-      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-        WhatsApp number <span className="font-normal text-gray-400">(optional)</span>
-        <input
-          type="tel"
-          name="whatsappPhone"
-          defaultValue={initialWhatsappPhone}
-          placeholder="e.g. 082 123 4567"
-          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20"
-        />
-        <span className="text-xs font-normal text-gray-400">Leave blank if it&apos;s the same as your call number</span>
-      </label>
-      {state?.error?.whatsappPhone && (
-        <p className="text-xs text-red-600">{state.error.whatsappPhone[0]}</p>
-      )}
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 
       <button

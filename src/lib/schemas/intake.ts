@@ -1,4 +1,24 @@
 import { z } from "zod";
+import { normaliseSaPhone } from "@/lib/contact/phone";
+
+// A South African number, stored canonically as 27XXXXXXXXX. An empty string
+// stays empty; anything else must parse or the member is told why.
+const saPhone = z
+  .string()
+  .max(30)
+  .optional()
+  .or(z.literal(""))
+  .transform((v) => (v ?? "").trim())
+  .superRefine((v, ctx) => {
+    if (!v) return;
+    const parsed = normaliseSaPhone(v);
+    if (!parsed.ok) ctx.addIssue({ code: z.ZodIssueCode.custom, message: parsed.error });
+  })
+  .transform((v) => {
+    if (!v) return "";
+    const parsed = normaliseSaPhone(v);
+    return parsed.ok ? parsed.e164 : v;
+  });
 
 // Exported so the WhatsApp onboarding conversation (lib/whatsapp/
 // conversation.ts) can validate against the exact same canonical list
@@ -25,8 +45,18 @@ export const step1Schema = z.object({
   // Optional — shown alongside contactEmail when a lead's success state
   // reveals contact details, so a visitor has a faster/more urgent option
   // than email if the business has these to share.
-  callPhone: z.string().max(30).optional().or(z.literal("")),
-  whatsappPhone: z.string().max(30).optional().or(z.literal("")),
+  // Handoff 02 B: both numbers are validated and stored canonically now, not
+  // kept as whatever the member typed. tel: and wa.me links both fail
+  // silently on a malformed number, so a member never finds out their call
+  // button is dead. Live data already had three formats plus one number
+  // missing its leading digit entirely.
+  //
+  // Still optional at the schema level: a member part-way through onboarding
+  // should not be blocked, and existing members predate the requirement. The
+  // dashboard nags instead, and their page simply shows no buttons until a
+  // number is there, which is better than a button that goes nowhere.
+  callPhone: saPhone,
+  whatsappPhone: saPhone,
 });
 
 // Mirrors the fields already captured by the WhatsApp onboarding flow —

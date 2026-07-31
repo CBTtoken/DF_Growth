@@ -60,8 +60,11 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
     .update({
       business_name: parsed.data.businessName,
       contact_email: parsed.data.contactEmail,
+      // Handoff 02 B: these arrive already normalised to 27XXXXXXXXX by the
+      // schema, so what is stored is canonical whatever the member typed.
       call_phone: parsed.data.callPhone || null,
       whatsapp_phone: parsed.data.whatsappPhone || null,
+      hide_call_button: formData.get("hideCallButton") === "on",
     })
     .eq("id", client.id)
     .select("slug")

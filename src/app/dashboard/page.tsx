@@ -25,6 +25,7 @@ import { DomainVerificationForm } from "@/components/dashboard/DomainVerificatio
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
 import { OrdersSection, type SellerOrder } from "@/components/dashboard/OrdersSection";
 import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
+import { LeadActivityCard } from "@/components/dashboard/LeadActivityCard";
 import { ReviewsManagement, type DashboardReview } from "@/components/dashboard/ReviewsManagement";
 import { BookingSection } from "@/components/dashboard/BookingSection";
 import { ShopSection } from "@/components/dashboard/ShopSection";
@@ -100,6 +101,12 @@ export default async function DashboardPage() {
   // fully per request by definition, so there's no stale-render risk here.
   // eslint-disable-next-line react-hooks/purity
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Handoff 02 D: calendar months, not rolling 30 days. A member comparing
+  // "this month" against "last month" means the months on their calendar, and
+  // a rolling window would quietly disagree with them.
+  const now = new Date();
+  const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
 
   const [
     { data: growthClient },
@@ -112,6 +119,7 @@ export default async function DashboardPage() {
     { data: landingPageType },
     { count: totalPageViews },
     { data: recentPageViews },
+    { data: leadEvents },
     { data: reviews },
     { data: bookableUnits },
     { data: bookingRules },
@@ -123,7 +131,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error, call_phone, whatsapp_phone, hide_call_button"
       )
       .eq("id", client.id)
       .single(),
@@ -178,6 +186,14 @@ export default async function DashboardPage() {
       .eq("growth_client_id", client.id)
       .gte("viewed_at", sevenDaysAgo)
       .order("viewed_at", { ascending: true }),
+    // Handoff 02 D. Both months in one query, split in memory below: two
+    // round trips for two buckets of the same small table is not worth it at
+    // this volume.
+    admin
+      .from("lead_events")
+      .select("action, created_at")
+      .eq("growth_client_id", client.id)
+      .gte("created_at", startOfLastMonth),
     // Rate & Review Sprint 2, Sec 6: excludes admin-removed reviews — a
     // business can't act on one either way once an admin has removed it,
     // so there's nothing useful this list would show them by keeping it.
@@ -276,6 +292,16 @@ export default async function DashboardPage() {
   // section component below is unchanged, just reorganized. Booking & Shop
   // only appears as its own tab for Growth-and-above (showMetaSection),
   // matching the same gate those two sections already used inline.
+  // Handoff 02 D.
+  const emptyCounts = { call: 0, whatsapp: 0, form: 0 };
+  const thisMonthLeads = { ...emptyCounts };
+  const lastMonthLeads = { ...emptyCounts };
+  for (const event of leadEvents ?? []) {
+    const bucket = event.created_at >= startOfThisMonth ? thisMonthLeads : lastMonthLeads;
+    const action = event.action as keyof typeof emptyCounts;
+    if (action in bucket) bucket[action] += 1;
+  }
+
   const dashboardTabs: DashboardTab[] = [
     {
       id: "overview",
@@ -286,6 +312,15 @@ export default async function DashboardPage() {
             hasBusinessDescription={Boolean(growthClient?.business_description)}
             hasBusinessAddress={Boolean(growthClient?.business_address)}
             photoCount={photos?.length ?? 0}
+          />
+
+          {/* Handoff 02 D: "it should be the first thing a member sees when
+              they log in", so this sits above page views. Somebody getting in
+              touch matters more than somebody looking. */}
+          <LeadActivityCard
+            thisMonth={thisMonthLeads}
+            lastMonth={lastMonthLeads}
+            hasNumber={Boolean(growthClient?.call_phone || growthClient?.whatsapp_phone)}
           />
 
           <PageViewsCard totalViews={totalPageViews ?? 0} recentViews={recentPageViews ?? []} />
