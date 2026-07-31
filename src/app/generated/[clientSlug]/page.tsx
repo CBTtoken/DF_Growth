@@ -67,7 +67,8 @@ export default async function GeneratedPreview({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <strong className="text-base">{sample.businessName}</strong>
             <span className="opacity-70">palette: {sample.plan.palette}</span>
-            <span className="opacity-70">font: {sample.plan.headingFont}</span>
+            <span className="opacity-70">type: {sample.plan.typePairing}</span>
+            <span className="opacity-70">rhythm: {sample.plan.rhythm}</span>
             <span className="opacity-70">{sample.plan.sections.length} sections</span>
             <span className="opacity-70">{photoSlots.length} photos requested</span>
             <a href={`/${sample.slug}`} className="underline underline-offset-2">
@@ -80,7 +81,6 @@ export default async function GeneratedPreview({
 
       <GeneratedPage
         plan={sample.plan}
-        businessName={sample.businessName}
         brandColor={sample.brandColor}
       />
     </>

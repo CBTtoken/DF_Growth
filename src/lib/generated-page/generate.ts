@@ -76,7 +76,17 @@ CHOOSING SECTIONS. You must start with a hero. After that, choose only sections 
 
 PHOTO BRIEFS. Where you request a photo, the brief is an instruction to the business owner, in plain language, about what to photograph. "A finished bathroom re-tile, taken in daylight" gets a photo. "An image representing quality" does not. Be concrete and be realistic about what a one-person business can take on a phone.
 
-DESIGN. Choose the palette and heading font that suit this trade, not the one you like. A funeral director is not "bold-industrial". A tattoo studio is not "clean-clinical". Justify both in the rationale field.
+DESIGN. You are laying this page out, not filling in a template. Three decisions.
+
+1. Palette and type pairing must suit the trade, not your taste. A funeral director is not "bold-industrial". A tattoo studio is not "clean-clinical". Vary the type pairing across businesses: it carries as much character as the colour does.
+
+2. Rhythm. "generous" for a page with few sections and room to breathe, "compact" for a business with a lot to list.
+
+3. LAYOUT, and this is the one that matters most. Every section type offers several layouts and they look genuinely different, not slightly different. Choose per section, for a reason. A page where every section uses the first listed layout looks like a template, which is the exact failure we are fixing.
+
+Vary the "band" too. A run of eight plain bands reads as one undifferentiated column. Use "tinted" to group related sections and "deep" once or twice for a section that deserves real weight, usually the one carrying the strongest idea. Never put two "deep" bands next to each other.
+
+Use "featureStrip" where a business has quick facts that would otherwise bloat the prose: areas covered, what is included, what makes the work different. Three to six short labels with icons. It is what stops a section being one flat idea, but do not put one on every section.
 
 HOUSE STYLE, absolute:
 1. NEVER use an em dash or an en dash, anywhere, in any field. Use a comma or a full stop, or restructure. This is the single most common thing to get wrong.
@@ -92,22 +102,26 @@ function schemaHint(): string {
 
 {
   "palette": one of ${JSON.stringify(PALETTE_KEYS)},
-  "headingFont": one of ${JSON.stringify(TYPE_KEYS)},
-  "rationale": string, max 600 chars, why you chose these sections, this palette and this font for this business,
+  "typePairing": one of ${JSON.stringify(TYPE_KEYS)},
+  "rhythm": "generous" | "standard" | "compact",
+  "rationale": string, max 600 chars, why these sections, this palette, this type and these layouts for this business,
   "sections": array of 3 to 12 section objects, the first of which MUST be the hero
 }
 
-Section objects, by "type":
-{"type":"hero","eyebrow"?:string<=60,"headline":string<=90,"subheadline":string<=200,"photoSlot"?:{"slotId":string,"brief":string}}
-{"type":"intro","heading":string<=90,"paragraphs":[string 40-700] x1-3}
-{"type":"pillars","eyebrow"?:string,"heading":string<=90,"items":[{"icon":iconKey,"title":string<=60,"body":string 20-300}] x2-6}
-{"type":"services","eyebrow"?:string,"heading":string<=90,"items":[{"name":string<=70,"description"?:string<=200}] x2-14}
-{"type":"process","eyebrow"?:string,"heading":string<=90,"steps":[{"title":string<=60,"body":string 20-300}] x2-5}
-{"type":"featureSplit","heading":string<=90,"body":string 40-600,"photoSlot"?:{"slotId":string,"brief":string},"mediaSide":"left"|"right"}
-{"type":"faq","heading":string<=90,"items":[{"question":string<=160,"answer":string 20-600}] x2-8}
-{"type":"gallery","heading":string<=90,"photoSlots":[{"slotId":string,"brief":string}] x2-8}
+Every section except "hero" and "notice" takes "band": "plain" | "tinted" | "deep".
+
+{"type":"hero","layout":"stacked"|"split"|"editorial"|"framed","eyebrow"?:string<=60,"headline":string<=90,"subheadline":string<=200,"photoSlot"?:{"slotId":string,"brief":string},"featureStrip"?:[{"icon":iconKey,"label":string<=40}] x3-6}
+{"type":"intro","layout":"split-heading"|"statement"|"columns","band":band,"heading":string<=90,"paragraphs":[string 40-700] x1-3,"featureStrip"?:strip}
+{"type":"pillars","layout":"icon-cards"|"numbered"|"wide-rows"|"quiet","band":band,"eyebrow"?:string,"heading":string<=90,"items":[{"icon":iconKey,"title":string<=60,"body":string 20-300}] x2-6}
+{"type":"services","layout":"cards"|"list-rows"|"two-column"|"tiles","band":band,"eyebrow"?:string,"heading":string<=90,"items":[{"name":string<=70,"description"?:string<=200}] x2-14}
+{"type":"process","layout":"steps"|"timeline"|"big-numbers","band":band,"eyebrow"?:string,"heading":string<=90,"steps":[{"title":string<=60,"body":string 20-300}] x2-5}
+{"type":"featureSplit","layout":"clean"|"framed"|"offset","band":band,"mediaSide":"left"|"right","heading":string<=90,"body":string 40-600,"photoSlot"?:slot,"featureStrip"?:strip}
+{"type":"faq","layout":"cards"|"rules"|"two-column","band":band,"heading":string<=90,"items":[{"question":string<=160,"answer":string 20-600}] x2-8}
+{"type":"gallery","layout":"grid"|"feature"|"strip","band":band,"heading":string<=90,"photoSlots":[slot] x2-8}
 {"type":"notice","icon":iconKey,"text":string 10-180}
-{"type":"ctaBand","heading":string<=90,"body"?:string<=300}
+{"type":"ctaBand","band":band,"heading":string<=90,"body"?:string<=300}
+
+"tiles" for services is label-only, so use it only where the services need no descriptions.
 
 iconKey must be one of ${JSON.stringify(ICON_KEYS)}.`;
 }
@@ -169,7 +183,11 @@ export async function generatePagePlan(facts: MemberFacts): Promise<GenerateResu
     const anthropic = new Anthropic({ apiKey });
     const message = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 8000,
+      // 8000 was not enough: a member with a lot to say produced a plan that
+      // ran out of budget partway through the JSON, which fails as a parse
+      // error rather than as anything diagnosable. A full twelve-section plan
+      // with real prose in every field is a big document.
+      max_tokens: 16000,
       // Same reason as draft-copy.ts: Sonnet returns an extended-thinking
       // block by default, which on a long structured output can eat the whole
       // token budget and leave no room for the JSON itself.

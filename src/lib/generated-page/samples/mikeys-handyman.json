@@ -2,155 +2,190 @@
   "slug": "mikeys-handyman",
   "businessName": "Mikeys Handyman",
   "brandColor": null,
-  "generatedAt": "2026-07-31T09:56:02.967Z",
+  "generatedAt": "2026-07-31T10:18:12.416Z",
   "plan": {
     "palette": "bold-industrial",
-    "headingFont": "display-condensed",
-    "rationale": "A general construction and handyman business needs a straightforward, trustworthy, tool-in-hand feel rather than something soft or clinical. Bold industrial with a condensed heading font reads as sturdy and no-nonsense, matching steel and amber tones the owner already uses. I kept only claims actually stated: broad service categories, the Pretoria area list, and the no-unfinished-jobs stance. I dropped every invented number, guarantee wording and award since none of those can be verified from what was given, only the general service scope and area could be used honestly.",
+    "typePairing": "technical-sans",
+    "rhythm": "standard",
+    "rationale": "A one-man general handyman needs to look dependable and specific, not corporate. I kept only claims actually stated: general repairs, maintenance, small renovations, installations, and the named Pretoria area suburbs. Dropped the years-of-experience and guarantee language since those are unverifiable claims, not facts the input grounds in specifics. Steel and amber suit trade work without being a plumber's blue or a creative's pastel. Layouts vary so the page does not read as a stacked template, and a photo gallery is requested since trade work sells itself visually once photos exist.",
     "sections": [
       {
         "type": "hero",
+        "layout": "split",
         "eyebrow": "Pretoria & surrounding areas",
-        "headline": "Mikey's Handyman",
-        "subheadline": "Your home is one of your most valuable investments. Whether it's a quick repair or a larger project, you deserve a handyman who shows up and does it right.",
+        "headline": "Handyman services for homes and small properties in Pretoria",
+        "subheadline": "Repairs, maintenance and small renovation work, done by one team you can call directly.",
         "photoSlot": {
           "slotId": "hero-main",
-          "brief": "A photo of Mikey mid job, in work clothes, holding tools or busy at a task. Daylight, taken by someone else or a tripod, no selfie angle."
-        }
-      },
-      {
-        "type": "notice",
-        "icon": "check",
-        "text": "No unfinished jobs. Every job, big or small, gets full attention through to completion."
+          "brief": "A photo of you mid job, on site, holding tools or working on a repair. Daylight, no posing."
+        },
+        "featureStrip": [
+          {
+            "icon": "wrench",
+            "label": "General repairs"
+          },
+          {
+            "icon": "home",
+            "label": "Property maintenance"
+          },
+          {
+            "icon": "hammer",
+            "label": "Small renovations"
+          },
+          {
+            "icon": "plug",
+            "label": "Installations & fittings"
+          }
+        ]
       },
       {
         "type": "intro",
-        "heading": "Home repairs and small renovations, done properly",
+        "layout": "split-heading",
+        "band": "plain",
+        "heading": "Your home is one of your most valuable assets",
         "paragraphs": [
-          "Mikey's Handyman is your partner for home repairs, property maintenance and improvement projects across Pretoria and the surrounding areas. Whether it's a quick fix or a larger project, the aim is the same: work done properly, the first time.",
-          "We show up, we do the work, and we do it right."
+          "Mikey's Handyman covers home repairs, property maintenance and improvement work across Pretoria and the surrounding areas. Whether it's a quick fix or a larger project, the aim is the same, get it done properly.",
+          "We show up, we do the work, and we finish it."
         ]
       },
       {
         "type": "services",
+        "layout": "list-rows",
+        "band": "tinted",
         "eyebrow": "What we do",
         "heading": "Home repair and handyman services",
         "items": [
           {
             "name": "General home repairs",
-            "description": "Everyday fixes around the house, from the small annoying jobs to the ones you keep putting off."
+            "description": "Household fixes and repairs around the home."
           },
           {
             "name": "Property maintenance",
-            "description": "Ongoing upkeep for homeowners, landlords and property managers who need a dependable local team."
+            "description": "Ongoing upkeep for homeowners, landlords and property managers."
           },
           {
             "name": "Home improvement projects",
-            "description": "Upgrades and improvements to your living space, planned and carried out with care."
+            "description": "Upgrades and improvements to your living space."
           },
           {
             "name": "Installations and fittings",
-            "description": "Fitting and installing items around the home that need a steady, experienced hand."
+            "description": "Fitting and installing household items and fixtures."
           },
           {
             "name": "Minor renovations",
-            "description": "Smaller renovation work, tackled with the same attention to detail as a full remodel."
+            "description": "Smaller renovation work, done properly."
           },
           {
             "name": "Household repairs",
-            "description": "General repairs to keep your home running and looking the way it should."
+            "description": "General repairs of items and fixtures around the property."
           },
           {
             "name": "Small building jobs",
-            "description": "Small-scale building work for additions and fixes around the property."
+            "description": "Smaller scale building work."
           },
           {
-            "name": "Something else? Just ask",
-            "description": "If it's not listed here, get in touch. If it's a handyman job, it's worth asking about."
+            "name": "Other jobs",
+            "description": "Not seeing what you need? Just ask."
           }
         ]
       },
       {
         "type": "pillars",
+        "layout": "quiet",
+        "band": "plain",
         "eyebrow": "Why choose us",
-        "heading": "Built on skill, trust and results",
+        "heading": "How we work",
         "items": [
           {
-            "icon": "briefcase",
-            "title": "Experienced local professionals",
-            "body": "We understand the needs of Pretoria homeowners and property managers, with hands-on trade experience behind every job."
+            "icon": "target",
+            "title": "Local knowledge",
+            "body": "Familiar with the needs of Pretoria homeowners and property managers."
           },
           {
             "icon": "check",
-            "title": "Quality workmanship, every time",
-            "body": "We aim for durable, high-quality results on every job. If it's worth doing, it's worth doing right."
+            "title": "Quality workmanship",
+            "body": "We aim for durable results and don't cut corners on the job."
           },
           {
             "icon": "clock",
             "title": "Reliable and on time",
-            "body": "We show up when we say we will and work to complete jobs within the agreed timelines."
+            "body": "We arrive when we say we will and complete work within the agreed timeline."
           },
           {
             "icon": "shield",
-            "title": "Safe, professional and trustworthy",
-            "body": "You shouldn't let just anyone into your home. We respect your space, your time and your investment."
+            "title": "Respect for your home",
+            "body": "We respect your space, your time and your property on every visit."
+          }
+        ]
+      },
+      {
+        "type": "gallery",
+        "layout": "grid",
+        "band": "tinted",
+        "heading": "Recent work",
+        "photoSlots": [
+          {
+            "slotId": "gallery-1",
+            "brief": "A finished repair or installation, close up, good lighting."
+          },
+          {
+            "slotId": "gallery-2",
+            "brief": "A before and after of a small renovation or maintenance job."
+          },
+          {
+            "slotId": "gallery-3",
+            "brief": "You on site working, mid task."
+          },
+          {
+            "slotId": "gallery-4",
+            "brief": "A completed small building or fitting job, wide shot."
           }
         ]
       },
       {
         "type": "featureSplit",
-        "heading": "Our commitment to every client",
-        "body": "We stand behind our workmanship and aim to build long-term relationships based on trust, reliability and professionalism. Every job, big or small, gets our full attention and best effort. No unfinished jobs, ever.",
+        "layout": "clean",
+        "band": "deep",
+        "mediaSide": "right",
+        "heading": "Serving Pretoria and the surrounding areas",
+        "body": "We work across Pretoria, Centurion, Midrand, Hatfield, Menlyn, Lynnwood, Garsfontein and nearby areas, for homeowners, landlords and businesses maintaining, upgrading or preparing a property.",
         "photoSlot": {
-          "slotId": "commitment-photo",
-          "brief": "A close-up photo of finished work, such as a completed repair or installation, showing the neat end result."
+          "slotId": "area-photo",
+          "brief": "A photo taken on a job site somewhere recognisably Pretoria, or your van or tools set up outside a home."
         },
-        "mediaSide": "right"
-      },
-      {
-        "type": "gallery",
-        "heading": "Recent work",
-        "photoSlots": [
+        "featureStrip": [
           {
-            "slotId": "gallery-1",
-            "brief": "Before and after photo of a repair or small renovation job, taken on site."
+            "icon": "mapPin",
+            "label": "Pretoria"
           },
           {
-            "slotId": "gallery-2",
-            "brief": "A photo of tools and materials set up ready for a job, showing preparation and care."
+            "icon": "mapPin",
+            "label": "Centurion"
           },
           {
-            "slotId": "gallery-3",
-            "brief": "A photo of an installation or fitting once completed, taken straight on in good light."
+            "icon": "mapPin",
+            "label": "Midrand"
           },
           {
-            "slotId": "gallery-4",
-            "brief": "A wider shot of a finished small building or renovation job."
+            "icon": "mapPin",
+            "label": "Hatfield"
+          },
+          {
+            "icon": "mapPin",
+            "label": "Menlyn"
           }
         ]
       },
       {
-        "type": "faq",
-        "heading": "Common questions",
-        "items": [
-          {
-            "question": "What areas do you cover?",
-            "answer": "We serve Pretoria and surrounding areas including Centurion, Midrand, Hatfield, Menlyn, Lynnwood and Garsfontein. If you're nearby and unsure, just ask."
-          },
-          {
-            "question": "What kind of jobs can you help with?",
-            "answer": "General home repairs, property maintenance, home improvement projects, installations and fittings, minor renovations and small building jobs. If your job doesn't fit neatly into one of these, get in touch and ask."
-          },
-          {
-            "question": "Do you take on small jobs as well as bigger projects?",
-            "answer": "Yes. Whether it's a quick fix or a larger project, every job gets the same attention through to completion."
-          }
-        ]
+        "type": "notice",
+        "icon": "wrench",
+        "text": "No unfinished jobs. Every job gets full attention from start to finish."
       },
       {
         "type": "ctaBand",
-        "heading": "Need a hand around the house?",
-        "body": "Get in touch to talk through your repair, maintenance or small renovation job in Pretoria and surrounding areas."
+        "band": "deep",
+        "heading": "Need something fixed, maintained or improved?",
+        "body": "Get in touch and tell us what needs doing, big or small."
       }
     ]
   }

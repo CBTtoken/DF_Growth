@@ -84,8 +84,10 @@ export async function POST(request: Request) {
     ok: true,
     seconds,
     palette: result.plan.palette,
-    headingFont: result.plan.headingFont,
-    sections: result.plan.sections.map((s) => s.type),
+    typePairing: result.plan.typePairing,
+    rhythm: result.plan.rhythm,
+    sections: result.plan.sections.map((s) => ("layout" in s ? `${s.type}:${s.layout}` : s.type)),
+    bands: result.plan.sections.map((s) => ("band" in s ? s.band : "-")),
     rationale: result.plan.rationale,
   });
 }

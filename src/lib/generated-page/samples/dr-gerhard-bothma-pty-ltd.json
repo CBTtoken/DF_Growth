@@ -1,0 +1,130 @@
+{
+  "slug": "dr-gerhard-bothma-pty-ltd",
+  "businessName": "Dr Gerhard Bothma (PTY) Ltd",
+  "brandColor": null,
+  "generatedAt": "2026-07-31T10:20:30.665Z",
+  "plan": {
+    "palette": "slate-professional",
+    "typePairing": "classic-book",
+    "rhythm": "standard",
+    "rationale": "A multidisciplinary consultant with real, specific credentials. Layout leads with his background and qualifications stated plainly (they carry weight on their own, no need to dress them up), then moves to who he works with and the actual frameworks he uses. Slate and classic-book type suit a serious academic/counselling practice rather than a spa. No gallery or pricing since no photos or rates were given, and no invented process steps since his work varies too much by client to reduce to a generic sequence.",
+    "sections": [
+      {
+        "type": "hero",
+        "layout": "framed",
+        "eyebrow": "Dr Gerhard Bothma (PTY) Ltd",
+        "headline": "We specialise in caring for your health, wealth and relationship needs.",
+        "subheadline": "Consulting, coaching and counselling in Pretoria, drawing on more than 40 years across law, ministry, academia and corporate work.",
+        "featureStrip": [
+          {
+            "icon": "graduation",
+            "label": "PhD, University of Pretoria"
+          },
+          {
+            "icon": "heart",
+            "label": "Specialist Wellness Counsellor"
+          },
+          {
+            "icon": "users",
+            "label": "Individuals, couples and teams"
+          },
+          {
+            "icon": "briefcase",
+            "label": "Marriage Officer"
+          }
+        ]
+      },
+      {
+        "type": "intro",
+        "layout": "split-heading",
+        "band": "plain",
+        "heading": "A career built across several disciplines",
+        "paragraphs": [
+          "Dr. Gerhard Bothma is a consultant, coach, educator and public speaker with more than 40 years of experience helping individuals and organisations thrive. He is a graduate of the University of Pretoria, holding three academic degrees including a Ph.D. earned in 2004.",
+          "His career spans law, ministry, academia, charitable work and corporate consulting. This mix gives him a particular insight into human behaviour, leadership and personal growth. He is the author of four books and numerous articles reflecting both scholarly work and real-world experience."
+        ]
+      },
+      {
+        "type": "pillars",
+        "layout": "icon-cards",
+        "band": "tinted",
+        "eyebrow": "Qualifications",
+        "heading": "Credentials and tools",
+        "items": [
+          {
+            "icon": "briefcase",
+            "title": "Religious Specialist",
+            "body": "One of his recognised specialisations, drawn from his background in ministry and academia."
+          },
+          {
+            "icon": "heart",
+            "title": "Specialist Wellness Counsellor",
+            "body": "Registered as ASCHP SWC24/4080."
+          },
+          {
+            "icon": "target",
+            "title": "Certified Neethling Brain Instruments Practitioner",
+            "body": "A certified practitioner of the Neethling Brain Instruments (NBI) system, used to support personal and professional development."
+          },
+          {
+            "icon": "lightbulb",
+            "title": "Psychological frameworks",
+            "body": "Also draws on tools such as the 16 Personalities and the Enneagram to support growth, emotional intelligence, leadership and life transitions."
+          }
+        ]
+      },
+      {
+        "type": "services",
+        "layout": "list-rows",
+        "band": "plain",
+        "eyebrow": "Who he works with",
+        "heading": "Support that is personal and professional",
+        "items": [
+          {
+            "name": "Individuals",
+            "description": "Support for personal growth, emotional and relational intelligence, and navigating life transitions."
+          },
+          {
+            "name": "Couples",
+            "description": "Guidance for relationship growth, using the frameworks and tools listed above."
+          },
+          {
+            "name": "Teams and organisations",
+            "description": "Leadership development and support for organisations, drawing on his corporate consulting background."
+          },
+          {
+            "name": "Wedding ceremonies",
+            "description": "As a licensed Marriage Officer, Dr. Bothma offers personalised wedding ceremonies tailored to each couple's values and story."
+          }
+        ]
+      },
+      {
+        "type": "featureSplit",
+        "layout": "clean",
+        "band": "deep",
+        "mediaSide": "right",
+        "heading": "A compassionate, results-oriented approach",
+        "body": "Dr. Bothma brings a compassionate, results-oriented approach to his work, drawing from a wide network of multidisciplinary professionals when additional referrals or support are needed. Whether you are navigating a personal challenge, facing a leadership decision, or planning a life-changing event, he works alongside you to help you move forward with clarity and purpose.",
+        "photoSlot": {
+          "slotId": "portrait",
+          "brief": "A clear, professional photograph of Dr. Bothma, ideally seated or standing in his consulting space, taken in good natural light."
+        }
+      },
+      {
+        "type": "intro",
+        "layout": "statement",
+        "band": "tinted",
+        "heading": "Author and public speaker",
+        "paragraphs": [
+          "Beyond his consulting and counselling work, Dr. Bothma is the author of four books and numerous articles reflecting both scholarly insight and real-world wisdom, and continues to speak publicly on the subjects that shape his practice."
+        ]
+      },
+      {
+        "type": "ctaBand",
+        "band": "plain",
+        "heading": "Let's go for better, together",
+        "body": "Whether you are navigating a personal challenge, a leadership decision, or planning a wedding ceremony, get in touch to start the conversation."
+      }
+    ]
+  }
+}

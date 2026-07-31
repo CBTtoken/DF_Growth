@@ -1,0 +1,151 @@
+{
+  "slug": "watershed-plumbing",
+  "businessName": "Watershed plumbing",
+  "brandColor": null,
+  "generatedAt": "2026-07-31T10:20:48.336Z",
+  "plan": {
+    "palette": "slate-professional",
+    "typePairing": "technical-sans",
+    "rhythm": "standard",
+    "rationale": "A residential and commercial plumber with a genuinely wide scope, from new site plumbing to tiling and paving. Services list carries the detail since that is where the real facts live. Pillars group the six offerings into a scannable set, process explains how a job actually runs from quote to sign off, and a notice carries the free quote line they explicitly offered. No photos on file so gallery slots are requested rather than assumed filled. Slate and technical-sans keep it straight and trustworthy without dressing up a trade business as something fancier.",
+    "sections": [
+      {
+        "type": "hero",
+        "layout": "split",
+        "eyebrow": "Cape Town, Western Cape",
+        "headline": "Building. Renovating. Maintaining. Watershed Plumbing Does It All.",
+        "subheadline": "Residential and commercial plumbing across new construction, renovations, and everyday repairs, handled with clear communication and transparent pricing.",
+        "photoSlot": {
+          "slotId": "hero-main",
+          "brief": "A photo of you or your team on an active job site, mid task, in work clothes. Natural light, no posing."
+        },
+        "featureStrip": [
+          {
+            "icon": "droplet",
+            "label": "Geyser installs and repairs"
+          },
+          {
+            "icon": "wrench",
+            "label": "Drain laying and repairs"
+          },
+          {
+            "icon": "home",
+            "label": "Bathroom renovations"
+          },
+          {
+            "icon": "building",
+            "label": "New site construction plumbing"
+          }
+        ]
+      },
+      {
+        "type": "intro",
+        "layout": "statement",
+        "band": "plain",
+        "heading": "A plumbing partner for the whole job, not just the leak",
+        "paragraphs": [
+          "Watershed Plumbing handles residential and commercial work across Cape Town, from plumbing on brand new construction sites through to fixing a dripping tap. We believe in clear communication and transparent pricing, so you know what you are paying for before we start."
+        ]
+      },
+      {
+        "type": "pillars",
+        "layout": "icon-cards",
+        "band": "tinted",
+        "eyebrow": "What we do",
+        "heading": "Six services, one team",
+        "items": [
+          {
+            "icon": "building",
+            "title": "New Site Construction Plumbing",
+            "body": "Complete plumbing installations for new construction projects, built for seamless integration and long-lasting performance."
+          },
+          {
+            "icon": "home",
+            "title": "Bathroom Renovations",
+            "body": "From fixture installation to complete overhauls, we handle every detail of your bathroom transformation with precision."
+          },
+          {
+            "icon": "wrench",
+            "title": "Comprehensive Maintenance",
+            "body": "Preventative and reactive maintenance to keep your plumbing systems running smoothly and minimise disruptions and costly repairs."
+          },
+          {
+            "icon": "droplet",
+            "title": "Drain Laying and Repairs",
+            "body": "Specialised drain laying and repair work, addressing blockages and ensuring efficient wastewater management."
+          },
+          {
+            "icon": "flame",
+            "title": "Geyser Installation and Repairs",
+            "body": "Professional installation and repair of geysers, for reliable hot water in your home or business."
+          },
+          {
+            "icon": "paintRoller",
+            "title": "Tiling and Paving",
+            "body": "Expert tiling and paving services that add both functionality and aesthetic appeal to your property."
+          }
+        ]
+      },
+      {
+        "type": "process",
+        "layout": "steps",
+        "band": "plain",
+        "eyebrow": "How a job runs",
+        "heading": "From first call to finished job",
+        "steps": [
+          {
+            "title": "Get in touch",
+            "body": "Call us for a free quote or to discuss your project, whether it is a new build, a renovation, or a repair."
+          },
+          {
+            "title": "We assess the work",
+            "body": "We look at what the job needs, residential or commercial, and talk you through it with transparent pricing."
+          },
+          {
+            "title": "We carry out the work",
+            "body": "Our team completes the installation, repair, or renovation with attention to every detail."
+          },
+          {
+            "title": "We keep the relationship going",
+            "body": "We aim to build long-term relationships with our clients through reliable, trustworthy service on future maintenance needs."
+          }
+        ]
+      },
+      {
+        "type": "gallery",
+        "layout": "grid",
+        "band": "tinted",
+        "heading": "Recent work",
+        "photoSlots": [
+          {
+            "slotId": "gallery-bathroom",
+            "brief": "A finished bathroom renovation, wide shot in good light, showing tiling and fixtures."
+          },
+          {
+            "slotId": "gallery-geyser",
+            "brief": "A geyser installation, close up, clearly showing pipework and connections."
+          },
+          {
+            "slotId": "gallery-drain",
+            "brief": "A drain laying or repair job in progress, showing the trench or pipe work."
+          },
+          {
+            "slotId": "gallery-tiling",
+            "brief": "A tiling or paving job, before and after if you have both, taken outdoors in daylight."
+          }
+        ]
+      },
+      {
+        "type": "notice",
+        "icon": "phone",
+        "text": "Call Watershed Plumbing for a free quote or to discuss your project."
+      },
+      {
+        "type": "ctaBand",
+        "band": "deep",
+        "heading": "Let us take care of your plumbing needs",
+        "body": "Efficient, expert plumbing for residential and commercial clients across Cape Town. Get in touch to discuss your project."
+      }
+    ]
+  }
+}

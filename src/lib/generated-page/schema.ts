@@ -2,28 +2,32 @@ import { z } from "zod";
 
 // The generated page plan.
 //
-// This is the contract that replaces template picking. A model reads what a
-// member told us about their business and answers three questions: which
-// sections does THIS business need, in what order, and what goes in them.
-// A component library renders the answer.
+// A model reads what a member told us and answers three questions: which
+// sections does THIS business need, in what order, and what goes in them. A
+// component library renders the answer. The model never writes code, which is
+// what keeps the result reviewable and, above all, editable by the member.
 //
-// The model never writes code. Everything here is data, which is what makes
-// the result reviewable, diffable, and above all editable by the member in
-// their own backoffice. Hand-written JSX, which is how Buffelskop and HelpLift
-// were built, cannot be edited by the person who owns the page.
+// Revision after Dewald's review of the first three pages. His criticism was
+// exact: "the font changes, not the layout". Every section type had one
+// rendering, so every business's pillars looked like every other business's
+// pillars and only the colours moved. Buffelskop reads as designed because
+// each of its sections has its own layout and some carry two layout ideas at
+// once (NatureSection is an image split AND a six-badge strip).
 //
-// Every choice the model is allowed to make is a closed set. It picks a
-// palette from a list, an icon from a list, a section type from a list. It
-// cannot invent a colour that fails contrast or an icon that does not exist,
-// because it is never given the option.
+// So layout is now the model's decision too. Each section type carries a
+// `layout` and most carry a `band`, which multiplies out to genuinely
+// different pages rather than one page in different colours.
+//
+// Content and layout stay separate fields on purpose. That separation is what
+// makes the member backoffice possible: it renders a plain form over the
+// content ("Heading", "Item 1 title", "Item 1 body") and never shows the
+// layout at all, so a member can edit their words without being able to break
+// the design.
 
 // ---------------------------------------------------------------------------
 // Closed vocabularies
 // ---------------------------------------------------------------------------
 
-// Icons the model may choose from, by meaning rather than by name, so it picks
-// for sense instead of guessing at the lucide export list. Every one of these
-// is verified to exist in lucide-react, which is already a dependency.
 export const ICON_KEYS = [
   "wrench", "hammer", "paintRoller", "plug", "droplet", "flame", "home", "building",
   "shield", "clock", "calendar", "phone", "mapPin", "truck", "package", "scissors",
@@ -32,10 +36,10 @@ export const ICON_KEYS = [
   "lightbulb", "settings", "search", "message", "shoppingBag", "creditCard", "key",
 ] as const;
 
-// Palettes are designed, not generated. Each is a full surface system that has
-// been checked for contrast, so the model choosing "wrong" produces a page that
-// suits the business badly, never one that is unreadable. The member's own
-// brand colour, where they have one, overrides the accent at render time.
+// Dewald, 2026-07-31: no full dark mode ever, it does not suit this market.
+// Every palette here is light-surfaced. Each still owns a deep band colour for
+// contrast, used once or twice a page, which is a different thing from a dark
+// page.
 export const PALETTE_KEYS = [
   "slate-professional",
   "warm-earth",
@@ -43,61 +47,90 @@ export const PALETTE_KEYS = [
   "clean-clinical",
   "bold-industrial",
   "soft-craft",
-  "night-premium",
+  "sun-coast",
+  "ink-editorial",
 ] as const;
 
-// Reuses the four heading fonts already loaded by the anchor system, so this
-// introduces no new font payload and inherits its LCP protection.
-export const TYPE_KEYS = ["sans-default", "serif-editorial", "display-condensed", "mono-technical"] as const;
-
-export const SECTION_TYPES = [
-  "hero",
-  "intro",
-  "pillars",
-  "services",
-  "process",
-  "featureSplit",
-  "faq",
-  "gallery",
-  "notice",
-  "ctaBand",
+// Heading and body together, because what makes type feel designed is the
+// relationship between the two.
+export const TYPE_KEYS = [
+  "editorial-serif",
+  "modern-display",
+  "warm-serif",
+  "clean-geometric",
+  "technical-sans",
+  "classic-book",
 ] as const;
+
+// Which surface a section sits on. The model choosing these is most of what
+// gives a page its rhythm: a run of eight plain bands reads as a template
+// however good the content is.
+export const BAND_KEYS = ["plain", "tinted", "deep"] as const;
+
+// ---------------------------------------------------------------------------
+// Shared pieces
+// ---------------------------------------------------------------------------
+
+const iconKey = z.enum(ICON_KEYS);
+const band = z.enum(BAND_KEYS).default("plain");
+
+// Photo slots are named by what the photo should BE. That name is what the
+// member gets emailed, and "a finished bathroom re-tile, taken in daylight"
+// gets photos where "upload an image" does not.
+const photoSlot = z.object({
+  slotId: z.string().min(1).max(40),
+  // 220 rather than 160. The first run at 160 rejected an otherwise good plan
+  // over a brief that ran six characters long, and a brief is an instruction
+  // to a person holding a phone, so specific beats short. This is the only
+  // field where length is a feature.
+  brief: z.string().min(10).max(220),
+});
+
+// The Buffelskop move: a short row of badges under a section, carrying the
+// quick facts that would otherwise bloat the prose. Optional on the sections
+// where it makes sense, which is what lets one section hold two layout ideas.
+const featureStrip = z
+  .array(z.object({ icon: iconKey, label: z.string().min(2).max(40) }))
+  .min(3)
+  .max(6);
 
 // ---------------------------------------------------------------------------
 // Sections
 // ---------------------------------------------------------------------------
 
-const iconKey = z.enum(ICON_KEYS);
-
-// Photo slots are named by what the photo should BE, not by position. That
-// name is what the member is asked for by email: "a photo of finished work"
-// gets photos, "upload an image" does not.
-const photoSlot = z.object({
-  slotId: z.string().min(1).max(40),
-  brief: z.string().min(10).max(160),
-});
-
 const heroSection = z.object({
   type: z.literal("hero"),
+  // "stacked" is a big centred statement, "split" pairs copy with a photo,
+  // "editorial" runs an oversized headline with the subheadline offset below,
+  // "framed" sets the whole hero inside the deep band colour.
+  layout: z.enum(["stacked", "split", "editorial", "framed"]),
   eyebrow: z.string().max(60).optional(),
   headline: z.string().min(3).max(90),
   subheadline: z.string().max(200),
-  // Optional because a business with no photograph gets a typographic hero,
-  // which is a deliberate look rather than a gap.
   photoSlot: photoSlot.optional(),
+  featureStrip: featureStrip.optional(),
 });
 
 const introSection = z.object({
   type: z.literal("intro"),
+  // "split-heading" holds the heading left against the body right,
+  // "statement" centres a single large paragraph, "columns" runs the body in
+  // two columns under a full-width heading.
+  layout: z.enum(["split-heading", "statement", "columns"]),
+  band,
   heading: z.string().min(3).max(90),
   paragraphs: z.array(z.string().min(40).max(700)).min(1).max(3),
+  featureStrip: featureStrip.optional(),
 });
 
-// The HelpLift "Four Pillars" shape, generalised. A business with a real
-// framework gets its framework. A business without one does not get this
-// section at all.
 const pillarsSection = z.object({
   type: z.literal("pillars"),
+  // "icon-cards" is the safe grid, "numbered" drops the icons for large
+  // numerals and a rule, "wide-rows" gives each pillar a full-width row with
+  // the icon set left, "quiet" removes the card entirely and separates with
+  // hairlines.
+  layout: z.enum(["icon-cards", "numbered", "wide-rows", "quiet"]),
+  band,
   eyebrow: z.string().max(60).optional(),
   heading: z.string().min(3).max(90),
   items: z
@@ -112,11 +145,13 @@ const pillarsSection = z.object({
     .max(6),
 });
 
-// Services with real one-line descriptions, not bare labels. A bare list is
-// what the old template system produced and is most of why those pages read
-// as thin.
 const servicesSection = z.object({
   type: z.literal("services"),
+  // "cards" is the grid, "list-rows" is a single dense column with rules,
+  // "two-column" splits a heading off to the side, "tiles" is a compact
+  // label-only grid for members with many short services.
+  layout: z.enum(["cards", "list-rows", "two-column", "tiles"]),
+  band,
   eyebrow: z.string().max(60).optional(),
   heading: z.string().min(3).max(90),
   items: z
@@ -130,11 +165,12 @@ const servicesSection = z.object({
     .max(14),
 });
 
-// What actually happens, for THIS trade. A plumber's first visit is not a
-// tattoo consultation, and the old shared "Three simple steps" pretended
-// otherwise on every page that used it.
 const processSection = z.object({
   type: z.literal("process"),
+  // "steps" is the vertical numbered list, "timeline" runs horizontally with
+  // a connecting rule, "big-numbers" sets oversized numerals as the design.
+  layout: z.enum(["steps", "timeline", "big-numbers"]),
+  band,
   eyebrow: z.string().max(60).optional(),
   heading: z.string().min(3).max(90),
   steps: z
@@ -150,15 +186,21 @@ const processSection = z.object({
 
 const featureSplitSection = z.object({
   type: z.literal("featureSplit"),
+  // "clean" is a plain two-column split, "framed" puts the photo in a raised
+  // frame, "offset" lets the photo break out of the column for asymmetry.
+  layout: z.enum(["clean", "framed", "offset"]),
+  band,
+  mediaSide: z.enum(["left", "right"]).default("right"),
   heading: z.string().min(3).max(90),
   body: z.string().min(40).max(600),
   photoSlot: photoSlot.optional(),
-  // Lets consecutive splits alternate rather than stacking identically.
-  mediaSide: z.enum(["left", "right"]).default("right"),
+  featureStrip: featureStrip.optional(),
 });
 
 const faqSection = z.object({
   type: z.literal("faq"),
+  layout: z.enum(["cards", "rules", "two-column"]),
+  band,
   heading: z.string().min(3).max(90),
   items: z
     .array(
@@ -173,12 +215,14 @@ const faqSection = z.object({
 
 const gallerySection = z.object({
   type: z.literal("gallery"),
+  // "grid" is uniform, "feature" gives the first photo double width,
+  // "strip" is a single wide row.
+  layout: z.enum(["grid", "feature", "strip"]),
+  band,
   heading: z.string().min(3).max(90),
   photoSlots: z.array(photoSlot).min(2).max(8),
 });
 
-// One short, important line. An emergency callout number, a delivery area, a
-// standing guarantee. Only where the member actually stated it.
 const noticeSection = z.object({
   type: z.literal("notice"),
   icon: iconKey,
@@ -187,6 +231,7 @@ const noticeSection = z.object({
 
 const ctaBandSection = z.object({
   type: z.literal("ctaBand"),
+  band,
   heading: z.string().min(3).max(90),
   body: z.string().max(300).optional(),
 });
@@ -206,6 +251,7 @@ export const sectionSchema = z.discriminatedUnion("type", [
 
 export type PageSection = z.infer<typeof sectionSchema>;
 export type PhotoSlot = z.infer<typeof photoSlot>;
+export type FeatureStrip = z.infer<typeof featureStrip>;
 
 // ---------------------------------------------------------------------------
 // The plan
@@ -213,19 +259,17 @@ export type PhotoSlot = z.infer<typeof photoSlot>;
 
 export const pagePlanSchema = z.object({
   palette: z.enum(PALETTE_KEYS),
-  headingFont: z.enum(TYPE_KEYS),
+  typePairing: z.enum(TYPE_KEYS),
+  rhythm: z.enum(["generous", "standard", "compact"]).default("standard"),
   // Why the model made the calls it made. Not rendered: this is for the
-  // internal review queue, so a human reading a flagged page can see the
+  // internal review queue, so a human looking at a flagged page can read the
   // reasoning instead of guessing at it.
   rationale: z.string().max(600),
-  // Must start with a hero. Everything after it is the model's call.
   sections: z.array(sectionSchema).min(3).max(12),
 });
 
 export type PagePlan = z.infer<typeof pagePlanSchema>;
 
-// Every photo the plan asks for, flattened, which is what the member gets
-// emailed and what the backoffice renders upload slots for.
 export function collectPhotoSlots(plan: PagePlan): PhotoSlot[] {
   const slots: PhotoSlot[] = [];
   for (const section of plan.sections) {

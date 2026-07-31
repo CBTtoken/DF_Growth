@@ -1,317 +1,569 @@
-import type { PagePlan, PageSection, PhotoSlot } from "@/lib/generated-page/schema";
-import { PALETTES, ICONS, isDarkPalette, type Palette } from "@/lib/generated-page/design";
-import { HEADING_FONT_CLASS, HEADING_FONT_VARIABLE, type HeadingFontKey } from "@/lib/templates/anchors";
+import type { ReactNode } from "react";
+import type { PagePlan, PageSection, PhotoSlot, FeatureStrip } from "@/lib/generated-page/schema";
+import { PALETTES, ICONS, TYPE_PAIRINGS, RHYTHM, type Palette, type RhythmKey } from "@/lib/generated-page/design";
 import { ensureContrast } from "@/lib/color";
 
 // Renders a generated page plan.
 //
-// The whole library is server components and plain markup. Nothing here is
-// clever, which is the point: everything that makes one member's page differ
-// from another's lives in the plan, not in the code. That is what makes the
-// result editable by the member later, and reviewable by us now.
+// Every section type has several genuinely different layouts and the model
+// picks one, because Dewald's review of the first version was that only the
+// font changed while the layout stayed identical, which is precisely what
+// makes a page feel template-driven. Nothing here is clever: all the variety
+// lives in the plan, which is what keeps it editable by the member later.
 
 type Ctx = {
   palette: Palette;
   accent: string;
-  dark: boolean;
+  rhythm: (typeof RHYTHM)[RhythmKey];
   headingClass: string;
-  /** Resolved photo URL per slotId, empty until the member uploads. */
+  eyebrowClass: string;
   photos: Record<string, string>;
-  businessName: string;
 };
 
-// Placeholder for a photo the plan asked for and the member has not sent yet.
-// Deliberately states the brief on the page in preview mode: this is the same
-// text the member gets emailed, and seeing it in position is what makes the
-// ask concrete rather than an abstract "add images".
-function PhotoFrame({ slot, ctx, aspect }: { slot: PhotoSlot; ctx: Ctx; aspect: string }) {
+/** Resolved colours for whichever surface a section sits on. */
+type Surface = { bg: string; ink: string; inkMuted: string; card: string; border: string; onDeep: boolean };
+
+function surfaceFor(ctx: Ctx, band: "plain" | "tinted" | "deep"): Surface {
+  const p = ctx.palette;
+  if (band === "deep") {
+    return {
+      bg: p.surfaceDeep,
+      ink: p.inkOnDeep,
+      inkMuted: p.inkMutedOnDeep,
+      card: "rgba(255,255,255,0.06)",
+      border: "rgba(255,255,255,0.14)",
+      onDeep: true,
+    };
+  }
+  return {
+    bg: band === "tinted" ? p.surfaceAlt : p.surface,
+    ink: p.ink,
+    inkMuted: p.inkMuted,
+    card: p.card,
+    border: p.border,
+    onDeep: false,
+  };
+}
+
+// On a deep band the palette accent often fails contrast, so it is lifted
+// against that background rather than used raw.
+function accentOn(ctx: Ctx, s: Surface): string {
+  return s.onDeep ? ensureContrast(ctx.accent, s.bg, 3) : ctx.accent;
+}
+
+function PhotoFrame({
+  slot,
+  ctx,
+  s,
+  aspect,
+  className = "",
+}: {
+  slot: PhotoSlot;
+  ctx: Ctx;
+  s: Surface;
+  aspect: string;
+  className?: string;
+}) {
   const url = ctx.photos[slot.slotId];
   if (url) {
-    // eslint-disable-next-line @next/next/no-img-element -- preview route only; the real route uses next/image once slots resolve to stored paths.
-    return <img src={url} alt={slot.brief} className={`w-full ${aspect} rounded-2xl object-cover`} />;
+    // eslint-disable-next-line @next/next/no-img-element -- preview route; the live route uses next/image once slots resolve to stored paths.
+    return <img src={url} alt={slot.brief} className={`w-full ${aspect} object-cover ${className}`} />;
   }
+  // States the brief in position. This is the same text the member gets
+  // emailed, and seeing it where the photo will go is what makes the ask
+  // concrete rather than an abstract "add images".
   return (
     <div
-      className={`flex w-full ${aspect} flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 text-center`}
-      style={{ borderColor: ctx.palette.border, backgroundColor: ctx.palette.surfaceAlt }}
+      className={`flex w-full ${aspect} flex-col items-center justify-center gap-2 border-2 border-dashed p-6 text-center ${className}`}
+      style={{ borderColor: s.border, backgroundColor: s.onDeep ? "rgba(255,255,255,0.04)" : ctx.palette.surfaceAlt }}
     >
-      <span className="text-xs font-semibold uppercase tracking-widest" style={{ color: ctx.accent }}>
+      <span className={ctx.eyebrowClass} style={{ color: accentOn(ctx, s) }}>
         Photo needed
       </span>
-      <span className="max-w-xs text-sm" style={{ color: ctx.palette.inkMuted }}>
+      <span className="max-w-xs text-sm" style={{ color: s.inkMuted }}>
         {slot.brief}
       </span>
     </div>
   );
 }
 
-function SectionHeading({ eyebrow, heading, ctx }: { eyebrow?: string; heading: string; ctx: Ctx }) {
+function Eyebrow({ text, ctx, s }: { text?: string; ctx: Ctx; s: Surface }) {
+  if (!text) return null;
   return (
-    <>
-      {eyebrow && (
-        <p className="text-xs font-bold uppercase tracking-widest" style={{ color: ctx.accent }}>
-          {eyebrow}
-        </p>
-      )}
-      <h2
-        className={`mt-2 text-3xl font-bold tracking-tight sm:text-4xl ${ctx.headingClass}`}
-        style={{ color: ctx.palette.ink }}
-      >
-        {heading}
-      </h2>
-    </>
+    <p className={ctx.eyebrowClass} style={{ color: accentOn(ctx, s) }}>
+      {text}
+    </p>
   );
 }
 
-function Band({
-  children,
-  ctx,
-  alt = false,
-}: {
-  children: React.ReactNode;
-  ctx: Ctx;
-  alt?: boolean;
-}) {
+function Heading({ children, ctx, s, className = "" }: { children: ReactNode; ctx: Ctx; s: Surface; className?: string }) {
   return (
-    <section
-      className="px-5 py-14 sm:px-8 sm:py-20"
-      style={{ backgroundColor: alt ? ctx.palette.surfaceAlt : ctx.palette.surface }}
-    >
-      <div className="mx-auto max-w-5xl">{children}</div>
+    <h2 className={`${ctx.rhythm.heading} ${ctx.headingClass} ${className}`} style={{ color: s.ink }}>
+      {children}
+    </h2>
+  );
+}
+
+function Band({ children, ctx, s, wide = false }: { children: ReactNode; ctx: Ctx; s: Surface; wide?: boolean }) {
+  return (
+    <section className={`px-5 sm:px-8 ${ctx.rhythm.band}`} style={{ backgroundColor: s.bg }}>
+      <div className={`mx-auto ${wide ? "max-w-6xl" : "max-w-5xl"}`}>{children}</div>
     </section>
   );
 }
 
-function Hero({ section, ctx }: { section: Extract<PageSection, { type: "hero" }>; ctx: Ctx }) {
-  const hasPhoto = Boolean(section.photoSlot);
+// The Buffelskop badge row. One section carrying two layout ideas is a large
+// part of why that page reads as designed rather than assembled.
+function Strip({ items, ctx, s }: { items: FeatureStrip; ctx: Ctx; s: Surface }) {
   return (
-    <header className="px-5 py-16 sm:px-8 sm:py-24" style={{ backgroundColor: ctx.palette.surface }}>
-      <div className={`mx-auto grid max-w-5xl gap-10 ${hasPhoto ? "lg:grid-cols-2 lg:items-center" : ""}`}>
-        <div>
-          {section.eyebrow && (
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: ctx.accent }}>
-              {section.eyebrow}
-            </p>
-          )}
-          <h1
-            className={`mt-3 text-4xl font-bold leading-[1.1] tracking-tight sm:text-5xl ${ctx.headingClass}`}
-            style={{ color: ctx.palette.ink }}
+    <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      {items.map((f, i) => {
+        const Icon = ICONS[f.icon];
+        return (
+          <div
+            key={i}
+            className="flex flex-col items-center gap-2 rounded-2xl border px-4 py-6 text-center"
+            style={{ backgroundColor: s.card, borderColor: s.border }}
           >
-            {section.headline}
-          </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-            {section.subheadline}
-          </p>
-        </div>
-        {section.photoSlot && <PhotoFrame slot={section.photoSlot} ctx={ctx} aspect="aspect-[4/3]" />}
+            <Icon size={22} aria-hidden style={{ color: accentOn(ctx, s) }} />
+            <span className="text-sm font-semibold" style={{ color: s.ink }}>
+              {f.label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hero
+// ---------------------------------------------------------------------------
+
+function Hero({ section, ctx }: { section: Extract<PageSection, { type: "hero" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.layout === "framed" ? "deep" : "plain");
+  const copy = (
+    <div>
+      <Eyebrow text={section.eyebrow} ctx={ctx} s={s} />
+      <h1
+        className={`mt-4 leading-[1.05] ${ctx.headingClass} ${
+          section.layout === "editorial" ? "text-5xl sm:text-7xl" : "text-4xl sm:text-6xl"
+        }`}
+        style={{ color: s.ink }}
+      >
+        {section.headline}
+      </h1>
+      <p
+        className={`mt-6 text-lg leading-relaxed ${section.layout === "editorial" ? "max-w-xl sm:ml-16" : "max-w-xl"}`}
+        style={{ color: s.inkMuted }}
+      >
+        {section.subheadline}
+      </p>
+    </div>
+  );
+
+  return (
+    <header className={`px-5 sm:px-8 ${ctx.rhythm.band}`} style={{ backgroundColor: s.bg }}>
+      <div className={`mx-auto max-w-6xl ${section.layout === "stacked" ? "text-center" : ""}`}>
+        {section.layout === "split" && section.photoSlot ? (
+          <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
+            {copy}
+            <PhotoFrame slot={section.photoSlot} ctx={ctx} s={s} aspect="aspect-[4/3]" className="rounded-3xl" />
+          </div>
+        ) : (
+          <div className={section.layout === "stacked" ? "mx-auto max-w-3xl" : "max-w-4xl"}>{copy}</div>
+        )}
+        {section.layout !== "split" && section.photoSlot && (
+          <div className="mt-12">
+            <PhotoFrame slot={section.photoSlot} ctx={ctx} s={s} aspect="aspect-[21/9]" className="rounded-3xl" />
+          </div>
+        )}
+        {section.featureStrip && <Strip items={section.featureStrip} ctx={ctx} s={s} />}
       </div>
     </header>
   );
 }
 
-function Intro({ section, ctx, alt }: { section: Extract<PageSection, { type: "intro" }>; ctx: Ctx; alt: boolean }) {
+// ---------------------------------------------------------------------------
+// Intro
+// ---------------------------------------------------------------------------
+
+function Intro({ section, ctx }: { section: Extract<PageSection, { type: "intro" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band);
+  const body = section.paragraphs.map((p, i) => (
+    <p key={i} className="text-lg leading-relaxed" style={{ color: s.inkMuted }}>
+      {p}
+    </p>
+  ));
+
   return (
-    <Band ctx={ctx} alt={alt}>
-      <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.5fr] md:gap-14">
-        <h2
-          className={`text-3xl font-bold tracking-tight sm:text-4xl ${ctx.headingClass}`}
-          style={{ color: ctx.palette.ink }}
-        >
-          {section.heading}
-        </h2>
-        <div className="flex flex-col gap-4">
-          {section.paragraphs.map((p, i) => (
-            <p key={i} className="text-lg leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-              {p}
-            </p>
+    <Band ctx={ctx} s={s}>
+      {section.layout === "statement" && (
+        <div className="mx-auto max-w-3xl text-center">
+          <Heading ctx={ctx} s={s}>{section.heading}</Heading>
+          <div className="mt-6 flex flex-col gap-5">{body}</div>
+        </div>
+      )}
+      {section.layout === "split-heading" && (
+        <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.6fr] md:gap-16">
+          <Heading ctx={ctx} s={s}>{section.heading}</Heading>
+          <div className="flex flex-col gap-5">{body}</div>
+        </div>
+      )}
+      {section.layout === "columns" && (
+        <>
+          <Heading ctx={ctx} s={s} className="max-w-3xl">{section.heading}</Heading>
+          <div className="mt-8 flex flex-col gap-5 md:columns-2 md:gap-12">{body}</div>
+        </>
+      )}
+      {section.featureStrip && <Strip items={section.featureStrip} ctx={ctx} s={s} />}
+    </Band>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pillars
+// ---------------------------------------------------------------------------
+
+function Pillars({ section, ctx }: { section: Extract<PageSection, { type: "pillars" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band);
+  const accent = accentOn(ctx, s);
+
+  return (
+    <Band ctx={ctx} s={s} wide={section.layout === "wide-rows"}>
+      <div className={`max-w-2xl ${section.layout === "numbered" ? "mx-auto text-center" : ""}`}>
+        <Eyebrow text={section.eyebrow} ctx={ctx} s={s} />
+        <Heading ctx={ctx} s={s} className="mt-3">{section.heading}</Heading>
+      </div>
+
+      {section.layout === "icon-cards" && (
+        <div className="mt-12 grid gap-5 sm:grid-cols-2">
+          {section.items.map((item, i) => {
+            const Icon = ICONS[item.icon];
+            return (
+              <div key={i} className="rounded-2xl border p-7" style={{ backgroundColor: s.card, borderColor: s.border }}>
+                <span
+                  className="grid size-12 place-items-center rounded-xl"
+                  style={{ backgroundColor: `${accent}1f`, color: accent }}
+                >
+                  <Icon size={22} aria-hidden />
+                </span>
+                <h3 className="mt-5 text-lg font-semibold" style={{ color: s.ink }}>{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{item.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {section.layout === "numbered" && (
+        <div className="mt-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
+          {section.items.map((item, i) => (
+            <div key={i} className="border-t pt-5" style={{ borderColor: accent }}>
+              <span className={`text-4xl ${ctx.headingClass}`} style={{ color: accent }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <h3 className="mt-3 text-lg font-semibold" style={{ color: s.ink }}>{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{item.body}</p>
+            </div>
           ))}
         </div>
-      </div>
-    </Band>
-  );
-}
+      )}
 
-function Pillars({ section, ctx, alt }: { section: Extract<PageSection, { type: "pillars" }>; ctx: Ctx; alt: boolean }) {
-  return (
-    <Band ctx={ctx} alt={alt}>
-      <div className="max-w-2xl">
-        <SectionHeading eyebrow={section.eyebrow} heading={section.heading} ctx={ctx} />
-      </div>
-      <div className="mt-10 grid gap-5 sm:grid-cols-2">
-        {section.items.map((item, i) => {
-          const Icon = ICONS[item.icon];
-          return (
-            <div
-              key={i}
-              className="rounded-2xl border p-6"
-              style={{ backgroundColor: ctx.palette.card, borderColor: ctx.palette.border }}
-            >
-              <span
-                className="grid size-11 place-items-center rounded-xl"
-                style={{ backgroundColor: `${ctx.accent}1a`, color: ctx.accent }}
+      {section.layout === "wide-rows" && (
+        <div className="mt-12 flex flex-col">
+          {section.items.map((item, i) => {
+            const Icon = ICONS[item.icon];
+            return (
+              <div
+                key={i}
+                className="grid gap-5 border-t py-8 md:grid-cols-[auto_minmax(0,1fr)_2fr] md:items-start md:gap-10"
+                style={{ borderColor: s.border }}
               >
-                <Icon size={20} aria-hidden />
-              </span>
-              <h3 className="mt-4 text-lg font-semibold" style={{ color: ctx.palette.ink }}>
-                {item.title}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-                {item.body}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+                <Icon size={30} aria-hidden style={{ color: accent }} />
+                <h3 className="text-xl font-semibold" style={{ color: s.ink }}>{item.title}</h3>
+                <p className="text-base leading-relaxed" style={{ color: s.inkMuted }}>{item.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {section.layout === "quiet" && (
+        <div className="mt-12 grid gap-x-12 gap-y-10 sm:grid-cols-2">
+          {section.items.map((item, i) => {
+            const Icon = ICONS[item.icon];
+            return (
+              <div key={i}>
+                <Icon size={24} aria-hidden style={{ color: accent }} />
+                <h3 className="mt-4 text-lg font-semibold" style={{ color: s.ink }}>{item.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{item.body}</p>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </Band>
   );
 }
 
-function Services({ section, ctx, alt }: { section: Extract<PageSection, { type: "services" }>; ctx: Ctx; alt: boolean }) {
-  const described = section.items.some((i) => i.description);
-  return (
-    <Band ctx={ctx} alt={alt}>
-      <div className="max-w-2xl">
-        <SectionHeading eyebrow={section.eyebrow} heading={section.heading} ctx={ctx} />
-      </div>
-      <div className={`mt-10 grid gap-4 ${described ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
-        {section.items.map((item, i) => (
-          <div
-            key={i}
-            className="rounded-2xl border px-5 py-4"
-            style={{ backgroundColor: ctx.palette.card, borderColor: ctx.palette.border }}
-          >
-            <h3 className="text-base font-semibold" style={{ color: ctx.palette.ink }}>
-              {item.name}
-            </h3>
-            {item.description && (
-              <p className="mt-1.5 text-sm leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-                {item.description}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </Band>
-  );
-}
+// ---------------------------------------------------------------------------
+// Services
+// ---------------------------------------------------------------------------
 
-function Process({ section, ctx, alt }: { section: Extract<PageSection, { type: "process" }>; ctx: Ctx; alt: boolean }) {
-  return (
-    <Band ctx={ctx} alt={alt}>
-      <div className="max-w-2xl">
-        <SectionHeading eyebrow={section.eyebrow} heading={section.heading} ctx={ctx} />
-      </div>
-      <ol className="mt-10 flex flex-col gap-4">
-        {section.steps.map((step, i) => (
-          <li key={i} className="flex gap-5">
-            <span
-              className="grid size-10 shrink-0 place-items-center rounded-full text-sm font-bold"
-              style={{ backgroundColor: ctx.accent, color: ctx.palette.onAccent }}
-            >
-              {i + 1}
-            </span>
-            <div className="pt-1">
-              <h3 className="text-lg font-semibold" style={{ color: ctx.palette.ink }}>
-                {step.title}
-              </h3>
-              <p className="mt-1.5 text-sm leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-                {step.body}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ol>
-    </Band>
-  );
-}
-
-function FeatureSplit({
-  section,
-  ctx,
-  alt,
-}: {
-  section: Extract<PageSection, { type: "featureSplit" }>;
-  ctx: Ctx;
-  alt: boolean;
-}) {
-  const media = section.photoSlot && <PhotoFrame slot={section.photoSlot} ctx={ctx} aspect="aspect-[4/3]" />;
-  const copy = (
-    <div>
-      <h2
-        className={`text-3xl font-bold tracking-tight sm:text-4xl ${ctx.headingClass}`}
-        style={{ color: ctx.palette.ink }}
-      >
-        {section.heading}
-      </h2>
-      <p className="mt-4 text-lg leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-        {section.body}
-      </p>
+function Services({ section, ctx }: { section: Extract<PageSection, { type: "services" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band);
+  const accent = accentOn(ctx, s);
+  const header = (
+    <div className="max-w-2xl">
+      <Eyebrow text={section.eyebrow} ctx={ctx} s={s} />
+      <Heading ctx={ctx} s={s} className="mt-3">{section.heading}</Heading>
     </div>
   );
+
+  if (section.layout === "two-column") {
+    return (
+      <Band ctx={ctx} s={s}>
+        <div className="grid gap-10 md:grid-cols-[minmax(0,1fr)_1.6fr] md:gap-16">
+          {header}
+          <div className="flex flex-col">
+            {section.items.map((item, i) => (
+              <div key={i} className="border-t py-5" style={{ borderColor: s.border }}>
+                <h3 className="text-base font-semibold" style={{ color: s.ink }}>{item.name}</h3>
+                {item.description && (
+                  <p className="mt-1.5 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{item.description}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Band>
+    );
+  }
+
   return (
-    <Band ctx={ctx} alt={alt}>
-      <div className={`grid gap-10 ${media ? "lg:grid-cols-2 lg:items-center" : ""}`}>
-        {section.mediaSide === "left" && media}
-        {copy}
-        {section.mediaSide === "right" && media}
-      </div>
+    <Band ctx={ctx} s={s}>
+      {header}
+      {section.layout === "cards" && (
+        <div className="mt-12 grid gap-5 sm:grid-cols-2">
+          {section.items.map((item, i) => (
+            <div key={i} className="rounded-2xl border p-6" style={{ backgroundColor: s.card, borderColor: s.border }}>
+              <h3 className="text-base font-semibold" style={{ color: s.ink }}>{item.name}</h3>
+              {item.description && (
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{item.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {section.layout === "list-rows" && (
+        <div className="mt-12 flex flex-col">
+          {section.items.map((item, i) => (
+            <div
+              key={i}
+              className="grid gap-2 border-t py-6 md:grid-cols-[1fr_2fr] md:gap-10"
+              style={{ borderColor: s.border }}
+            >
+              <h3 className="text-lg font-semibold" style={{ color: s.ink }}>{item.name}</h3>
+              {item.description && (
+                <p className="text-base leading-relaxed" style={{ color: s.inkMuted }}>{item.description}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+      {section.layout === "tiles" && (
+        <div className="mt-12 flex flex-wrap gap-3">
+          {section.items.map((item, i) => (
+            <span
+              key={i}
+              className="rounded-full border px-5 py-2.5 text-sm font-semibold"
+              style={{ borderColor: accent, color: s.ink, backgroundColor: s.card }}
+            >
+              {item.name}
+            </span>
+          ))}
+        </div>
+      )}
     </Band>
   );
 }
 
-function Faq({ section, ctx, alt }: { section: Extract<PageSection, { type: "faq" }>; ctx: Ctx; alt: boolean }) {
+// ---------------------------------------------------------------------------
+// Process
+// ---------------------------------------------------------------------------
+
+function Process({ section, ctx }: { section: Extract<PageSection, { type: "process" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band);
+  const accent = accentOn(ctx, s);
+
   return (
-    <Band ctx={ctx} alt={alt}>
-      <div className="max-w-2xl">
-        <h2
-          className={`text-3xl font-bold tracking-tight sm:text-4xl ${ctx.headingClass}`}
-          style={{ color: ctx.palette.ink }}
-        >
-          {section.heading}
-        </h2>
+    <Band ctx={ctx} s={s} wide={section.layout === "timeline"}>
+      <div className={`max-w-2xl ${section.layout === "timeline" ? "mx-auto text-center" : ""}`}>
+        <Eyebrow text={section.eyebrow} ctx={ctx} s={s} />
+        <Heading ctx={ctx} s={s} className="mt-3">{section.heading}</Heading>
       </div>
-      <dl className="mt-10 flex flex-col gap-5">
-        {section.items.map((item, i) => (
-          <div
-            key={i}
-            className="rounded-2xl border p-6"
-            style={{ backgroundColor: ctx.palette.card, borderColor: ctx.palette.border }}
-          >
-            <dt className="text-base font-semibold" style={{ color: ctx.palette.ink }}>
-              {item.question}
-            </dt>
-            <dd className="mt-2 text-sm leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-              {item.answer}
-            </dd>
-          </div>
-        ))}
+
+      {section.layout === "steps" && (
+        <ol className="mt-12 flex flex-col gap-6">
+          {section.steps.map((step, i) => (
+            <li key={i} className="flex gap-6">
+              <span
+                className="grid size-11 shrink-0 place-items-center rounded-full text-sm font-bold"
+                style={{ backgroundColor: accent, color: ctx.palette.onAccent }}
+              >
+                {i + 1}
+              </span>
+              <div className="pt-1.5">
+                <h3 className="text-lg font-semibold" style={{ color: s.ink }}>{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{step.body}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {section.layout === "timeline" && (
+        <ol className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {section.steps.map((step, i) => (
+            <li key={i} className="border-t pt-5" style={{ borderColor: accent }}>
+              <span className="text-xs font-bold" style={{ color: accent }}>STEP {i + 1}</span>
+              <h3 className="mt-2 text-lg font-semibold" style={{ color: s.ink }}>{step.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{step.body}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {section.layout === "big-numbers" && (
+        <div className="mt-12 flex flex-col gap-10">
+          {section.steps.map((step, i) => (
+            <div key={i} className="grid gap-4 md:grid-cols-[auto_minmax(0,1fr)] md:gap-10">
+              <span className={`text-6xl leading-none ${ctx.headingClass}`} style={{ color: `${accent}44` }}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h3 className="text-xl font-semibold" style={{ color: s.ink }}>{step.title}</h3>
+                <p className="mt-2 text-base leading-relaxed" style={{ color: s.inkMuted }}>{step.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </Band>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Feature split
+// ---------------------------------------------------------------------------
+
+function FeatureSplit({ section, ctx }: { section: Extract<PageSection, { type: "featureSplit" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band);
+  const frame =
+    section.layout === "framed" ? "rounded-3xl shadow-2xl shadow-black/20" : section.layout === "offset" ? "rounded-2xl lg:-mb-14 lg:mt-14" : "rounded-2xl";
+  const media = section.photoSlot && (
+    <PhotoFrame slot={section.photoSlot} ctx={ctx} s={s} aspect="aspect-[4/5]" className={frame} />
+  );
+  const copy = (
+    <div>
+      <Heading ctx={ctx} s={s}>{section.heading}</Heading>
+      <p className="mt-5 text-lg leading-relaxed" style={{ color: s.inkMuted }}>{section.body}</p>
+    </div>
+  );
+
+  return (
+    <Band ctx={ctx} s={s} wide>
+      <div className={`grid ${ctx.rhythm.gap} ${media ? "lg:grid-cols-2 lg:items-center" : ""}`}>
+        {media && section.mediaSide === "left" && media}
+        {copy}
+        {media && section.mediaSide === "right" && media}
+      </div>
+      {section.featureStrip && <Strip items={section.featureStrip} ctx={ctx} s={s} />}
+    </Band>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// FAQ
+// ---------------------------------------------------------------------------
+
+function Faq({ section, ctx }: { section: Extract<PageSection, { type: "faq" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band);
+  const item = (q: string, a: string, key: number, boxed: boolean) => (
+    <div
+      key={key}
+      className={boxed ? "rounded-2xl border p-6" : "border-t py-6"}
+      style={boxed ? { backgroundColor: s.card, borderColor: s.border } : { borderColor: s.border }}
+    >
+      <dt className="text-base font-semibold" style={{ color: s.ink }}>{q}</dt>
+      <dd className="mt-2 text-sm leading-relaxed" style={{ color: s.inkMuted }}>{a}</dd>
+    </div>
+  );
+
+  return (
+    <Band ctx={ctx} s={s}>
+      <Heading ctx={ctx} s={s} className="max-w-2xl">{section.heading}</Heading>
+      <dl
+        className={`mt-10 ${
+          section.layout === "cards" ? "flex flex-col gap-5" : section.layout === "two-column" ? "grid gap-x-12 sm:grid-cols-2" : "flex flex-col"
+        }`}
+      >
+        {section.items.map((f, i) => item(f.question, f.answer, i, section.layout === "cards"))}
       </dl>
     </Band>
   );
 }
 
-function Gallery({ section, ctx, alt }: { section: Extract<PageSection, { type: "gallery" }>; ctx: Ctx; alt: boolean }) {
+// ---------------------------------------------------------------------------
+// Gallery
+// ---------------------------------------------------------------------------
+
+function Gallery({ section, ctx }: { section: Extract<PageSection, { type: "gallery" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band);
   return (
-    <Band ctx={ctx} alt={alt}>
-      <h2
-        className={`text-3xl font-bold tracking-tight sm:text-4xl ${ctx.headingClass}`}
-        style={{ color: ctx.palette.ink }}
-      >
-        {section.heading}
-      </h2>
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {section.photoSlots.map((slot) => (
-          <PhotoFrame key={slot.slotId} slot={slot} ctx={ctx} aspect="aspect-[4/3]" />
-        ))}
-      </div>
+    <Band ctx={ctx} s={s} wide>
+      <Heading ctx={ctx} s={s}>{section.heading}</Heading>
+      {section.layout === "grid" && (
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {section.photoSlots.map((slot) => (
+            <PhotoFrame key={slot.slotId} slot={slot} ctx={ctx} s={s} aspect="aspect-[4/3]" className="rounded-2xl" />
+          ))}
+        </div>
+      )}
+      {section.layout === "feature" && (
+        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+          {section.photoSlots.map((slot, i) => (
+            <PhotoFrame
+              key={slot.slotId}
+              slot={slot}
+              ctx={ctx}
+              s={s}
+              aspect={i === 0 ? "aspect-[16/10]" : "aspect-[4/3]"}
+              className={`rounded-2xl ${i === 0 ? "sm:col-span-2 sm:row-span-2" : ""}`}
+            />
+          ))}
+        </div>
+      )}
+      {section.layout === "strip" && (
+        <div className="mt-10 grid gap-4" style={{ gridTemplateColumns: `repeat(${Math.min(section.photoSlots.length, 4)}, minmax(0,1fr))` }}>
+          {section.photoSlots.slice(0, 4).map((slot) => (
+            <PhotoFrame key={slot.slotId} slot={slot} ctx={ctx} s={s} aspect="aspect-[3/4]" className="rounded-2xl" />
+          ))}
+        </div>
+      )}
     </Band>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Full-bleed pieces
+// ---------------------------------------------------------------------------
+
 function Notice({ section, ctx }: { section: Extract<PageSection, { type: "notice" }>; ctx: Ctx }) {
   const Icon = ICONS[section.icon];
   return (
-    <section className="px-5 py-6 sm:px-8" style={{ backgroundColor: ctx.accent }}>
+    <section className="px-5 py-7 sm:px-8" style={{ backgroundColor: ctx.accent }}>
       <div
         className="mx-auto flex max-w-5xl items-center justify-center gap-3 text-center text-base font-semibold"
         style={{ color: ctx.palette.onAccent }}
@@ -324,94 +576,79 @@ function Notice({ section, ctx }: { section: Extract<PageSection, { type: "notic
 }
 
 function CtaBand({ section, ctx }: { section: Extract<PageSection, { type: "ctaBand" }>; ctx: Ctx }) {
+  const s = surfaceFor(ctx, section.band === "plain" ? "tinted" : section.band);
   return (
-    <section className="px-5 py-16 sm:px-8 sm:py-20" style={{ backgroundColor: ctx.palette.surfaceAlt }}>
-      <div className="mx-auto flex max-w-3xl flex-col items-center gap-4 text-center">
-        <h2
-          className={`text-3xl font-bold tracking-tight sm:text-4xl ${ctx.headingClass}`}
-          style={{ color: ctx.palette.ink }}
-        >
-          {section.heading}
-        </h2>
+    <Band ctx={ctx} s={s}>
+      <div className="mx-auto flex max-w-3xl flex-col items-center gap-5 text-center">
+        <Heading ctx={ctx} s={s}>{section.heading}</Heading>
         {section.body && (
-          <p className="text-lg leading-relaxed" style={{ color: ctx.palette.inkMuted }}>
-            {section.body}
-          </p>
+          <p className="text-lg leading-relaxed" style={{ color: s.inkMuted }}>{section.body}</p>
         )}
       </div>
-    </section>
+    </Band>
   );
 }
 
+// ---------------------------------------------------------------------------
+
 export function GeneratedPage({
   plan,
-  businessName,
   brandColor,
   photos = {},
   contactActions,
 }: {
   plan: PagePlan;
-  businessName: string;
-  /** The member's own colour, which overrides the palette accent where they have one. */
+  /** The member's own colour, which overrides the palette accent where it stays readable. */
   brandColor?: string | null;
   photos?: Record<string, string>;
-  contactActions?: React.ReactNode;
+  contactActions?: ReactNode;
 }) {
   const palette = PALETTES[plan.palette];
-  const dark = isDarkPalette(plan.palette);
-  // The member's brand colour wins where it is readable on this palette's
-  // surface. Where it is not, the designed accent wins, because an unreadable
-  // page is worse than one slightly off-brand.
+  const pairing = TYPE_PAIRINGS[plan.typePairing];
   const accent = brandColor ? ensureContrast(brandColor, palette.surface) : palette.accent;
-  const headingFont = plan.headingFont as HeadingFontKey;
 
   const ctx: Ctx = {
     palette,
     accent,
-    dark,
-    headingClass: HEADING_FONT_CLASS[headingFont],
+    rhythm: RHYTHM[plan.rhythm],
+    headingClass: `${pairing.headingClass} ${pairing.headingTone}`,
+    eyebrowClass: pairing.eyebrowClass,
     photos,
-    businessName,
   };
 
-  // Alternating bands so consecutive sections separate without hairlines.
-  // Full-bleed sections (notice, cta) do not participate in the alternation.
-  let bandIndex = 0;
-
   return (
-    <main className={HEADING_FONT_VARIABLE[headingFont]} style={{ backgroundColor: palette.surface }}>
+    <main className={pairing.variable} style={{ backgroundColor: palette.surface }}>
       {plan.sections.map((section, i) => {
-        if (section.type === "hero") {
-          return (
-            <div key={i}>
-              <Hero section={section} ctx={ctx} />
-              {contactActions && (
-                <div className="px-5 pb-14 sm:px-8">
-                  <div className="mx-auto max-w-5xl">{contactActions}</div>
-                </div>
-              )}
-            </div>
-          );
-        }
-        if (section.type === "notice") return <Notice key={i} section={section} ctx={ctx} />;
-        if (section.type === "ctaBand") return <CtaBand key={i} section={section} ctx={ctx} />;
-
-        const alt = bandIndex++ % 2 === 1;
         switch (section.type) {
+          case "hero":
+            return (
+              <div key={i}>
+                <Hero section={section} ctx={ctx} />
+                {contactActions && (
+                  <div className="px-5 pb-12 sm:px-8" style={{ backgroundColor: palette.surface }}>
+                    <div className="mx-auto max-w-6xl">{contactActions}</div>
+                  </div>
+                )}
+              </div>
+            );
           case "intro":
-            return <Intro key={i} section={section} ctx={ctx} alt={alt} />;
+            return <Intro key={i} section={section} ctx={ctx} />;
           case "pillars":
-            return <Pillars key={i} section={section} ctx={ctx} alt={alt} />;
+            return <Pillars key={i} section={section} ctx={ctx} />;
           case "services":
-            return <Services key={i} section={section} ctx={ctx} alt={alt} />;
+            return <Services key={i} section={section} ctx={ctx} />;
           case "process":
-            return <Process key={i} section={section} ctx={ctx} alt={alt} />;
+            return <Process key={i} section={section} ctx={ctx} />;
           case "featureSplit":
-            return <FeatureSplit key={i} section={section} ctx={ctx} alt={alt} />;
+            return <FeatureSplit key={i} section={section} ctx={ctx} />;
           case "faq":
-            return <Faq key={i} section={section} ctx={ctx} alt={alt} />;
+            return <Faq key={i} section={section} ctx={ctx} />;
           case "gallery":
-            return <Gallery key={i} section={section} ctx={ctx} alt={alt} />;
+            return <Gallery key={i} section={section} ctx={ctx} />;
+          case "notice":
+            return <Notice key={i} section={section} ctx={ctx} />;
+          case "ctaBand":
+            return <CtaBand key={i} section={section} ctx={ctx} />;
         }
       })}
     </main>
