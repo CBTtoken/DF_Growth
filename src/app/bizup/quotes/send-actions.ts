@@ -226,6 +226,30 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   const title = documentTitle(docType, vendor);
   const amount = `${formatZar(doc.total_incl_cents)}${vendor ? " including VAT" : ""}`;
 
+  // The customer holding a quote and wanting to say yes had exactly one way
+  // to do it: reply to the email. That is the same mistake Growth pages made
+  // by hiding the number behind a form, and it costs the member work. Their
+  // own details go on the document email so a customer can phone, WhatsApp or
+  // reply, whichever suits them.
+  //
+  // Only rendered where the member has actually filled the field in. A dead
+  // link is worse than no link.
+  const waNumber = toWhatsAppNumber(account.whatsapp || account.phone);
+  const contactRows = [
+    account.phone
+      ? `<a href="tel:${account.phone.replace(/s+/g, "")}" style="color:#1d4ed8;text-decoration:none;">${account.phone}</a>`
+      : null,
+    waNumber ? `<a href="https://wa.me/${waNumber}" style="color:#1d4ed8;text-decoration:none;">WhatsApp</a>` : null,
+    account.email
+      ? `<a href="mailto:${account.email}" style="color:#1d4ed8;text-decoration:none;">${account.email}</a>`
+      : null,
+  ].filter(Boolean);
+
+  const contactBlock = contactRows.length
+    ? `<p style="margin-top:20px;">Any questions, you are welcome to get hold of ${account.business_name} directly:<br />
+       ${contactRows.join(" &nbsp;·&nbsp; ")}</p>`
+    : "";
+
   const body =
     docType === "invoice"
       ? `
@@ -235,6 +259,7 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
       ${doc.due_date ? `<p>Payment is due by <strong>${doc.due_date}</strong>.</p>` : ""}
       <p>When you pay, please use <strong>${doc.number}</strong> as your payment reference so we can match it to your account.</p>
       <p>Reply to this email if you have any questions.</p>
+      ${contactBlock}
       <p>${account.business_name}</p>
     `
       : docType === "credit_note"
@@ -244,6 +269,7 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
       <p><a href="${url}">View and download ${title.toLowerCase()} ${doc.number}</a></p>
       <p>This credits an amount previously invoiced to you. No payment is needed for this document.</p>
       <p>Reply to this email if you have any questions.</p>
+      ${contactBlock}
       <p>${account.business_name}</p>
     `
         : `
@@ -252,6 +278,7 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
       <p><a href="${url}">View and download quotation ${doc.number}</a></p>
       ${doc.valid_until ? `<p>This quotation is valid until <strong>${doc.valid_until}</strong>.</p>` : ""}
       <p>Reply to this email if you would like to go ahead, or if you have any questions.</p>
+      ${contactBlock}
       <p>${account.business_name}</p>
     `;
 
