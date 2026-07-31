@@ -103,6 +103,10 @@ export default async function BoardPage({
           <PostBar />
         </div>
 
+        <div className="mt-3">
+          <EventsPointer />
+        </div>
+
         <div className="mt-5">
           {posts.length === 0 ? (
             <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-neutral-border bg-white p-12 text-center">
@@ -129,10 +133,6 @@ export default async function BoardPage({
               ))}
             </div>
           )}
-        </div>
-
-        <div className="mt-6">
-          <EventsPointer />
         </div>
 
         {/* Moved below the posts. It is useful, and it is not what somebody

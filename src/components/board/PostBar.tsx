@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, ImagePlus, Plus, Tag } from "lucide-react";
+import { CalendarDays, ChevronRight, ImagePlus, Plus, Tag } from "lucide-react";
 
 // The status box, borrowed from the one everybody already uses.
 //
@@ -58,17 +58,27 @@ export function PostBar({ areaName }: { areaName?: string | null }) {
  * between the two.
  *
  * Dewald's decision: the board is notices and member specials, events have
- * their own section, and mixing them would clutter both. One quiet line
- * rather than a feature.
+ * their own section, and mixing them would clutter both.
+ *
+ * It started as a line of small grey text under the feed, which he found
+ * and called hidden. Fair: somebody about to put an event on the board has
+ * already decided what they are doing by the time they scroll past the
+ * posts. So it is a real button now, sitting under the post bar, which is
+ * exactly where that decision gets made.
  */
 export function EventsPointer() {
   return (
-    <p className="flex items-center justify-center gap-1.5 text-xs text-neutral-muted">
-      <CalendarDays size={13} />
-      Running an event?{" "}
-      <Link href="/events" className="font-semibold text-brand-blue underline-offset-2 hover:underline">
-        Use our events section
-      </Link>
-    </p>
+    <Link
+      href="/events"
+      className="flex items-center gap-2.5 rounded-2xl border border-brand-blue/20 bg-brand-blue-light px-3.5 py-2.5 transition-colors hover:border-brand-blue/40"
+    >
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white text-brand-blue shadow-sm">
+        <CalendarDays size={15} />
+      </span>
+      <span className="min-w-0 flex-1 text-sm font-semibold text-neutral-ink">
+        Running an event? <span className="font-normal text-neutral-mid">Use the events section</span>
+      </span>
+      <ChevronRight size={16} className="shrink-0 text-brand-blue" />
+    </Link>
   );
 }
