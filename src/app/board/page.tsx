@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Store } from "lucide-react";
+import { Store, UsersRound } from "lucide-react";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BoardPostCard } from "@/components/board/BoardPostCard";
@@ -67,7 +67,16 @@ export default async function BoardPage({
               Specials from local businesses, things for sale, and people looking for help.
             </p>
           </div>
-          <BoardMessagesLink unread={unread} />
+          <div className="flex items-center gap-2">
+            <Link
+              href="/board/contacts"
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-border bg-white px-4 py-2 text-sm font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
+            >
+              <UsersRound size={16} />
+              <span className="hidden sm:inline">Providers</span>
+            </Link>
+            <BoardMessagesLink unread={unread} />
+          </div>
         </div>
 
         <div className="mt-4">

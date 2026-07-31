@@ -6,6 +6,7 @@ import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { restoreComment, removeComment, hidePost, dismissPostReports } from "@/app/admin/board/actions";
+import { blockFromForm, unblockIdentity } from "@/app/admin/board/block-actions";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
@@ -21,7 +22,7 @@ type HeldComment = {
   body: string;
   held_reason: string | null;
   created_at: string;
-  board_identities: { display_name: string; email: string };
+  board_identities: { id: string; display_name: string; email: string | null; blocked_at: string | null };
   board_posts: { slug: string; title: string; growth_clients: { business_name: string } };
 };
 
@@ -35,7 +36,7 @@ export default async function AdminBoardPage() {
     admin
       .from("board_comments")
       .select(
-        "id, body, held_reason, created_at, board_identities!inner(display_name, email), board_posts!inner(slug, title, growth_clients!inner(business_name))"
+        "id, body, held_reason, created_at, board_identities!inner(id, display_name, email, blocked_at), board_posts!inner(slug, title, growth_clients!inner(business_name))"
       )
       .eq("status", "held")
       .order("created_at", { ascending: true }),
@@ -128,6 +129,40 @@ export default async function AdminBoardPage() {
                   >
                     See the post
                   </Link>
+                </div>
+
+                {/* Blocking the person rather than the message. A report
+                    deals with one comment, this deals with whoever keeps
+                    writing them. */}
+                <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-2">
+                  {comment.board_identities.blocked_at ? (
+                    <form action={unblockIdentity.bind(null, comment.board_identities.id)}>
+                      <button
+                        type="submit"
+                        className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 transition hover:border-gray-300"
+                      >
+                        Blocked, undo
+                      </button>
+                    </form>
+                  ) : (
+                    <form
+                      action={blockFromForm.bind(null, comment.board_identities.id)}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <input
+                        type="text"
+                        name="reason"
+                        placeholder="Why, for the record"
+                        className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs outline-none focus:border-brand"
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-full border border-red-200 bg-white px-4 py-2 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                      >
+                        Block this person
+                      </button>
+                    </form>
+                  )}
                 </div>
               </div>
             ))

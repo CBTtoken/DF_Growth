@@ -7,6 +7,7 @@ import { GET as expirePlanGrants } from "../expire-plan-grants/route";
 import { GET as bizupNotifications } from "../bizup-notifications/route";
 import { GET as bizupCheckins } from "../bizup-checkins/route";
 import { GET as retentionReport } from "../retention/route";
+import { GET as boardCleanup } from "../board-cleanup/route";
 
 // Every scheduled job shares one invocation instead of the separate
 // function budgets they had as individual endpoints, and several of them
@@ -53,6 +54,10 @@ export async function GET(request: Request) {
     // Reports what retention is due and writes the evidence row. Never
     // deletes: that is a button on /admin/retention.
     ["retentionReport", retentionReport],
+    // The ten day clear-out. Deletes on a schedule rather than queueing a
+    // decision, because a want-ad and a finished chat were both told up
+    // front that they last ten days. Never touches a business post.
+    ["boardCleanup", boardCleanup],
   ];
   // Screenshot refresh only needs to run weekly — real pages don't change
   // often enough to justify a daily capture, and running it daily would

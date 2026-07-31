@@ -52,12 +52,33 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
           fontFamily: "Barlow Condensed",
         }}
       >
+        {/* DF above the word, small. Dewald's ask, for the extra bit of
+            brand exposure every time somebody looks at their home screen.
+            Deliberately quiet: big enough to read, small enough that the
+            word underneath is still what the icon says. */}
         <div
           style={{
             display: "flex",
-            fontSize: size * 0.3 * scale,
+            fontSize: size * 0.15 * scale,
             fontWeight: 700,
-            letterSpacing: -size * 0.008,
+            letterSpacing: size * 0.02,
+            color: config.accent,
+            marginBottom: -size * 0.02 * scale,
+          }}
+        >
+          DF
+        </div>
+
+        {/* As large as it goes without crowding the edges. At 192 pixels
+            this fills the width with a hair of breathing room, which is
+            where a wordmark stops looking confident and starts looking
+            cramped. */}
+        <div
+          style={{
+            display: "flex",
+            fontSize: size * 0.36 * scale,
+            fontWeight: 700,
+            letterSpacing: -size * 0.01,
             color: "#ffffff",
             textTransform: "lowercase",
           }}
@@ -71,11 +92,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
         <div
           style={{
             display: "flex",
-            width: size * 0.22 * scale,
-            height: Math.max(size * 0.035 * scale, 3),
+            width: size * 0.26 * scale,
+            height: Math.max(size * 0.028 * scale, 3),
             borderRadius: size,
             backgroundColor: config.accent,
-            marginTop: size * 0.05 * scale,
+            marginTop: size * 0.04 * scale,
           }}
         />
       </div>
