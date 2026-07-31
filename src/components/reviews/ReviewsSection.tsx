@@ -51,18 +51,24 @@ export function ReviewsSection({
   businessId,
   reviews,
   accentColor,
-  eyebrowNumber,
   anchor,
 }: {
   businessId: string;
   reviews: PublicReview[];
   accentColor: string;
-  eyebrowNumber: string;
   anchor?: TemplateAnchor;
 }) {
   const list = reviews;
   const count = list.length;
   const average = count > 0 ? list.reduce((sum, r) => sum + r.rating, 0) / count : 0;
+
+  // Handoff 01 D: a member with no reviews used to get a section announcing
+  // exactly that ("No reviews yet. Be the first."), which advertises
+  // emptiness to their customers. The section now does not appear at all
+  // until there is something in it. Members can still collect their first
+  // review through the direct link at /{slug}/review, which is what they
+  // send a customer after a job.
+  if (count === 0) return null;
 
   if (!anchor) {
     return (
@@ -72,23 +78,19 @@ export function ReviewsSection({
             className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base"
             style={{ color: accentColor }}
           >
-            {eyebrowNumber} · Reviews
+            Reviews
           </p>
 
           <div className="mt-4 flex flex-wrap items-center gap-6">
-            {count > 0 ? (
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-ink">{average.toFixed(1)}</span>
-                <div className="flex flex-col">
-                  <span style={{ color: accentColor }}>{"★".repeat(Math.round(average))}</span>
-                  <span className="text-sm text-gray-500">
-                    {count} review{count === 1 ? "" : "s"}
-                  </span>
-                </div>
+            <div className="flex items-center gap-3">
+              <span className="text-3xl font-bold text-ink">{average.toFixed(1)}</span>
+              <div className="flex flex-col">
+                <span style={{ color: accentColor }}>{"★".repeat(Math.round(average))}</span>
+                <span className="text-sm text-gray-500">
+                  {count} review{count === 1 ? "" : "s"}
+                </span>
               </div>
-            ) : (
-              <p className="text-sm text-gray-500">No reviews yet. Be the first.</p>
-            )}
+            </div>
             <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
           </div>
 
@@ -158,19 +160,13 @@ export function ReviewsSection({
     const rest = list.slice(4);
     body = (
       <div className="mt-8 flex flex-col items-center gap-3 text-center">
-        {count > 0 ? (
-          <>
-            <span className={`text-6xl font-bold ${headingClass}`}>{average.toFixed(1)}</span>
-            <span className="text-2xl" style={{ color: accentColor }}>
-              {"★".repeat(Math.round(average))}
-            </span>
-            <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-              Based on {count} review{count === 1 ? "" : "s"}
-            </span>
-          </>
-        ) : (
-          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet. Be the first.</p>
-        )}
+        <span className={`text-6xl font-bold ${headingClass}`}>{average.toFixed(1)}</span>
+        <span className="text-2xl" style={{ color: accentColor }}>
+          {"★".repeat(Math.round(average))}
+        </span>
+        <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+          Based on {count} review{count === 1 ? "" : "s"}
+        </span>
         <div className="mt-2">
           <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
         </div>
@@ -195,19 +191,15 @@ export function ReviewsSection({
     body = (
       <>
         <div className="mt-4 flex flex-wrap items-center gap-6">
-          {count > 0 ? (
-            <div className="flex items-center gap-3">
-              <span className={`text-3xl font-bold ${headingClass}`}>{average.toFixed(1)}</span>
-              <div className="flex flex-col">
-                <span style={{ color: accentColor }}>{"★".repeat(Math.round(average))}</span>
-                <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                  {count} review{count === 1 ? "" : "s"}
-                </span>
-              </div>
+          <div className="flex items-center gap-3">
+            <span className={`text-3xl font-bold ${headingClass}`}>{average.toFixed(1)}</span>
+            <div className="flex flex-col">
+              <span style={{ color: accentColor }}>{"★".repeat(Math.round(average))}</span>
+              <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                {count} review{count === 1 ? "" : "s"}
+              </span>
             </div>
-          ) : (
-            <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet. Be the first.</p>
-          )}
+          </div>
           <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
         </div>
 
@@ -227,7 +219,7 @@ export function ReviewsSection({
     <section id="reviews" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · Reviews
+          Reviews
         </p>
 
         {body}

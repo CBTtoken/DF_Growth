@@ -46,8 +46,6 @@ export default async function TemplatePreviewPage({
   const packages = SAMPLE_DATA.packages;
 
   if (templateId === "conversion") {
-    let n = 0;
-    const num = () => String(++n).padStart(2, "0");
     return (
       <main>
         <ConversionHero
@@ -62,16 +60,14 @@ export default async function TemplatePreviewPage({
         />
         <AboutSection
           businessName={SAMPLE_DATA.businessName}
-          tagline={SAMPLE_DATA.tagline}
           aboutText={SAMPLE_DATA.aboutText}
           accentColor={accentColor}
-          eyebrowNumber={num()}
         />
-        <StorySection storyText={SAMPLE_DATA.additionalNotes} accentColor={accentColor} eyebrowNumber={num()} />
-        <ServicesList servicesText={SAMPLE_DATA.servicesText} accentColor={accentColor} eyebrowNumber={num()} />
-        <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={num()} />
-        <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={num()} />
-        <LocationMap businessAddress={SAMPLE_DATA.businessAddress} accentColor={accentColor} eyebrowNumber={num()} />
+        <StorySection storyText={SAMPLE_DATA.additionalNotes} accentColor={accentColor} />
+        <ServicesList servicesText={SAMPLE_DATA.servicesText} accentColor={accentColor} />
+        <PackagesSection packages={packages} accentColor={accentColor} />
+        <TrustBadges testimonials={testimonials} accentColor={accentColor} />
+        <LocationMap businessAddress={SAMPLE_DATA.businessAddress} accentColor={accentColor} />
         <PreviewLeadForm primaryColor={primaryColor} />
       </main>
     );
@@ -92,9 +88,6 @@ export default async function TemplatePreviewPage({
 
   const checklistItems = SAMPLE_DATA.servicesText.split("\n");
 
-  let sectionCount = 0;
-  const nextNumber = () => String(++sectionCount).padStart(2, "0");
-
   const anchor = getAnchor(template.id);
   // Dark Mode pilot rebuild: accentColor was only ever contrast-checked
   // against white, even for a dark-surface anchor — a client color that
@@ -107,16 +100,13 @@ export default async function TemplatePreviewPage({
   const galleryStorageBase = "https://images.pexels.com";
 
   const renderSection = (key: SectionKey) => {
-    const number = nextNumber();
     switch (key) {
       case "about":
         return (
           <AboutSection
             businessName={SAMPLE_DATA.businessName}
-            tagline={SAMPLE_DATA.tagline}
             aboutText={SAMPLE_DATA.aboutText}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
@@ -125,7 +115,6 @@ export default async function TemplatePreviewPage({
           <StorySection
             storyText={SAMPLE_DATA.additionalNotes}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
@@ -134,20 +123,18 @@ export default async function TemplatePreviewPage({
           <ServicesList
             servicesText={SAMPLE_DATA.servicesText}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "packages":
         return (
-          <PackagesSection packages={packages} accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />
+          <PackagesSection packages={packages} accentColor={anchorAccentColor} anchor={anchor} />
         );
       case "trust":
         return (
           <TrustBadges
             testimonials={testimonials}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
@@ -157,7 +144,6 @@ export default async function TemplatePreviewPage({
             photos={SAMPLE_DATA.photos}
             storageBase={galleryStorageBase}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
@@ -166,19 +152,17 @@ export default async function TemplatePreviewPage({
           <LocationMap
             businessAddress={SAMPLE_DATA.businessAddress}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "howItWorks":
-        return <HowItWorksSection accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />;
+        return <HowItWorksSection accentColor={anchorAccentColor} anchor={anchor} />;
       case "reviews":
         return (
           <ReviewsSection
             businessId="preview"
             reviews={SAMPLE_DATA.reviews}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );

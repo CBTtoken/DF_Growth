@@ -23,19 +23,17 @@ const steps = [
 
 export function HowItWorksSection({
   accentColor,
-  eyebrowNumber,
   anchor,
 }: {
   accentColor: string;
-  eyebrowNumber: string;
   anchor?: TemplateAnchor;
 }) {
   if (!anchor) {
     return (
-      <section className="border-b border-gray-100 bg-white">
+      <section id="how-it-works" className="border-b border-gray-100 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-            {eyebrowNumber} · How it works
+            How it works
           </p>
           <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
             Three simple steps.
@@ -63,11 +61,14 @@ export function HowItWorksSection({
   const isDark = anchor.sectionSurface === "dark";
   const cardIsDark = anchor.cardRecipe === "dark-panel";
 
+  // Handoff 01 D: TimelineHero's "See the full process ↓" has always pointed
+  // at #how-it-works, and this section never carried that id, so the link did
+  // nothing on every step-by-step page.
   return (
-    <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
+    <section id="how-it-works" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · How it works
+          How it works
         </p>
         <h2
           className={`mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}

@@ -19,13 +19,11 @@ export function PhotoGallerySection({
   photos,
   storageBase,
   accentColor,
-  eyebrowNumber,
   anchor,
 }: {
   photos: Photo[];
   storageBase: string;
   accentColor: string;
-  eyebrowNumber: string;
   anchor?: TemplateAnchor;
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -39,7 +37,7 @@ export function PhotoGallerySection({
       <section className="border-b border-gray-100 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-            {eyebrowNumber} · Gallery
+            Gallery
           </p>
           <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
             {photos.map((photo, i) => (
@@ -97,7 +95,7 @@ export function PhotoGallerySection({
     <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · Gallery
+          Gallery
         </p>
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
           {photos.map((photo, i) => (

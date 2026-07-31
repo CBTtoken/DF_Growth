@@ -9,6 +9,7 @@ import type { PublicBookableUnit } from "@/components/landing/BookingSection";
 import type { PublicShopProduct } from "@/components/landing/ShopSection";
 import type { PublicReview } from "@/components/reviews/ReviewsSection";
 import { truncateOnWord } from "@/lib/text";
+import { memberPageTitle, firstProse } from "@/lib/landing/page-copy";
 import { getLiveAgentPage, getAgentSocialProof, getProofPages, getAgentPageByFormerSlug } from "@/lib/agent-page/data";
 import { AgentPageView } from "@/components/agent-page/AgentPageView";
 import { agentPageMetadata } from "@/lib/agent-page/og";
@@ -78,7 +79,7 @@ export async function generateMetadata({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification, industry, city, landing_pages!inner(page_type, custom_page_key)"
+      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification, industry, city, landing_pages!inner(page_type, custom_page_key, services_text, about_text)"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -107,7 +108,12 @@ export async function generateMetadata({
   // landing_pages.growth_client_id alone — see init_schema.sql), so this
   // comes back as an array even filtered down to one row by the query
   // above; `!inner` + the dot-filter already guarantees at least one match.
-  const landingPages = client.landing_pages as unknown as { page_type: string; custom_page_key: string | null }[];
+  const landingPages = client.landing_pages as unknown as {
+    page_type: string;
+    custom_page_key: string | null;
+    services_text: string | null;
+    about_text: string | null;
+  }[];
   const customCheck = landingPages[0];
   if (customCheck?.page_type === "custom") {
     const meta = getCustomPageMeta(customCheck.custom_page_key);
@@ -122,23 +128,42 @@ export async function generateMetadata({
     };
   }
 
-  // SEO fix: title used to be just the bare business name, relying
-  // entirely on the root layout's "%s | DigitalFlyer Growth" template for
-  // any context at all — no industry or city, so Google had nothing to
-  // match against an unbranded local search ("plumber in Boksburg"). The
-  // layout template still adds the brand suffix automatically, this just
-  // adds the middle segment. Falls back gracefully — a business missing
-  // industry or city keeps a shorter title rather than a broken one with
-  // stray "in undefined" text.
-  const locationSegment = [client.industry, client.city].filter(Boolean).join(" in ");
-  const title = locationSegment ? `${client.business_name} | ${locationSegment}` : client.business_name;
+  // Handoff 01 G. Three things were wrong with the old title, which read
+  // `{Business} | {Category} in {City}` and then had "| DigitalFlyer Growth"
+  // appended by the root layout's `title.template`:
+  //
+  // 1. The category is a taxonomy label, not the member's trade, so a tattoo
+  //    studio published as "General Beauty & Wellness". The member's own
+  //    first service line now wins where they have typed one.
+  // 2. "General " is filing shorthand and reads as an error in a search
+  //    result. Stripped everywhere it is rendered.
+  // 3. The brand suffix made every member's page look like ours. `absolute`
+  //    opts this route out of the layout template.
+  //
+  // The brief also asks for suburb alongside city. growth_clients has no
+  // suburb column, only free-text business_address, city and province, so
+  // city is as fine-grained as this can honestly get today.
+  const title = memberPageTitle({
+    businessName: client.business_name,
+    industry: client.industry,
+    servicesText: customCheck?.services_text,
+    city: client.city,
+  });
   // Agent Programme Phase 0.4: this was a raw .slice(160), which cut mid-word
   // ("...and for my bu") straight into Google results and WhatsApp link
-  // previews. The tagline is truncated too, since a long one hit the same
-  // wall at render time.
+  // previews.
+  //
+  // Handoff 01 A: the tagline no longer comes first. That column holds values
+  // stored hard-cut at 80 characters for a number of live members, so
+  // preferring it meant re-truncating an already-broken string and publishing
+  // the result to Google. The page's own about copy is the best description a
+  // member has, business_description is raw intake text, and firstProse skips
+  // any candidate that is not actually a sentence. 155 rather than 160 leaves
+  // room for the ellipsis inside the usual snippet width.
   const description = truncateOnWord(
-    client.tagline || client.business_description || `${client.business_name} on DigitalFlyer.`,
-    160
+    firstProse(customCheck?.about_text, client.business_description, client.tagline) ??
+      `${client.business_name} on DigitalFlyer.`,
+    155
   );
   const image = client.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
@@ -146,7 +171,7 @@ export async function generateMetadata({
   const url = `/${clientSlug}`;
 
   return {
-    title,
+    title: { absolute: title },
     description,
     alternates: { canonical: url },
     openGraph: { title, description, url, images: [image] },
@@ -187,7 +212,7 @@ export default async function ClientLandingPage({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      `id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, meta_pixel_id, hero_photo_id, booking_enabled, shop_enabled, shop_flat_delivery_cents, shop_free_delivery_over_cents, fallback_photo_url,
+      `id, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, tagline, business_address, packages, logo_path, additional_notes, facebook_url, instagram_url, website_url, template, industry, city, province, meta_pixel_id, hero_photo_id, booking_enabled, shop_enabled, shop_flat_delivery_cents, shop_free_delivery_over_cents, fallback_photo_url,
       landing_pages!inner(id, headline, subheadline, about_text, services_text, cta_label, page_type, custom_page_key),
       testimonials(id, author_name, quote, rating),
       client_photos!client_photos_growth_client_id_fkey(id, storage_path),
@@ -299,10 +324,15 @@ export default async function ClientLandingPage({
     /* eslint-enable react-hooks/static-components */
   }
 
+  // Handoff 01 E: ClientPageNavBar used to sit here, above the member's own
+  // hero, showing the DigitalFlyer logo linked to /pricing and a "← Marketplace"
+  // back-link. On a member's page the member is the brand, so their name and
+  // logo is now the topmost element and our attribution is a single line in
+  // the footer, linking to the marketplace rather than to pricing. The strip
+  // stays on custom pages above, which are ours rather than a member's.
   return (
     <>
       <PageViewTracker slug={clientSlug} />
-      <ClientPageNavBar />
       <ClientLandingPageView
         client={client}
         landingPage={landingPage}

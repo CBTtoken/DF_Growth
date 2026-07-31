@@ -13,15 +13,20 @@ import {
 // Server component. servicesText is stored as plain text, one service per
 // line (see src/lib/ai/draft-copy.ts and the Landing Copy step) so it stays
 // a normal editable textarea rather than needing a dynamic list-editor UI.
+// Handoff 01 F: the heading here used to be the literal string "Everything
+// you need, in one place." on every page ever generated, which is the single
+// loudest tell that these pages come out of a template. It now comes from the
+// caller, derived from the member's own trade or industry, and falls back to
+// a plain "Services" rather than to marketing copy.
 export function ServicesList({
   servicesText,
+  heading = "Services",
   accentColor,
-  eyebrowNumber,
   anchor,
 }: {
   servicesText: string | null;
+  heading?: string;
   accentColor: string;
-  eyebrowNumber: string;
   anchor?: TemplateAnchor;
 }) {
   const services = (servicesText ?? "")
@@ -36,10 +41,10 @@ export function ServicesList({
       <section id="services" className="border-b border-gray-100 bg-gray-50">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-            {eyebrowNumber} · What we offer
+            What we offer
           </p>
           <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
-            Everything you need, in one place.
+            {heading}
           </h2>
 
           <ul className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -160,10 +165,10 @@ export function ServicesList({
     <section id="services" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-gray-50"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · What we offer
+          What we offer
         </p>
         <h2 className={`mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${headingClass}`}>
-          Everything you need, in one place.
+          {heading}
         </h2>
 
         {body}

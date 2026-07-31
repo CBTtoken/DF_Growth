@@ -22,12 +22,10 @@ type Testimonial = {
 export function TrustBadges({
   testimonials,
   accentColor,
-  eyebrowNumber,
   anchor,
 }: {
   testimonials: Testimonial[];
   accentColor: string;
-  eyebrowNumber: string;
   anchor?: TemplateAnchor;
 }) {
   // Combined spec Sec 2: this "Secure payment via Paystack" badge used to
@@ -44,7 +42,7 @@ export function TrustBadges({
         {testimonials.length > 0 && (
           <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
             <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-              {eyebrowNumber} · What people say
+              What people say
             </p>
             <div className="mt-10 flex w-full gap-4 overflow-x-auto pb-2">
               {testimonials.map((t) => (
@@ -133,7 +131,7 @@ export function TrustBadges({
       {testimonials.length > 0 && (
         <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
           <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-            {eyebrowNumber} · What people say
+            What people say
           </p>
           {body}
         </div>

@@ -12,19 +12,20 @@ import {
 // Server component, no client JS — same reasoning as TrustBadges. Renders
 // nothing if there's no about copy yet (a client who hasn't been through the
 // AI-assisted Landing Copy step, or skipped it, shouldn't get a blank box).
+// Handoff 01 A: the tagline used to render as a summary line directly above
+// the full about body, which repeated it and, worse, exposed the stored
+// tagline's hard 80-character cut mid-word on live pages ("...one of your
+// most valuable as"). The about section now shows the about body only. The
+// tagline is still the hero's and the marketplace card's job.
 export function AboutSection({
   businessName,
-  tagline,
   aboutText,
   accentColor,
-  eyebrowNumber,
   anchor,
 }: {
   businessName: string;
-  tagline: string | null;
   aboutText: string | null;
   accentColor: string;
-  eyebrowNumber: string;
   anchor?: TemplateAnchor;
 }) {
   if (!aboutText) return null;
@@ -40,14 +41,13 @@ export function AboutSection({
           <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
             <div>
               <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-                {eyebrowNumber} · About
+                About
               </p>
               <h2 className="mt-3 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
                 About {businessName}
               </h2>
             </div>
             <div>
-              {tagline && <p className="mb-3 text-base font-medium text-gray-500">{tagline}</p>}
               <p className="text-lg leading-relaxed text-gray-600">{aboutText}</p>
             </div>
           </div>
@@ -67,7 +67,7 @@ export function AboutSection({
         <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_1.4fr] md:gap-14">
           <div>
             <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-              {eyebrowNumber} · About
+              About
             </p>
             <h2
               className={`mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}
@@ -76,9 +76,6 @@ export function AboutSection({
             </h2>
           </div>
           <div>
-            {tagline && (
-              <p className={`mb-3 text-base font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>{tagline}</p>
-            )}
             <p className={`text-lg leading-relaxed ${SURFACE_BODY_CLASS[anchor.sectionSurface]}`}>{aboutText}</p>
           </div>
         </div>

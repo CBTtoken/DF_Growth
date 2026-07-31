@@ -66,7 +66,11 @@ export function ShowcaseHero({
         </a>
       </div>
 
-      <div className="relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pb-16 pt-6 sm:px-8 lg:grid-cols-[1fr_1fr] lg:gap-14 lg:pb-24 lg:pt-10">
+      <div
+        className={`relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-5 pb-16 pt-6 sm:px-8 lg:gap-14 lg:pb-24 lg:pt-10 ${
+          cards.length > 0 ? "lg:grid-cols-[1fr_1fr]" : ""
+        }`}
+      >
         <div className="flex flex-col items-start gap-6">
           <span
             className="inline-flex items-center gap-2 rounded-full border px-4 py-1.5 font-mono text-xs uppercase tracking-[0.2em]"
@@ -99,31 +103,34 @@ export function ShowcaseHero({
           </div>
         </div>
 
-        <div className="flex flex-col gap-3">
-          {(cards.length > 0
-            ? cards
-            : [{ name: `What ${businessName} offers`, price: null }]
-          ).map((card, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between gap-4 rounded-2xl bg-white p-5 shadow-xl ring-1 ring-black/5"
-              style={{ marginLeft: `${i * 1.25}rem` }}
-            >
-              <div className="min-w-0">
-                <p className="truncate text-base font-bold text-gray-900">{card.name}</p>
-                <p className="text-sm text-gray-500">Tap through to see the details</p>
+        {/* Handoff 01 D: a member with no packages used to get a single
+            placeholder card reading "What {business} offers" with the
+            sub-line "Tap through to see the details" and nothing to tap
+            through to, which is what the audit found live on /tats-by-mags.
+            No packages now means no card stack at all, and the sub-line is
+            gone entirely: these cards are a preview, not a link, so it was
+            never true even when packages did exist. */}
+        {cards.length > 0 && (
+          <div className="flex flex-col gap-3">
+            {cards.map((card, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between gap-4 rounded-2xl bg-white p-5 shadow-xl ring-1 ring-black/5"
+                style={{ marginLeft: `${i * 1.25}rem` }}
+              >
+                <p className="min-w-0 truncate text-base font-bold text-gray-900">{card.name}</p>
+                {card.price && (
+                  <span
+                    className="shrink-0 rounded-full px-3 py-1.5 text-sm font-bold"
+                    style={{ backgroundColor: `${priceTextColor}14`, color: priceTextColor }}
+                  >
+                    {card.price}
+                  </span>
+                )}
               </div>
-              {card.price && (
-                <span
-                  className="shrink-0 rounded-full px-3 py-1.5 text-sm font-bold"
-                  style={{ backgroundColor: `${priceTextColor}14`, color: priceTextColor }}
-                >
-                  {card.price}
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </header>
   );

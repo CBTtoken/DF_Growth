@@ -52,12 +52,10 @@ function formatPrice(price: string): string {
 export function PackagesSection({
   packages,
   accentColor,
-  eyebrowNumber,
   anchor,
 }: {
   packages: Package[];
   accentColor: string;
-  eyebrowNumber: string;
   anchor?: TemplateAnchor;
 }) {
   if (!packages || packages.length === 0) return null;
@@ -73,7 +71,7 @@ export function PackagesSection({
       <section id="packages" className="border-b border-gray-100 bg-gray-50">
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-8 sm:py-16">
           <p className="font-mono text-sm font-semibold uppercase tracking-[0.2em] sm:text-base" style={{ color: accentColor }}>
-            {eyebrowNumber} · {title}
+            {title}
           </p>
           <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
             Pick what fits you.
@@ -293,7 +291,7 @@ export function PackagesSection({
     <section id="packages" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-gray-50"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · {title}
+          {title}
         </p>
         <h2 className={`mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${headingClass}`}>
           Pick what fits you.

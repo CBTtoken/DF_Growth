@@ -90,13 +90,18 @@ export function BentoHero({
             >
               {ctaLabel}
             </a>
-            <a
-              href="#services"
-              className="text-sm font-medium underline-offset-4 opacity-85 hover:underline"
-              style={{ color: textColor }}
-            >
-              See everything we do ↓
-            </a>
+            {/* Handoff 01 D: #services does not exist for a member who has
+                not typed any services, and this link pointed at it
+                regardless. */}
+            {tiles.length > 0 && (
+              <a
+                href="#services"
+                className="text-sm font-medium underline-offset-4 opacity-85 hover:underline"
+                style={{ color: textColor }}
+              >
+                See everything we do ↓
+              </a>
+            )}
           </div>
         </div>
 

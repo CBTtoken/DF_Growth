@@ -29,6 +29,7 @@ import { BentoHero } from "@/components/landing/heroes/BentoHero";
 import { TimelineHero } from "@/components/landing/heroes/TimelineHero";
 import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
 import { ensureContrast } from "@/lib/color";
+import { resolveLocation, servicesHeading } from "@/lib/landing/page-copy";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
 
@@ -51,6 +52,9 @@ type ClientData = {
   template: string | null;
   industry: string | null;
   city: string | null;
+  // Handoff 01 C: needed to build a map query that actually resolves.
+  // Optional because the sample/preview call sites do not fetch it.
+  province?: string | null;
   meta_pixel_id: string | null;
   hero_photo_id: string | null;
   // Optional: marketplace/sample preview call sites don't fetch this, and a
@@ -143,21 +147,42 @@ export async function ClientLandingPageView({
         }
       : null;
 
+  // Handoff 01 D, the one rule the whole page now obeys: "a section with no
+  // content does not render, and a call to action that targets a section that
+  // did not render does not render either."
+  //
+  // This map used to exist only to drive eyebrow numbering, and two of its
+  // entries lied about what actually rendered (reviews claimed content it did
+  // not have; location claimed an address it could not place). It is now the
+  // single source of truth for what appears on the page, and every hero link
+  // that targets a section is gated on it.
+  const serviceLines = (landingPage.services_text ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
   const hasContent: Record<SectionKey, boolean> = {
     about: Boolean(landingPage.about_text),
     story: Boolean(client.additional_notes),
-    services: Boolean(landingPage.services_text?.trim()),
+    services: serviceLines.length > 0,
     packages: packages.length > 0,
     trust: testimonials.length > 0,
     gallery: photos.length >= 2,
-    location: Boolean(client.business_address) && client.business_address !== "Online",
+    // Matches LocationMap's own decision exactly, rather than approximating
+    // it: an address it cannot confidently place renders as an area line, and
+    // no address at all renders nothing.
+    location: resolveLocation({
+      businessAddress: client.business_address,
+      city: client.city,
+      province: client.province,
+    }).kind !== "none",
     howItWorks: true,
-    // Always present — ReviewsSection itself never returns null (Sec 5:
-    // the section is the call-to-action to leave the first review when
-    // there are none yet), so it always gets a real number, matching every
-    // other section whose hasContent mirrors whether it actually renders.
-    reviews: true,
+    reviews: reviews.length > 0,
   };
+
+  // Handoff 01 F: replaces "Everything you need, in one place.", which was
+  // above the services list of every page this platform has ever generated.
+  const servicesSectionHeading = servicesHeading({ industry: client.industry });
 
   const template = getTemplate(templateOverride !== undefined ? templateOverride : client.template);
 
@@ -209,6 +234,14 @@ export async function ClientLandingPageView({
     </div>
   );
 
+  // Handoff 01 E: the DigitalFlyer logo used to sit in a strip above the
+  // member's own hero, linking to our pricing page, so the member's page
+  // marketed us above them. The member's name and logo is now the topmost
+  // brand element and our attribution is one line down here, pointing at the
+  // marketplace (where a visitor might find another business) rather than at
+  // pricing (which is for people who want to buy a page, not for this
+  // business's customers). "Manage this page" is the member's own link and
+  // stays.
   const footer = (
     <footer className="bg-white py-6 text-center text-xs text-gray-400">
       © {new Date().getFullYear()} {client.business_name} ·{" "}
@@ -223,6 +256,12 @@ export async function ClientLandingPageView({
       <Link href="/terms" className="underline-offset-2 hover:text-gray-600 hover:underline">
         Terms &amp; Conditions
       </Link>
+      <span className="mt-2 block">
+        Page by{" "}
+        <Link href="/marketplace" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          DigitalFlyer
+        </Link>
+      </span>
     </footer>
   );
 
@@ -242,18 +281,12 @@ export async function ClientLandingPageView({
   );
 
   // Every template-less client keeps exactly the original hand-built layout.
+  //
+  // Handoff 01 F: the "01 ·", "02 ·" section eyebrows that used to be
+  // calculated here are gone. They were a template tell in the most literal
+  // sense: no small business numbers the sections of its own website, and
+  // every page carrying them read as output from the same machine.
   if (!template) {
-    let sectionCount = 0;
-    const nextNumber = (present: boolean) => (present ? String(++sectionCount).padStart(2, "0") : "");
-    const aboutNumber = nextNumber(hasContent.about);
-    const storyNumber = nextNumber(hasContent.story);
-    const servicesNumber = nextNumber(hasContent.services);
-    const packagesNumber = nextNumber(hasContent.packages);
-    const trustNumber = nextNumber(hasContent.trust);
-    const galleryNumber = nextNumber(hasContent.gallery);
-    const locationNumber = nextNumber(hasContent.location);
-    const reviewsNumber = nextNumber(hasContent.reviews);
-
     return (
       <main>
         {previewBanner}
@@ -272,50 +305,60 @@ export async function ClientLandingPageView({
           instagramUrl={client.instagram_url}
           websiteUrl={client.website_url}
         />
-        <ScrollReveal>
-          <AboutSection
-            businessName={client.business_name}
-            tagline={client.tagline}
-            aboutText={landingPage.about_text}
-            accentColor={accentColor}
-            eyebrowNumber={aboutNumber}
-          />
-        </ScrollReveal>
+        {hasContent.about && (
+          <ScrollReveal>
+            <AboutSection
+              businessName={client.business_name}
+              aboutText={landingPage.about_text}
+              accentColor={accentColor}
+            />
+          </ScrollReveal>
+        )}
         {packages.length === 0 && <EarlyContactCta accentColor={accentColor} />}
-        <ScrollReveal>
-          <StorySection storyText={client.additional_notes} accentColor={accentColor} eyebrowNumber={storyNumber} />
-        </ScrollReveal>
-        <ScrollReveal>
-          <ServicesList
-            servicesText={landingPage.services_text}
-            accentColor={accentColor}
-            eyebrowNumber={servicesNumber}
-          />
-        </ScrollReveal>
-        <ScrollReveal>
-          <PackagesSection packages={packages} accentColor={accentColor} eyebrowNumber={packagesNumber} />
-        </ScrollReveal>
-        <ScrollReveal>
-          <TrustBadges testimonials={testimonials} accentColor={accentColor} eyebrowNumber={trustNumber} />
-        </ScrollReveal>
-        <ScrollReveal>
-          <PhotoGallerySection
-            photos={photos}
-            storageBase={photosStorageBase}
-            accentColor={accentColor}
-            eyebrowNumber={galleryNumber}
-          />
-        </ScrollReveal>
-        <ScrollReveal>
-          <LocationMap
-            businessAddress={client.business_address}
-            accentColor={accentColor}
-            eyebrowNumber={locationNumber}
-          />
-        </ScrollReveal>
-        <ScrollReveal>
-          <ReviewsSection businessId={client.id} reviews={reviews} accentColor={accentColor} eyebrowNumber={reviewsNumber} />
-        </ScrollReveal>
+        {hasContent.story && (
+          <ScrollReveal>
+            <StorySection storyText={client.additional_notes} accentColor={accentColor} />
+          </ScrollReveal>
+        )}
+        {hasContent.services && (
+          <ScrollReveal>
+            <ServicesList
+              servicesText={landingPage.services_text}
+              heading={servicesSectionHeading}
+              accentColor={accentColor}
+            />
+          </ScrollReveal>
+        )}
+        {hasContent.packages && (
+          <ScrollReveal>
+            <PackagesSection packages={packages} accentColor={accentColor} />
+          </ScrollReveal>
+        )}
+        {hasContent.trust && (
+          <ScrollReveal>
+            <TrustBadges testimonials={testimonials} accentColor={accentColor} />
+          </ScrollReveal>
+        )}
+        {hasContent.gallery && (
+          <ScrollReveal>
+            <PhotoGallerySection photos={photos} storageBase={photosStorageBase} accentColor={accentColor} />
+          </ScrollReveal>
+        )}
+        {hasContent.location && (
+          <ScrollReveal>
+            <LocationMap
+              businessAddress={client.business_address}
+              city={client.city}
+              province={client.province}
+              accentColor={accentColor}
+            />
+          </ScrollReveal>
+        )}
+        {hasContent.reviews && (
+          <ScrollReveal>
+            <ReviewsSection businessId={client.id} reviews={reviews} accentColor={accentColor} />
+          </ScrollReveal>
+        )}
         {bookingSection}
         {shopSection}
         <ScrollReveal>
@@ -351,11 +394,15 @@ export async function ClientLandingPageView({
     photoUrl = heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : (client.fallback_photo_url ?? null);
   }
 
-  const checklistItems = (landingPage.services_text ?? "")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .slice(0, 6);
+  // Handoff 01 B: /seven-passes-initiative rendered its complete service list
+  // twice, once inside the hero's browser frame and again under the services
+  // section. ChecklistHero is the only hero that shows the list in full, so
+  // that template's standalone services section is dropped below and the hero
+  // gets every service rather than a silently truncated first six. BentoHero
+  // (4 tiles) and TimelineHero (3 steps) show a strict subset and link onward
+  // to the full section, which is a preview rather than a duplicate, so they
+  // are left alone and cap themselves.
+  const heroOwnsServiceList = template.hero === "checklist";
 
   const heroProps = {
     businessName: client.business_name,
@@ -370,9 +417,6 @@ export async function ClientLandingPageView({
     websiteUrl: client.website_url,
   };
 
-  let sectionCount = 0;
-  const nextNumber = (present: boolean) => (present ? String(++sectionCount).padStart(2, "0") : "");
-
   const anchor = getAnchor(template.id);
   // Dark Mode pilot rebuild: accentColor was only ever contrast-checked
   // against white, even for a dark-surface anchor — a client color that
@@ -381,57 +425,37 @@ export async function ClientLandingPageView({
   const anchorAccentColor = ensureContrast(primaryColor, anchor.sectionSurface === "dark" ? "#0b1220" : "#ffffff");
 
   const renderSection = (key: SectionKey) => {
-    const number = nextNumber(hasContent[key]);
     switch (key) {
       case "about":
         return (
           <AboutSection
             businessName={client.business_name}
-            tagline={client.tagline}
             aboutText={landingPage.about_text}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "story":
-        return (
-          <StorySection
-            storyText={client.additional_notes}
-            accentColor={anchorAccentColor}
-            eyebrowNumber={number}
-            anchor={anchor}
-          />
-        );
+        return <StorySection storyText={client.additional_notes} accentColor={anchorAccentColor} anchor={anchor} />;
       case "services":
         return (
           <ServicesList
             servicesText={landingPage.services_text}
+            heading={servicesSectionHeading}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "packages":
-        return (
-          <PackagesSection packages={packages} accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />
-        );
+        return <PackagesSection packages={packages} accentColor={anchorAccentColor} anchor={anchor} />;
       case "trust":
-        return (
-          <TrustBadges
-            testimonials={testimonials}
-            accentColor={anchorAccentColor}
-            eyebrowNumber={number}
-            anchor={anchor}
-          />
-        );
+        return <TrustBadges testimonials={testimonials} accentColor={anchorAccentColor} anchor={anchor} />;
       case "gallery":
         return (
           <PhotoGallerySection
             photos={photos}
             storageBase={photosStorageBase}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
@@ -439,25 +463,32 @@ export async function ClientLandingPageView({
         return (
           <LocationMap
             businessAddress={client.business_address}
+            city={client.city}
+            province={client.province}
             accentColor={anchorAccentColor}
-            eyebrowNumber={number}
             anchor={anchor}
           />
         );
       case "howItWorks":
-        return <HowItWorksSection accentColor={anchorAccentColor} eyebrowNumber={number} anchor={anchor} />;
+        return <HowItWorksSection accentColor={anchorAccentColor} anchor={anchor} />;
       case "reviews":
         return (
-          <ReviewsSection
-            businessId={client.id}
-            reviews={reviews}
-            accentColor={anchorAccentColor}
-            eyebrowNumber={number}
-            anchor={anchor}
-          />
+          <ReviewsSection businessId={client.id} reviews={reviews} accentColor={anchorAccentColor} anchor={anchor} />
         );
     }
   };
+
+  // Handoff 01 D, applied once for the whole page: a section with no content
+  // is not in this list, so it cannot render and nothing can link to it.
+  const visibleSections = template.sections.filter(
+    (key) => hasContent[key] && !(key === "services" && heroOwnsServiceList)
+  );
+
+  // Handoff 01 D: the multi-product template's hero CTA points at #packages.
+  // A member with no packages has no packages section, so the button that
+  // opens their page led nowhere. It falls back to the form, which is always
+  // there.
+  const heroCtaHref = template.ctaHref === "#packages" && !hasContent.packages ? "#lead-form" : template.ctaHref;
 
   return (
     <main className={HEADING_FONT_VARIABLE[anchor.headingFont]}>
@@ -467,21 +498,23 @@ export async function ClientLandingPageView({
       {template.hero === "minimal" && <MinimalHero {...heroProps} />}
       {template.hero === "split" && <SplitHero {...heroProps} photoUrl={photoUrl} />}
       {template.hero === "editorial" && <EditorialHero {...heroProps} />}
-      {template.hero === "dark" && <DarkHero {...heroProps} photoUrl={photoUrl} />}
+      {template.hero === "dark" && (
+        <DarkHero {...heroProps} photoUrl={photoUrl} showTestimonialsLink={hasContent.trust} />
+      )}
       {template.hero === "compact" && <CompactHero {...heroProps} testimonialCount={testimonials.length} />}
       {template.hero === "geometric" && <GeometricHero {...heroProps} />}
-      {template.hero === "checklist" && <ChecklistHero {...heroProps} checklistItems={checklistItems} />}
-      {template.hero === "bento" && <BentoHero {...heroProps} highlights={checklistItems} ctaHref={template.ctaHref} />}
-      {template.hero === "timeline" && <TimelineHero {...heroProps} steps={checklistItems} ctaHref={template.ctaHref} />}
+      {template.hero === "checklist" && <ChecklistHero {...heroProps} checklistItems={serviceLines} />}
+      {template.hero === "bento" && <BentoHero {...heroProps} highlights={serviceLines} ctaHref={heroCtaHref} />}
+      {template.hero === "timeline" && <TimelineHero {...heroProps} steps={serviceLines} ctaHref={heroCtaHref} />}
       {template.hero === "showcase" && (
         <ShowcaseHero
           {...heroProps}
           packages={packages.map((p) => ({ name: p.name, price: p.price }))}
-          ctaHref={template.ctaHref}
+          ctaHref={heroCtaHref}
         />
       )}
       {template.hero === "default" && (
-        <ConversionHero {...heroProps} tagline={client.tagline} ctaHref={template.ctaHref} />
+        <ConversionHero {...heroProps} tagline={client.tagline} ctaHref={heroCtaHref} />
       )}
       {/* Combined spec Sec 19: templates don't share a fixed section order
           (About isn't always first), so this goes right after the hero
@@ -490,7 +523,7 @@ export async function ClientLandingPageView({
         <EarlyContactCta accentColor={anchorAccentColor} dark={anchor.sectionSurface === "dark"} />
       )}
 
-      {template.sections.map((key) => (
+      {visibleSections.map((key) => (
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>
       ))}
 

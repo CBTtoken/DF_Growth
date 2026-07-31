@@ -19,8 +19,20 @@ import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 // The fraud checks did not change. A review from the business's own address,
 // or a burst from one network, is still flagged and still waits for a human.
 // The door changed, not the guard.
-export function ReviewSubmissionForm({ businessId, accentColor }: { businessId: string; accentColor: string }) {
-  const [open, setOpen] = useState(false);
+export function ReviewSubmissionForm({
+  businessId,
+  accentColor,
+  // Handoff 01 D: on the member's own page the form starts collapsed behind
+  // a "Leave a review" button. On the direct-link page at /{slug}/review,
+  // which a member sends to a customer on purpose, the form is the entire
+  // point of the page, so it opens straight away.
+  startOpen = false,
+}: {
+  businessId: string;
+  accentColor: string;
+  startOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(startOpen);
   const [rating, setRating] = useState(0);
   const [state, formAction, pending] = useActionState(submitReviewSimple.bind(null, businessId), null);
 
@@ -108,13 +120,15 @@ export function ReviewSubmissionForm({ businessId, accentColor }: { businessId: 
         >
           {pending ? "Posting..." : "Post review"}
         </button>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600"
-        >
-          Cancel
-        </button>
+        {!startOpen && (
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600"
+          >
+            Cancel
+          </button>
+        )}
       </div>
     </form>
   );

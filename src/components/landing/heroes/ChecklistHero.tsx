@@ -62,17 +62,23 @@ export function ChecklistHero({
         <p className="max-w-lg text-lg opacity-85">{subheadline}</p>
       </div>
 
-      <div className="mx-auto max-w-2xl px-4 pb-20 pt-10 sm:pb-28">
-        <div className="overflow-hidden rounded-2xl bg-white text-left shadow-2xl">
-          <div className="flex items-center gap-1.5 border-b border-gray-100 bg-gray-50 px-4 py-3">
-            <span className="size-2.5 rounded-full bg-red-400" />
-            <span className="size-2.5 rounded-full bg-amber-400" />
-            <span className="size-2.5 rounded-full bg-emerald-400" />
-            <span className="ml-3 truncate font-mono text-xs text-gray-400">{businessName}</span>
-          </div>
-          <ul className="flex flex-col gap-3 p-6">
-            {checklistItems.length > 0 ? (
-              checklistItems.map((item, i) => (
+      {/* Handoff 01 B/D: this frame renders the member's complete service
+          list, and ClientLandingPageView drops the standalone services
+          section for this template so the list appears exactly once on the
+          page. It also used to show "Your services will show up here." to a
+          member with no services, which is an instruction to the member
+          shown to their customers. No services now means no frame. */}
+      {checklistItems.length > 0 && (
+        <div className="mx-auto max-w-2xl px-4 pb-20 pt-10 sm:pb-28">
+          <div className="overflow-hidden rounded-2xl bg-white text-left shadow-2xl">
+            <div className="flex items-center gap-1.5 border-b border-gray-100 bg-gray-50 px-4 py-3">
+              <span className="size-2.5 rounded-full bg-red-400" />
+              <span className="size-2.5 rounded-full bg-amber-400" />
+              <span className="size-2.5 rounded-full bg-emerald-400" />
+              <span className="ml-3 truncate font-mono text-xs text-gray-400">{businessName}</span>
+            </div>
+            <ul className="flex flex-col gap-3 p-6">
+              {checklistItems.map((item, i) => (
                 <li key={i} className="flex items-center gap-3 text-sm font-medium text-gray-700">
                   <span
                     className="grid size-6 flex-shrink-0 place-items-center rounded-full text-xs font-bold"
@@ -82,13 +88,11 @@ export function ChecklistHero({
                   </span>
                   {item}
                 </li>
-              ))
-            ) : (
-              <li className="text-sm text-gray-400">Your services will show up here.</li>
-            )}
-          </ul>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

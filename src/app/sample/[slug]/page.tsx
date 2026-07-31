@@ -59,39 +59,26 @@ export default async function SamplePage({ params }: { params: Params }) {
     secondaryColor: sample.secondaryColor,
   };
 
-  // Matches ClientLandingPageView's own pattern: a section that renders
-  // nothing (gallery has no fixture photos, howItWorks isn't used by any
-  // of these three templates) must not still consume a number, or the
-  // eyebrow numbering skips one (e.g. 05 straight to 07).
-  const RENDERED_SECTIONS: SectionKey[] = ["about", "story", "services", "packages", "trust", "location"];
-  let sectionCount = 0;
-  const nextNumber = (key: SectionKey) =>
-    RENDERED_SECTIONS.includes(key) ? String(++sectionCount).padStart(2, "0") : "";
-
+  // Handoff 01 F: section eyebrow numbering is gone platform-wide, so the
+  // bookkeeping that used to live here (skip a number for a section that
+  // renders nothing, or the sequence jumps from 05 to 07) went with it.
   const renderSection = (key: SectionKey) => {
-    const number = nextNumber(key);
     switch (key) {
       case "about":
         return (
-          <AboutSection
-            businessName={sample.businessName}
-            tagline={sample.tagline}
-            aboutText={sample.aboutText}
-            accentColor={accentColor}
-            eyebrowNumber={number}
-          />
+          <AboutSection businessName={sample.businessName} aboutText={sample.aboutText} accentColor={accentColor} />
         );
       case "story":
-        return <StorySection storyText={sample.additionalNotes} accentColor={accentColor} eyebrowNumber={number} />;
+        return <StorySection storyText={sample.additionalNotes} accentColor={accentColor} />;
       case "services":
-        return <ServicesList servicesText={sample.servicesText} accentColor={accentColor} eyebrowNumber={number} />;
+        return <ServicesList servicesText={sample.servicesText} accentColor={accentColor} />;
       case "packages":
-        return <PackagesSection packages={sample.packages} accentColor={accentColor} eyebrowNumber={number} />;
+        return <PackagesSection packages={sample.packages} accentColor={accentColor} />;
       case "trust":
-        return <TrustBadges testimonials={sample.testimonials} accentColor={accentColor} eyebrowNumber={number} />;
+        return <TrustBadges testimonials={sample.testimonials} accentColor={accentColor} />;
       case "location":
         return (
-          <LocationMap businessAddress={sample.businessAddress} accentColor={accentColor} eyebrowNumber={number} />
+          <LocationMap businessAddress={sample.businessAddress} accentColor={accentColor} />
         );
       // "gallery" has no fixture photos here (same as a real client who
       // hasn't uploaded any — PhotoGallerySection already renders nothing

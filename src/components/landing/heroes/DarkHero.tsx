@@ -22,6 +22,7 @@ export function DarkHero({
   instagramUrl,
   websiteUrl,
   photoUrl,
+  showTestimonialsLink = false,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -33,6 +34,11 @@ export function DarkHero({
   instagramUrl?: string | null;
   websiteUrl?: string | null;
   photoUrl: string | null;
+  // Handoff 01 D: "a call to action that targets a section that did not
+  // render does not render either." This hero's secondary button points at
+  // #trust, which is absent for any member with no testimonials, so the
+  // caller has to tell us whether that section exists.
+  showTestimonialsLink?: boolean;
 }) {
   const bg = "#0a0a0f";
   const textColor = "#f5f5f7";
@@ -93,13 +99,15 @@ export function DarkHero({
             >
               {ctaLabel}
             </a>
-            <a
-              href="#trust"
-              className="rounded-full border px-8 py-4 text-base font-semibold transition hover:-translate-y-0.5"
-              style={{ borderColor: `${textColor}33`, color: textColor }}
-            >
-              See what people say
-            </a>
+            {showTestimonialsLink && (
+              <a
+                href="#trust"
+                className="rounded-full border px-8 py-4 text-base font-semibold transition hover:-translate-y-0.5"
+                style={{ borderColor: `${textColor}33`, color: textColor }}
+              >
+                See what people say
+              </a>
+            )}
           </div>
         </div>
 
@@ -141,13 +149,19 @@ export function DarkHero({
               />
             </>
           )}
+          {/* Handoff 01 E: this caption used to read "Premium · {businessName}".
+              The audit read that as the member's subscription tier leaking to
+              the public. It was not: "Premium" was a hardcoded decorative word
+              on every dark-mode page regardless of plan, which is arguably
+              worse, since it is a claim the member never made. The caption is
+              now the member's own name and nothing else. */}
           <div className="absolute inset-x-0 bottom-0 p-6">
             <div
               className="w-fit rounded-2xl border px-4 py-3 backdrop-blur-sm"
               style={{ borderColor: `${textColor}1a`, backgroundColor: `${bg}b3` }}
             >
               <p className="font-mono text-xs uppercase tracking-widest" style={{ color: glow }}>
-                Premium · {businessName}
+                {businessName}
               </p>
             </div>
           </div>
