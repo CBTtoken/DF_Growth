@@ -96,31 +96,36 @@ export function ServicesList({
       </ol>
     );
   } else if (layout === "spotlight-tiles") {
-    // Dark Mode pilot rebuild: an asymmetric grid instead of a uniform
-    // card grid — the first service gets real visual weight (a wider
-    // tile, bigger type), the rest sit as smaller supporting tiles.
+    // Rebuilt after Dewald looked at /nefeli-property-maintenance and called
+    // it what it was. Three separate faults, all visible in one screenshot:
+    //
+    // 1. `justify-between` inside a `min-h-[8rem]` box pinned the number to
+    //    the top and the label to the bottom, so a short service like "Tiling"
+    //    sat alone at the foot of a tall empty card. Ten services produced ten
+    //    mostly-empty boxes.
+    // 2. The 01/02/03 ordinals were the same template tell Handoff 01 F
+    //    removed from every section eyebrow, still running here inside the
+    //    cards. A business does not number the things it does.
+    // 3. The first service got a double-width tile and 20px type purely for
+    //    being first. That is arbitrary emphasis on whatever the member
+    //    happened to type at the top of a textarea, and it made "Carpentry"
+    //    look like the headline act of a general maintenance business.
+    //
+    // Now a uniform grid that sizes to its content. It still reads differently
+    // from icon-grid (no checkmarks, tiles not rows) and checklist-compact
+    // (grid not list), which is the point of the layout existing, without
+    // inventing hierarchy the data does not have.
     body = (
-      <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
-        {services.map((service, i) => {
-          const isFirst = i === 0;
-          return (
-            <div
-              key={i}
-              className={`flex flex-col justify-between gap-6 p-6 ${CARD_RECIPE_CLASS[anchor.cardRecipe]} ${
-                isFirst ? "col-span-2 min-h-[10rem]" : "col-span-1 min-h-[8rem]"
-              }`}
+      <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((service, i) => (
+          <div key={i} className={`px-5 py-4 ${CARD_RECIPE_CLASS[anchor.cardRecipe]}`}>
+            <span
+              className={`text-base font-semibold leading-snug ${isDark ? "text-white" : "text-gray-900"}`}
             >
-              <span className="font-mono text-xs" style={{ color: accentColor }}>
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <span
-                className={`font-semibold leading-snug ${isFirst ? "text-xl" : "text-sm"} ${isDark ? "text-white" : "text-gray-900"}`}
-              >
-                {service}
-              </span>
-            </div>
-          );
-        })}
+              {service}
+            </span>
+          </div>
+        ))}
       </div>
     );
   } else if (layout === "checklist-compact") {
