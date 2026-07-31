@@ -5,7 +5,8 @@ import { ChevronLeft, MapPin } from "lucide-react";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BoardPostCard } from "@/components/board/BoardPostCard";
-import { findArea, listAreas, listPosts } from "@/lib/board/queries";
+import { PostBar } from "@/components/board/PostBar";
+import { findArea, listPosts } from "@/lib/board/queries";
 import { areaHeading } from "@/lib/board/areas";
 import { boardRobots } from "@/lib/board/visibility";
 
@@ -49,33 +50,41 @@ export default async function BoardAreaPage({ params }: { params: Promise<{ area
   // that a crawler indexes and a person bounces off.
   if (!area) notFound();
 
-  const [posts, allAreas] = await Promise.all([listPosts({ area: area.slug }), listAreas()]);
-  const otherAreas = allAreas.filter((a) => a.slug !== area.slug).slice(0, 12);
-
+  const posts = await listPosts({ area: area.slug });
+  
   return (
     <main className="flex flex-1 flex-col bg-neutral-light">
       <MarketingHeader />
 
-      <section className="bg-gradient-to-br from-brand-blue-light via-white to-white px-4 pb-8 pt-10 sm:px-6">
-        <div className="mx-auto max-w-6xl">
-          <Link
-            href="/board"
-            className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-mid transition-colors hover:text-brand-blue"
-          >
-            <ChevronLeft size={14} /> The Board
-          </Link>
-          <h1 className="mt-3 flex flex-wrap items-center gap-2 text-3xl font-extrabold leading-tight tracking-tight text-neutral-ink sm:text-4xl">
-            <MapPin size={26} className="text-brand-blue" />
-            {areaHeading(area.name)}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-neutral-mid sm:text-base">
-            {area.count} {area.count === 1 ? "business" : "businesses"} in {area.name} on DigitalFlyer. What they have
-            posted is below, newest first.
-          </p>
+      <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-5 sm:px-6">
+        {/* One line, not a hero. */}
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/board"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-neutral-mid transition-colors hover:text-brand-blue"
+            >
+              <ChevronLeft size={14} /> Back to the board
+            </Link>
+            <span className="text-neutral-border" aria-hidden>
+              /
+            </span>
+            <h1 className="inline-flex items-center gap-1.5 text-lg font-extrabold tracking-tight text-neutral-ink">
+              <MapPin size={17} className="text-brand-blue" />
+              {area.name}
+            </h1>
+          </div>
+          <span className="text-xs text-neutral-muted">
+            {area.count} {area.count === 1 ? "business" : "businesses"}
+          </span>
         </div>
-      </section>
 
-      <section className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
+        <div className="mt-3">
+          <PostBar areaName={area.name} />
+        </div>
+
+        <div className="mt-5" />
+
         {posts.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-neutral-border bg-white p-14 text-center">
             <p className="text-base font-semibold text-neutral-ink">Nobody in {area.name} has posted yet</p>
@@ -95,7 +104,7 @@ export default async function BoardAreaPage({ params }: { params: Promise<{ area
             <p className="mb-4 text-sm font-semibold text-neutral-ink">
               {posts.length} {posts.length === 1 ? "post" : "posts"}
             </p>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="flex flex-col gap-4">
               {posts.map((post) => (
                 <BoardPostCard key={post.id} post={post} />
               ))}
@@ -103,24 +112,7 @@ export default async function BoardAreaPage({ params }: { params: Promise<{ area
           </>
         )}
 
-        {otherAreas.length > 0 && (
-          <div className="mt-10 border-t border-neutral-border pt-6">
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-neutral-muted">Other areas</h2>
-            <div className="flex flex-wrap gap-2">
-              {otherAreas.map((other) => (
-                <Link
-                  key={other.slug}
-                  href={`/board/area/${other.slug}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-neutral-border bg-white px-3.5 py-2 text-xs font-semibold text-neutral-mid transition-colors hover:border-brand-blue/40 hover:text-brand-blue"
-                >
-                  {other.name}
-                  <span className="text-[11px] font-bold text-neutral-muted">{other.count}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </section>
+      </div>
 
       <SiteFooter />
     </main>

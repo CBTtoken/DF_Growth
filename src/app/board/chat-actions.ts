@@ -106,3 +106,60 @@ export async function replyAsPublic(threadId: string, _prevState: SendMessageSta
   revalidatePath("/board/messages");
   return { sent: true };
 }
+
+/**
+ * Star or unstar a conversation.
+ *
+ * Each side has its own flag, so a business pinning a regular customer does
+ * not pin itself in that customer's list. Scoped to the caller either way:
+ * a thread id from a form is never trusted on its own.
+ */
+export async function toggleFavourite(
+  threadId: string,
+  side: "public" | "member"
+): Promise<{ error?: string; favourite?: boolean }> {
+  const admin = createAdminClient();
+
+  if (side === "public") {
+    const visitor = await currentVisitor();
+    if (!visitor) return { error: "Open this from the link in your email first." };
+
+    const { data: thread } = await admin
+      .from("board_threads")
+      .select("favourite_public")
+      .eq("id", threadId)
+      .eq("identity_id", visitor.id)
+      .maybeSingle();
+    if (!thread) return { error: "That conversation is no longer available." };
+
+    const next = !thread.favourite_public;
+    await admin
+      .from("board_threads")
+      .update({ favourite_public: next })
+      .eq("id", threadId)
+      .eq("identity_id", visitor.id);
+    revalidatePath("/board/messages");
+    return { favourite: next };
+  }
+
+  const { requireGrowthClientId } = await import("@/lib/auth/require-growth-client");
+  const client = await requireGrowthClientId();
+  if (client.error || !client.id) return { error: "Please log in again." };
+
+  const { data: thread } = await admin
+    .from("board_threads")
+    .select("favourite_member")
+    .eq("id", threadId)
+    .eq("growth_client_id", client.id)
+    .maybeSingle();
+  if (!thread) return { error: "That conversation is no longer available." };
+
+  const next = !thread.favourite_member;
+  await admin
+    .from("board_threads")
+    .update({ favourite_member: next })
+    .eq("id", threadId)
+    .eq("growth_client_id", client.id);
+  revalidatePath("/dashboard/messages");
+  return { favourite: next };
+}

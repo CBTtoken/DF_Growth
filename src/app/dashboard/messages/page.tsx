@@ -6,6 +6,7 @@ import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ChatThreadView } from "@/components/board/ChatThreadView";
+import { ConversationList } from "@/components/board/ConversationList";
 import { listMemberThreads, readThread } from "@/lib/board/chat";
 import { replyAsMember, setChatEnabled } from "@/app/dashboard/messages/actions";
 
@@ -90,27 +91,14 @@ export default async function DashboardMessagesPage({
             Nobody has messaged you here yet.
           </p>
         ) : (
-          <div className="mt-5 grid gap-5 md:grid-cols-[220px_1fr]">
-            <nav className="flex flex-col gap-1.5">
-              {threads.map((thread) => (
-                <Link
-                  key={thread.id}
-                  href={`/dashboard/messages?thread=${thread.id}`}
-                  className={`flex items-center justify-between gap-2 rounded-xl border px-3.5 py-2.5 text-sm font-semibold transition-colors ${
-                    active?.id === thread.id
-                      ? "border-brand bg-white text-brand"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-brand/40"
-                  }`}
-                >
-                  <span className="truncate">{thread.personName}</span>
-                  {thread.unread > 0 && (
-                    <span className="shrink-0 rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
-                      {thread.unread}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </nav>
+          <div className="mt-5 grid gap-5 md:grid-cols-[300px_1fr]">
+            <div>
+              <ConversationList
+                threads={threads}
+                side="member"
+                hrefFor={(t) => `/dashboard/messages?thread=${t.id}`}
+              />
+            </div>
 
             {active && (
               <section className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">

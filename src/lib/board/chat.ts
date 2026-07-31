@@ -25,8 +25,15 @@ export type ChatThread = {
   identityId: string;
   businessName: string;
   businessSlug: string;
+  businessLogoUrl: string | null;
+  brandColor: string;
   personName: string;
   lastMessageAt: string;
+  /** The last line, for the conversation list. Null on a thread with no messages yet. */
+  preview: string | null;
+  /** Who wrote it, so the list can show "You:" the way WhatsApp does. */
+  previewSender: "public" | "member" | null;
+  favourite: boolean;
   unread: number;
 };
 
@@ -37,7 +44,7 @@ export async function listMemberThreads(growthClientId: string): Promise<ChatThr
   const admin = createAdminClient();
   const { data } = await admin
     .from("board_threads")
-    .select("id, growth_client_id, identity_id, last_message_at, board_identities!inner(display_name), growth_clients!inner(business_name, slug)")
+    .select("id, growth_client_id, identity_id, last_message_at, last_message_preview, last_message_sender, favourite_member, favourite_public, board_identities!inner(display_name), growth_clients!inner(business_name, slug, logo_path, brand_primary_color)")
     .eq("growth_client_id", growthClientId)
     .order("last_message_at", { ascending: false });
 
@@ -49,7 +56,7 @@ export async function listIdentityThreads(identityId: string): Promise<ChatThrea
   const admin = createAdminClient();
   const { data } = await admin
     .from("board_threads")
-    .select("id, growth_client_id, identity_id, last_message_at, board_identities!inner(display_name), growth_clients!inner(business_name, slug)")
+    .select("id, growth_client_id, identity_id, last_message_at, last_message_preview, last_message_sender, favourite_member, favourite_public, board_identities!inner(display_name), growth_clients!inner(business_name, slug, logo_path, brand_primary_color)")
     .eq("identity_id", identityId)
     .order("last_message_at", { ascending: false });
 
@@ -61,8 +68,12 @@ type ThreadRow = {
   growth_client_id: string;
   identity_id: string;
   last_message_at: string;
+  last_message_preview: string | null;
+  last_message_sender: "public" | "member" | null;
+  favourite_member: boolean;
+  favourite_public: boolean;
   board_identities: { display_name: string };
-  growth_clients: { business_name: string; slug: string };
+  growth_clients: { business_name: string; slug: string; logo_path: string | null; brand_primary_color: string | null };
 };
 
 async function decorateThreads(rows: unknown[], side: "public" | "member"): Promise<ChatThread[]> {
@@ -86,16 +97,30 @@ async function decorateThreads(rows: unknown[], side: "public" | "member"): Prom
     unreadByThread.set(row.thread_id, (unreadByThread.get(row.thread_id) ?? 0) + 1);
   }
 
-  return threads.map((thread) => ({
-    id: thread.id,
-    growthClientId: thread.growth_client_id,
-    identityId: thread.identity_id,
-    businessName: thread.growth_clients.business_name,
-    businessSlug: thread.growth_clients.slug,
-    personName: thread.board_identities.display_name,
-    lastMessageAt: thread.last_message_at,
-    unread: unreadByThread.get(thread.id) ?? 0,
-  }));
+  return threads
+    .map((thread) => ({
+      id: thread.id,
+      growthClientId: thread.growth_client_id,
+      identityId: thread.identity_id,
+      businessName: thread.growth_clients.business_name,
+      businessSlug: thread.growth_clients.slug,
+      businessLogoUrl: thread.growth_clients.logo_path
+        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${thread.growth_clients.logo_path}`
+        : null,
+      brandColor: thread.growth_clients.brand_primary_color || "#1081b8",
+      personName: thread.board_identities.display_name,
+      lastMessageAt: thread.last_message_at,
+      preview: thread.last_message_preview,
+      previewSender: thread.last_message_sender,
+      favourite: side === "member" ? thread.favourite_member : thread.favourite_public,
+      unread: unreadByThread.get(thread.id) ?? 0,
+    }))
+    // Starred first, then most recent. The same order WhatsApp uses for
+    // pinned chats, and the reason a star is worth having at all.
+    .sort((a, b) => {
+      if (a.favourite !== b.favourite) return a.favourite ? -1 : 1;
+      return b.lastMessageAt.localeCompare(a.lastMessageAt);
+    });
 }
 
 /** Every message in a thread, and marks the other side's messages read. */
@@ -169,6 +194,8 @@ export async function sendChatMessage(options: {
         identity_id: identityId,
         opening_post_id: openingPostId ?? null,
         last_message_at: new Date().toISOString(),
+        last_message_preview: truncateOnWord(body, 90),
+        last_message_sender: sender,
       },
       { onConflict: "growth_client_id,identity_id" }
     )
@@ -254,4 +281,38 @@ function chatEmail({
       <p style="font-size: 12px; color: #718096; margin: 0;">${footer}</p>
     </div>
   `;
+}
+
+/**
+ * How many messages this device has not read, across every conversation.
+ *
+ * Drives the badge on the Messages button, which is the WhatsApp habit
+ * Dewald asked for: you should be able to tell at a glance that somebody
+ * answered you without opening anything.
+ *
+ * Correct on every page load and every navigation. It does not tick over
+ * while somebody sits still on one screen, because that needs a live
+ * connection rather than a query, and a fake one built on polling would
+ * cost more than it is worth.
+ */
+export async function unreadForVisitor(): Promise<number> {
+  const { currentVisitor } = await import("@/lib/board/visitor");
+  const visitor = await currentVisitor();
+  if (!visitor) return 0;
+
+  const admin = createAdminClient();
+  const { data: threads } = await admin.from("board_threads").select("id").eq("identity_id", visitor.id);
+  if (!threads?.length) return 0;
+
+  const { count } = await admin
+    .from("board_messages")
+    .select("id", { count: "exact", head: true })
+    .in(
+      "thread_id",
+      threads.map((t) => t.id)
+    )
+    .eq("sender", "member")
+    .is("read_at", null);
+
+  return count ?? 0;
 }

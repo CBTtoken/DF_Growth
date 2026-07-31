@@ -3,19 +3,26 @@ import { loadAssetFonts } from "@/lib/assets/fonts";
 
 // Home screen icons, generated rather than drawn.
 //
-// Two apps end up on a phone: the board, and messages. Neither had an icon
-// and neither needed a designer for one, so these are rendered from the same
-// brand colours and the same font the rest of the platform uses. Generating
-// them also means the maskable versions cannot drift out of step with the
-// normal ones, which is the usual way an Android icon ends up in a white
-// square next to every other app.
+// The first version was a flat blue square with a "B" on it, which Dewald
+// called dated, and it was: a single letter on a flat field is what an icon
+// looked like in 2012, and it told nobody what the app does.
 //
-// Cached hard: an icon changes when we change this file, never per request.
+// This one takes the note about Uber literally. A deep, almost black field,
+// a single confident white wordmark, and nothing else. No gradient, no
+// bevel, no letter to decode. "Board" and "Chat" are short enough to read at
+// the size a phone actually draws them, which a longer word would not be,
+// and a wordmark is unmistakable in a way an initial never is.
+//
+// Cached hard: an icon changes when this file changes, never per request.
 export const contentType = "image/png";
 
-const APPS: Record<string, { glyph: string; background: string; foreground: string }> = {
-  board: { glyph: "B", background: "#1081b8", foreground: "#ffffff" },
-  messages: { glyph: "M", background: "#0c6a97", foreground: "#ffffff" },
+const APPS: Record<string, { word: string; background: string; accent: string }> = {
+  // Near black rather than brand blue. The blue is the app's colour and it
+  // is everywhere inside it, so an icon in the same blue disappears into a
+  // phone full of blue icons. The accent bar underneath is where the brand
+  // lives.
+  board: { word: "Board", background: "#0f1b28", accent: "#e8821a" },
+  messages: { word: "Chat", background: "#0f1b28", accent: "#1081b8" },
 };
 
 export async function GET(request: Request, { params }: { params: Promise<{ app: string }> }) {
@@ -25,9 +32,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
 
   const url = new URL(request.url);
   const size = Math.min(Math.max(parseInt(url.searchParams.get("size") ?? "192", 10) || 192, 48), 512);
-  // Android crops a maskable icon to the phone's own shape, so the glyph
+  // Android crops a maskable icon to the phone's own shape, so everything
   // has to sit inside the safe area rather than filling the square.
   const maskable = url.searchParams.get("maskable") === "1";
+  const scale = maskable ? 0.72 : 1;
   const fonts = await loadAssetFonts();
 
   return new ImageResponse(
@@ -37,6 +45,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: config.background,
@@ -46,13 +55,29 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
         <div
           style={{
             display: "flex",
-            fontSize: maskable ? size * 0.44 : size * 0.62,
+            fontSize: size * 0.3 * scale,
             fontWeight: 700,
-            color: config.foreground,
+            letterSpacing: -size * 0.008,
+            color: "#ffffff",
+            textTransform: "lowercase",
           }}
         >
-          {config.glyph}
+          {config.word}
         </div>
+
+        {/* One short bar under the word. It is the only piece of colour, and
+            it is what makes the mark look deliberate rather than like text
+            that happens to be centred. */}
+        <div
+          style={{
+            display: "flex",
+            width: size * 0.22 * scale,
+            height: Math.max(size * 0.035 * scale, 3),
+            borderRadius: size,
+            backgroundColor: config.accent,
+            marginTop: size * 0.05 * scale,
+          }}
+        />
       </div>
     ),
     {
