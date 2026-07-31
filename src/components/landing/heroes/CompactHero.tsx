@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { readableTextOn } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
 
@@ -20,6 +21,7 @@ export function CompactHero({
   instagramUrl,
   websiteUrl,
   testimonialCount,
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -32,6 +34,10 @@ export function CompactHero({
   instagramUrl?: string | null;
   websiteUrl?: string | null;
   testimonialCount: number;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const textColor = readableTextOn(secondaryColor);
   const ctaTextColor = readableTextOn(primaryColor);
@@ -74,6 +80,7 @@ export function CompactHero({
         <p className="mx-auto mt-5 max-w-xl text-lg opacity-70" style={{ color: textColor }}>
           {subheadline}
         </p>
+        <div className="mt-6">{contactActions}</div>
       </div>
     </header>
   );

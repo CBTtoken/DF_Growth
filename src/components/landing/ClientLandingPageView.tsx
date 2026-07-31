@@ -29,6 +29,9 @@ import { BentoHero } from "@/components/landing/heroes/BentoHero";
 import { TimelineHero } from "@/components/landing/heroes/TimelineHero";
 import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
 import { ensureContrast } from "@/lib/color";
+import { ContactActions } from "@/components/landing/ContactActions";
+import { normaliseSaPhone, telHref, whatsAppHref } from "@/lib/contact/phone";
+import { whatsAppMessage } from "@/lib/contact/reference";
 import { resolveLocation, servicesHeading } from "@/lib/landing/page-copy";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -57,6 +60,10 @@ type ClientData = {
   province?: string | null;
   meta_pixel_id: string | null;
   hero_photo_id: string | null;
+  // Handoff 02 B: the member has chosen WhatsApp only. Optional for the same
+  // reason as the fields below: preview and sample call sites do not fetch it,
+  // and false is the correct default for both.
+  hide_call_button?: boolean;
   // Optional: marketplace/sample preview call sites don't fetch this, and a
   // client without Booking switched on simply never has it true.
   booking_enabled?: boolean;
@@ -184,6 +191,38 @@ export async function ClientLandingPageView({
   // above the services list of every page this platform has ever generated.
   const servicesSectionHeading = servicesHeading();
 
+  // Handoff 02 A/B. The member's WhatsApp number falls back to their call
+  // number, matching the onboarding field's own "leave blank if it is the
+  // same" hint, which is how most members filled it in.
+  //
+  // Every href here comes back null rather than broken when the stored number
+  // will not parse, or when it is a landline being asked for a WhatsApp link.
+  // "Never render a dead button" is the rule, and one live member
+  // (refurb-online) has a WhatsApp number missing its leading digit that would
+  // otherwise produce a wa.me link to nobody.
+  const whatsAppNumber = client.whatsapp_phone || client.call_phone;
+  const contactWhatsAppHref = whatsAppHref(
+    whatsAppNumber,
+    whatsAppMessage({ businessName: client.business_name, growthClientId: client.id })
+  );
+  // The setting hides the button, never the number itself: a visitor who wants
+  // to dial by hand can still read it below.
+  const contactTelHref = client.hide_call_button ? null : telHref(client.call_phone);
+  const parsedCallNumber = normaliseSaPhone(client.call_phone);
+  const displayNumber = parsedCallNumber.ok ? parsedCallNumber.display : null;
+
+  const contactActions =
+    contactWhatsAppHref || contactTelHref ? (
+      <ContactActions
+        growthClientId={client.id}
+        whatsAppHref={contactWhatsAppHref}
+        telHref={contactTelHref}
+        displayNumber={displayNumber}
+        accentColor={secondaryColor}
+        variant="hero"
+      />
+    ) : null;
+
   const template = getTemplate(templateOverride !== undefined ? templateOverride : client.template);
 
   const trackingScripts = mode === "live" && (
@@ -226,6 +265,27 @@ export async function ClientLandingPageView({
         freeDeliveryOverCents={client.shop_free_delivery_over_cents ?? null}
       />
     </ScrollReveal>
+  );
+
+  // Handoff 02 A: "WhatsApp and Call appear in the hero, above the fold, and
+  // again in the contact section at the foot of the page." A visitor who has
+  // read the whole page should not have to scroll back up to act on it.
+  const contactBlock = (contactWhatsAppHref || contactTelHref) && (
+    <section className="border-b border-gray-100 bg-white">
+      <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 px-4 py-12 text-center sm:px-8">
+        <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          Talk to {client.business_name}
+        </h2>
+        <ContactActions
+          growthClientId={client.id}
+          whatsAppHref={contactWhatsAppHref}
+          telHref={contactTelHref}
+          displayNumber={displayNumber}
+          accentColor={accentColor}
+          variant="section"
+        />
+      </div>
+    </section>
   );
 
   const previewBanner = mode === "preview" && (
@@ -304,6 +364,7 @@ export async function ClientLandingPageView({
           facebookUrl={client.facebook_url}
           instagramUrl={client.instagram_url}
           websiteUrl={client.website_url}
+          contactActions={contactActions}
         />
         {hasContent.about && (
           <ScrollReveal>
@@ -361,6 +422,7 @@ export async function ClientLandingPageView({
         )}
         {bookingSection}
         {shopSection}
+        {contactBlock}
         <ScrollReveal>
           <LeadForm
             growthClientId={client.id}
@@ -415,6 +477,7 @@ export async function ClientLandingPageView({
     facebookUrl: client.facebook_url,
     instagramUrl: client.instagram_url,
     websiteUrl: client.website_url,
+    contactActions,
   };
 
   const anchor = getAnchor(template.id);
@@ -529,6 +592,7 @@ export async function ClientLandingPageView({
 
       {bookingSection}
       {shopSection}
+      {contactBlock}
       <ScrollReveal>
         <LeadForm
           growthClientId={client.id}

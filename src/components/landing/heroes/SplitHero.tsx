@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { readableTextOn, shade } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
@@ -20,6 +21,7 @@ export function SplitHero({
   instagramUrl,
   websiteUrl,
   photoUrl,
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -32,6 +34,10 @@ export function SplitHero({
   instagramUrl?: string | null;
   websiteUrl?: string | null;
   photoUrl: string | null;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const textColor = readableTextOn(secondaryColor);
   const ctaTextColor = readableTextOn(primaryColor);
@@ -58,6 +64,7 @@ export function SplitHero({
             {subheadline}
           </p>
         </div>
+        {contactActions}
         <a
           href="#lead-form"
           className="w-fit rounded-xl px-7 py-4 text-base font-semibold shadow-lg transition hover:-translate-y-0.5"

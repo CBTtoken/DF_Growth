@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { readableTextOn, shade } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
 
@@ -17,6 +18,7 @@ export function GeometricHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -28,6 +30,10 @@ export function GeometricHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const bg = shade(secondaryColor, 0.85);
   const textColor = readableTextOn(bg);
@@ -74,6 +80,7 @@ export function GeometricHero({
         <p className="max-w-md text-lg opacity-80" style={{ color: textColor }}>
           {subheadline}
         </p>
+        {contactActions}
         <a
           href="#lead-form"
           className="w-fit rounded-2xl px-8 py-4 text-base font-bold shadow-lg transition hover:-translate-y-0.5 hover:rotate-1"

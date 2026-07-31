@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { readableTextOn, ensureContrast } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
 
@@ -21,6 +22,7 @@ export function ChecklistHero({
   instagramUrl,
   websiteUrl,
   checklistItems,
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -33,6 +35,10 @@ export function ChecklistHero({
   instagramUrl?: string | null;
   websiteUrl?: string | null;
   checklistItems: string[];
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const textColor = readableTextOn(primaryColor);
   const ctaTextColor = ensureContrast(primaryColor, secondaryColor);
@@ -60,6 +66,7 @@ export function ChecklistHero({
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 pt-6" style={{ color: textColor }}>
         <h1 className="text-4xl font-black leading-[1.1] tracking-tight sm:text-5xl">{headline}</h1>
         <p className="max-w-lg text-lg opacity-85">{subheadline}</p>
+        <div className="mt-2">{contactActions}</div>
       </div>
 
       {/* Handoff 01 B/D: this frame renders the member's complete service

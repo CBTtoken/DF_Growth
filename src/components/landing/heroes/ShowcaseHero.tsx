@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { shade, readableTextOn, ensureContrast } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
 
@@ -20,6 +21,7 @@ export function ShowcaseHero({
   websiteUrl,
   packages,
   ctaHref = "#packages",
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -33,6 +35,10 @@ export function ShowcaseHero({
   websiteUrl?: string | null;
   packages: { name: string; price: string | null }[];
   ctaHref?: string;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const textColor = readableTextOn(primaryColor);
   const glow = shade(primaryColor, 0.3);
@@ -85,6 +91,7 @@ export function ShowcaseHero({
           <p className="max-w-lg text-lg opacity-85" style={{ color: textColor }}>
             {subheadline}
           </p>
+          {contactActions}
           <div className="flex flex-wrap items-center gap-4">
             <a
               href={ctaHref}

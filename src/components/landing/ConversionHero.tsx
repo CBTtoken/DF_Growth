@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { shade, readableTextOn, ensureContrast } from "@/lib/color";
 
@@ -20,6 +21,7 @@ export function ConversionHero({
   instagramUrl,
   websiteUrl,
   ctaHref = "#lead-form",
+  contactActions,
 }: {
   businessName: string;
   tagline: string | null;
@@ -36,6 +38,10 @@ export function ConversionHero({
   // #packages instead of the lead form — every other template uses the
   // default, unchanged from before this prop existed.
   ctaHref?: string;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const textColor = readableTextOn(primaryColor);
   const glow = shade(primaryColor, 0.3);
@@ -178,6 +184,7 @@ export function ConversionHero({
           {subheadline}
         </p>
 
+        {contactActions}
         <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
           <a
             href={ctaHref}

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { captureLead } from "@/app/[clientSlug]/actions";
 import { TrackEvent } from "@/components/analytics/TrackEvent";
+import { RecordFormSubmission } from "@/components/landing/RecordFormSubmission";
 import { readableTextOn, ensureContrast } from "@/lib/color";
 
 // South African cell numbers are typically entered locally ("082 123
@@ -62,6 +63,12 @@ export function LeadForm({
           {state?.success ? (
             <div className="flex flex-col items-center gap-2 py-8 text-center">
               <TrackEvent name="generate_lead" />
+              {/* Handoff 02 C: the form is the third of the three tracked
+                  actions, so it records into the same table the call and
+                  WhatsApp taps do. Without this the dashboard would compare a
+                  counted tap against an uncounted submission and make the form
+                  look dead. */}
+              <RecordFormSubmission growthClientId={growthClientId} />
               <span
                 aria-hidden
                 className="grid size-12 place-items-center rounded-full text-2xl"
@@ -69,9 +76,11 @@ export function LeadForm({
               >
                 ✓
               </span>
-              {/* Combined spec Sec 21: warmer, specific confirmation copy,
-                  and (Sec 20) this is the one and only place call/WhatsApp
-                  numbers are ever shown on the page. */}
+              {/* Combined spec Sec 21: warmer, specific confirmation copy.
+                  Sec 20's "this is the one and only place call/WhatsApp
+                  numbers are ever shown" no longer holds: Handoff 02 A made
+                  those details public, so this is now a convenient repeat
+                  rather than the reveal the visitor paid a form for. */}
               <h2 className="mt-2 text-2xl font-bold text-gray-900">Thank you for reaching out!</h2>
               <p className="max-w-md text-gray-500">
                 {businessName} will be in touch shortly.

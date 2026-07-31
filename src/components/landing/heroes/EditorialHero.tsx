@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { readableTextOn, shade, ensureContrast } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
 
@@ -17,6 +18,7 @@ export function EditorialHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -28,6 +30,10 @@ export function EditorialHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   // A warm off-white paper tone derived from the client's own color rather
   // than a fixed stone/cream palette, so the editorial feel still looks
@@ -69,6 +75,7 @@ export function EditorialHero({
         <p className="mt-8 max-w-2xl text-xl leading-relaxed opacity-80" style={{ color: textColor }}>
           {subheadline}
         </p>
+        <div className="mt-8">{contactActions}</div>
       </div>
     </header>
   );

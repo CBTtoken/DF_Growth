@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { ensureContrast, readableTextOn, shade } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
@@ -23,6 +24,7 @@ export function DarkHero({
   websiteUrl,
   photoUrl,
   showTestimonialsLink = false,
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -39,6 +41,10 @@ export function DarkHero({
   // #trust, which is absent for any member with no testimonials, so the
   // caller has to tell us whether that section exists.
   showTestimonialsLink?: boolean;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const bg = "#0a0a0f";
   const textColor = "#f5f5f7";
@@ -91,6 +97,7 @@ export function DarkHero({
           <p className="max-w-lg text-lg opacity-70" style={{ color: textColor }}>
             {subheadline}
           </p>
+          {contactActions}
           <div className="flex flex-wrap items-center gap-3">
             <a
               href="#lead-form"

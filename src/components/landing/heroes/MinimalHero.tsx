@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { readableTextOn } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
 
@@ -16,6 +17,7 @@ export function MinimalHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  contactActions,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -27,6 +29,10 @@ export function MinimalHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  // Handoff 02 A: WhatsApp and Call, rendered inside the hero so they are
+  // above the fold. Optional because the preview and sample routes have no
+  // real member behind them.
+  contactActions?: ReactNode;
 }) {
   const textColor = readableTextOn(secondaryColor);
 
@@ -53,6 +59,7 @@ export function MinimalHero({
         <p className="max-w-md text-xl opacity-70" style={{ color: textColor }}>
           {subheadline}
         </p>
+        {contactActions}
         <a
           href="#lead-form"
           className="rounded-full px-10 py-4 text-lg font-semibold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
