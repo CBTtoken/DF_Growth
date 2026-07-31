@@ -61,15 +61,23 @@ export function firstProse(...candidates: (string | null | undefined)[]): string
 // F: replaces the literal "Everything you need, in one place." that appeared
 // above the services section of every page ever generated.
 //
-// Deliberately uses the member's category and not their first service line,
-// even though the brief prefers the trade. Tested against /nefeli-property-
-// maintenance: the first service line is by definition also the first item in
-// the list directly underneath, so using it produced a heading of "Carpentry"
-// sitting on top of a list whose first entry was "Carpentry". The first
-// service line is still preferred for the page title, where nothing repeats
-// it.
-export function servicesHeading({ industry }: { industry: string | null | undefined }): string {
-  return displayCategory(industry) ?? "Services";
+// Two candidates were tried and both rejected, so this is deliberately the
+// plainest possible word:
+//
+// 1. The member's first service line, which the brief prefers. That line is by
+//    definition also the first item in the list directly underneath the
+//    heading, so /nefeli-property-maintenance rendered "Carpentry" on top of a
+//    list starting with "Carpentry".
+// 2. The member's category. 19 of 34 active members sit under a "General "
+//    category and several are plainly misfiled, so this put "Beauty &
+//    Wellness" above the services of a business consultant. Dewald's call,
+//    2026-07-31: a neutral heading beats a confidently wrong one.
+//
+// Revisit once the category taxonomy pass has cleaned up the misfiled members:
+// displayCategory below is the switch, and the page title already uses the
+// member's own trade, where nothing sits underneath to repeat it.
+export function servicesHeading(): string {
+  return "Services";
 }
 
 // G: the member page title. The root layout sets a global

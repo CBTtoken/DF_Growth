@@ -182,7 +182,7 @@ export async function ClientLandingPageView({
 
   // Handoff 01 F: replaces "Everything you need, in one place.", which was
   // above the services list of every page this platform has ever generated.
-  const servicesSectionHeading = servicesHeading({ industry: client.industry });
+  const servicesSectionHeading = servicesHeading();
 
   const template = getTemplate(templateOverride !== undefined ? templateOverride : client.template);
 
