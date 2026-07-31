@@ -93,11 +93,7 @@ export default async function DashboardMessagesPage({
         ) : (
           <div className="mt-5 grid gap-5 md:grid-cols-[300px_1fr]">
             <div>
-              <ConversationList
-                threads={threads}
-                side="member"
-                hrefFor={(t) => `/dashboard/messages?thread=${t.id}`}
-              />
+              <ConversationList threads={threads} side="member" />
             </div>
 
             {active && (

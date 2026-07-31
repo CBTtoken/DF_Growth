@@ -71,7 +71,7 @@ export default async function BoardMessagesPage() {
               No conversations yet. Message a business from any post on the board.
             </p>
           ) : (
-            <ConversationList threads={threads} side="public" hrefFor={(t) => `/board/chat/${t.businessSlug}`} />
+            <ConversationList threads={threads} side="public" />
           )}
         </div>
 

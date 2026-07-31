@@ -28,10 +28,11 @@ export function BoardFilters({
   const router = useRouter();
 
   const selectClass =
-    "w-full rounded-full border border-neutral-border bg-white px-4 py-2.5 text-sm font-semibold text-neutral-mid outline-none transition focus:border-brand-blue sm:w-auto";
+    "w-full min-w-0 rounded-full border border-neutral-border bg-white px-3 py-2.5 text-sm font-semibold text-neutral-mid outline-none transition focus:border-brand-blue sm:w-auto sm:px-4";
 
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      {/* Search full width, the two dropdowns sharing a row underneath. */}
       <form method="GET" action="/board" className="relative flex-1">
         <Search size={16} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-neutral-muted" />
         <input
@@ -43,6 +44,7 @@ export function BoardFilters({
         />
       </form>
 
+      <div className="grid grid-cols-2 gap-2 sm:contents">
       <select
         aria-label="Area"
         value={activeArea}
@@ -70,6 +72,7 @@ export function BoardFilters({
           </option>
         ))}
       </select>
+      </div>
     </div>
   );
 }

@@ -62,8 +62,8 @@ export default async function BoardPage({
         {/* One line, not a hero. */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-neutral-ink">The Board</h1>
-            <p className="mt-0.5 text-sm text-neutral-mid">
+            <h1 className="text-xl font-extrabold tracking-tight text-neutral-ink sm:text-2xl">The Board</h1>
+            <p className="mt-0.5 text-xs text-neutral-mid sm:text-sm">
               Specials from local businesses, things for sale, and people looking for help.
             </p>
           </div>
@@ -84,15 +84,15 @@ export default async function BoardPage({
         </div>
 
         {/* The kinds, one compact row rather than a block of chips. */}
-        <div className="mt-3 flex flex-wrap items-center gap-1 rounded-full bg-white p-1 shadow-card">
-          <Link href={q ? `/board?q=${encodeURIComponent(q)}` : "/board"} className={`${kindChip} ${kind === null ? kindOn : kindOff}`}>
+        <div className="mt-3 flex items-center gap-1 overflow-x-auto rounded-full bg-white p-1 shadow-card [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <Link href={q ? `/board?q=${encodeURIComponent(q)}` : "/board"} className={`${kindChip} shrink-0 ${kind === null ? kindOn : kindOff}`}>
             Everything
           </Link>
           {POST_KINDS.map((k) => (
             <Link
               key={k.id}
               href={`/board?kind=${k.param}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-              className={`${kindChip} ${kind === k.id ? kindOn : kindOff}`}
+              className={`${kindChip} shrink-0 ${kind === k.id ? kindOn : kindOff}`}
             >
               {k.label}
             </Link>
@@ -101,10 +101,6 @@ export default async function BoardPage({
 
         <div className="mt-3">
           <PostBar />
-        </div>
-
-        <div className="mt-3">
-          <EventsPointer />
         </div>
 
         <div className="mt-5">
@@ -133,6 +129,10 @@ export default async function BoardPage({
               ))}
             </div>
           )}
+        </div>
+
+        <div className="mt-6">
+          <EventsPointer />
         </div>
 
         {/* Moved below the posts. It is useful, and it is not what somebody

@@ -31,15 +31,12 @@ function whenLabel(iso: string): string {
   return date.toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
 }
 
-export function ConversationList({
-  threads,
-  side,
-  hrefFor,
-}: {
-  threads: ChatThread[];
-  side: "public" | "member";
-  hrefFor: (thread: ChatThread) => string;
-}) {
+export function ConversationList({ threads, side }: { threads: ChatThread[]; side: "public" | "member" }) {
+  // The person opens the full screen chat with that business. The business
+  // opens the thread beside its own inbox.
+  const hrefFor = (thread: ChatThread) =>
+    side === "public" ? `/board/chat/${thread.businessSlug}` : `/dashboard/messages?thread=${thread.id}`;
+
   const [starred, setStarred] = useState<Record<string, boolean>>(
     Object.fromEntries(threads.map((t) => [t.id, t.favourite]))
   );
