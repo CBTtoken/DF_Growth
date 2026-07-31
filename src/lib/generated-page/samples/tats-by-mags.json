@@ -1,40 +1,38 @@
 {
   "slug": "tats-by-mags",
+  "tier": "sections",
   "businessName": "Tats by Mags",
   "brandColor": null,
-  "generatedAt": "2026-07-31T10:18:32.010Z",
+  "photoUrls": [],
+  "generatedAt": "2026-07-31T11:25:20.261Z",
   "plan": {
     "palette": "ink-editorial",
     "typePairing": "modern-display",
     "rhythm": "standard",
-    "rationale": "A solo tattoo artist selling personal, custom artwork. Ink-editorial palette and modern-display type suit the craft without going clinical or generic. Layout favours a strong hero, styles as pillars, a process section reflecting a real consultation to tattoo journey, hygiene as its own weighted moment, and a gallery request since none exist yet. No prices, timelines or claims were given, so none appear.",
+    "rationale": "A solo tattoo artist selling personal style and trust. Ink-editorial palette and modern-display type suit the craft without cliche. Sections cover styles, approach, hygiene and process, each grounded in what Mags actually said. Photo slots requested since none exist yet. No pricing or claims invented.",
     "sections": [
       {
         "type": "hero",
-        "layout": "editorial",
+        "layout": "split",
         "eyebrow": "Hartbeespoort",
-        "headline": "Tats by Mags: Expertly Crafted Tattoos Uniquely You",
-        "subheadline": "Custom tattoo art by Mags, working in black and grey realism, watercolour and fine line, from concept to skin.",
+        "headline": "Expertly crafted tattoos, uniquely you",
+        "subheadline": "Tats by Mags turns your ideas into personalised tattoos, worked out together with you from first sketch to final line.",
         "photoSlot": {
-          "slotId": "hero-main",
-          "brief": "A photo of Mags at work in the studio, tattoo machine in hand, taken from the side so the client's arm or the piece in progress is visible"
+          "slotId": "hero-1",
+          "brief": "A photo of Mags at work in the studio, tattoo machine in hand, taken from the side so the setup is visible"
         },
         "featureStrip": [
           {
             "icon": "pen",
-            "label": "Black and grey realism"
-          },
-          {
-            "icon": "sparkles",
-            "label": "Watercolour"
-          },
-          {
-            "icon": "brush",
-            "label": "Fine line"
+            "label": "Custom designs"
           },
           {
             "icon": "shield",
             "label": "Single-use needles and inks"
+          },
+          {
+            "icon": "heart",
+            "label": "Collaborative process"
           }
         ]
       },
@@ -44,52 +42,80 @@
         "band": "plain",
         "heading": "Your canvas, our passion",
         "paragraphs": [
-          "Tattoos are more than ink on skin. They are stories, expressions of individuality, and lasting works of art. Mags works to turn your ideas into a personalised tattoo you will carry for life.",
-          "Every design starts with a conversation. Mags listens to your ideas, collaborates with you on the design, and makes sure every detail is right before the needle touches your skin."
+          "At Tats by Mags, tattoos are treated as more than ink on skin. They are stories, expressions of individuality and lasting works of art, and the aim is always to create something you will cherish for a lifetime.",
+          "Mags is the heart and soul of the studio, a passionate and talented tattoo artist who specialises in black and grey realism, watercolour and fine line work, each design built to reflect your personality and style."
         ]
       },
       {
         "type": "pillars",
         "layout": "icon-cards",
         "band": "tinted",
-        "eyebrow": "Styles",
-        "heading": "What Mags specialises in",
+        "heading": "What sets the studio apart",
         "items": [
           {
             "icon": "pen",
-            "title": "Black and grey realism",
-            "body": "Detailed, shaded work built for depth and lifelike precision."
+            "title": "Personalised designs",
+            "body": "Mags works closely with you to create custom designs that are uniquely yours, not templates pulled off a wall."
           },
           {
             "icon": "sparkles",
-            "title": "Watercolour",
-            "body": "Soft, flowing colour work for a more painterly, expressive piece."
+            "title": "Attention to detail",
+            "body": "Meticulous artistry and precision go into every piece, from the first sketch to the final pass of the needle."
           },
           {
-            "icon": "brush",
-            "title": "Fine line",
-            "body": "Delicate, precise linework for minimalist and detailed designs alike."
+            "icon": "heart",
+            "title": "Comfortable atmosphere",
+            "body": "The studio is clean, relaxed and welcoming, so you feel at ease throughout the whole process."
+          },
+          {
+            "icon": "handshake",
+            "title": "Exceptional service",
+            "body": "A positive and memorable experience is the goal from your first message to the finished tattoo."
+          }
+        ]
+      },
+      {
+        "type": "services",
+        "layout": "cards",
+        "band": "plain",
+        "eyebrow": "Styles",
+        "heading": "Styles Mags works in",
+        "items": [
+          {
+            "name": "Black and grey realism",
+            "description": "Detailed, shaded work built to look lifelike."
+          },
+          {
+            "name": "Watercolour",
+            "description": "Soft, flowing colour effects for a painterly finish."
+          },
+          {
+            "name": "Fine line",
+            "description": "Delicate, precise linework for subtle, detailed pieces."
           }
         ]
       },
       {
         "type": "process",
         "layout": "steps",
-        "band": "plain",
-        "eyebrow": "How it works",
-        "heading": "From your idea to the finished piece",
+        "band": "tinted",
+        "heading": "How a tattoo comes together",
         "steps": [
           {
             "title": "Consultation",
-            "body": "You bring your ideas and Mags takes the time to understand what you want and why it matters to you."
+            "body": "You bring your ideas and Mags listens, so the design starts from what the tattoo means to you."
           },
           {
-            "title": "Design collaboration",
-            "body": "Together you refine the design until every detail feels right, before any ink is applied."
+            "title": "Collaborative design",
+            "body": "Together you work through the details of the design until every element feels right."
           },
           {
-            "title": "The tattoo session",
-            "body": "Work takes place in a clean, relaxed studio environment, with your comfort considered throughout."
+            "title": "Final check",
+            "body": "Every detail is confirmed and agreed before the needle touches your skin."
+          },
+          {
+            "title": "The tattoo",
+            "body": "Using single-use needles and inks, and following all health and safety regulations, in a clean and relaxed studio setting."
           }
         ]
       },
@@ -99,61 +125,65 @@
         "band": "deep",
         "mediaSide": "right",
         "heading": "Hygiene and safety come first",
-        "body": "Your safety is paramount. The studio uses single-use needles and inks for every client, and follows all health and safety regulations. It is a standard Mags does not compromise on, so you can focus on the art itself.",
+        "body": "Your safety is treated as paramount. The studio maintains high standards of hygiene and sterilisation, using only single-use needles and inks and adhering to all health and safety regulations throughout.",
         "photoSlot": {
-          "slotId": "hygiene-setup",
-          "brief": "A photo of your sterile setup tray, single-use needles and ink caps laid out before a session"
+          "slotId": "hygiene-1",
+          "brief": "A photo of the sterilisation and setup area, showing single-use needles and inks laid out before a session"
         }
       },
       {
         "type": "gallery",
         "layout": "grid",
         "band": "plain",
-        "heading": "Recent work",
+        "heading": "A look at the work",
         "photoSlots": [
           {
             "slotId": "gallery-1",
-            "brief": "A completed black and grey realism piece, clear and well lit, healed or fresh"
+            "brief": "A close-up of a finished black and grey realism piece, in good natural light"
           },
           {
             "slotId": "gallery-2",
-            "brief": "A completed watercolour tattoo, showing the colour work clearly"
+            "brief": "A close-up of a finished watercolour tattoo, showing the colour blending clearly"
           },
           {
             "slotId": "gallery-3",
-            "brief": "A completed fine line tattoo, close up, in good natural light"
+            "brief": "A close-up of a finished fine line tattoo, showing the detail of the linework"
           },
           {
             "slotId": "gallery-4",
-            "brief": "A wide shot of the studio space showing the clean, welcoming environment"
+            "brief": "A wide shot of the studio space itself, clean and set up for a session"
           }
         ]
       },
       {
         "type": "faq",
-        "layout": "cards",
+        "layout": "rules",
         "band": "tinted",
         "heading": "Before you book",
         "items": [
           {
-            "question": "I have an idea but it is not fully formed yet, can we still talk?",
-            "answer": "Yes. Mags works with you to develop and refine your idea through the design collaboration process, so you do not need a finished concept before reaching out."
+            "question": "Do I need to know exactly what I want before contacting you?",
+            "answer": "No. Bring your ideas, however rough, and Mags will collaborate with you on the design from there."
           },
           {
-            "question": "Is this my first tattoo, does that matter?",
-            "answer": "Not at all. Whether it is your first tattoo or an addition to an existing collection, the same care goes into listening to your ideas and creating a comfortable experience."
+            "question": "Is this suitable for a first tattoo?",
+            "answer": "Yes, whether it is your first tattoo or an addition to an existing collection, the same collaborative process applies."
           },
           {
             "question": "What hygiene standards does the studio follow?",
-            "answer": "Single-use needles and inks are used for every client, and the studio adheres to all health and safety regulations."
+            "answer": "Single-use needles and inks are used for every session, and the studio adheres to all health and safety regulations."
+          },
+          {
+            "question": "Where is the studio based?",
+            "answer": "Tats by Mags is based in Hartbeespoort, North West."
           }
         ]
       },
       {
         "type": "ctaBand",
         "band": "deep",
-        "heading": "Let's bring your vision to life",
-        "body": "Contact Tats by Mags in Hartbeespoort to book a consultation and start designing your next piece."
+        "heading": "Ready to bring your idea to life?",
+        "body": "Contact Tats by Mags today to book a consultation and start talking through your design."
       }
     ]
   }

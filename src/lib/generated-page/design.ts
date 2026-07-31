@@ -3,7 +3,8 @@ import {
   Calendar, Phone, MapPin, Truck, Package, Scissors, Sparkles, Heart, Handshake, Users,
   GraduationCap, Briefcase, ChartNoAxesColumn, Leaf, Sun, Camera, Brush, PenLine, Star,
   Check, Award, Target, Lightbulb, Settings, Search, MessageCircle, ShoppingBag,
-  CreditCard, KeyRound, type LucideIcon,
+  CreditCard, KeyRound, PawPrint, Sprout, Recycle, Utensils, Bike, Music, BookOpen,
+  Globe, Lock, type LucideIcon,
 } from "lucide-react";
 import { Playfair_Display, Bricolage_Grotesque, Fraunces, Outfit, Sora, Libre_Baskerville } from "next/font/google";
 import type { PALETTE_KEYS, ICON_KEYS, TYPE_KEYS } from "./schema";
@@ -194,4 +195,7 @@ export const ICONS: Record<IconKey, LucideIcon> = {
   sun: Sun, camera: Camera, brush: Brush, pen: PenLine, star: Star, check: Check,
   award: Award, target: Target, lightbulb: Lightbulb, settings: Settings, search: Search,
   message: MessageCircle, shoppingBag: ShoppingBag, creditCard: CreditCard, key: KeyRound,
+  paw: PawPrint, sprout: Sprout, recycle: Recycle, utensils: Utensils, bike: Bike,
+  music: Music, book: BookOpen, globe: Globe, lock: Lock,
 };
+

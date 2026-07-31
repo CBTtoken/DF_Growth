@@ -1,28 +1,30 @@
 {
   "slug": "seven-passes-initiative",
+  "tier": "sections",
   "businessName": "Seven Passes Initiative",
   "brandColor": null,
-  "generatedAt": "2026-07-31T10:19:30.665Z",
+  "photoUrls": [],
+  "generatedAt": "2026-07-31T11:25:38.222Z",
   "plan": {
     "palette": "deep-forest",
-    "typePairing": "warm-serif",
-    "rhythm": "standard",
-    "rationale": "An NPO with a clear grassroots mission needs weight and dignity, not sales energy. Deep forest palette and warm serif type read as grounded and human rather than corporate CSR. Sections build the case in order: mission, the need, program areas as pillars, then two distinct calls to action (partners and individuals) kept separate since they want different things. No gallery since there are no photos yet, no fabricated stats or dates anywhere.",
+    "typePairing": "editorial-serif",
+    "rhythm": "generous",
+    "rationale": "An NPO with a clear mission and five distinct program areas needs room to explain the need before asking for support. Deep forest and editorial serif read as grounded and serious rather than corporate. Pillars carry the program areas, a deep band carries the founding belief, featureSplit gives the partnership pitch its own weight, and process explains how someone actually gets involved. No photos exist yet so slots are requested where they would carry real weight.",
     "sections": [
       {
         "type": "hero",
-        "layout": "editorial",
-        "eyebrow": "Hoekwil and Touwsranten, Garden Route",
-        "headline": "We create pathways, not handouts",
-        "subheadline": "A community based organisation working at grassroots level to prevent violence and build safer, stronger communities in Hoekwil and Touwsranten.",
+        "layout": "stacked",
+        "eyebrow": "Registered Non-Profit Organisation",
+        "headline": "Building pathways to opportunity, safety and hope",
+        "subheadline": "The Seven Passes Initiative works at grassroots level in the Hoekwil and Touwsranten communities on the Garden Route, tackling the root causes of violence and poverty before they take hold.",
         "featureStrip": [
-          {
-            "icon": "graduation",
-            "label": "Educational enrichment"
-          },
           {
             "icon": "users",
             "label": "Youth empowerment"
+          },
+          {
+            "icon": "book",
+            "label": "Educational enrichment"
           },
           {
             "icon": "heart",
@@ -31,6 +33,10 @@
           {
             "icon": "shield",
             "label": "Violence prevention"
+          },
+          {
+            "icon": "handshake",
+            "label": "Community collaboration"
           }
         ]
       },
@@ -38,123 +44,108 @@
         "type": "intro",
         "layout": "statement",
         "band": "plain",
-        "heading": "Prevention is the most powerful form of intervention",
+        "heading": "We do not provide handouts. We create pathways.",
         "paragraphs": [
-          "The Seven Passes Initiative is a registered Non-Profit Organisation working at grassroots level in the Hoekwil and Touwsranten communities, two rural areas along the Garden Route in the Western Cape. We were founded in response to the complex challenges facing these communities: poverty, limited educational access, family violence and unemployment.",
-          "We do not provide handouts. We create pathways to opportunity, to safety and to hope. We are building that future one life, one household, one program at a time."
-        ]
-      },
-      {
-        "type": "intro",
-        "layout": "columns",
-        "band": "tinted",
-        "heading": "Why we exist",
-        "paragraphs": [
-          "Hoekwil and Touwsranten, like many rural South African areas, face systemic socio-economic challenges that limit progress for generations. High rates of unemployment, limited access to quality education and family violence remain everyday realities. Without proactive support and preventative strategies, the cycle continues.",
-          "Our model is holistic, practical and community-driven. We intervene before violence escalates. We equip, educate and empower rather than react."
+          "Hoekwil and Touwsranten face high unemployment, limited access to quality education, and family violence that repeats across generations. Our model is holistic, practical and community driven. We intervene before violence escalates, rather than reacting once harm is done.",
+          "Every child deserves a future free from fear. Every family deserves the tools to thrive. Every community deserves to grow with dignity and purpose. We are building that future, one life, one household, one program at a time."
         ]
       },
       {
         "type": "pillars",
         "layout": "icon-cards",
-        "band": "plain",
-        "eyebrow": "Our mission",
-        "heading": "How we work towards safer, stronger communities",
+        "band": "tinted",
+        "eyebrow": "Our Program Areas",
+        "heading": "Five ways we work",
         "items": [
           {
-            "icon": "graduation",
-            "title": "Educational environments",
-            "body": "Supporting and transforming educational environments into uplifting, opportunity-filled spaces."
+            "icon": "users",
+            "title": "Youth Empowerment",
+            "body": "After school programs, academic support and youth leadership development."
           },
           {
-            "icon": "users",
-            "title": "Youth empowerment",
-            "body": "Empowering youth through mentorship, leadership and skills development."
+            "icon": "book",
+            "title": "Educational Enrichment",
+            "body": "Partnering with local schools to improve learning outcomes and infrastructure."
           },
           {
             "icon": "heart",
-            "title": "Family strengthening",
-            "body": "Strengthening families through psychosocial support, early childhood development and parenting programs."
+            "title": "Family Support",
+            "body": "Parenting workshops, trauma informed care, counselling and home visits."
+          },
+          {
+            "icon": "shield",
+            "title": "Violence Prevention",
+            "body": "Early intervention programs, community dialogues, mentorship and awareness campaigns."
           },
           {
             "icon": "handshake",
-            "title": "Community collaboration",
-            "body": "Collaborating with local government, businesses and community leaders to create long-term systemic impact."
-          }
-        ]
-      },
-      {
-        "type": "services",
-        "layout": "two-column",
-        "band": "tinted",
-        "eyebrow": "Program areas",
-        "heading": "Where our work happens",
-        "items": [
-          {
-            "name": "Youth Empowerment",
-            "description": "After-school programs, academic support and youth leadership development."
-          },
-          {
-            "name": "Educational Enrichment",
-            "description": "Partnering with local schools to improve learning outcomes and infrastructure."
-          },
-          {
-            "name": "Family Support",
-            "description": "Parenting workshops, trauma-informed care, counseling and home visits."
-          },
-          {
-            "name": "Violence Prevention",
-            "description": "Early intervention programs, community dialogues, mentorship and awareness campaigns."
-          },
-          {
-            "name": "Community Collaboration",
-            "description": "Building networks with local authorities, businesses and stakeholders to amplify change."
+            "title": "Community Collaboration",
+            "body": "Building networks with local authorities, businesses and stakeholders to amplify change."
           }
         ]
       },
       {
         "type": "featureSplit",
-        "layout": "offset",
+        "layout": "framed",
         "band": "deep",
         "mediaSide": "right",
         "heading": "Why partner with us",
-        "body": "Partnering with Seven Passes isn't about ticking a CSR checkbox, it's about directing real resources to the people and places that need it most. As a sponsor or corporate partner, you gain visibility among a socially-conscious audience, align your brand with purpose-driven development, and access storytelling opportunities to showcase your impact in action. Whether you're a local enterprise or a national brand, your involvement signals commitment to a stronger South Africa.",
+        "body": "Partnering with Seven Passes is not about ticking a CSR checkbox, it is about directing real resources to the people and places that need it most. As a sponsor or corporate partner you gain visibility among a socially conscious audience, align your brand with purpose driven development, and access storytelling opportunities to showcase your impact in action. Whether you are a local enterprise or a national brand, your involvement signals commitment to a stronger South Africa.",
         "photoSlot": {
           "slotId": "partner-visit",
-          "brief": "A photo taken during a program session or community visit, showing the work in action rather than a posed group shot."
+          "brief": "A photo taken during a program session, workshop or community visit, showing the work happening on the ground. Daylight, candid rather than posed."
         }
       },
       {
-        "type": "pillars",
-        "layout": "quiet",
+        "type": "process",
+        "layout": "steps",
         "band": "plain",
-        "eyebrow": "Get involved",
-        "heading": "Ways to support Seven Passes",
-        "items": [
+        "eyebrow": "Get Involved",
+        "heading": "Ways to support the work",
+        "steps": [
           {
-            "icon": "briefcase",
-            "title": "Corporate Sponsorships",
-            "body": "One-off or long-term partnerships with local and national businesses."
+            "title": "Corporate Sponsorship",
+            "body": "One off or long term partnerships with local and national businesses."
           },
           {
-            "icon": "heart",
             "title": "Individual Donations",
-            "body": "Every contribution, large or small, helps."
+            "body": "Every contribution, large or small, helps fund our program areas."
           },
           {
-            "icon": "calendar",
             "title": "Event Participation",
-            "body": "Attend, sponsor or contribute to our events."
+            "body": "Attend, sponsor or contribute to our upcoming events."
           },
           {
-            "icon": "users",
             "title": "Volunteer",
-            "body": "Bring your time and talent where it matters most."
+            "body": "Bring your time and talent where it matters most, in the communities we serve."
           },
           {
-            "icon": "star",
             "title": "Fundraise",
-            "body": "Host your own event in support of Seven Passes."
+            "body": "Host your own event in support of Seven Passes Initiative."
+          }
+        ]
+      },
+      {
+        "type": "gallery",
+        "layout": "grid",
+        "band": "tinted",
+        "heading": "Our work in the community",
+        "photoSlots": [
+          {
+            "slotId": "gallery-1",
+            "brief": "Children or youth participating in an after school program or mentorship activity."
+          },
+          {
+            "slotId": "gallery-2",
+            "brief": "A parenting workshop, home visit or family support session in progress."
+          },
+          {
+            "slotId": "gallery-3",
+            "brief": "A community dialogue, school partnership meeting or collaboration event."
+          },
+          {
+            "slotId": "gallery-4",
+            "brief": "The Hoekwil or Touwsranten area itself, showing the community context of the work."
           }
         ]
       },
@@ -162,7 +153,7 @@
         "type": "ctaBand",
         "band": "deep",
         "heading": "Join our upcoming event",
-        "body": "See under events for details, or get in touch to find out how you or your business can get involved."
+        "body": "See our events for the next opportunity to attend, sponsor or contribute in person."
       }
     ]
   }

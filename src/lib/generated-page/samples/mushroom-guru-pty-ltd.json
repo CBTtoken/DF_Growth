@@ -1,0 +1,456 @@
+{
+  "slug": "mushroom-guru-pty-ltd",
+  "tier": "composed",
+  "businessName": "Mushroom Guru (Pty) Ltd",
+  "brandColor": "#caa62b",
+  "photoUrls": [
+    "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/a62bd892-a964-4443-ab76-fb8d682cafb6/03ae477f-8769-416a-b510-f8090e4a931e.jpg",
+    "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/a62bd892-a964-4443-ab76-fb8d682cafb6/dfbc347e-3a62-48a9-882f-2226bbf08550.jpg",
+    "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/a62bd892-a964-4443-ab76-fb8d682cafb6/e5ae4c37-ddc2-45ff-b42a-31742168967e.jpg",
+    "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/a62bd892-a964-4443-ab76-fb8d682cafb6/7e4914f7-282a-4e46-bc1e-319e03455c1b.jpg",
+    "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/a62bd892-a964-4443-ab76-fb8d682cafb6/47a9bffc-fdd7-4021-bb6c-df0606943073.jpg",
+    "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/a62bd892-a964-4443-ab76-fb8d682cafb6/241b7279-83bd-4ff7-baaf-e59d9f51ef90.jpg",
+    "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/a62bd892-a964-4443-ab76-fb8d682cafb6/25735f8f-dd64-476f-9da4-3328da19d775.jpg"
+  ],
+  "generatedAt": "2026-07-31T11:20:28.554Z",
+  "plan": {
+    "palette": "deep-forest",
+    "typePairing": "editorial-serif",
+    "rationale": "Deep forest and an editorial serif give this the feel of a scientific monograph rather than a supplement hard-sell, which suits a company built around lab verification and a registered facility. I kept every registration number, the facility size, the location and the review figures because they were explicitly given, but I deliberately stripped out the percentage improvement claims and disease-related language since the business's own educational notice says the products are not evaluated by SAHPRA and not intended to diagnose or treat anything. The page leans on the process story (dual-phase extraction, the chitin wall problem, 13 years of cultivation) and the product range itself, with photographs carrying the sterile-facility credibility rather than more adjectives. The disclaimer gets its own quiet, unavoidable place near the bottom rather than being buried in fine print.",
+    "sections": [
+      {
+        "band": "deep",
+        "padding": "xl",
+        "width": "wide",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "eyebrow",
+              "text": "Grown and extracted in Strand, Western Cape"
+            },
+            "span": 8,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "heading",
+              "text": "South Africa's only pure, scientifically validated dual antler Reishi extract",
+              "scale": "display"
+            },
+            "span": 8,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "body",
+              "text": "Mushroom Guru is a registered South African company cultivating, extracting and lab-verifying Reishi in our own 250 square metre sterile facility here in Strand. Not imported. Not generic.",
+              "scale": "lg"
+            },
+            "span": 7,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "plain",
+        "padding": "lg",
+        "width": "full",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "media",
+              "slot": {
+                "slotId": "photo-1",
+                "brief": "Wide shot of the sterile cultivation and extraction facility in Strand"
+              },
+              "aspect": "wide",
+              "treatment": "bleed"
+            },
+            "span": 12,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "plain",
+        "padding": "lg",
+        "width": "normal",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "eyebrow",
+              "text": "What is GanodermaGOLD"
+            },
+            "span": 6,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "heading",
+              "text": "A 2 000 year old mushroom, finally made bio-available",
+              "scale": "lg"
+            },
+            "span": 6,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "body",
+              "text": "Reishi has been used in Eastern medicine for over two millennia and contains more than 400 bioactive compounds. The problem with most Reishi products is the tough chitin wall of the mushroom, which blocks absorption so the body cannot use most of what is swallowed. Through years of proprietary cultivation and a dual-phase extraction process, GanodermaGOLD breaks through that wall, delivering the compounds in a form the body can actually use.",
+              "scale": "base"
+            },
+            "span": 6,
+            "start": 7,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "tinted",
+        "padding": "md",
+        "width": "normal",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "media",
+              "slot": {
+                "slotId": "photo-2",
+                "brief": "Close-up of a GanodermaGOLD capsule bottle on a clean surface"
+              },
+              "aspect": "square",
+              "treatment": "framed"
+            },
+            "span": 5,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "body",
+              "text": "Every batch is independently lab-verified. The lab documentation behind each claim we make is available on our website for anyone to review. That is the standard we hold ourselves to before we hold it up to you.",
+              "scale": "base"
+            },
+            "span": 6,
+            "start": 7,
+            "align": "center"
+          }
+        ]
+      },
+      {
+        "band": "plain",
+        "padding": "lg",
+        "width": "normal",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "eyebrow",
+              "text": "The range"
+            },
+            "span": 12,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "heading",
+              "text": "Why people choose GanodermaGOLD",
+              "scale": "lg"
+            },
+            "span": 8,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "list",
+              "style": "cards",
+              "items": [
+                {
+                  "icon": "shield",
+                  "title": "Immune support",
+                  "body": "LZ8 protein in Reishi is associated with natural killer cell activity, part of the body's frontline defence."
+                },
+                {
+                  "icon": "flame",
+                  "title": "Inflammation and recovery",
+                  "body": "Ganoderic acids in Reishi are studied for their role in inflammatory pathways and recovery support."
+                },
+                {
+                  "icon": "sparkles",
+                  "title": "Energy without the crash",
+                  "body": "As an adaptogen, Reishi supports the adrenal system rather than the spike and crash of stimulants."
+                },
+                {
+                  "icon": "sun",
+                  "title": "Sleep quality",
+                  "body": "Triterpenes in Reishi have a calming effect on the nervous system, supporting more restorative sleep."
+                },
+                {
+                  "icon": "leaf",
+                  "title": "Cellular health",
+                  "body": "The 400+ bioactive compounds in Reishi work at cellular level, part of the foundation for long-term resilience."
+                },
+                {
+                  "icon": "paw",
+                  "title": "Works for your pets too",
+                  "body": "GanodermaGOLD PET is the same extract, calibrated for animal body weight, for the pets who matter to you."
+                }
+              ]
+            },
+            "span": 12,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "plain",
+        "padding": "md",
+        "width": "wide",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "media",
+              "slot": {
+                "slotId": "photo-3",
+                "brief": "Product shot of sublingual drops"
+              },
+              "aspect": "portrait",
+              "treatment": "rounded"
+            },
+            "span": 3,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "media",
+              "slot": {
+                "slotId": "photo-4",
+                "brief": "Product shot of the topical serum"
+              },
+              "aspect": "portrait",
+              "treatment": "rounded"
+            },
+            "span": 3,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "media",
+              "slot": {
+                "slotId": "photo-5",
+                "brief": "Product shot of the arnica rub"
+              },
+              "aspect": "portrait",
+              "treatment": "rounded"
+            },
+            "span": 3,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "media",
+              "slot": {
+                "slotId": "photo-6",
+                "brief": "Product shot of the GanodermaGOLD PET formula"
+              },
+              "aspect": "portrait",
+              "treatment": "rounded"
+            },
+            "span": 3,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "body",
+              "text": "Available as capsules, sublingual drops, topical serum, an arnica rub, and a pet formula. Scroll to browse the range or WhatsApp us and we'll help you find the right product for your goal.",
+              "scale": "base"
+            },
+            "span": 8,
+            "start": 3,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "deep",
+        "padding": "lg",
+        "width": "normal",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "quote",
+              "text": "I have been using the Reishi Targeted Therapy for about 2 months. I am 68 years old and come from the alternative health field, my discernment is high after 23 years of taking supplements. These products are in a category of their own.",
+              "attribution": "Verified Google Review"
+            },
+            "span": 6,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "quote",
+              "text": "Delivered to our office in rural KZN in just a few days. I am well satisfied and would happily recommend Mushroom Guru's products and service to anyone.",
+              "attribution": "Verified Google Review"
+            },
+            "span": 6,
+            "start": 7,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "tinted",
+        "padding": "lg",
+        "width": "normal",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "eyebrow",
+              "text": "Our credentials"
+            },
+            "span": 12,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "heading",
+              "text": "Science first, claims second",
+              "scale": "lg"
+            },
+            "span": 7,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "list",
+              "style": "checks",
+              "items": [
+                {
+                  "icon": "check",
+                  "title": "Registered South African company",
+                  "body": "Reg. No. 2014/075567/07, VAT No. 4830284552."
+                },
+                {
+                  "icon": "building",
+                  "title": "250 square metre sterile facility",
+                  "body": "Cultivation and extraction, based right here in Strand, Western Cape."
+                },
+                {
+                  "icon": "sparkles",
+                  "title": "South Africa's only pure dual-extract Reishi antler product"
+                },
+                {
+                  "icon": "shield",
+                  "title": "Independent lab verification",
+                  "body": "Every batch is independently and internationally lab-verified."
+                },
+                {
+                  "icon": "clock",
+                  "title": "13+ years",
+                  "body": "Continuous Ganoderma cultivation and laboratory refinement."
+                }
+              ]
+            },
+            "span": 12,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "plain",
+        "padding": "md",
+        "width": "normal",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "media",
+              "slot": {
+                "slotId": "photo-7",
+                "brief": "The Mushroom Guru logo or branding on packaging"
+              },
+              "aspect": "landscape",
+              "treatment": "plain"
+            },
+            "span": 6,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "body",
+              "text": "4.9 out of 5 from 96 verified Google reviews. Search \"Mushroom Guru Strand\" on Google Maps to read them all.",
+              "scale": "base"
+            },
+            "span": 5,
+            "start": 8,
+            "align": "center"
+          }
+        ]
+      },
+      {
+        "band": "accent",
+        "padding": "lg",
+        "width": "narrow",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "heading",
+              "text": "Ready to order, or have a question?",
+              "scale": "md"
+            },
+            "span": 8,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "body",
+              "text": "WhatsApp us directly and we'll get back to you personally.",
+              "scale": "base"
+            },
+            "span": 8,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "badges",
+              "items": [
+                {
+                  "icon": "phone",
+                  "label": "WhatsApp us"
+                },
+                {
+                  "icon": "mapPin",
+                  "label": "Strand, Western Cape"
+                }
+              ]
+            },
+            "span": 8,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "plain",
+        "padding": "sm",
+        "width": "normal",
+        "columns": 12,
+        "cells": [
+          {
+            "element": {
+              "kind": "body",
+              "text": "Educational notice: GanodermaGOLD products have not been evaluated by SAHPRA or the MCC and are not intended to diagnose, treat, cure or prevent any disease. Information is provided for educational purposes only.",
+              "scale": "sm"
+            },
+            "span": 12,
+            "align": "start"
+          }
+        ]
+      }
+    ]
+  }
+}

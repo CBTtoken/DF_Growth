@@ -34,6 +34,7 @@ export const ICON_KEYS = [
   "sparkles", "heart", "handshake", "users", "graduation", "briefcase", "chart",
   "leaf", "sun", "camera", "brush", "pen", "star", "check", "award", "target",
   "lightbulb", "settings", "search", "message", "shoppingBag", "creditCard", "key",
+  "paw", "sprout", "recycle", "utensils", "bike", "music", "book", "globe", "lock",
 ] as const;
 
 // Dewald, 2026-07-31: no full dark mode ever, it does not suit this market.
@@ -71,7 +72,11 @@ export const BAND_KEYS = ["plain", "tinted", "deep"] as const;
 // Shared pieces
 // ---------------------------------------------------------------------------
 
-const iconKey = z.enum(ICON_KEYS);
+// Unknown icons fall back rather than failing the plan. See composed-schema.ts.
+const iconKey = z.preprocess(
+  (v) => (typeof v === "string" && (ICON_KEYS as readonly string[]).includes(v) ? v : "sparkles"),
+  z.enum(ICON_KEYS)
+);
 const band = z.enum(BAND_KEYS).default("plain");
 
 // Photo slots are named by what the photo should BE. That name is what the
@@ -264,7 +269,7 @@ export const pagePlanSchema = z.object({
   // Why the model made the calls it made. Not rendered: this is for the
   // internal review queue, so a human looking at a flagged page can read the
   // reasoning instead of guessing at it.
-  rationale: z.string().max(600),
+  rationale: z.string().max(900),
   sections: z.array(sectionSchema).min(3).max(12),
 });
 

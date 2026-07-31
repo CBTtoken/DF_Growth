@@ -102,3 +102,31 @@ body {
     @apply text-neutral-ink font-extrabold leading-tight tracking-tight;
   }
 }
+
+/* Generated member pages, photo-led tier (lib/generated-page/composed-schema.ts).
+   Static rules driven by custom properties, because column spans are data and
+   Tailwind cannot generate classes it never sees at build time.
+
+   Mobile is deliberately a single stacked column: `grid-column: span 6` inside
+   a one-column grid does not clamp, it creates six implicit columns, so the
+   span must not apply until the grid actually exists. */
+.gp-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gp-cell {
+  grid-column: auto;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .gp-grid {
+    grid-template-columns: repeat(var(--gp-cols, 1), minmax(0, 1fr));
+  }
+
+  .gp-cell {
+    grid-column: span var(--gp-span, 1) / span var(--gp-span, 1);
+    grid-column-start: var(--gp-start, auto);
+  }
+}

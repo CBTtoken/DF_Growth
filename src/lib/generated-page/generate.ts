@@ -28,7 +28,7 @@ export type GenerateResult =
   | { ok: true; plan: PagePlan; sourceText: string }
   | { ok: false; error: string };
 
-function factsToText(facts: MemberFacts): string {
+export function factsToText(facts: MemberFacts): string {
   return [
     `Business name: ${facts.businessName}`,
     facts.industry ? `Trade or category: ${facts.industry}` : null,
@@ -201,7 +201,18 @@ export async function generatePagePlan(facts: MemberFacts): Promise<GenerateResu
 
     // Strip markdown fences before parsing. The prompt says not to add them
     // and models add them anyway, which has bitten this codebase before.
-    const raw = block.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+    // Take the outermost JSON object rather than assuming the reply is only
+    // JSON. Found live: a member whose input was largely unverifiable health
+    // marketing made the model open with a paragraph explaining what it was
+    // refusing to repeat. That judgement is exactly what we want and it should
+    // not fail the parse. Assistant prefill would be the neater fix, but this
+    // model rejects a conversation that ends on an assistant turn.
+    const first = block.text.indexOf("{");
+    const last = block.text.lastIndexOf("}");
+    if (first === -1 || last <= first) {
+      return { ok: false, error: `No JSON object in the reply. First 200 chars: ${block.text.slice(0, 200)}` };
+    }
+    const raw = block.text.slice(first, last + 1);
 
     let parsedJson: unknown;
     try {

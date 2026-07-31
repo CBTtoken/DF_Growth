@@ -2,32 +2,35 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { notFound } from "next/navigation";
 import { GeneratedPage } from "@/components/generated/GeneratedPage";
+import { ComposedPage } from "@/components/generated/ComposedPage";
 import { pagePlanSchema, collectPhotoSlots, type PagePlan } from "@/lib/generated-page/schema";
+import { composedPlanSchema, collectComposedSlots, type ComposedPlan } from "@/lib/generated-page/composed-schema";
 
-// Proof-of-concept preview for the generated-page architecture.
-//
-// Renders a plan produced by scripts/generate-page-plans.mjs so it can be put
-// side by side with the same member's current live page. Reads from disk
-// rather than the database because the plans are still being tuned and being
-// able to diff them matters more than where they live.
+// Proof-of-concept preview for the generated-page architecture, both tiers.
+// Reads plans from disk rather than the database because they are still being
+// tuned and being able to diff them matters more than where they live.
 //
 // noindex, and no live page is affected by anything here.
 export const dynamic = "force-static";
+export const metadata = { robots: { index: false, follow: false } };
 
-type SamplePayload = {
+type Sample = {
   slug: string;
+  tier: "sections" | "composed";
   businessName: string;
   brandColor: string | null;
+  photoUrls?: string[];
   generatedAt: string;
-  plan: PagePlan;
+  plan: PagePlan | ComposedPlan;
 };
 
 const SAMPLES_DIR = path.join(process.cwd(), "src/lib/generated-page/samples");
 
-function loadSample(slug: string): SamplePayload | null {
+function loadSample(slug: string): Sample | null {
   try {
     const raw = JSON.parse(readFileSync(path.join(SAMPLES_DIR, `${slug}.json`), "utf8"));
-    const plan = pagePlanSchema.safeParse(raw.plan);
+    const schema = raw.tier === "composed" ? composedPlanSchema : pagePlanSchema;
+    const plan = schema.safeParse(raw.plan);
     if (!plan.success) return null;
     return { ...raw, plan: plan.data };
   } catch {
@@ -45,8 +48,6 @@ export function generateStaticParams() {
   }
 }
 
-export const metadata = { robots: { index: false, follow: false } };
-
 export default async function GeneratedPreview({
   params,
 }: {
@@ -56,21 +57,38 @@ export default async function GeneratedPreview({
   const sample = loadSample(clientSlug);
   if (!sample) return notFound();
 
-  const photoSlots = collectPhotoSlots(sample.plan);
+  const composed = sample.tier === "composed";
+  const slots = composed
+    ? collectComposedSlots(sample.plan as ComposedPlan)
+    : collectPhotoSlots(sample.plan as PagePlan);
+
+  // The member's existing photographs have no per-image descriptions yet, so
+  // they map onto the requested slots in upload order. Proper matching, with
+  // a description per photograph, is Handoff 03's job.
+  const photos: Record<string, string> = {};
+  (sample.photoUrls ?? []).forEach((url, i) => {
+    const slot = slots[i];
+    if (slot) photos[slot.slotId] = url;
+  });
+
+  const filled = Object.keys(photos).length;
 
   return (
     <>
-      {/* Review strip. Not part of the design, just what a reviewer needs:
-          what the model chose, why, and what it is asking the member for. */}
+      {/* Review strip. Not part of the design, just what a reviewer needs. */}
       <div className="bg-ink px-5 py-4 text-white sm:px-8">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 text-sm">
+        <div className="mx-auto flex max-w-6xl flex-col gap-2 text-sm">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <strong className="text-base">{sample.businessName}</strong>
-            <span className="opacity-70">palette: {sample.plan.palette}</span>
-            <span className="opacity-70">type: {sample.plan.typePairing}</span>
-            <span className="opacity-70">rhythm: {sample.plan.rhythm}</span>
+            <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-xs font-semibold">
+              {composed ? "photo-led, composed layout" : "no photos, prepared sections"}
+            </span>
+            <span className="opacity-70">{sample.plan.palette}</span>
+            <span className="opacity-70">{sample.plan.typePairing}</span>
             <span className="opacity-70">{sample.plan.sections.length} sections</span>
-            <span className="opacity-70">{photoSlots.length} photos requested</span>
+            <span className="opacity-70">
+              {filled} of {slots.length} photos filled
+            </span>
             <a href={`/${sample.slug}`} className="underline underline-offset-2">
               compare with current page
             </a>
@@ -79,10 +97,11 @@ export default async function GeneratedPreview({
         </div>
       </div>
 
-      <GeneratedPage
-        plan={sample.plan}
-        brandColor={sample.brandColor}
-      />
+      {composed ? (
+        <ComposedPage plan={sample.plan as ComposedPlan} brandColor={sample.brandColor} photos={photos} />
+      ) : (
+        <GeneratedPage plan={sample.plan as PagePlan} brandColor={sample.brandColor} photos={photos} />
+      )}
     </>
   );
 }
