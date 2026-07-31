@@ -2,9 +2,9 @@
 
 import { useActionState, useState } from "react";
 import { CornerDownRight, Flag, Heart, MessageSquare, Star } from "lucide-react";
-import Link from "next/link";
 import { submitComment, toggleLike, reportContent } from "@/app/board/actions";
 import { ShareRow } from "@/components/board/ShareRow";
+import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 import type { BoardComment } from "@/lib/board/engagement";
 
@@ -136,7 +136,7 @@ export function BoardComments({
   postSlug,
   comments,
   likeCount,
-  businessSlug,
+  businessId,
   businessName,
   shareUrl,
   shareText,
@@ -144,13 +144,15 @@ export function BoardComments({
   postSlug: string;
   comments: BoardComment[];
   likeCount: number;
-  businessSlug: string | null;
+  /** Null when a person posted this rather than a business. */
+  businessId: string | null;
   businessName: string | null;
   shareUrl: string;
   shareText: string;
 }) {
   const [commentState, commentAction, commentPending] = useActionState(submitComment.bind(null, postSlug, null), null);
   const [writing, setWriting] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [likes, setLikes] = useState(likeCount);
   const [liked, setLiked] = useState(false);
 
@@ -194,13 +196,26 @@ export function BoardComments({
           {totalComments > 0 ? totalComments : "Comment"}
         </button>
 
-        {businessSlug && (
-          <Link href={`/${businessSlug}#reviews`} className={`${barButton} text-neutral-mid hover:bg-neutral-light`}>
+        {businessId && (
+          <button
+            type="button"
+            onClick={() => setReviewing((open) => !open)}
+            className={`${barButton} text-neutral-mid hover:bg-neutral-light`}
+          >
             <Star size={17} />
             Review
-          </Link>
+          </button>
         )}
       </div>
+
+      {reviewing && businessId && (
+        <div className="rounded-xl border border-neutral-border bg-neutral-light p-4">
+          <p className="mb-2 text-sm font-semibold text-neutral-ink">
+            Review {businessName ?? "this business"}
+          </p>
+          <ReviewSubmissionForm businessId={businessId} accentColor="#1081b8" />
+        </div>
+      )}
 
       <ShareRow url={shareUrl} text={shareText} />
 

@@ -194,7 +194,7 @@ export default async function ClientLandingPage({
       bookable_units(id, name, unit_type, description, base_price_cents, capacity, duration_minutes),
       booking_operational_rules(operating_hours, buffer_minutes),
       shop_products(id, title, description, base_price_cents, sale_count),
-      reviews(id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name))`
+      reviews(id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name), board_identities(display_name))`
     )
     .eq("slug", clientSlug)
     .eq("status", "active")

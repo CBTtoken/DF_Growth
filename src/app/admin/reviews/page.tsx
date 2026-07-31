@@ -36,7 +36,7 @@ export default async function AdminReviewsPage() {
   const { data: reviews } = await admin
     .from("reviews")
     .select(
-      "id, rating, review_text, flagged_by, flagged_reason, flagged_at, created_at, growth_clients(business_name), reviewer_accounts(display_name)"
+      "id, rating, review_text, flagged_by, flagged_reason, flagged_at, created_at, growth_clients(business_name), reviewer_accounts(display_name), board_identities(display_name)"
     )
     .not("flagged_by", "is", null)
     .order("flagged_at", { ascending: true });

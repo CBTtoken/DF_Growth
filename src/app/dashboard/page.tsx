@@ -183,7 +183,7 @@ export default async function DashboardPage() {
     // so there's nothing useful this list would show them by keeping it.
     admin
       .from("reviews")
-      .select("id, rating, review_text, business_reply, flagged_by, flagged_reason, created_at, reviewer_accounts(display_name)")
+      .select("id, rating, review_text, business_reply, flagged_by, flagged_reason, created_at, reviewer_accounts(display_name), board_identities(display_name)")
       .eq("business_id", client.id)
       .neq("status", "removed")
       .order("created_at", { ascending: false }),

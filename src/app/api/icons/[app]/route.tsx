@@ -16,13 +16,14 @@ import { loadAssetFonts } from "@/lib/assets/fonts";
 // Cached hard: an icon changes when this file changes, never per request.
 export const contentType = "image/png";
 
-const APPS: Record<string, { word: string; background: string; accent: string }> = {
+const APPS: Record<string, { word: string; background: string; accent: string; top: string }> = {
   // Near black rather than brand blue. The blue is the app's colour and it
   // is everywhere inside it, so an icon in the same blue disappears into a
   // phone full of blue icons. The accent bar underneath is where the brand
   // lives.
-  board: { word: "Board", background: "#0f1b28", accent: "#e8821a" },
-  messages: { word: "Chat", background: "#0f1b28", accent: "#1081b8" },
+  board: { word: "Board", background: "#0f1b28", accent: "#e8821a", top: "DF" },
+  messages: { word: "Chat", background: "#0f1b28", accent: "#1081b8", top: "DF" },
+  katisobiz: { word: "Q & I", background: "#0f1b28", accent: "#10b981", top: "KB-DF" },
 };
 
 export async function GET(request: Request, { params }: { params: Promise<{ app: string }> }) {
@@ -59,14 +60,14 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
         <div
           style={{
             display: "flex",
-            fontSize: size * 0.15 * scale,
+            fontSize: (config.top.length > 3 ? size * 0.115 : size * 0.15) * scale,
             fontWeight: 700,
             letterSpacing: size * 0.02,
             color: config.accent,
             marginBottom: -size * 0.02 * scale,
           }}
         >
-          DF
+          {config.top}
         </div>
 
         {/* As large as it goes without crowding the edges. At 192 pixels
@@ -76,11 +77,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ app:
         <div
           style={{
             display: "flex",
-            fontSize: size * 0.36 * scale,
+            fontSize: (config.word.length > 5 ? size * 0.3 : size * 0.36) * scale,
             fontWeight: 700,
             letterSpacing: -size * 0.01,
             color: "#ffffff",
-            textTransform: "lowercase",
+            textTransform: config.word === "Q & I" ? "none" : "lowercase",
           }}
         >
           {config.word}

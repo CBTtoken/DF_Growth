@@ -203,7 +203,7 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
               postSlug={post.slug}
               comments={comments}
               likeCount={likes.count}
-              businessSlug={member?.slug ?? null}
+              businessId={member?.id ?? null}
               businessName={member?.businessName ?? null}
               shareUrl={shareUrl}
               shareText={shareText}

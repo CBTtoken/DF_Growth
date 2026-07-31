@@ -1,249 +1,121 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import {
-  submitReviewNewReviewer,
-  submitReviewExistingReviewer,
-  verifyReviewerSignupOtp,
-} from "@/lib/reviews/actions";
+import { Star } from "lucide-react";
+import { submitReviewSimple } from "@/lib/reviews/actions";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 
-// Rate & Review Sprint 1. Two account paths share the same rating/review
-// fields — "I want to leave a review" is the actual user journey, account
-// creation (or login) is incidental to that, not a separate destination.
+// Leaving a review, in one screen.
+//
+// What this replaces: pick new or returning, create a password, submit, go
+// to your inbox, find a code, come back, type it in. Six weeks live, zero
+// reviews. Not few. Zero.
+//
+// The board proved the fix the night before: a name, the invisible
+// Cloudflare check, and an optional email for somebody who wants to know
+// when the business replies. It uses the same identity as the board, so
+// somebody who commented on a post yesterday is already known here.
+//
+// The fraud checks did not change. A review from the business's own address,
+// or a burst from one network, is still flagged and still waits for a human.
+// The door changed, not the guard.
 export function ReviewSubmissionForm({ businessId, accentColor }: { businessId: string; accentColor: string }) {
   const [open, setOpen] = useState(false);
-  const [mode, setMode] = useState<"new" | "existing">("new");
-  const [step, setStep] = useState<"form" | "otp" | "done">("form");
   const [rating, setRating] = useState(0);
-  const [pendingEmail, setPendingEmail] = useState("");
+  const [state, formAction, pending] = useActionState(submitReviewSimple.bind(null, businessId), null);
 
-  const [newState, newAction, newPending] = useActionState(
-    async (_prevState: Awaited<ReturnType<typeof submitReviewNewReviewer>>, formData: FormData) => {
-      const result = await submitReviewNewReviewer(_prevState, formData);
-      if (result?.success) {
-        setPendingEmail(String(formData.get("email")));
-        setStep("otp");
-      }
-      return result;
-    },
-    null
-  );
-
-  const [existingState, existingAction, existingPending] = useActionState(
-    async (_prevState: Awaited<ReturnType<typeof submitReviewExistingReviewer>>, formData: FormData) => {
-      const result = await submitReviewExistingReviewer(_prevState, formData);
-      if (result?.success) setStep("done");
-      return result;
-    },
-    null
-  );
-
-  const [otpState, otpAction, otpPending] = useActionState(
-    async (_prevState: Awaited<ReturnType<typeof verifyReviewerSignupOtp>>, formData: FormData) => {
-      const result = await verifyReviewerSignupOtp(_prevState, formData);
-      if (result?.success) setStep("done");
-      return result;
-    },
-    null
-  );
+  if (state?.success) {
+    return (
+      <p className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        {state.held
+          ? "Thank you. Your review is with us to check before it appears."
+          : "Thank you, your review is up."}
+      </p>
+    );
+  }
 
   if (!open) {
     return (
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
+        className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
         style={{ backgroundColor: accentColor }}
       >
+        <Star size={16} />
         Leave a review
       </button>
     );
   }
 
-  if (step === "done") {
-    return (
-      <div className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-6 text-center">
-        <span
-          className="grid size-12 place-items-center rounded-full text-xl text-white"
-          style={{ backgroundColor: accentColor }}
-        >
-          ✓
-        </span>
-        <p className="font-semibold text-ink">
-          {mode === "new" ? "Thanks, your review is live." : "Thanks for your review."}
-        </p>
-      </div>
-    );
-  }
+  const inputClass =
+    "w-full rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-900 outline-none transition-colors focus:border-brand focus:ring-2 focus:ring-brand/20";
 
-  if (step === "otp") {
-    return (
-      <div className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6">
-        <p className="text-sm text-gray-500">
-          We sent a code to <span className="font-medium text-ink">{pendingEmail}</span>. Enter it to
-          publish your review.
-        </p>
-        <form action={otpAction} className="flex flex-col gap-3">
-          <input type="hidden" name="email" value={pendingEmail} />
-          <input
-            type="text"
-            name="token"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            required
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-center text-lg tracking-[0.3em] text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-          />
-          {otpState?.error && <p className="text-xs text-red-600">{otpState.error}</p>}
-          <button
-            type="submit"
-            disabled={otpPending}
-            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
-            style={{ backgroundColor: accentColor }}
-          >
-            {otpPending ? "Confirming…" : "Confirm"}
-          </button>
-        </form>
-      </div>
-    );
-  }
-
-  const ratingAndText = (
-    <>
+  return (
+    <form action={formAction} className="flex w-full max-w-md flex-col gap-3 rounded-2xl border border-gray-200 bg-white p-4">
       <div className="flex flex-col gap-1.5">
-        <span className="text-sm font-medium text-gray-700">Rating</span>
-        <div className="flex gap-1">
-          {[1, 2, 3, 4, 5].map((n) => (
+        <span className="text-sm font-semibold text-gray-700">How was it?</span>
+        <div className="flex items-center gap-1">
+          {[1, 2, 3, 4, 5].map((value) => (
             <button
-              key={n}
+              key={value}
               type="button"
-              onClick={() => setRating(n)}
-              aria-label={`${n} star${n > 1 ? "s" : ""}`}
-              className="text-2xl leading-none"
-              style={{ color: n <= rating ? accentColor : "#d1d5db" }}
+              onClick={() => setRating(value)}
+              aria-label={`${value} out of 5`}
+              className="p-0.5"
             >
-              ★
+              <Star
+                size={26}
+                className={value <= rating ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}
+              />
             </button>
           ))}
         </div>
         <input type="hidden" name="rating" value={rating} />
       </div>
-      <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-        Your review
-        <textarea
-          name="reviewText"
-          required
-          minLength={10}
-          rows={4}
-          className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-        />
-      </label>
-    </>
-  );
 
-  return (
-    <div className="flex w-full max-w-sm flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-ink">Leave a review</h3>
-        <button type="button" onClick={() => setOpen(false)} className="text-xs text-gray-400 hover:text-gray-600">
+      <textarea
+        name="reviewText"
+        rows={3}
+        required
+        maxLength={2000}
+        placeholder="What did they do, and how did it go?"
+        className={inputClass}
+      />
+
+      <input type="text" name="displayName" required placeholder="Your name" className={inputClass} />
+
+      <details className="text-sm">
+        <summary className="cursor-pointer text-xs font-semibold text-gray-500 hover:text-brand">
+          Want to know when they reply? Add your email
+        </summary>
+        <div className="mt-2">
+          <input type="email" name="email" placeholder="Your email, optional" className={inputClass} />
+          <p className="mt-1 text-xs text-gray-500">Never shown on the page.</p>
+        </div>
+      </details>
+
+      <TurnstileWidget />
+
+      {state?.error && <p className="text-xs text-red-600">{state.error}</p>}
+
+      <div className="flex gap-2">
+        <button
+          type="submit"
+          disabled={pending || rating === 0}
+          className="rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition disabled:opacity-50"
+          style={{ backgroundColor: accentColor }}
+        >
+          {pending ? "Posting..." : "Post review"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          className="rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600"
+        >
           Cancel
         </button>
       </div>
-
-      {mode === "new" ? (
-        <form action={newAction} className="flex flex-col gap-3">
-          <input type="hidden" name="businessId" value={businessId} />
-          {ratingAndText}
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            First name
-            <input
-              type="text"
-              name="displayName"
-              required
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </label>
-          {newState?.error?.displayName && <p className="text-xs text-red-600">{newState.error.displayName[0]}</p>}
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Email
-            <input
-              type="email"
-              name="email"
-              required
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </label>
-          {newState?.error?.email && <p className="text-xs text-red-600">{newState.error.email[0]}</p>}
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Password
-            <input
-              type="password"
-              name="password"
-              required
-              minLength={8}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </label>
-          {newState?.error?.password && <p className="text-xs text-red-600">{newState.error.password[0]}</p>}
-          {newState?.error?.rating && <p className="text-xs text-red-600">{newState.error.rating[0]}</p>}
-          {newState?.error?.reviewText && <p className="text-xs text-red-600">{newState.error.reviewText[0]}</p>}
-          {newState?.error?._form && <p className="text-xs text-red-600">{newState.error._form[0]}</p>}
-
-          <TurnstileWidget />
-
-          <button
-            type="submit"
-            disabled={newPending || rating === 0}
-            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
-            style={{ backgroundColor: accentColor }}
-          >
-            {newPending ? "Submitting…" : "Submit review"}
-          </button>
-          <button type="button" onClick={() => setMode("existing")} className="text-xs text-gray-400 hover:text-gray-600">
-            Already have an account? Log in
-          </button>
-        </form>
-      ) : (
-        <form action={existingAction} className="flex flex-col gap-3">
-          <input type="hidden" name="businessId" value={businessId} />
-          {ratingAndText}
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Email
-            <input
-              type="email"
-              name="email"
-              required
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
-            Password
-            <input
-              type="password"
-              name="password"
-              required
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-            />
-          </label>
-          {existingState?.error?.rating && <p className="text-xs text-red-600">{existingState.error.rating[0]}</p>}
-          {existingState?.error?.reviewText && <p className="text-xs text-red-600">{existingState.error.reviewText[0]}</p>}
-          {existingState?.error?._form && <p className="text-xs text-red-600">{existingState.error._form[0]}</p>}
-
-          <TurnstileWidget />
-
-          <button
-            type="submit"
-            disabled={existingPending || rating === 0}
-            className="inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-50"
-            style={{ backgroundColor: accentColor }}
-          >
-            {existingPending ? "Submitting…" : "Submit review"}
-          </button>
-          <button type="button" onClick={() => setMode("new")} className="text-xs text-gray-400 hover:text-gray-600">
-            New here? Create an account
-          </button>
-        </form>
-      )}
-    </div>
+    </form>
   );
 }

@@ -247,3 +247,90 @@ export async function verifyReviewerSignupOtp(_prevState: VerifyOtpState, formDa
 
   return { success: true };
 }
+
+type SimpleReviewState = { error?: string; success?: boolean; held?: boolean } | null;
+
+/**
+ * Leaving a review, with nobody sent anywhere.
+ *
+ * This replaces the three-step flow above, which asked for a password,
+ * emailed a code, and produced zero reviews in six weeks. A name, an
+ * invisible bot check, and an optional email if the person wants to know
+ * when the business replies. The same identity the board uses, so one
+ * person is one person across a comment, a message and a review.
+ *
+ * The fraud checks are unchanged and still run: a review from the same
+ * address as the business, or a burst from one network, is flagged for a
+ * human exactly as before. What changed is the door, not the guard.
+ */
+export async function submitReviewSimple(
+  businessId: string,
+  _prevState: SimpleReviewState,
+  formData: FormData
+): Promise<SimpleReviewState> {
+  const h = await headers();
+  const ip = clientIpFromHeaders(h);
+
+  if (isRateLimited(`review-simple:${ip}`, 5, 10 * 60 * 1000)) {
+    return { error: "Too many attempts, please wait a few minutes and try again." };
+  }
+
+  const reviewParsed = parseReviewFields(formData);
+  if (!reviewParsed.success) {
+    const issues = reviewParsed.error.flatten().fieldErrors;
+    return { error: issues.reviewText?.[0] ?? issues.rating?.[0] ?? "Check what you have written." };
+  }
+
+  const displayName = String(formData.get("displayName") ?? "").trim();
+  if (displayName.length < 2) return { error: "Enter the name you want on your review." };
+
+  const email = String(formData.get("email") ?? "").trim().toLowerCase() || null;
+
+  const { currentVisitor, resolveVisitor } = await import("@/lib/board/visitor");
+  const existing = await currentVisitor();
+
+  if (!existing) {
+    const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+    if (!turnstileOk) {
+      return { error: "Could not confirm you are a person, please reload the page and try again." };
+    }
+  }
+
+  const resolved = await resolveVisitor({ displayName, email });
+  if ("error" in resolved) return { error: resolved.error };
+
+  const admin = createAdminClient();
+  const ipFingerprint = hashIp(ip);
+  const fraudFlag = await evaluateFraudSignals({
+    businessId,
+    reviewerEmail: email ?? `identity:${resolved.visitor.id}`,
+    ipFingerprint,
+  });
+
+  const { error } = await admin.from("reviews").insert({
+    business_id: businessId,
+    identity_id: resolved.visitor.id,
+    rating: reviewParsed.data.rating,
+    review_text: reviewParsed.data.reviewText,
+    // Published unless a fraud signal says otherwise, which is the whole
+    // point of removing the wall. A flagged one waits, out of sight, the
+    // same as it always did.
+    status: fraudFlag ? "pending_verification" : "published",
+    verified_at: fraudFlag ? null : new Date().toISOString(),
+    ip_fingerprint: ipFingerprint,
+    ...(fraudFlag && {
+      flagged_by: fraudFlag.flaggedBy,
+      flagged_reason: fraudFlag.flaggedReason,
+      flagged_at: new Date().toISOString(),
+    }),
+  });
+
+  if (error) {
+    // 23505 is the one-review-per-person constraint.
+    if (error.code === "23505") return { error: "You have already reviewed this business." };
+    console.error("Could not save a review", error);
+    return { error: "Something went wrong saving your review, please try again." };
+  }
+
+  return { success: true, held: Boolean(fraudFlag) };
+}

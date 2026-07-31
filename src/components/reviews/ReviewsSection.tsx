@@ -1,5 +1,13 @@
 import type { ReactNode } from "react";
 import { ReviewSubmissionForm } from "@/components/reviews/ReviewSubmissionForm";
+
+/**
+ * Who wrote it. Either source, whichever is set, and a fallback that is
+ * still true when retention has removed the person but left the review.
+ */
+function reviewerName(review: { reviewer_accounts: { display_name: string } | null; board_identities?: { display_name: string } | null }): string {
+  return review.board_identities?.display_name ?? review.reviewer_accounts?.display_name ?? "A customer";
+}
 import type { TemplateAnchor } from "@/lib/templates/anchors";
 import {
   HEADING_FONT_CLASS,
@@ -18,6 +26,8 @@ export type PublicReview = {
   business_reply: string | null;
   created_at: string;
   reviewer_accounts: { display_name: string } | null;
+  /** The board identity behind a review left without an account. */
+  board_identities?: { display_name: string } | null;
 };
 
 // Rate & Review Sprint 1, Sec 5: "Star rating and total review count
@@ -91,7 +101,7 @@ export function ReviewsSection({
                 {list.map((r) => (
                   <div key={r.id} className="rounded-2xl border border-gray-100 bg-gray-50 p-5">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-ink">{r.reviewer_accounts?.display_name ?? "A customer"}</span>
+                      <span className="font-semibold text-ink">{reviewerName(r)}</span>
                       <span style={{ color: accentColor }}>{"★".repeat(r.rating)}</span>
                     </div>
                     <p className="mt-2 text-sm text-gray-700">{r.review_text}</p>
@@ -120,7 +130,7 @@ export function ReviewsSection({
     <div key={r.id} className={`p-5 ${CARD_RECIPE_CLASS[anchor.cardRecipe]}`}>
       <div className="flex items-center justify-between">
         <span className={`font-semibold ${isDark ? "text-white" : "text-ink"}`}>
-          {r.reviewer_accounts?.display_name ?? "A customer"}
+          {reviewerName(r)}
         </span>
         <span style={{ color: accentColor }}>{"★".repeat(r.rating)}</span>
       </div>

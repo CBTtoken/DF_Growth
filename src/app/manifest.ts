@@ -47,14 +47,18 @@ export default async function manifest(): Promise<MetadataRoute.Manifest> {
     lang: "en-ZA",
     categories: ["business", "productivity", "finance"],
 
+    // Generated, in the same family as the Board and Chat icons, so a
+    // phone with all three on it reads as one product rather than three.
+    // Q and I for quotes and invoices, which is what a member opens this to
+    // do, and KB-DF above it for the same reason DF sits above the others.
     icons: [
-      { src: "/katisobiz/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
-      { src: "/katisobiz/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/api/icons/katisobiz?size=192", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/api/icons/katisobiz?size=512", sizes: "512x512", type: "image/png", purpose: "any" },
       // Android crops these to the phone's own icon shape. Without them it
       // draws a white square around the mark, which looks broken next to
       // every other app.
-      { src: "/katisobiz/icon-maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
-      { src: "/katisobiz/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/api/icons/katisobiz?size=192&maskable=1", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/api/icons/katisobiz?size=512&maskable=1", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
 
     // Long press the icon on Android and these appear, the same way
