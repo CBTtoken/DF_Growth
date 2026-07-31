@@ -16,6 +16,7 @@ export async function sendEmail({
   replyTo,
   cc,
   footer = "platform",
+  kind = "transactional",
 }: {
   to: string;
   subject: string;
@@ -44,12 +45,34 @@ export async function sendEmail({
    * lib/email/footer.ts for the live defect that prompted this.
    */
   footer?: EmailFooterKind;
+  /**
+   * Which domain this goes out on, and it is enforced here rather than left
+   * to each call site to remember.
+   *
+   * "transactional" is invoices, password resets, leads and notifications. It
+   * uses notify.digitalflyersa.co.za and its reputation must be protected at
+   * all costs: if that domain gets throttled, a member's invoice stops
+   * reaching their customer and nobody can reset a password.
+   *
+   * "marketing" is campaigns, and goes out on mail.digitalflyer.co.za, a
+   * different root domain entirely. The worst a bad campaign can then do is
+   * burn the marketing domain, which costs us a campaign rather than the
+   * product.
+   */
+  kind?: "transactional" | "marketing";
 }): Promise<{ ok: boolean; error?: string }> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return { ok: false, error: "Missing RESEND_API_KEY" };
 
+  // Marketing has its own verified domain so a campaign can never damage the
+  // deliverability of anything the product depends on. Falls back to the
+  // transactional sender only if the marketing one is not configured, which
+  // is safer than failing to send at all but should never happen in
+  // production.
   const configuredFrom =
-    process.env.RESEND_FROM_EMAIL ?? "DigitalFlyer Growth <onboarding@resend.dev>";
+    (kind === "marketing" ? process.env.RESEND_MARKETING_FROM : undefined) ??
+    process.env.RESEND_FROM_EMAIL ??
+    "DigitalFlyer Growth <onboarding@resend.dev>";
   // Swaps only the display name, keeping whatever verified address is
   // configured. Quotes are stripped so a business name containing one
   // cannot break the header.
