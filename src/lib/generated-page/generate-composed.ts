@@ -44,7 +44,14 @@ Think like a designer, not an assembler:
 
 The first section is the hero and should be the most confident thing on the page. Use scale "display" there and nowhere else.
 
-PHOTOGRAPHS. This business has real photographs, which is why you are laying the page out rather than filling in blocks. Build the composition around them. Where you request a photo you have not been given, write the brief as an instruction to the owner holding a phone: "the finished bathroom re-tile, shot straight on in daylight" gets a photo, "an image conveying quality" does not.
+PHOTOGRAPHS. You are given a description of every photograph this business has, taken from the actual image. This is why you are laying the page out rather than filling in blocks: you know what each picture shows.
+
+Place a photograph with {"photoId": "<its id>"}. Two rules, and the first one matters more than anything else on this page:
+
+1. Only ever use an aspect listed in that photograph's own safe aspects. Forcing a tall photograph into a wide banner cuts the subject in half, and that single mistake is what makes a page look amateur no matter how good the layout is.
+2. Put each photograph where its "best used as" says it belongs. A photo marked "detail" is a close-up supporting something else, not a hero.
+
+Do not place the same photograph twice. If you want a photograph they do not have, use {"slot": {...}} instead and write the brief as an instruction to the owner holding a phone: "the finished bathroom re-tile, shot straight on in daylight" gets a photo, "an image conveying quality" does not.
 
 HOUSE STYLE, absolute:
 1. NEVER use an em dash or an en dash, anywhere. Use a comma or a full stop.
@@ -82,7 +89,7 @@ Elements:
 {"kind":"eyebrow","text":string 2-60}
 {"kind":"heading","text":string 2-120,"scale":"display"|"xl"|"lg"|"md"}
 {"kind":"body","text":string 20-900,"scale":"lg"|"base"|"sm"}
-{"kind":"media","slot":{"slotId":string,"brief":string 10-220},"aspect":"square"|"portrait"|"landscape"|"wide"|"tall","treatment":"plain"|"rounded"|"framed"|"bleed"}
+{"kind":"media","photoId"?:string,"slot"?:{"slotId":string,"brief":string 10-220},"aspect":"square"|"portrait"|"landscape"|"wide"|"tall","treatment":"plain"|"rounded"|"framed"|"bleed"}  (exactly one of photoId or slot)
 {"kind":"list","style":"checks"|"rules"|"cards"|"numbered"|"plain","items":[{"icon"?:iconKey,"title":string 2-80,"body"?:string<=320}] x2-12}
 {"kind":"badges","items":[{"icon":iconKey,"label":string 2-40}] x2-8}
 {"kind":"quote","text":string 20-400,"attribution"?:string<=80}
@@ -123,14 +130,11 @@ function cleanStrings(value: unknown): unknown {
 export async function generateComposedPlan(
   facts: MemberFacts,
   sourceText: string,
-  existingPhotoBriefs: string[]
+  /** Descriptions of the member's actual photographs, from analyse-photos.ts. */
+  photoPrompt: string
 ): Promise<ComposedResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, error: "ANTHROPIC_API_KEY is not set." };
-
-  const photoNote = existingPhotoBriefs.length
-    ? `\n\nThey already have these photographs on file, so build the composition around them rather than asking for new ones where these will do:\n${existingPhotoBriefs.map((b, i) => `${i + 1}. ${b}`).join("\n")}`
-    : "";
 
   try {
     const anthropic = new Anthropic({ apiKey });
@@ -139,7 +143,7 @@ export async function generateComposedPlan(
       max_tokens: 16000,
       thinking: { type: "disabled" },
       system: `${SYSTEM_PROMPT}\n\n${schemaHint()}`,
-      messages: [{ role: "user", content: `${sourceText}${photoNote}` }],
+      messages: [{ role: "user", content: `${sourceText}${photoPrompt}` }],
     });
 
     const block = message.content[0];

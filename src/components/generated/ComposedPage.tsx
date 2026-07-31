@@ -15,7 +15,10 @@ type Ctx = {
   accent: string;
   headingClass: string;
   eyebrowClass: string;
+  /** Photos the member has been asked for but not yet sent, keyed by slotId. */
   photos: Record<string, string>;
+  /** Photos the member already has, analysed, keyed by photoId. */
+  photoIndex: Record<string, { url: string; description: string; focalPoint: string }>;
 };
 
 type Surface = { bg: string; ink: string; inkMuted: string; card: string; border: string; accent: string };
@@ -70,8 +73,25 @@ const ASPECT = {
 const PADDING = { sm: "py-8 sm:py-10", md: "py-10 sm:py-14", lg: "py-12 sm:py-16", xl: "py-16 sm:py-20" } as const;
 const WIDTH = { narrow: "max-w-3xl", normal: "max-w-5xl", wide: "max-w-6xl", full: "max-w-none" } as const;
 
+// Where the subject sits, translated into the CSS that keeps it in frame when
+// the image is cropped to an aspect ratio. This is the other half of the
+// cropping problem: knowing a photo is a portrait of a person is no use if the
+// crop still takes the top of their head off.
+const OBJECT_POSITION: Record<string, string> = {
+  centre: "50% 50%",
+  top: "50% 15%",
+  bottom: "50% 85%",
+  left: "15% 50%",
+  right: "85% 50%",
+  "top-left": "20% 20%",
+  "top-right": "80% 20%",
+  "bottom-left": "20% 80%",
+  "bottom-right": "80% 80%",
+};
+
 function Media({ el, ctx, s }: { el: Extract<ComposedElement, { kind: "media" }>; ctx: Ctx; s: Surface }) {
-  const url = ctx.photos[el.slot.slotId];
+  const analysed = el.photoId ? ctx.photoIndex[el.photoId] : undefined;
+  const url = analysed?.url ?? (el.slot ? ctx.photos[el.slot.slotId] : undefined);
   const shape =
     el.treatment === "plain"
       ? ""
@@ -82,9 +102,21 @@ function Media({ el, ctx, s }: { el: Extract<ComposedElement, { kind: "media" }>
           : "rounded-2xl";
 
   if (url) {
-    // eslint-disable-next-line @next/next/no-img-element -- preview route; the live route uses next/image once slots resolve to stored paths.
-    return <img src={url} alt={el.slot.brief} className={`w-full ${ASPECT[el.aspect]} object-cover ${shape}`} />;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- preview route; the live route uses next/image once slots resolve to stored paths.
+      <img
+        src={url}
+        alt={analysed?.description ?? el.slot?.brief ?? ""}
+        className={`w-full ${ASPECT[el.aspect]} object-cover ${shape}`}
+        // object-cover crops rather than stretches, and the focal point decides
+        // what survives the crop.
+        style={{ objectPosition: OBJECT_POSITION[analysed?.focalPoint ?? "centre"] }}
+      />
+    );
   }
+
+  if (!el.slot) return null;
+
   return (
     <div
       className={`flex w-full ${ASPECT[el.aspect]} flex-col items-center justify-center gap-2 border-2 border-dashed p-6 text-center ${shape}`}
@@ -254,11 +286,13 @@ export function ComposedPage({
   plan,
   brandColor,
   photos = {},
+  photoIndex = {},
   contactActions,
 }: {
   plan: ComposedPlan;
   brandColor?: string | null;
   photos?: Record<string, string>;
+  photoIndex?: Record<string, { url: string; description: string; focalPoint: string }>;
   contactActions?: ReactNode;
 }) {
   const palette = PALETTES[plan.palette];
@@ -271,6 +305,7 @@ export function ComposedPage({
     headingClass: `${pairing.headingClass} ${pairing.headingTone}`,
     eyebrowClass: pairing.eyebrowClass,
     photos,
+    photoIndex,
   };
 
   return (

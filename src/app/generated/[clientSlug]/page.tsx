@@ -20,6 +20,8 @@ type Sample = {
   businessName: string;
   brandColor: string | null;
   photoUrls?: string[];
+  /** Analysed photographs the member already has, keyed by photoId. */
+  photoIndex?: Record<string, { url: string; description: string; focalPoint: string }>;
   generatedAt: string;
   plan: PagePlan | ComposedPlan;
 };
@@ -71,7 +73,8 @@ export default async function GeneratedPreview({
     if (slot) photos[slot.slotId] = url;
   });
 
-  const filled = Object.keys(photos).length;
+  const placed = Object.keys(sample.photoIndex ?? {}).length;
+  const filled = Object.keys(photos).length + placed;
 
   return (
     <>
@@ -87,7 +90,7 @@ export default async function GeneratedPreview({
             <span className="opacity-70">{sample.plan.typePairing}</span>
             <span className="opacity-70">{sample.plan.sections.length} sections</span>
             <span className="opacity-70">
-              {filled} of {slots.length} photos filled
+              {placed} photos placed, {slots.length} more requested
             </span>
             <a href={`/${sample.slug}`} className="underline underline-offset-2">
               compare with current page
@@ -98,7 +101,12 @@ export default async function GeneratedPreview({
       </div>
 
       {composed ? (
-        <ComposedPage plan={sample.plan as ComposedPlan} brandColor={sample.brandColor} photos={photos} />
+        <ComposedPage
+          plan={sample.plan as ComposedPlan}
+          brandColor={sample.brandColor}
+          photos={photos}
+          photoIndex={sample.photoIndex}
+        />
       ) : (
         <GeneratedPage plan={sample.plan as PagePlan} brandColor={sample.brandColor} photos={photos} />
       )}

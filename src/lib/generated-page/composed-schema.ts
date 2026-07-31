@@ -61,9 +61,20 @@ const bodyEl = z.object({
   scale: z.enum(["lg", "base", "sm"]).default("base"),
 });
 
+// Either an actual photograph the member has uploaded, placed by id, or a
+// brief asking for one they have not sent yet. Before photo analysis existed
+// this was slot-only and images were mapped on in upload order, which is why a
+// generated page could put a tall bag shot where a wide banner belonged.
+// No .refine() here, deliberately. Wrapping this in one makes it a ZodEffects
+// rather than a ZodObject, which silently breaks z.discriminatedUnion below
+// and collapses the whole element type to `never`. The "needs a photoId or a
+// slot" rule is enforced on the section instead.
 const mediaEl = z.object({
   kind: z.literal("media"),
-  slot: photoSlot,
+  /** An analysed photograph the member already has. */
+  photoId: z.string().max(60).optional(),
+  /** A photograph we are asking them for. */
+  slot: photoSlot.optional(),
   aspect: z.enum(["square", "portrait", "landscape", "wide", "tall"]),
   // "bleed" runs the image past the container edge, which is the move that
   // most makes a page look composed rather than assembled.
@@ -141,7 +152,13 @@ const composedSectionSchema = z
   })
   .refine((s) => s.cells.every((c) => !c.start || c.start + c.span - 1 <= s.columns), {
     message: "A cell cannot start where it would overflow the grid.",
-  });
+  })
+  // Enforced here rather than on the media element itself, because a .refine()
+  // on a union member breaks the discriminated union.
+  .refine(
+    (s) => s.cells.every((c) => c.element.kind !== "media" || c.element.photoId || c.element.slot),
+    { message: "A media element needs either a photoId or a slot brief." }
+  );
 
 export type ComposedSection = z.infer<typeof composedSectionSchema>;
 
@@ -158,7 +175,7 @@ export function collectComposedSlots(plan: ComposedPlan) {
   const slots: z.infer<typeof photoSlot>[] = [];
   for (const section of plan.sections) {
     for (const cell of section.cells) {
-      if (cell.element.kind === "media") slots.push(cell.element.slot);
+      if (cell.element.kind === "media" && cell.element.slot) slots.push(cell.element.slot);
     }
   }
   return slots;

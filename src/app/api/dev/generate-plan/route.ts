@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { generatePagePlan, factsToText, type MemberFacts } from "@/lib/generated-page/generate";
 import { generateComposedPlan } from "@/lib/generated-page/generate-composed";
+import { analysePhotos, photosToPrompt } from "@/lib/generated-page/analyse-photos";
 
 // Development-only. Generates a page for a real member and writes it to
 // src/lib/generated-page/samples/{slug}.json for the preview route.
@@ -51,7 +52,7 @@ export async function POST(request: Request) {
 
   const { data: photoRows } = await admin
     .from("client_photos")
-    .select("storage_path")
+    .select("id, storage_path")
     .eq("growth_client_id", client.id)
     .order("position", { ascending: true });
 
@@ -83,15 +84,18 @@ export async function POST(request: Request) {
   const started = Date.now();
 
   if (tier === "composed") {
-    const result = await generateComposedPlan(
-      facts,
-      factsToText(facts),
-      // The member's existing photographs have no briefs attached, so the
-      // model is told how many exist and composes around that count. Mapping
-      // real photos onto the slots it produces happens at render time, in
-      // order. Proper per-photo descriptions are Handoff 03's job.
-      photos.map((_, i) => `Photograph ${i + 1} of their own work, already uploaded.`)
+    // Look at every photograph before laying anything out. Without this the
+    // composer knows only a count, picks aspect ratios blind, and photos land
+    // in upload order, which is exactly why the first composed Buffelskop was
+    // worse than the hand-built one.
+    const analyses = await analysePhotos(
+      photos.map((p) => ({
+        photoId: p.id,
+        url: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos/${p.storage_path}`,
+      }))
     );
+
+    const result = await generateComposedPlan(facts, factsToText(facts), photosToPrompt(analyses));
     const seconds = Number(((Date.now() - started) / 1000).toFixed(1));
     if (!result.ok) return NextResponse.json({ slug, tier, ok: false, seconds, error: result.error });
 
@@ -101,6 +105,9 @@ export async function POST(request: Request) {
       businessName: client.business_name,
       brandColor: client.brand_primary_color,
       photoUrls,
+      photoIndex: Object.fromEntries(
+        analyses.map((a) => [a.photoId, { url: a.url, description: a.description, focalPoint: a.focalPoint }])
+      ),
       generatedAt: new Date().toISOString(),
       plan: result.plan,
     });
@@ -111,6 +118,7 @@ export async function POST(request: Request) {
       ok: true,
       seconds,
       photoCount: photos.length,
+      analysed: analyses.map((a) => `${a.subject} (${a.orientation}, ${a.quality}, ${a.bestUse}, safe: ${a.safeAspects.join("/")})`),
       palette: result.plan.palette,
       typePairing: result.plan.typePairing,
       grids: result.plan.sections.map((s) => `${s.columns}col/${s.band}/${s.width}`),

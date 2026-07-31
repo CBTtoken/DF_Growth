@@ -13,14 +13,51 @@
     "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/66a054b5-24b7-4691-bf1e-867f720c6b38.jpg",
     "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/e5a2299b-73e2-4ed8-99a8-2d60a5e6aac0.jpg"
   ],
-  "generatedAt": "2026-07-31T11:18:07.156Z",
+  "photoIndex": {
+    "9ac65500-9c13-4434-9d06-4f0386b1c002": {
+      "url": "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/85a9841f-97b5-42da-b953-b14c1affc831.jpg",
+      "description": "A wide farmland view showing long rows of green crops (likely potatoes or similar vegetables) stretching toward a treeline, with a large blue sky dominating the upper half and a center-pivot irrigation system visible on…",
+      "focalPoint": "centre"
+    },
+    "99ff7a71-3d15-4a28-87e5-08d9232d6a0d": {
+      "url": "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/45715889-267b-4f80-85a2-d2c68b55a664.jpg",
+      "description": "Aerial/drone photograph of cultivated farmland with long rows of young green crops planted in dark tilled soil, stretching toward a tree-lined horizon under a wide blue sky filled with scattered puffy clouds",
+      "focalPoint": "centre"
+    },
+    "943956cc-d381-41e0-8d7f-908afede9923": {
+      "url": "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/8579ab6d-96d5-4a61-993c-472eb3df478c.jpg",
+      "description": "A close-up outdoor photo of a chilli plant heavily laden with long, curling red chillies still on the stem, surrounded by green leaves and dark soil, shot in bright direct sunlight from above",
+      "focalPoint": "centre"
+    },
+    "6a4df15c-a7b1-49c4-aaa0-3672653caad0": {
+      "url": "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/7deb4a46-1113-4547-b9fa-91cc51c8f459.jpg",
+      "description": "Overhead close-up looking into a woven poly sack filled with fresh red chillies, taken with a phone in natural light. The bag's off-white fabric frames the vivid red pile of chillies which fills most of the lower two-th…",
+      "focalPoint": "bottom"
+    },
+    "ac90b6ab-9e92-48f6-bee8-762232657e76": {
+      "url": "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/bdecf3c0-6b1a-4935-b51d-e889cb60c5ac.jpg",
+      "description": "Top-down close-up photograph of a large pile of fresh green chillies filling most of the frame, sitting in a woven sack, with a hand partially visible at the top edge holding the bag open",
+      "focalPoint": "centre"
+    },
+    "3535673f-f152-4a1a-a248-494f9de96e71": {
+      "url": "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/66a054b5-24b7-4691-bf1e-867f720c6b38.jpg",
+      "description": "A large trailer or drying rack heaped with a huge quantity of bright red chillies drying in the sun, set on a farm with green trees, a fence, and jerry cans in the background",
+      "focalPoint": "centre"
+    },
+    "4f966388-497b-427d-9776-8b576ed9368a": {
+      "url": "https://cjqvelgarwfiskgtmrkm.supabase.co/storage/v1/object/public/client-photos/8d506323-eb64-457c-b0a3-f39b6207e33e/e5a2299b-73e2-4ed8-99a8-2d60a5e6aac0.jpg",
+      "description": "A close-up top-down shot of a large heap of dried red chillies piled inside a woven sack, filling most of the frame with a small margin of the sack's white and blue-patterned fabric visible at the edges.",
+      "focalPoint": "centre"
+    }
+  },
+  "generatedAt": "2026-07-31T12:20:13.142Z",
   "plan": {
-    "palette": "sun-coast",
+    "palette": "warm-earth",
     "typePairing": "warm-serif",
-    "rationale": "Buffelskop is a single product told through process, so the page is built as a slow unfold from field to jar rather than a services grid. Warm terracotta and sun tones echo cayenne without illustrating it literally, letting the photographs carry the actual colour. The hero runs full width and display scale to give the chilli powder the same confidence a premium food brand would get, then the page settles into narrower, asymmetric bands so each photograph gets room to breathe. No claims beyond what is given, the copy leans entirely on hand-picked and sun-dried since that is the whole story here.",
+    "rationale": "Buffelskop's own photographs already tell the whole story, from field to sun-drying to sack, so the layout gets out of the way and lets that sequence carry the page. Warm earth tones and a warm serif suit sun-dried chilli and open Rustenburg farmland without leaning on invented marketing language. The hero uses the wide crop field at display scale for confidence, then the page narrows into tighter, denser moments (the drying trailer, the sacks of red and green chilli) that mimic the actual process: grown, picked, dried, packed. One bleed on the drying trailer photo gives the page its single big design gesture. No claims beyond what the tagline and photographs show, so the page stays short and specific rather than padded.",
     "sections": [
       {
-        "band": "deep",
+        "band": "plain",
         "padding": "xl",
         "width": "full",
         "columns": 12,
@@ -28,12 +65,9 @@
           {
             "element": {
               "kind": "media",
-              "slot": {
-                "slotId": "photo-1",
-                "brief": "the cayenne chilli powder, full frame, rich red"
-              },
+              "photoId": "9ac65500-9c13-4434-9d06-4f0386b1c002",
               "aspect": "wide",
-              "treatment": "bleed"
+              "treatment": "plain"
             },
             "span": 12,
             "align": "start"
@@ -43,7 +77,7 @@
               "kind": "eyebrow",
               "text": "Buffelskop, Rustenburg"
             },
-            "span": 6,
+            "span": 8,
             "start": 1,
             "align": "start",
             "order": 0
@@ -54,7 +88,7 @@
               "text": "Premium sundried cayenne chilli powder",
               "scale": "display"
             },
-            "span": 8,
+            "span": 9,
             "start": 1,
             "align": "start",
             "order": 1
@@ -65,7 +99,7 @@
               "text": "Hand-picked and naturally sun-dried. Pure heat, natural flavour.",
               "scale": "lg"
             },
-            "span": 6,
+            "span": 7,
             "start": 1,
             "align": "start",
             "order": 2
@@ -73,16 +107,17 @@
         ]
       },
       {
-        "band": "plain",
+        "band": "tinted",
         "padding": "lg",
         "width": "normal",
         "columns": 12,
         "cells": [
           {
             "element": {
-              "kind": "heading",
-              "text": "From the field",
-              "scale": "lg"
+              "kind": "media",
+              "photoId": "943956cc-d381-41e0-8d7f-908afede9923",
+              "aspect": "portrait",
+              "treatment": "rounded"
             },
             "span": 5,
             "start": 1,
@@ -90,11 +125,21 @@
           },
           {
             "element": {
+              "kind": "heading",
+              "text": "Grown on the land, ripened in the sun",
+              "scale": "lg"
+            },
+            "span": 6,
+            "start": 7,
+            "align": "start"
+          },
+          {
+            "element": {
               "kind": "body",
-              "text": "Every chilli is picked by hand before it goes anywhere near the sun. Nothing is forced or rushed, the peppers dry naturally the way they always have.",
+              "text": "Our chillies are grown out on the fields around Rustenburg and left on the plant until they turn deep red before picking. Nothing rushed, nothing forced.",
               "scale": "base"
             },
-            "span": 5,
+            "span": 6,
             "start": 7,
             "align": "start"
           }
@@ -102,53 +147,14 @@
       },
       {
         "band": "plain",
-        "padding": "md",
-        "width": "wide",
-        "columns": 12,
-        "cells": [
-          {
-            "element": {
-              "kind": "media",
-              "slot": {
-                "slotId": "photo-2",
-                "brief": "chillies being hand-picked in the field"
-              },
-              "aspect": "portrait",
-              "treatment": "rounded"
-            },
-            "span": 5,
-            "start": 1,
-            "align": "start"
-          },
-          {
-            "element": {
-              "kind": "media",
-              "slot": {
-                "slotId": "photo-3",
-                "brief": "close-up of ripe cayenne chillies still on the plant"
-              },
-              "aspect": "portrait",
-              "treatment": "rounded"
-            },
-            "span": 5,
-            "start": 8,
-            "align": "start"
-          }
-        ]
-      },
-      {
-        "band": "tinted",
-        "padding": "xl",
+        "padding": "lg",
         "width": "full",
         "columns": 12,
         "cells": [
           {
             "element": {
               "kind": "media",
-              "slot": {
-                "slotId": "photo-4",
-                "brief": "chillies laid out sun-drying, wide view showing the drying process"
-              },
+              "photoId": "3535673f-f152-4a1a-a248-494f9de96e71",
               "aspect": "wide",
               "treatment": "bleed"
             },
@@ -158,66 +164,24 @@
           {
             "element": {
               "kind": "heading",
-              "text": "Sun-dried, not machine-dried",
-              "scale": "md"
-            },
-            "span": 6,
-            "start": 1,
-            "align": "start",
-            "order": 0
-          },
-          {
-            "element": {
-              "kind": "body",
-              "text": "The chillies are laid out and left to dry naturally in the sun. This is what keeps the flavour honest and the heat true.",
-              "scale": "base"
+              "text": "Sun-dried, the natural way",
+              "scale": "xl"
             },
             "span": 6,
             "start": 1,
             "align": "start",
             "order": 1
-          }
-        ]
-      },
-      {
-        "band": "plain",
-        "padding": "lg",
-        "width": "normal",
-        "columns": 12,
-        "cells": [
-          {
-            "element": {
-              "kind": "media",
-              "slot": {
-                "slotId": "photo-5",
-                "brief": "close-up of the dried chillies before grinding, showing texture and colour"
-              },
-              "aspect": "square",
-              "treatment": "framed"
-            },
-            "span": 4,
-            "start": 1,
-            "align": "start"
-          },
-          {
-            "element": {
-              "kind": "heading",
-              "text": "Ground to order",
-              "scale": "lg"
-            },
-            "span": 6,
-            "start": 6,
-            "align": "start"
           },
           {
             "element": {
               "kind": "body",
-              "text": "Once fully dried, the chillies are ground down into a fine cayenne powder, ready to bring pure heat and natural flavour to any dish.",
+              "text": "Once picked, the chillies are spread out and left to dry naturally in the open air and sun, not in a machine. That slow drying is what gives Buffelskop chilli powder its pure heat and natural flavour.",
               "scale": "base"
             },
             "span": 6,
-            "start": 6,
-            "align": "start"
+            "start": 1,
+            "align": "start",
+            "order": 2
           }
         ]
       },
@@ -230,26 +194,31 @@
           {
             "element": {
               "kind": "media",
-              "slot": {
-                "slotId": "photo-6",
-                "brief": "the powder mid-grind or freshly ground, texture visible"
-              },
-              "aspect": "landscape",
-              "treatment": "rounded"
+              "photoId": "6a4df15c-a7b1-49c4-aaa0-3672653caad0",
+              "aspect": "portrait",
+              "treatment": "framed"
             },
-            "span": 7,
+            "span": 4,
             "start": 1,
             "align": "start"
           },
           {
             "element": {
               "kind": "media",
-              "slot": {
-                "slotId": "photo-7",
-                "brief": "jar or bag of the finished cayenne powder, close up"
-              },
+              "photoId": "ac90b6ab-9e92-48f6-bee8-762232657e76",
+              "aspect": "portrait",
+              "treatment": "framed"
+            },
+            "span": 4,
+            "start": 5,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "media",
+              "photoId": "4f966388-497b-427d-9776-8b576ed9368a",
               "aspect": "square",
-              "treatment": "rounded"
+              "treatment": "framed"
             },
             "span": 4,
             "start": 9,
@@ -260,43 +229,74 @@
       {
         "band": "deep",
         "padding": "xl",
-        "width": "full",
+        "width": "narrow",
+        "columns": 8,
+        "cells": [
+          {
+            "element": {
+              "kind": "heading",
+              "text": "From sack to spice rack",
+              "scale": "lg"
+            },
+            "span": 8,
+            "start": 1,
+            "align": "start"
+          },
+          {
+            "element": {
+              "kind": "body",
+              "text": "Fresh red and green chillies, dried down and ground into a powder that keeps its natural colour and heat. This is chilli powder the way it used to be made.",
+              "scale": "lg"
+            },
+            "span": 6,
+            "start": 1,
+            "align": "start"
+          }
+        ]
+      },
+      {
+        "band": "tinted",
+        "padding": "md",
+        "width": "normal",
         "columns": 12,
         "cells": [
           {
             "element": {
               "kind": "media",
-              "slot": {
-                "slotId": "photo-8",
-                "brief": "the final packaged product, styled shot"
-              },
-              "aspect": "wide",
-              "treatment": "bleed"
+              "photoId": "99ff7a71-3d15-4a28-87e5-08d9232d6a0d",
+              "aspect": "landscape",
+              "treatment": "rounded"
             },
-            "span": 12,
+            "span": 7,
+            "start": 1,
             "align": "start"
           },
           {
             "element": {
-              "kind": "heading",
-              "text": "Buffelskop cayenne, straight from Rustenburg",
-              "scale": "lg"
+              "kind": "list",
+              "style": "plain",
+              "items": [
+                {
+                  "icon": "sun",
+                  "title": "Naturally sun-dried"
+                },
+                {
+                  "icon": "leaf",
+                  "title": "Hand-picked"
+                },
+                {
+                  "icon": "flame",
+                  "title": "Cayenne heat"
+                },
+                {
+                  "icon": "sprout",
+                  "title": "Grown in Rustenburg"
+                }
+              ]
             },
-            "span": 7,
-            "start": 1,
-            "align": "start",
-            "order": 0
-          },
-          {
-            "element": {
-              "kind": "body",
-              "text": "Hand-picked, sun-dried, and ground with care. Pure heat, natural flavour, nothing added.",
-              "scale": "base"
-            },
-            "span": 6,
-            "start": 1,
-            "align": "start",
-            "order": 1
+            "span": 4,
+            "start": 9,
+            "align": "start"
           }
         ]
       }
