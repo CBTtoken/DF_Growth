@@ -1,0 +1,164 @@
+{
+  "slug": "seven-passes-initiative",
+  "businessName": "Seven Passes Initiative",
+  "brandColor": null,
+  "generatedAt": "2026-07-31T09:56:55.314Z",
+  "plan": {
+    "palette": "warm-earth",
+    "headingFont": "serif-editorial",
+    "rationale": "An NPO working on family and community upliftment needs warmth and dignity, not corporate polish. Warm earth tones and a serif heading feel human and trustworthy rather than clinical. Sections focus on mission, program areas and ways to get involved, since that is the real content given. No pricing, stats or history were provided so none are invented, and gallery slots are requested to fill the visual gap left by having no photos yet.",
+    "sections": [
+      {
+        "type": "hero",
+        "eyebrow": "Hoekwil and Touwsranten, Garden Route",
+        "headline": "The Seven Passes Initiative is committed to building pathways, not handouts",
+        "subheadline": "A registered Non-Profit Organisation working at grassroots level in Hoekwil and Touwsranten to prevent violence and build safer, stronger communities.",
+        "photoSlot": {
+          "slotId": "hero-community",
+          "brief": "A photo of the Hoekwil or Touwsranten area, or of an event or program activity in progress, taken outdoors in good light"
+        }
+      },
+      {
+        "type": "intro",
+        "heading": "Why we exist",
+        "paragraphs": [
+          "The Hoekwil and Touwsranten communities face high unemployment, limited access to quality education and family violence. These are everyday realities that, without proactive support, repeat across generations.",
+          "We believe prevention is the most powerful form of intervention. Instead of reacting after harm has occurred, we work at the root, equipping, educating and empowering families and young people before violence escalates.",
+          "We do not provide handouts. We create pathways to opportunity, to safety and to hope."
+        ]
+      },
+      {
+        "type": "pillars",
+        "eyebrow": "Our mission",
+        "heading": "How we work",
+        "items": [
+          {
+            "icon": "graduation",
+            "title": "Transform educational environments",
+            "body": "Supporting schools and turning learning spaces into uplifting, opportunity-filled environments."
+          },
+          {
+            "icon": "users",
+            "title": "Empower youth",
+            "body": "Mentorship, leadership and skills development that give young people real direction."
+          },
+          {
+            "icon": "heart",
+            "title": "Strengthen families",
+            "body": "Psychosocial support, early childhood development and parenting programs that build stability at home."
+          },
+          {
+            "icon": "handshake",
+            "title": "Collaborate for systemic impact",
+            "body": "Working with local government, businesses and community leaders to create change that lasts."
+          }
+        ]
+      },
+      {
+        "type": "services",
+        "eyebrow": "Our program areas",
+        "heading": "Where our work happens",
+        "items": [
+          {
+            "name": "Youth Empowerment",
+            "description": "After-school programs, academic support and youth leadership development."
+          },
+          {
+            "name": "Educational Enrichment",
+            "description": "Partnering with local schools to improve learning outcomes and infrastructure."
+          },
+          {
+            "name": "Family Support",
+            "description": "Parenting workshops, trauma-informed care, counselling and home visits."
+          },
+          {
+            "name": "Violence Prevention",
+            "description": "Early intervention programs, community dialogues, mentorship and awareness campaigns."
+          },
+          {
+            "name": "Community Collaboration",
+            "description": "Building networks with local authorities, businesses and stakeholders to amplify change."
+          }
+        ]
+      },
+      {
+        "type": "featureSplit",
+        "heading": "Every child deserves a future free from fear",
+        "body": "Every family deserves the tools to thrive, and every community deserves to grow with dignity and purpose. We are building that future one life, one household and one program at a time, through a model that is holistic, practical and community-driven.",
+        "photoSlot": {
+          "slotId": "feature-program",
+          "brief": "A photo from an after-school program, workshop or community gathering, showing the work in action"
+        },
+        "mediaSide": "right"
+      },
+      {
+        "type": "intro",
+        "heading": "Why partner with us",
+        "paragraphs": [
+          "Your business has the power to change lives. Partnering with Seven Passes isn't about ticking a CSR checkbox, it's about directing real resources to the people and places that need it most.",
+          "As a sponsor or corporate partner, you'll gain visibility among a socially-conscious audience, be seen as a champion for community upliftment, align your brand with purpose-driven development, and access storytelling opportunities to showcase your impact in action.",
+          "Whether you are a local enterprise or a national brand, your involvement signals commitment to a stronger South Africa."
+        ]
+      },
+      {
+        "type": "pillars",
+        "eyebrow": "Get involved",
+        "heading": "Ways to support Seven Passes",
+        "items": [
+          {
+            "icon": "briefcase",
+            "title": "Corporate Sponsorships",
+            "body": "One-off or long-term partnerships with local and national businesses."
+          },
+          {
+            "icon": "heart",
+            "title": "Individual Donations",
+            "body": "Every contribution, large or small, helps move our work forward."
+          },
+          {
+            "icon": "calendar",
+            "title": "Event Participation",
+            "body": "Attend, sponsor or contribute to our upcoming events."
+          },
+          {
+            "icon": "users",
+            "title": "Volunteer",
+            "body": "Bring your time and talent where it matters most."
+          },
+          {
+            "icon": "target",
+            "title": "Fundraise",
+            "body": "Host your own event in support of Seven Passes."
+          }
+        ]
+      },
+      {
+        "type": "gallery",
+        "heading": "Our community",
+        "photoSlots": [
+          {
+            "slotId": "gallery-1",
+            "brief": "A wide photo of Hoekwil or Touwsranten showing the setting the organisation works in"
+          },
+          {
+            "slotId": "gallery-2",
+            "brief": "A photo of a workshop, parenting program or counselling session in progress, with consent from those involved"
+          },
+          {
+            "slotId": "gallery-3",
+            "brief": "A photo of youth mentorship, an after-school activity or a leadership session"
+          },
+          {
+            "slotId": "gallery-4",
+            "brief": "A photo from a past event, sponsor visit or community dialogue"
+          }
+        ]
+      },
+      {
+        "type": "ctaBand",
+        "heading": "Join our upcoming event",
+        "body": "See our events for details on how you can attend, sponsor or get involved directly with the Seven Passes Initiative."
+      }
+    ]
+  }
+}

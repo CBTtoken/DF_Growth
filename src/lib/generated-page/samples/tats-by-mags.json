@@ -1,0 +1,134 @@
+{
+  "slug": "tats-by-mags",
+  "businessName": "Tats by Mags",
+  "brandColor": null,
+  "generatedAt": "2026-07-31T09:56:33.620Z",
+  "plan": {
+    "palette": "night-premium",
+    "headingFont": "display-condensed",
+    "rationale": "A tattoo studio needs a bold, moody feel rather than clinical or corporate. Night-premium suits the dark, artistic atmosphere of tattooing, and display-condensed gives the headings an inked, graphic edge without tipping into gimmicky. Sections focus on Mags's actual specialities, her collaborative process and her stated hygiene standards, since those are the concrete facts given. No pricing, awards or years in business are claimed as none were stated.",
+    "sections": [
+      {
+        "type": "hero",
+        "eyebrow": "Hartbeespoort, North West",
+        "headline": "Tats by Mags: Expertly Crafted Tattoos Uniquely You",
+        "subheadline": "Your canvas, our passion. Custom tattoo designs built around your ideas, your story and your style.",
+        "photoSlot": {
+          "slotId": "hero-main",
+          "brief": "A photo of Mags at work in the studio, tattoo machine in hand, taken from the side so the client's privacy is kept if needed."
+        }
+      },
+      {
+        "type": "intro",
+        "heading": "Your canvas, our passion",
+        "paragraphs": [
+          "At Tats by Mags, tattoos are more than ink on skin. They're stories, expressions of individuality and lasting works of art. Our mission is to transform your ideas into stunning, personalised tattoos that you'll cherish for a lifetime.",
+          "Mags is the heart and soul of the studio, a passionate and talented tattoo artist who specialises in black and grey realism, watercolour and fine line work. She's dedicated to creating unique designs that reflect your personality and style."
+        ]
+      },
+      {
+        "type": "pillars",
+        "heading": "What sets us apart",
+        "items": [
+          {
+            "icon": "pen",
+            "title": "Personalised Designs",
+            "body": "We work closely with you to create custom designs that are uniquely yours, not off-the-shelf artwork."
+          },
+          {
+            "icon": "sparkles",
+            "title": "Attention to Detail",
+            "body": "Meticulous artistry and precision in every piece, from the first sketch to the final line."
+          },
+          {
+            "icon": "heart",
+            "title": "Comfortable Atmosphere",
+            "body": "Our studio is clean, relaxed and welcoming, so you feel at ease throughout the entire process."
+          },
+          {
+            "icon": "handshake",
+            "title": "Exceptional Service",
+            "body": "We're committed to a positive and memorable experience from start to finish."
+          }
+        ]
+      },
+      {
+        "type": "services",
+        "heading": "Styles Mags specialises in",
+        "items": [
+          {
+            "name": "Black and grey realism",
+            "description": "Detailed, lifelike tattoos built up in shades of black and grey."
+          },
+          {
+            "name": "Watercolour",
+            "description": "Soft, painterly designs with flowing colour and movement."
+          },
+          {
+            "name": "Fine line",
+            "description": "Delicate, precise linework for subtle and detailed designs."
+          }
+        ]
+      },
+      {
+        "type": "featureSplit",
+        "heading": "Hygiene and safety, taken seriously",
+        "body": "Your safety is paramount. We maintain the highest standards of hygiene and sterilisation, using only single-use needles and inks and adhering to all health and safety regulations.",
+        "photoSlot": {
+          "slotId": "hygiene-station",
+          "brief": "A photo of the clean, set-up tattoo station with sterilised equipment laid out, taken before a session begins."
+        },
+        "mediaSide": "right"
+      },
+      {
+        "type": "process",
+        "heading": "How we bring your idea to life",
+        "steps": [
+          {
+            "title": "Consultation",
+            "body": "We take the time to listen to your ideas and understand the story or style behind them."
+          },
+          {
+            "title": "Collaborate on the design",
+            "body": "Together we shape the design, refining details until it feels right and truly yours."
+          },
+          {
+            "title": "Final check before we start",
+            "body": "We make sure every detail is perfect before the needle touches your skin."
+          },
+          {
+            "title": "The tattoo session",
+            "body": "Your tattoo is created in a clean, relaxed studio environment, with your comfort front of mind throughout."
+          }
+        ]
+      },
+      {
+        "type": "gallery",
+        "heading": "The studio and the work",
+        "photoSlots": [
+          {
+            "slotId": "gallery-1",
+            "brief": "A close-up photo of a finished black and grey realism tattoo, taken in good natural light."
+          },
+          {
+            "slotId": "gallery-2",
+            "brief": "A close-up photo of a finished watercolour style tattoo."
+          },
+          {
+            "slotId": "gallery-3",
+            "brief": "A close-up photo of a finished fine line tattoo."
+          },
+          {
+            "slotId": "gallery-4",
+            "brief": "A wider photo of the studio space showing the clean, welcoming environment."
+          }
+        ]
+      },
+      {
+        "type": "ctaBand",
+        "heading": "Let's bring your vision to life",
+        "body": "Whether it's your first tattoo or an addition to your collection, contact us today to book a consultation."
+      }
+    ]
+  }
+}
