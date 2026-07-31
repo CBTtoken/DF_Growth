@@ -67,7 +67,7 @@ const ASPECT = {
   tall: "aspect-[3/4]",
 } as const;
 
-const PADDING = { sm: "py-10", md: "py-14 sm:py-16", lg: "py-16 sm:py-24", xl: "py-24 sm:py-32" } as const;
+const PADDING = { sm: "py-8 sm:py-10", md: "py-10 sm:py-14", lg: "py-12 sm:py-16", xl: "py-16 sm:py-20" } as const;
 const WIDTH = { narrow: "max-w-3xl", normal: "max-w-5xl", wide: "max-w-6xl", full: "max-w-none" } as const;
 
 function Media({ el, ctx, s }: { el: Extract<ComposedElement, { kind: "media" }>; ctx: Ctx; s: Surface }) {
@@ -239,7 +239,7 @@ function Section({ section, ctx }: { section: ComposedSection; ctx: Ctx }) {
       style={{ backgroundColor: s.bg }}
     >
       <div
-        className={`gp-grid mx-auto gap-6 sm:gap-10 ${WIDTH[section.width]}`}
+        className={`gp-grid mx-auto gap-5 sm:gap-8 ${WIDTH[section.width]}`}
         style={{ "--gp-cols": section.columns } as React.CSSProperties}
       >
         {section.cells.map((cell, i) => (

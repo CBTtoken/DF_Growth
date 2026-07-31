@@ -167,12 +167,15 @@ export const TYPE_PAIRINGS: Record<TypeKey, TypePairing> = {
 // Rhythm
 // ---------------------------------------------------------------------------
 
-// Buffelskop breathes at py-24. The first version of this library sat at
-// py-14, and cramped spacing reads as cheap however good the content is.
+// Revised twice. The first pass at py-14 was cramped, the second at py-24 was
+// airy to the point of looking unfinished, which Dewald called immediately:
+// "lots of wasted space". Buffelskop earns py-24 because full-bleed
+// photography fills it. A band of text and a placeholder does not, and the
+// same padding then reads as a page with nothing to say.
 export const RHYTHM = {
-  generous: { band: "py-20 sm:py-28", gap: "gap-12", heading: "text-4xl sm:text-5xl" },
-  standard: { band: "py-16 sm:py-24", gap: "gap-10", heading: "text-3xl sm:text-4xl" },
-  compact: { band: "py-12 sm:py-16", gap: "gap-8", heading: "text-3xl sm:text-4xl" },
+  generous: { band: "py-14 sm:py-20", gap: "gap-10", heading: "text-4xl sm:text-5xl" },
+  standard: { band: "py-12 sm:py-16", gap: "gap-8", heading: "text-3xl sm:text-4xl" },
+  compact: { band: "py-10 sm:py-12", gap: "gap-6", heading: "text-3xl sm:text-4xl" },
 } as const;
 
 export type RhythmKey = keyof typeof RHYTHM;
