@@ -81,10 +81,20 @@ preview matches their live page.
 
 ## 2. The Vercel preview URL
 
-**There isn't one, and this needs you.**
+**https://df-growth-ks6emc09r-digital-flyer.vercel.app**
 
-The preview build fails, and not because of these changes. Every Supabase
-environment variable on the `df-growth` project is set for **Production only**:
+Open it while logged into Vercel. Deployment Protection is on, so the URL
+redirects to a Vercel login for anyone else, which is what makes it safe for a
+preview to read the live database.
+
+Start with `/seven-passes-initiative`, `/nefeli-property-maintenance`,
+`/tats-by-mags` and `/mikeys-handyman`. Those four changed the most.
+
+### What had to be fixed first
+
+The preview build failed three times before this, and not because of these
+changes. Every Supabase environment variable on the `df-growth` project was set
+for **Production only**:
 
 ```
 SUPABASE_URL                    Production
@@ -98,24 +108,32 @@ A preview deployment therefore has no database credentials, and the build dies
 prerendering `/board/category/skilled-trades-repairs`, a page nothing in this
 handoff touches. Production deploys from two hours ago succeeded normally.
 
-This means no Vercel preview of this project has ever worked, so the
-"deploy to a preview" instruction in both handoffs cannot be followed as
-written until the environment is fixed. Both handoffs assume it works.
+A preview deployment therefore had no database credentials, and the build died
+prerendering `/board/category/skilled-trades-repairs`, a page nothing in this
+handoff touches. No Vercel preview of this project had ever worked, so the
+"deploy to a preview" instruction in both handoffs could not be followed as
+written. Both handoffs assume it works.
 
-Three ways forward, your call:
+Fixed on 2026-07-31 by adding four **new** Preview-scoped entries
+(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`,
+`SUPABASE_SECRET_KEY`, `NEXT_PUBLIC_SITE_URL`). The existing Production entries
+were never opened or edited. Values were piped straight from the local
+`.env.local` so nothing was copied by hand or printed anywhere.
 
-1. Add the Supabase variables to the Preview environment. Fastest, but it points
-   preview URLs at the live production database, and preview URLs are publicly
-   reachable by anyone who has the link.
-2. Point Preview at a separate Supabase project. Safer, more setup, and the
-   preview would not show your real members' pages, which is the whole point of
-   comparing against live.
-3. Review locally. I have a dev server running against production data at
-   **http://localhost:3002**, which is what I verified against. Try
-   `/seven-passes-initiative`, `/nefeli-property-maintenance`, `/tats-by-mags`
-   and `/mikeys-handyman` first, they changed the most.
+Two traps worth recording, because they nearly cost a production outage:
 
-Until you decide, nothing is merged and nothing is on production.
+- The Vercel UI no longer has per-environment tick boxes on one entry. It is one
+  entry per environment, which is why `ANTHROPIC_API_KEY` appears three times in
+  the list. Editing the Production entry and switching its dropdown to Preview
+  **moves** it rather than adding, so Production would have lost the variable.
+- Variables marked **Sensitive** are write-only. The Edit dialog shows an empty
+  Value box because the value cannot be read back, so saving that form would
+  have written a blank over the real value.
+
+`NEXT_PUBLIC_SITE_URL` for Preview is set to `https://growth.digitalflyersa.co.za`
+rather than the localhost value in `.env.local`.
+
+Nothing is merged and nothing is on production.
 
 ---
 
@@ -169,9 +187,12 @@ now derived from their category, so a wrong category is now visible to their
 customers rather than hidden in a filter. Dr Gerhard Bothma's services list
 currently sits under the heading "Beauty & Wellness".
 
-Taxonomy restructuring was out of scope for this pass, as instructed. If you
-would rather the heading stay neutral until the taxonomy is sorted, it is a
-one-line change to make it always read "Services".
+Taxonomy restructuring was out of scope for this pass, as instructed.
+
+**Your call, 2026-07-31: the heading now reads plain "Services" on every page**
+until the taxonomy is cleaned up. A neutral heading beats a confidently wrong
+one. The switch back is one line in `lib/landing/page-copy.ts`. The page title
+still uses the member's own trade, where nothing sits underneath to repeat it.
 
 ---
 
