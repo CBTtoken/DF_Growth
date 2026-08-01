@@ -479,3 +479,48 @@ compiles.
 2. A screen for the publisher to create writer accounts
 3. Cover image upload, which currently has a slot but no way to fill it
 4. The generalisation items listed above
+
+## Known faults, to fix before this goes public
+
+**1. Design settings do not reach the paginator.** `--mx-foot-h` and
+`--mx-topbar-h` are editable in Settings, but `useMeasuredPages` calls
+`liveHeightMm({})` with no arguments, so pagination always assumes the
+defaults of 10mm and 4mm. Moxie's `design` column is `{}` today, so nothing
+is wrong on screen. Change either value and every article in the publication
+silently runs over by exactly that difference, on every page, with no
+warning. Fix by threading the publication's design values into
+`liveHeightMm`. Small change, must land before anyone edits a design value,
+and certainly before a second publication exists.
+
+**2. Copyfitting scales fixed margins as though they were leading.**
+`pagesAt` in `lib/emag/fit.ts` scales every non-figure block by the squeeze
+factor. Line spacing does scale; a pull quote's 4mm margins do not. The
+estimate is therefore slightly optimistic for any block with fixed spacing.
+The 4mm page safety margin covers it, and `suggestTighten` verifies each
+candidate against the real paginator, so this cannot currently offer a saving
+that does not happen. Worth correcting when the block library grows.
+
+## Fixed, 1 August 2026: blocks measured smaller than they are
+
+The measuring column costed each block as its own height plus its own
+computed top and bottom margins. That double-counts collapsed margins between
+siblings, and completely misses a margin set on an inner child, which
+collapses out through its parent so the parent reports zero.
+
+The pull quote is the second case: it measured 7.01mm and occupies 13.16mm.
+Six millimetres disappeared from a page with a 4mm reserve, so the Editor's
+Letter was declared to fit on one page and its last lines slid under the
+footer.
+
+Blocks are now measured by their advance, the distance down to where the next
+in-flow block starts, which is the number that actually matters and one the
+browser has already worked out. Floats keep their own box height because they
+advance nothing and the paginator needs their bottom edge.
+
+This is an engine fix, not a repair to one article. Every article, already
+written or not, is measured the right way from now on. The Editor's Letter is
+honestly two pages and always was.
+
+`useMeasuredPages` now also checks that the measured blocks add up to the
+height of the column they were measured in, and reports a builder fault to
+the publisher if they ever drift apart again.
