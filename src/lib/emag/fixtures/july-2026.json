@@ -1,0 +1,268 @@
+{
+  "_note": "Real July 2026 content, transcribed from the published pages so the rebuild can be compared against the original rather than against invented copy. Held as JSON rather than TypeScript on purpose: this is Dewald's magazine text and it must survive byte for byte, including the punctuation the platform's own house style forbids in its own copy.",
+  "assets": [
+    {
+      "id": "think-banner",
+      "src": "/emag/reference/july2026/think-banner.png",
+      "alt": "A pair of elderly hands either side of a sepia photograph of soldiers",
+      "slot": "banner",
+      "side": "full",
+      "wrap": false,
+      "heightMm": 45
+    },
+    {
+      "id": "think-inline",
+      "src": "/emag/reference/july2026/think-inline.png",
+      "alt": "An older man sitting on the floor talking with his granddaughter",
+      "slot": "inline",
+      "side": "right",
+      "wrap": true,
+      "widthPct": 46
+    },
+    {
+      "id": "alice-hero",
+      "src": "/emag/reference/july2026/alice-hero.png",
+      "alt": "Alice Myburgh in a yellow jacket and cycling helmet, giving a thumbs up beside her bicycle",
+      "slot": "banner",
+      "side": "full",
+      "wrap": false,
+      "heightMm": 157
+    },
+    {
+      "id": "helplift-logo",
+      "src": "/emag/reference/july2026/helplift-logo.png",
+      "alt": "Helplift Network logo: Inspire and Enable people to help people",
+      "slot": "inline",
+      "side": "full",
+      "wrap": false
+    }
+  ],
+  "pages": [
+    {
+      "layout": "hero-opener",
+      "head": {
+        "pillar": "think",
+        "section": "The Big Idea"
+      },
+      "folio": 1,
+      "opener": {
+        "kicker": "The stories we are burying alive",
+        "headline": "What Dies",
+        "headlineTurn": "With Them.",
+        "turnColor": "#ffffff",
+        "bannerAssetId": "think-banner",
+        "bannerType": "top",
+        "scale": "lg",
+        "standfirstStyle": "ruled",
+        "standfirst": {
+          "text": "We are losing the most valuable library on earth. It does not have a building or pages. It has a face, a voice, and a chair in the corner we stopped pulling up to the table."
+        }
+      },
+      "blocks": [
+        {
+          "type": "p",
+          "content": {
+            "text": "There is a kind of knowledge that cannot be Googled."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "It lives in the way your grandmother's hands moved when she described something that happened before you were born. It lives in the pause your grandfather takes before he answers a hard question, the pause that tells you he has thought about this before, that he paid for that answer with something real. It lives in the lines on their faces, each one a chapter, and in the stories attached to those lines that most of us never thought to ask about."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "We are losing that library. Not slowly. Faster than we think. And we are so distracted by the noise of everything else that most of us will not notice it is gone until we are sitting in a room full of people who all feel the same quiet ache and cannot explain where it came from."
+          }
+        },
+        {
+          "type": "subhead",
+          "text": "The stories we think are small"
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "We have made a mistake about what storytelling is."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "We have confused it with entertainment. With the fish that got away, or the ghost story around the campfire, or the funny thing that happened on the way to somewhere. Those stories have their place. But they are not the ones we are talking about."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "The stories we are losing are different. They are the ones about how someone survived the thing that is currently breaking you. The story of how your uncle kept a family fed when there was no work and no plan and no end in sight. The story of how your grandmother walked into a room where she was not welcome and conducted herself with such quiet dignity that the room had to adjust to her. The story of what your father felt the day the rand was stronger than the pound, and what he felt the day it was not, and how he kept going through both."
+          }
+        },
+        {
+          "type": "pullquote",
+          "tone": "teal",
+          "beside": {
+            "assetId": "think-inline",
+            "side": "right",
+            "widthPct": 30
+          },
+          "content": {
+            "text": "These are not small stories. These are load-bearing stories. They hold people up."
+          }
+        }
+      ]
+    },
+    {
+      "layout": "band-opener",
+      "head": {
+        "pillar": "thrive",
+        "section": "The Quiet Hero"
+      },
+      "folio": 13,
+      "opener": {
+        "kicker": "Vanderbijlpark · Helplift Network Vaal Triangle",
+        "headline": "The Bridge Between Giving",
+        "headlineTurn": "and Getting There.",
+        "turnColor": "#8fd419",
+        "standfirstStyle": "plain",
+        "standfirst": {
+          "text": "South Africans with generous hearts stopped giving. Not because they became selfish. Because they got burned. Helplift Network was built to solve exactly that problem. In Vanderbijlpark, here is what solving it actually looks like."
+        }
+      },
+      "preBlocks": [
+        {
+          "type": "figure",
+          "assetId": "helplift-logo"
+        },
+        {
+          "type": "stats",
+          "accent": "#8fd419",
+          "cells": [
+            {
+              "figure": "60+",
+              "label": "Community partners",
+              "note": "Organisations, churches and businesses in the Vaal Triangle"
+            },
+            {
+              "figure": "1,000+",
+              "label": "People assisted via vouchers",
+              "note": "Clothing, household items and furniture reaching families in need"
+            },
+            {
+              "figure": "260+",
+              "label": "Free counselling sessions",
+              "note": "Trauma counselling for men, women and children in the community"
+            },
+            {
+              "figure": "R160,000+",
+              "label": "Clothing distributed",
+              "note": "To shelters, foster homes and transit houses across the Vaal Triangle"
+            }
+          ]
+        }
+      ],
+      "blocks": [
+        {
+          "type": "subhead",
+          "text": "The story"
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "Somewhere along the way, a lot of South Africans stopped donating."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "Not because they stopped caring. Because they stopped trusting."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "They had given clothing to an organisation and later saw it sold at a flea market. They had handed over food parcels and heard the stories. They had written cheques to registered NPOs and watched administrators buy new cars while the communities they were supposed to serve stayed exactly as they were. They had been approached so many times by so many people with so many urgent stories that they could no longer tell the difference between a genuine need and an orchestrated performance of need."
+          }
+        }
+      ]
+    },
+    {
+      "layout": "runon",
+      "head": {
+        "pillar": "thrive",
+        "section": "The Quiet Hero"
+      },
+      "folio": 14,
+      "blocks": [
+        {
+          "type": "p",
+          "content": {
+            "text": "The result is a painful kind of paralysis. Good people with resources, sitting on those resources because they cannot work out who is actually helping and who is helping themselves."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "This is the problem Helplift Network was built to solve."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "Not another organisation asking for your trust without earning it. A network. A verified, transparent system that sits between the giver and the receiver and makes sure both sides are protected. The giver's terms are respected. The receiver's dignity is preserved. A trained manager sits in the middle ensuring that generosity reaches its destination and is not quietly redirected along the way."
+          }
+        }
+      ]
+    },
+    {
+      "layout": "hero-opener",
+      "head": {
+        "pillar": "personality",
+        "section": "SA Personality"
+      },
+      "folio": 19,
+      "opener": {
+        "kicker": "South African First · SA Personality · Moxie · July 2026",
+        "headline": "7 Continents. 7 Days.",
+        "headlineTurn": "One Historic First.",
+        "bannerAssetId": "alice-hero",
+        "bannerType": "band",
+        "credit": "Alice Myburgh, Marloth Park. Photo supplied by Alice Myburgh."
+      },
+      "blocks": [
+        {
+          "type": "pullquote",
+          "tone": "orange",
+          "content": {
+            "text": "From Marloth Park to every corner of the earth. Alice Myburgh, 62, is about to do something no South African has ever done. A verified historical first in ultra-endurance running. And it all started because her daughter sent her a link."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "She will stand where no South African has ever stood."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "Not the first South African woman. Not the first in her age group, province, or running club. The first South African, full stop. Cross-reference every competitor database, every official leaderboard, every finishing record in the history of the Great World Race, and the answer is the same: the starting line of this event has never had a South African on it. Until November 2026."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "Alice Myburgh of Marloth Park is about to fix that."
+          }
+        },
+        {
+          "type": "p",
+          "content": {
+            "text": "From 15 to 21 November 2026, she will run a marathon on every continent in seven consecutive days, beginning in the frozen silence of Antarctica and ending, 168 hours and 295 kilometres later, on the streets of Miami. Seven continents. Seven days. One South African flag. Zero precedent."
+          }
+        }
+      ]
+    }
+  ]
+}
