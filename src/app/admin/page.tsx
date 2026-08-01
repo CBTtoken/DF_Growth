@@ -146,6 +146,14 @@ export default async function AdminPage() {
                 </span>
               )}
             </LinkButton>
+            {/* Moxie's publisher screen. It lives under /moxie rather than
+                /admin because the whole Moxie section is host-routed to
+                moxiemag.co.za, and a page at /admin/moxie would be
+                unreachable once the domain moves. This is the way in from
+                the admin area Dewald already uses. */}
+            <LinkButton href="/moxie/admin" variant="secondary" lift>
+              Moxie Magazine
+            </LinkButton>
             <LinkButton href="/admin/agents" variant="secondary" lift>
               Agents
               {!!pendingAgentsCount && (

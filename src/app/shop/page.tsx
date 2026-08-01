@@ -23,6 +23,22 @@ const FEATURED = {
   coverSlug: "standing365",
 };
 
+// Moxie Magazine, curated the same way Standing 365 is and for the same
+// reason: it keeps its own real checkout on its own pages, so it is not a
+// shop_products row and must not be turned into one.
+//
+// The cover is a static asset rather than a client screenshot, because Moxie
+// is not a growth_clients record. It is a publication with its own domain,
+// and the shop links across to it.
+const FEATURED_MOXIE = {
+  title: "Moxie Magazine",
+  description:
+    "South Africa's family discovery magazine. Science, nature, history, travel, food and puzzles, written for curious minds aged 8 to 80.",
+  priceLabel: "R49 a month",
+  href: "/moxie",
+  cover: "/moxie/covers/july-2026.webp",
+};
+
 export default async function ShopPage({
   searchParams,
 }: {
@@ -199,6 +215,38 @@ export default async function ShopPage({
                   <p className="mt-1 line-clamp-2 flex-1 text-xs leading-relaxed text-neutral-mid">{FEATURED.description}</p>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-sm font-bold text-accent">{FEATURED.priceLabel}</span>
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue">
+                      View <ArrowRight size={13} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+
+              <Link
+                href={FEATURED_MOXIE.href}
+                className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-card-hover"
+              >
+                <div className="relative h-40 overflow-hidden bg-neutral-light">
+                  <Image
+                    src={FEATURED_MOXIE.cover}
+                    alt={FEATURED_MOXIE.title}
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover object-top transition duration-500 group-hover:scale-105"
+                  />
+                  <span className="absolute right-2.5 top-2.5 rounded-full bg-accent px-2 py-0.5 text-[11px] font-bold text-white shadow">
+                    Featured
+                  </span>
+                </div>
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="text-sm font-bold text-neutral-ink group-hover:text-brand-blue">
+                    {FEATURED_MOXIE.title}
+                  </h3>
+                  <p className="mt-1 line-clamp-2 flex-1 text-xs leading-relaxed text-neutral-mid">
+                    {FEATURED_MOXIE.description}
+                  </p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <span className="text-sm font-bold text-accent">{FEATURED_MOXIE.priceLabel}</span>
                     <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-blue">
                       View <ArrowRight size={13} />
                     </span>

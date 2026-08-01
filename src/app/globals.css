@@ -15,6 +15,25 @@
   --ink-light: #1a2438;
   --spark: #f2994a;
   --spark-dark: #c9782f;
+
+  /* Moxie Magazine. A separate publication on its own domain with its own
+     design system, so these are deliberately not derived from the Growth
+     tokens above and must never be mixed with them. Values are quoted from
+     the Moxie Editorial and Design Reference 2026 section 4, which is the
+     single source of truth and supersedes the older Production Layout
+     Guide. Scoped by naming, the same way the home page tokens below are.
+
+     The teal is Smart Value Club's colour and the reference is explicit
+     that the two palettes never share a page. It is here because the site
+     carries SVC's member banner and access-code section, which are the one
+     sanctioned place the two brands meet. */
+  --moxie-orange: #c85a1e;
+  --moxie-teal: #0b6e6e;
+  --moxie-charcoal: #1e2020;
+  --moxie-cream: #f7f3ee;
+  --moxie-border: #e0d8d0;
+  --moxie-mint: #a8d0d0;
+  --moxie-caption: #888888;
 }
 
 @theme inline {
@@ -29,6 +48,20 @@
   --font-sans: var(--font-geist-sans);
   --font-badge: var(--font-barlow-condensed);
   --font-display: var(--font-barlow-condensed);
+
+  /* Moxie. The three faces the reference names, and it adds "no others,
+     ever". They are declared in src/app/moxie/layout.tsx rather than the
+     root layout, so a Growth page never downloads a font only Moxie uses. */
+  --color-moxie-orange: var(--moxie-orange);
+  --color-moxie-teal: var(--moxie-teal);
+  --color-moxie-charcoal: var(--moxie-charcoal);
+  --color-moxie-cream: var(--moxie-cream);
+  --color-moxie-border: var(--moxie-border);
+  --color-moxie-mint: var(--moxie-mint);
+  --color-moxie-caption: var(--moxie-caption);
+  --font-moxie-display: var(--font-playfair-display);
+  --font-moxie-body: var(--font-source-serif);
+  --font-moxie-label: var(--font-barlow-condensed-moxie);
 }
 
 body {

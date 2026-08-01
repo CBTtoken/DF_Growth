@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isMoxieHost, MOXIE_PREFIX } from "@/lib/moxie/host";
 
 // Agent Referral Programme, real agent feedback follow-up: personalized
 // referral links live on their own subdomain (agent.digitalflyersa.co.za/
@@ -122,6 +123,77 @@ export function proxy(request: NextRequest) {
   // but the header has to be here too or the path is indexable while the
   // subdomain is not.
   if (request.nextUrl.pathname === DESK_PREFIX || request.nextUrl.pathname.startsWith(`${DESK_PREFIX}/`)) {
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", NOINDEX);
+    return response;
+  }
+
+  // Moxie Magazine, the third product on this application. moxiemag.co.za is
+  // an additional domain on the same Vercel project, rewritten to /moxie the
+  // same way katisobiz.co.za is rewritten to /bizup.
+  //
+  // Unlike The Desk above, this branch sets no X-Robots-Tag. That is the
+  // point of it. The WordPress site this replaces is already indexed and
+  // ranking, and a noindex header leaking onto this hostname would throw
+  // that away silently, with nothing on any screen to show it had happened.
+  if (isMoxieHost(host)) {
+    const { pathname } = request.nextUrl;
+
+    // API routes are never rewritten under any hostname. The Paystack
+    // webhook posts to an absolute /api path and a rewrite here would
+    // silently break every subscription payment.
+    if (pathname.startsWith("/api/")) return NextResponse.next();
+
+    // Any file with an extension is served as-is from public/. A dot in the
+    // last segment is the tell: page routes never have one. Hoisted to the
+    // top of the branch for the same reason the KatisoBiz one was, after a
+    // moved logo file 404ed during a paid campaign.
+    if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
+      return NextResponse.next();
+    }
+
+    // The company-wide legal pages, served as-is here too. One set of
+    // documents for the whole business, not one per product: Digital Flyer
+    // (Pty) Ltd is the registered POPIA responsible party behind all three,
+    // and two privacy policies drift apart within a year.
+    if (SHARED_LEGAL_PATHS.has(pathname)) return NextResponse.next();
+
+    // robots.txt and sitemap.xml are host-aware and answer for themselves.
+    // Rewriting them into /moxie would 404 both, which is exactly the
+    // regression this build exists to avoid.
+    if (SHARED_CRAWLER_PATHS.has(pathname)) return NextResponse.next();
+
+    // moxiemag.co.za/          -> /moxie
+    // moxiemag.co.za/subscribe -> /moxie/subscribe
+    //
+    // Already-prefixed paths pass through unchanged rather than becoming
+    // /moxie/moxie, so a redirect() inside the app that uses an absolute
+    // /moxie/... path still lands in the right place on this hostname.
+    const moxieUrl = request.nextUrl.clone();
+    if (!(pathname === MOXIE_PREFIX || pathname.startsWith(`${MOXIE_PREFIX}/`))) {
+      moxieUrl.pathname = pathname === "/" ? MOXIE_PREFIX : `${MOXIE_PREFIX}${pathname}`;
+    }
+    return NextResponse.rewrite(moxieUrl);
+  }
+
+  // The same Moxie pages reached on any other hostname: the Growth domain
+  // while the DNS is still being set up, and every Vercel preview URL.
+  //
+  // Marked noindex, and this is not a temporary measure waiting for a flag.
+  // It is permanently right. A request on moxiemag.co.za returns from the
+  // branch above and never reaches this line, so the real site is always
+  // indexable; every other hostname is serving a duplicate of it. The old
+  // WordPress site is already indexed and ranking, and a second copy of the
+  // same content on a second domain splits that with nothing to say which
+  // one counts.
+  //
+  // Blocks crawlers only. People and payments are untouched, so the site can
+  // be live and taking memberships on the Growth domain today and simply
+  // start being indexed the day the domain moves.
+  if (
+    request.nextUrl.pathname === MOXIE_PREFIX ||
+    request.nextUrl.pathname.startsWith(`${MOXIE_PREFIX}/`)
+  ) {
     const response = NextResponse.next();
     response.headers.set("X-Robots-Tag", NOINDEX);
     return response;
