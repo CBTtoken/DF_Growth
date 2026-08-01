@@ -51,7 +51,7 @@ export async function setCover(editionId: string, storagePath: string) {
   });
   if (assetError) throw new Error(`Could not set the cover: ${assetError.message}`);
 
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }
 
 export async function setAdArtwork(editionId: string, adId: string, storagePath: string) {
@@ -65,7 +65,7 @@ export async function setAdArtwork(editionId: string, adId: string, storagePath:
     .eq("edition_id", editionId);
   if (error) throw new Error(`Could not save the artwork: ${error.message}`);
 
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }
 
 export async function renameAdvertiser(editionId: string, adId: string, advertiser: string) {
@@ -79,7 +79,7 @@ export async function renameAdvertiser(editionId: string, adId: string, advertis
     .eq("edition_id", editionId);
   if (error) throw new Error(`Could not rename: ${error.message}`);
 
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }
 
 /**
@@ -101,5 +101,5 @@ export async function setAccessCode(editionId: string, code: string) {
     .eq("id", editionId);
   if (error) throw new Error(`Could not save the code: ${error.message}`);
 
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }

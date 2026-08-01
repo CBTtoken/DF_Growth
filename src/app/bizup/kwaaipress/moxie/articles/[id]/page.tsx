@@ -65,8 +65,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
       <div style={{ maxWidth: 1320, margin: "0 auto" }}>
         <MoxieNav
           trail={[
-            { label: "Editions", href: "/bizup/emag/moxie/editions" },
-            { label: edition?.title ?? "Edition", href: `/bizup/emag/moxie/editions/${article.editionId}` },
+            { label: "Editions", href: "/bizup/kwaaipress/moxie/editions" },
+            { label: edition?.title ?? "Edition", href: `/bizup/kwaaipress/moxie/editions/${article.editionId}` },
             { label: article.title },
           ]}
         />

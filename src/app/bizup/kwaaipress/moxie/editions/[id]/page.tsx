@@ -29,7 +29,7 @@ async function startArticle(formData: FormData) {
     opener: { headline: "" },
     blocks: [{ type: "p", content: { text: "" } }],
   });
-  redirect(`/bizup/emag/moxie/articles/${id}`);
+  redirect(`/bizup/kwaaipress/moxie/articles/${id}`);
 }
 
 export default async function EditionPage({ params }: { params: Promise<{ id: string }> }) {
@@ -59,7 +59,7 @@ export default async function EditionPage({ params }: { params: Promise<{ id: st
       <div style={{ maxWidth: 820, margin: "0 auto" }}>
         <MoxieNav
           trail={[
-            { label: "Editions", href: "/bizup/emag/moxie/editions" },
+            { label: "Editions", href: "/bizup/kwaaipress/moxie/editions" },
             { label: edition.title },
           ]}
         />
@@ -67,10 +67,10 @@ export default async function EditionPage({ params }: { params: Promise<{ id: st
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <h1 style={{ fontSize: 28, margin: "0 0 16px", fontWeight: 700 }}>{edition.title}</h1>
           <span style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-            <Link href={`/bizup/emag/moxie/editions/${edition.id}/pictures`} style={{ color: "#c85a1e", fontWeight: 600, fontSize: 14 }}>
+            <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/pictures`} style={{ color: "#c85a1e", fontWeight: 600, fontSize: 14 }}>
               Cover, adverts and access
             </Link>
-            <Link href={`/bizup/emag/moxie/editions/${edition.id}/flatplan`} style={{ color: "#c85a1e", fontWeight: 600, fontSize: 14 }}>
+            <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/flatplan`} style={{ color: "#c85a1e", fontWeight: 600, fontSize: 14 }}>
               Flatplan
             </Link>
           </span>
@@ -83,7 +83,7 @@ export default async function EditionPage({ params }: { params: Promise<{ id: st
           </p>
         ) : (
           articles.map((article) => (
-            <Link key={article.id} href={`/bizup/emag/moxie/articles/${article.id}`} style={card}>
+            <Link key={article.id} href={`/bizup/kwaaipress/moxie/articles/${article.id}`} style={card}>
               <span style={{ flex: "1 1 auto", minWidth: 0 }}>
                 <span style={{ display: "block", fontWeight: 700, fontSize: 16 }}>
                   {article.title}

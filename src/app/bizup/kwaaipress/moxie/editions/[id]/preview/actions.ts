@@ -48,7 +48,7 @@ export async function publishEdition(editionId: string) {
     .eq("id", editionId);
   if (error) throw new Error(`Could not publish: ${error.message}`);
 
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }
 
 /** Takes an edition back off the shelf. The link stops working. */
@@ -62,7 +62,7 @@ export async function unpublishEdition(editionId: string) {
     .eq("id", editionId);
   if (error) throw new Error(`Could not unpublish: ${error.message}`);
 
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }
 
 /**
@@ -83,5 +83,5 @@ export async function setPdfEnabled(editionId: string, enabled: boolean) {
     .eq("id", editionId);
   if (error) throw new Error(`Could not change that: ${error.message}`);
 
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }

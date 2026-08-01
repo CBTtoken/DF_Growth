@@ -29,20 +29,20 @@ export function MoxieNav({ trail = [] }: { trail?: Crumb[] }) {
           reason nothing under the surface assumes Moxie, and the moment a
           second magazine exists this bar reads correctly without a change. */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 18, alignItems: "baseline" }}>
-        <Link href="/bizup/emag/moxie" style={brand}>
+        <Link href="/bizup/kwaaipress/moxie" style={brand}>
           Kwaai Press
         </Link>
         <span style={{ ...link, color: "#7a7671" }}>Moxie</span>
-        <Link href="/bizup/emag/moxie/editions" style={link}>
+        <Link href="/bizup/kwaaipress/moxie/editions" style={link}>
           Editions
         </Link>
-        <Link href="/bizup/emag/moxie/sections" style={link}>
+        <Link href="/bizup/kwaaipress/moxie/sections" style={link}>
           Sections and layouts
         </Link>
-        <Link href="/bizup/emag/moxie/settings" style={link}>
+        <Link href="/bizup/kwaaipress/moxie/settings" style={link}>
           Settings
         </Link>
-        <Link href="/bizup/emag/moxie/rebuild" style={link}>
+        <Link href="/bizup/kwaaipress/moxie/rebuild" style={link}>
           July rebuild
         </Link>
       </div>

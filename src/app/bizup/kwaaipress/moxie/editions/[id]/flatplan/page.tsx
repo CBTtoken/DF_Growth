@@ -51,7 +51,7 @@ export default async function FlatplanPage({ params }: { params: Promise<{ id: s
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <MoxieNav
           trail={[
-            { label: "Editions", href: "/bizup/emag/moxie/editions" },
+            { label: "Editions", href: "/bizup/kwaaipress/moxie/editions" },
             { label: edition.title },
             { label: "Flatplan" },
           ]}
@@ -82,13 +82,13 @@ export default async function FlatplanPage({ params }: { params: Promise<{ id: s
         ) : null}
 
         <p style={{ marginTop: 26, fontSize: 14, display: "flex", gap: 20, flexWrap: "wrap" }}>
-          <Link href={`/bizup/emag/moxie/editions/${edition.id}`} style={{ color: "#c85a1e" }}>
+          <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}`} style={{ color: "#c85a1e" }}>
             Write and edit this edition&apos;s articles
           </Link>
-          <Link href={`/bizup/emag/moxie/editions/${edition.id}/contents`} style={{ color: "#c85a1e" }}>
+          <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/contents`} style={{ color: "#c85a1e" }}>
             See the contents page this produces
           </Link>
-          <Link href={`/bizup/emag/moxie/editions/${edition.id}/preview`} style={{ color: "#c85a1e" }}>
+          <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/preview`} style={{ color: "#c85a1e" }}>
             Preview the whole edition and publish
           </Link>
         </p>

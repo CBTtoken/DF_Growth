@@ -70,6 +70,6 @@ export async function createEdition(formData: FormData) {
   );
   if (planError) throw new Error(`Could not start the flatplan: ${planError.message}`);
 
-  revalidatePath("/bizup/emag/moxie/editions");
-  redirect(`/bizup/emag/moxie/editions/${edition.id}/flatplan`);
+  revalidatePath("/bizup/kwaaipress/moxie/editions");
+  redirect(`/bizup/kwaaipress/moxie/editions/${edition.id}/flatplan`);
 }

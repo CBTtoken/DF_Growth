@@ -12,17 +12,17 @@ export const metadata = { title: "Moxie eMag builder", robots: { index: false } 
 
 const built = [
   {
-    href: "/bizup/emag/moxie/editions",
+    href: "/bizup/kwaaipress/moxie/editions",
     title: "Editions",
     body: "Start an edition, then order it on the flatplan. Page numbers and the contents page come from that order.",
   },
   {
-    href: "/bizup/emag/moxie/rebuild",
+    href: "/bizup/kwaaipress/moxie/rebuild",
     title: "July, rebuilt",
     body: "Published July pages beside the same content rendered by the builder. The check on whether the templates are right. A test harness, not part of the product.",
   },
   {
-    href: "/bizup/emag/moxie/sections",
+    href: "/bizup/kwaaipress/moxie/sections",
     title: "Sections and layouts",
     body: "The eight pillars, the seventeen standing sections, and which page structure each one maps onto.",
   },

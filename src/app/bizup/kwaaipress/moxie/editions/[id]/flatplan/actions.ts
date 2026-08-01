@@ -29,7 +29,7 @@ export async function saveOrder(editionId: string, orderedIds: string[]) {
   }
 
   await reorderFlatplan(editionId, clean);
-  revalidatePath(`/bizup/emag/moxie/editions/${editionId}/flatplan`);
+  revalidatePath(`/bizup/kwaaipress/moxie/editions/${editionId}/flatplan`);
 }
 
 export async function addBlock(
@@ -55,7 +55,7 @@ export async function addBlock(
   });
   if (error) throw new Error(`Could not add the block: ${error.message}`);
 
-  revalidatePath(`/bizup/emag/moxie/editions/${editionId}/flatplan`);
+  revalidatePath(`/bizup/kwaaipress/moxie/editions/${editionId}/flatplan`);
 }
 
 export async function removeBlock(editionId: string, blockId: string) {
@@ -73,5 +73,5 @@ export async function removeBlock(editionId: string, blockId: string) {
     .eq("edition_id", editionId);
   if (error) throw new Error(`Could not remove the block: ${error.message}`);
 
-  revalidatePath(`/bizup/emag/moxie/editions/${editionId}/flatplan`);
+  revalidatePath(`/bizup/kwaaipress/moxie/editions/${editionId}/flatplan`);
 }

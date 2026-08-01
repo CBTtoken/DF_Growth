@@ -81,7 +81,7 @@ export async function getEmagUser(slug: string = MOXIE_SLUG): Promise<EmagUser |
 /** Any member. Writers and publishers both. */
 export async function requireEmagUser(slug: string = MOXIE_SLUG): Promise<EmagUser> {
   const user = await getEmagUser(slug);
-  if (!user) redirect("/bizup/login?next=/emag/moxie");
+  if (!user) redirect("/bizup/login?next=/kwaaipress/moxie");
   return user;
 }
 
@@ -128,6 +128,6 @@ export async function requirePublisherForAction(slug: string = MOXIE_SLUG): Prom
  */
 export async function requirePublisher(slug: string = MOXIE_SLUG): Promise<EmagUser> {
   const user = await requireEmagUser(slug);
-  if (user.role !== "publisher") redirect("/bizup/emag/moxie");
+  if (user.role !== "publisher") redirect("/bizup/kwaaipress/moxie");
   return user;
 }
