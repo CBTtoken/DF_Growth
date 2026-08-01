@@ -22,6 +22,14 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   const host = (await headers()).get("host") ?? "";
   const bare = host.split(":")[0].toLowerCase();
 
+  // The Desk's hostname is not a public site and has no sitemap. Every page
+  // there already answers with an X-Robots-Tag, which is what actually keeps
+  // it out of an index; this just means a crawler that somehow reaches the
+  // host is told to leave before it asks for a page.
+  if (bare.split(".")[0] === "desk") {
+    return { rules: { userAgent: "*", disallow: "/" } };
+  }
+
   const siteUrl = isKatisoBizHost(host)
     ? `https://${bare}`
     : (process.env.NEXT_PUBLIC_SITE_URL ?? "https://df-growth.vercel.app");

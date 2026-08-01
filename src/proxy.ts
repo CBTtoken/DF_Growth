@@ -62,6 +62,20 @@ const GROWTH_ORIGIN = process.env.NEXT_PUBLIC_SITE_URL ?? "https://growth.digita
 // explicitly rather than being caught by the dot test below.
 const METADATA_IMAGE_SEGMENTS = ["opengraph-image", "twitter-image", "icon", "apple-icon"];
 
+// The Desk. A private single-user tool on its own hostname, with no link to
+// it from anywhere and no path from the public site.
+//
+// Matched on the first label like the KatisoBiz branch below, so it answers
+// on desk.katisobiz.co.za without needing to know the rest of the hostname.
+// desk. is checked before katisobiz. because a first-label match on "desk"
+// would otherwise never be reached.
+const DESK_PREFIX = "/desk";
+
+// Set on every Desk response, on both hostnames. A meta tag in the layout
+// would cover pages only; the header also covers the export endpoint, and it
+// is what a fetch of the URL can be checked against.
+const NOINDEX = "noindex, nofollow";
+
 export function proxy(request: NextRequest) {
   const hostname = request.headers.get("host") ?? "";
 
@@ -78,6 +92,41 @@ export function proxy(request: NextRequest) {
   // nothing points at it.
   const host = hostname.split(":")[0].toLowerCase();
   const firstLabel = host.split(".")[0];
+
+  if (firstLabel === "desk") {
+    const { pathname } = request.nextUrl;
+
+    // Files with an extension are served as-is, same rule as the KatisoBiz
+    // branch: a page route never has a dot in its last segment.
+    if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
+      return NextResponse.next();
+    }
+
+    // desk.katisobiz.co.za/       -> /desk
+    // desk.katisobiz.co.za/today  -> /desk/today
+    //
+    // Already-prefixed paths pass through unchanged rather than becoming
+    // /desk/desk, so a redirect() inside the app that uses an absolute
+    // /desk/... path still lands in the right place on this hostname.
+    const url = request.nextUrl.clone();
+    if (!(pathname === DESK_PREFIX || pathname.startsWith(`${DESK_PREFIX}/`))) {
+      url.pathname = pathname === "/" ? DESK_PREFIX : `${DESK_PREFIX}${pathname}`;
+    }
+
+    const response = NextResponse.rewrite(url);
+    response.headers.set("X-Robots-Tag", NOINDEX);
+    return response;
+  }
+
+  // The same pages reached on the Growth hostname. Auth-gated either way,
+  // but the header has to be here too or the path is indexable while the
+  // subdomain is not.
+  if (request.nextUrl.pathname === DESK_PREFIX || request.nextUrl.pathname.startsWith(`${DESK_PREFIX}/`)) {
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", NOINDEX);
+    return response;
+  }
+
   if (firstLabel === "katisobiz" || firstLabel === "bizup" || host === "www.katisobiz.co.za") {
     const { pathname } = request.nextUrl;
 
