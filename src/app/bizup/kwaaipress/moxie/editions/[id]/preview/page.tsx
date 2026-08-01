@@ -26,7 +26,7 @@ export default async function EditionPreview({ params }: { params: Promise<{ id:
     credit: publication?.footer_credit ?? "",
   };
 
-  const readUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"}/bizup/emag/moxie/read/${edition.slug}`;
+  const readUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"}/bizup/kwaaipress/moxie/read/${edition.slug}`;
 
   return (
     <main
@@ -41,8 +41,8 @@ export default async function EditionPreview({ params }: { params: Promise<{ id:
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <MoxieNav
           trail={[
-            { label: "Editions", href: "/bizup/emag/moxie/editions" },
-            { label: edition.title, href: `/bizup/emag/moxie/editions/${id}` },
+            { label: "Editions", href: "/bizup/kwaaipress/moxie/editions" },
+            { label: edition.title, href: `/bizup/kwaaipress/moxie/editions/${id}` },
             { label: "Preview and publish" },
           ]}
         />

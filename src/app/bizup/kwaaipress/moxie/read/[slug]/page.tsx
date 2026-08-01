@@ -76,7 +76,7 @@ export default async function ReadEdition({ params }: { params: Promise<{ slug: 
         found!.access_code as string,
         String(formData.get("code") ?? "")
       );
-      if (result.ok) redirect(`/bizup/emag/moxie/read/${slug}`);
+      if (result.ok) redirect(`/bizup/kwaaipress/moxie/read/${slug}`);
     }
 
     return (
@@ -101,7 +101,7 @@ export default async function ReadEdition({ params }: { params: Promise<{ slug: 
         publication={publication?.name ?? ""}
         pages={edition.pages.length}
         pdfEnabled={edition.pdfEnabled}
-        printHref={`/bizup/emag/moxie/read/${slug}/print`}
+        printHref={`/bizup/kwaaipress/moxie/read/${slug}/print`}
       />
 
       <div className="mx-reader__deck">

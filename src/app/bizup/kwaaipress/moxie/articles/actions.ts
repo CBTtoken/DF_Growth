@@ -108,7 +108,7 @@ export async function saveArticle(draft: ArticleDraft) {
     if (error) throw new Error(`Could not save: ${error.message}`);
 
     await syncFlatplanPages(draft.id, 0);
-    revalidatePath(`/bizup/emag/moxie/articles/${draft.id}`);
+    revalidatePath(`/bizup/kwaaipress/moxie/articles/${draft.id}`);
     return draft.id;
   }
 
@@ -119,7 +119,7 @@ export async function saveArticle(draft: ArticleDraft) {
     .single();
   if (error) throw new Error(`Could not create the article: ${error.message}`);
 
-  revalidatePath(`/bizup/emag/moxie/editions/${draft.editionId}`);
+  revalidatePath(`/bizup/kwaaipress/moxie/editions/${draft.editionId}`);
   return data.id as string;
 }
 
@@ -133,7 +133,7 @@ export async function submitArticle(id: string) {
     .eq("id", id);
   if (error) throw new Error(`Could not submit: ${error.message}`);
 
-  revalidatePath(`/bizup/emag/moxie/articles/${id}`);
+  revalidatePath(`/bizup/kwaaipress/moxie/articles/${id}`);
 }
 
 /**
@@ -188,8 +188,8 @@ export async function approveArticle(id: string, pages: RenderedPage[]) {
   await syncFlatplanPages(id, pages.length);
   await ensureInFlatplan(existing.edition_id as string, id, pages.length);
 
-  revalidatePath(`/bizup/emag/moxie/articles/${id}`);
-  revalidatePath(`/bizup/emag/moxie/editions/${existing.edition_id}/flatplan`);
+  revalidatePath(`/bizup/kwaaipress/moxie/articles/${id}`);
+  revalidatePath(`/bizup/kwaaipress/moxie/editions/${existing.edition_id}/flatplan`);
 }
 
 /** Keeps the flatplan's copy of the extent in step with the article. */
@@ -256,8 +256,8 @@ export async function deleteArticle(id: string, editionId: string) {
   const { error } = await supabase.from("emag_articles").delete().eq("id", id);
   if (error) throw new Error(`Could not delete: ${error.message}`);
 
-  revalidatePath(`/bizup/emag/moxie/editions/${editionId}/flatplan`);
-  redirect(`/bizup/emag/moxie/editions/${editionId}`);
+  revalidatePath(`/bizup/kwaaipress/moxie/editions/${editionId}/flatplan`);
+  redirect(`/bizup/kwaaipress/moxie/editions/${editionId}`);
 }
 
 /**
@@ -327,13 +327,13 @@ export async function saveAsset(
   if (asset.id) {
     const { error } = await supabase.from("emag_assets").update(row).eq("id", asset.id);
     if (error) throw new Error(`Could not save the image settings: ${error.message}`);
-    revalidatePath(`/bizup/emag/moxie/articles/${articleId}`);
+    revalidatePath(`/bizup/kwaaipress/moxie/articles/${articleId}`);
     return asset.id;
   }
 
   const { data, error } = await supabase.from("emag_assets").insert(row).select("id").single();
   if (error) throw new Error(`Could not save the image: ${error.message}`);
-  revalidatePath(`/bizup/emag/moxie/articles/${articleId}`);
+  revalidatePath(`/bizup/kwaaipress/moxie/articles/${articleId}`);
   return data.id as string;
 }
 
@@ -371,7 +371,7 @@ export async function updateAssetPlacement(assetId: string, changes: Record<stri
     .maybeSingle();
   if (error) throw new Error(`Could not move the picture: ${error.message}`);
 
-  if (data?.article_id) revalidatePath(`/bizup/emag/moxie/articles/${data.article_id}`);
+  if (data?.article_id) revalidatePath(`/bizup/kwaaipress/moxie/articles/${data.article_id}`);
 }
 
 export async function deleteAsset(articleId: string, assetId: string) {
@@ -379,5 +379,5 @@ export async function deleteAsset(articleId: string, assetId: string) {
   const supabase = createAdminClient();
   const { error } = await supabase.from("emag_assets").delete().eq("id", assetId);
   if (error) throw new Error(`Could not remove the image: ${error.message}`);
-  revalidatePath(`/bizup/emag/moxie/articles/${articleId}`);
+  revalidatePath(`/bizup/kwaaipress/moxie/articles/${articleId}`);
 }

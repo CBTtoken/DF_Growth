@@ -54,8 +54,8 @@ export default async function EditionPicturesPage({
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
         <MoxieNav
           trail={[
-            { label: "Editions", href: "/bizup/emag/moxie/editions" },
-            { label: edition.title, href: `/bizup/emag/moxie/editions/${id}` },
+            { label: "Editions", href: "/bizup/kwaaipress/moxie/editions" },
+            { label: edition.title, href: `/bizup/kwaaipress/moxie/editions/${id}` },
             { label: "Pictures and access" },
           ]}
         />

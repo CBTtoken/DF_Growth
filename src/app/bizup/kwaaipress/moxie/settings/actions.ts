@@ -61,7 +61,7 @@ export async function saveDesign(publicationId: string, incoming: DesignSettings
 
   // Every screen that draws a page reads these, so they all have to be
   // rebuilt rather than just this one.
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }
 
 export async function saveIdentity(publicationId: string, fields: Record<string, string>) {
@@ -82,5 +82,5 @@ export async function saveIdentity(publicationId: string, fields: Record<string,
     .eq("id", publicationId);
 
   if (error) throw new Error(`Could not save: ${error.message}`);
-  revalidatePath("/bizup/emag/moxie", "layout");
+  revalidatePath("/bizup/kwaaipress/moxie", "layout");
 }

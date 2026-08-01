@@ -56,7 +56,7 @@ export default async function EditionsPage() {
           list.map((edition) => (
             <div key={edition.id} style={card}>
               <Link
-                href={`/bizup/emag/moxie/editions/${edition.id}`}
+                href={`/bizup/kwaaipress/moxie/editions/${edition.id}`}
                 style={{ flex: "1 1 auto", minWidth: 0, textDecoration: "none", color: "inherit" }}
               >
                 <span style={{ display: "block", fontWeight: 700, fontSize: 17 }}>
@@ -67,13 +67,13 @@ export default async function EditionsPage() {
                   {STATUS_WORDS[edition.status] ?? edition.status}
                 </span>
               </Link>
-              <Link href={`/bizup/emag/moxie/editions/${edition.id}`} style={rowLink}>
+              <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}`} style={rowLink}>
                 Articles
               </Link>
-              <Link href={`/bizup/emag/moxie/editions/${edition.id}/flatplan`} style={rowLink}>
+              <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/flatplan`} style={rowLink}>
                 Flatplan
               </Link>
-              <Link href={`/bizup/emag/moxie/editions/${edition.id}/preview`} style={rowLink}>
+              <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/preview`} style={rowLink}>
                 Publish
               </Link>
             </div>

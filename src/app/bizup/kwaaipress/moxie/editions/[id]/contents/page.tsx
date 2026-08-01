@@ -60,8 +60,8 @@ export default async function ContentsPreview({ params }: { params: Promise<{ id
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <MoxieNav
           trail={[
-            { label: "Editions", href: "/bizup/emag/moxie/editions" },
-            { label: edition.title, href: `/bizup/emag/moxie/editions/${edition.id}/flatplan` },
+            { label: "Editions", href: "/bizup/kwaaipress/moxie/editions" },
+            { label: edition.title, href: `/bizup/kwaaipress/moxie/editions/${edition.id}/flatplan` },
             { label: "Contents" },
           ]}
         />
