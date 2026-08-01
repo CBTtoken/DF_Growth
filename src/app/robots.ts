@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { isKatisoBizHost } from "@/lib/bizup/product";
+import { isMoxieHost } from "@/lib/moxie/host";
 
 // Next.js special file — serves this at /robots.txt automatically.
 //
@@ -28,6 +29,23 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   // host is told to leave before it asks for a page.
   if (bare.split(".")[0] === "desk") {
     return { rules: { userAgent: "*", disallow: "/" } };
+  }
+
+  // Moxie is the opposite case to The Desk, and the reason this branch is
+  // written out rather than falling through to the default below: the
+  // WordPress site it replaces returns index, follow today and has been
+  // indexed for months. Reaching the default would hand moxiemag.co.za a
+  // sitemap listing Growth's pages, on a domain where none of them exist.
+  //
+  // Nothing is disallowed. The reader and account pages are protected by
+  // server-side auth, and listing them here would only advertise that they
+  // are worth looking at, which is the same reasoning the note above records
+  // for /admin and /dashboard.
+  if (isMoxieHost(host)) {
+    return {
+      rules: { userAgent: "*", allow: "/" },
+      sitemap: `https://${bare}/sitemap.xml`,
+    };
   }
 
   const siteUrl = isKatisoBizHost(host)

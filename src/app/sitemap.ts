@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isKatisoBizHost } from "@/lib/bizup/product";
+import { isMoxieHost } from "@/lib/moxie/host";
 import { listAreas, listPostSlugsForSitemap } from "@/lib/board/queries";
 import { BOARD_CATEGORIES } from "@/lib/board/categories";
 import { isBoardPublic } from "@/lib/board/visibility";
@@ -27,6 +28,59 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${katisoUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
       { url: `${katisoUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
       { url: `${katisoUrl}/paia`, changeFrequency: "yearly", priority: 0.2 },
+    ];
+  }
+
+  // Moxie's own domain gets its own page list, for the same reason
+  // KatisoBiz does: listing Growth's client pages under moxiemag.co.za
+  // would tell a crawler that pages exist on a domain where they do not.
+  //
+  if (isMoxieHost(host)) {
+    const moxieUrl = `https://${bare}`;
+    const { listEditions, isFreeToRead } = await import("@/lib/moxie/editions");
+    const editions = await listEditions();
+
+    // Every edition page is listed, including the one still in production.
+    // A crawler that finds next month's edition early costs nothing, and
+    // the page is a real page with a real description rather than a stub.
+    //
+    // The reader itself is deliberately absent. It is gated, its pages are
+    // served through expiring signed URLs, and a sitemap entry is an
+    // invitation to crawl something a crawler cannot read.
+    const editionEntries: MetadataRoute.Sitemap = editions.flatMap((e) => {
+      const entries: MetadataRoute.Sitemap = [
+        {
+          url: `${moxieUrl}/editions/${e.slug}`,
+          lastModified: e.published_at ?? undefined,
+          changeFrequency: "monthly" as const,
+          priority: e.status === "published" ? 0.9 : 0.5,
+        },
+      ];
+
+      // The full text version, listed only once the edition has actually
+      // opened up. This is where the real indexable writing lives, so it
+      // carries the higher priority of the two, but listing it before it
+      // exists would send a crawler to a 404 every month.
+      if (isFreeToRead(e)) {
+        entries.push({
+          url: `${moxieUrl}/editions/${e.slug}/text`,
+          lastModified: e.published_at ?? undefined,
+          changeFrequency: "yearly" as const,
+          priority: 1,
+        });
+      }
+
+      return entries;
+    });
+
+    return [
+      { url: moxieUrl, changeFrequency: "weekly", priority: 1 },
+      { url: `${moxieUrl}/editions`, changeFrequency: "monthly", priority: 0.9 },
+      { url: `${moxieUrl}/subscribe`, changeFrequency: "monthly", priority: 0.9 },
+      ...editionEntries,
+      { url: `${moxieUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${moxieUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${moxieUrl}/paia`, changeFrequency: "yearly", priority: 0.2 },
     ];
   }
 

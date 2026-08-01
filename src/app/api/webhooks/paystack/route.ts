@@ -10,6 +10,7 @@ import { buildBookShopOrder } from "@/lib/orders/book-order-row";
 import { trackBetaEvent } from "@/lib/metrics/track";
 import { recordCommissionIfEligible } from "@/lib/agents/commission";
 import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
+import { handleMoxieEvent } from "@/lib/moxie/webhook";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -35,6 +36,23 @@ export async function POST(request: Request) {
   }
 
   const event = JSON.parse(rawBody);
+
+  // Moxie Magazine, checked first and before the charge.success filter
+  // below.
+  //
+  // Before the filter, because a membership needs subscription.create,
+  // subscription.disable and invoice.payment_failed as well, and all three
+  // would otherwise be dropped two lines from here.
+  //
+  // First, because three products now share this one endpoint and the
+  // expensive failure is not a crash. It is a payment attributed to the
+  // wrong product, activating the wrong thing for a real customer. The
+  // handler returns true only for an event it has positively identified as
+  // Moxie's, by metadata on a first payment or by plan code on a renewal,
+  // so nothing else changes behaviour.
+  if (await handleMoxieEvent(event)) {
+    return NextResponse.json({ received: true });
+  }
 
   if (event.event !== "charge.success") {
     return NextResponse.json({ received: true });

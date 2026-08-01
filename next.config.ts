@@ -152,6 +152,41 @@ const nextConfig: NextConfig = {
       // rather than 404s: anything already shared, indexed or sitting in
       // somebody's WhatsApp history still arrives.
       { source: "/rebiz", destination: "/katisobiz-nomads", permanent: true },
+
+      // The WordPress site moxiemag.co.za replaces. These URLs are indexed
+      // and have been shared, so they redirect rather than 404 when the DNS
+      // moves.
+      //
+      // Every one of them is host-gated, and that is not caution, it is
+      // required. /shop is a real Growth page and /product/... could easily
+      // become one; an ungated rule here would silently redirect Growth's
+      // own shop into a magazine archive on the live site. The `has` host
+      // condition is what keeps these rules on Moxie's domain only.
+      //
+      // www is listed separately because a host condition matches the
+      // header exactly and cannot express "with or without www".
+      ...["moxiemag.co.za", "www.moxiemag.co.za"].flatMap((host) => {
+        const onMoxie = [{ type: "host" as const, value: host }];
+        return [
+          // The WooCommerce shop and every product page it sold. All three
+          // editions it listed are in the new archive, so the archive is
+          // the honest destination for each.
+          { source: "/shop", destination: "/editions", permanent: true, has: onMoxie },
+          { source: "/shop/:path*", destination: "/editions", permanent: true, has: onMoxie },
+          { source: "/product/:slug", destination: "/editions", permanent: true, has: onMoxie },
+          { source: "/product-category/:slug*", destination: "/editions", permanent: true, has: onMoxie },
+          // WooCommerce's customer area. There are no orders to show in the
+          // new world, but somebody arriving here is looking for their
+          // reading, so they land on their account rather than on a 404.
+          { source: "/my-account", destination: "/account", permanent: true, has: onMoxie },
+          { source: "/my-account/:path*", destination: "/account", permanent: true, has: onMoxie },
+          // The cart and checkout no longer exist as concepts: membership
+          // replaced the single-issue sale.
+          { source: "/cart", destination: "/subscribe", permanent: true, has: onMoxie },
+          { source: "/checkout", destination: "/subscribe", permanent: true, has: onMoxie },
+          { source: "/checkout/:path*", destination: "/subscribe", permanent: true, has: onMoxie },
+        ];
+      }),
     ];
   },
 };
