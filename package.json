@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:style": "node scripts/check-house-style.mjs"
+    "check:style": "node scripts/check-house-style.mjs",
+    "check:layout": "node --experimental-strip-types --no-warnings scripts/check-layout.mjs",
+    "check": "npm run check:style && npm run check:layout"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

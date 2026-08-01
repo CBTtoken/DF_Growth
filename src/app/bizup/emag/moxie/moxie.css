@@ -1,0 +1,1336 @@
+/* ---------------------------------------------------------------------------
+   Moxie eMag: the page itself.
+
+   Written as plain CSS rather than Tailwind classes on purpose. This is a
+   fixed A4 page measured in millimetres, and every value below was taken
+   off the published June and July pages at 300dpi. Utility classes would
+   turn "the orange rule is 0.5mm wide and starts 9mm from the left edge"
+   into an unreadable string of arbitrary-value brackets, and the whole
+   argument of this build is that the layout is deterministic and legible.
+
+   Nothing here leaks: every selector is prefixed .mx- and the file is
+   imported only by the eMag layout, so the rest of the platform never
+   loads it.
+
+   The page is fixed, not reflowing. On a phone the reader pinches and
+   zooms, exactly like every other digital magazine. That is what makes an
+   article occupy a known number of pages, which is what makes the flatplan
+   and the contents page possible at all.
+--------------------------------------------------------------------------- */
+
+.mx {
+  /* Section 4 of the Editorial and Design Reference. The first four were
+     sampled independently off the published pages at 300dpi and came back
+     identical, which is a useful confirmation that the exports are true to
+     the source. The last three come from the reference only. */
+  --mx-orange: #c85a1e;
+  --mx-teal: #0b6e6e;
+  --mx-charcoal: #1e2020;
+  --mx-cream: #f7f3ee;
+  --mx-border: #e0d8d0;
+  --mx-mint: #a8d0d0;
+  --mx-caption: #888888;
+
+  /* Section 6. A4 exactly, RGB, screen first. The left margin rule sits
+     4mm to the left of the 14mm margin, which puts it at 10mm. */
+  --mx-page-w: 210mm;
+  --mx-page-h: 297mm;
+  --mx-topbar-h: 4mm;
+  --mx-head-h: 6mm;
+  --mx-foot-h: 10mm;
+  --mx-rule-x: 10mm;
+  --mx-rule-w: 1.5pt;
+  --mx-text-l: 14mm;
+  --mx-text-r: 14mm;
+  --mx-hero-h: 52mm;
+  --mx-body-top: 2mm;
+
+  /* Section 6 spacing rules. Named rather than repeated, because the
+     reference gives them as rules and a value that appears in eight places
+     drifts in seven of them. */
+  --mx-gap-min: 4mm;
+  --mx-gap-section: 8mm;
+  --mx-gap-subhead-above: 8mm;
+  --mx-gap-subhead-below: 4mm;
+
+  /* The reference's gaps are what a reader sees, not what gets added to
+     whatever is already there.
+     Dewald, 1 August 2026: "the gaps are too big, can you see it?" He was
+     right and the numbers were all correct, which is the annoying kind of
+     wrong. A paragraph carries 1.9mm under it, so an 8mm gap above a
+     subheading was landing as 9.9mm, and every section gap after a
+     paragraph was doing the same. Subtracting the paragraph's own spacing
+     makes 8mm mean 8mm. */
+  --mx-gap-after-para: calc(var(--mx-gap-section) - var(--mx-para-gap));
+  --mx-gap-subhead-real: calc(var(--mx-gap-subhead-above) - var(--mx-para-gap));
+
+  /* The left margin rule is orange on editorial pages and teal on BELIEVE
+     pages. Overridden by the page, not by each rule that uses it. */
+  --mx-margin-rule: var(--mx-orange);
+
+  /* Type. Loaded by the eMag layout through next/font, so they are
+     self-hosted and identical on every machine, which is what makes
+     "the same article renders identically every time" true rather than
+     hopeful. */
+  --mx-display: var(--font-mx-playfair), Georgia, serif;
+  --mx-body: var(--font-mx-source-serif), Georgia, serif;
+  --mx-label: var(--font-mx-barlow), "Arial Narrow", sans-serif;
+
+  /* Section 5. Body copy is 12pt on 16pt and the reference says never
+     smaller, so this is a floor rather than a starting point. It was
+     raised from 11pt after Edition 01 for mobile legibility, which is why
+     measuring Edition 02 and trusting the number would have been wrong by
+     a hair. */
+  --mx-body-size: 12pt;
+  --mx-body-leading: 1.3333;
+
+  /* Defaults for every value the settings screen can override. The
+     renderer reads the custom property; this is what it falls back to. */
+  --mx-headline-size: 30pt;
+  --mx-standfirst-size: 12pt;
+  --mx-subhead-size: 11.5pt;
+  --mx-kicker-size: 9.5pt;
+  --mx-quote-size: 14pt;
+  --mx-caption-size: 9.5pt;
+  --mx-labelbar-size: 9.5pt;
+  --mx-footer-size: 9pt;
+
+  /* Measured off July page 30: the gap between paragraphs is 22px at
+     300dpi on top of the line pitch, which is 1.9mm. The reference says
+     "one line space only, never double space" without giving a value, so
+     the published page is the tiebreak. */
+  --mx-para-gap: 1.9mm;
+}
+
+/* --------------------------------------------------------------------------
+   The page frame
+-------------------------------------------------------------------------- */
+
+.mx-page {
+  position: relative;
+  box-sizing: border-box;
+  width: var(--mx-page-w);
+  height: var(--mx-page-h);
+  overflow: hidden;
+  background: var(--mx-cream);
+  color: var(--mx-charcoal);
+  font-family: var(--mx-body);
+  font-size: var(--mx-body-size);
+  /* --mx-fit is the copyfitting squeeze, 1 normally and slightly under 1
+     when an article has been tightened to pull stranded lines back. */
+  line-height: calc(var(--mx-body-leading) * var(--mx-fit, 1));
+  /* Bleeds, bands and full-width photographs are positioned against this,
+     so it must be the containing block even when a child is absolute. */
+  contain: paint;
+}
+
+/* A BELIEVE page. The only pillar with its own visual treatment: the hero
+   band and the left margin rule are teal instead of charcoal and orange.
+   Rebinding two variables rather than restating colours on each rule means
+   nothing can be half converted. */
+.mx-page--believe {
+  --mx-margin-rule: var(--mx-teal);
+  --mx-band-bg: var(--mx-teal);
+}
+
+.mx-page__topbar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: var(--mx-topbar-h);
+  background: var(--mx-orange);
+}
+
+.mx-page__head {
+  position: absolute;
+  top: var(--mx-topbar-h);
+  left: var(--mx-text-l);
+  right: var(--mx-text-r);
+  height: var(--mx-head-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6mm;
+  /* Section 6: a thin 0.5pt charcoal rule below both. */
+  border-bottom: 0.5pt solid var(--mx-charcoal);
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: var(--mx-labelbar-size);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* The pillar name, orange and underlined. The underline is part of the
+   spec rather than decoration, and it is the one thing that tells a reader
+   which of the two labels is the pillar. */
+.mx-page__head-left {
+  color: var(--mx-orange);
+  white-space: nowrap;
+  border-bottom: 0.5pt solid var(--mx-orange);
+  padding-bottom: 0.4mm;
+}
+
+.mx-page__head-right {
+  color: var(--mx-charcoal);
+  white-space: nowrap;
+}
+
+/* The separator between a section and its subsection. A middot with hair
+   space either side, which is what the published pages use. */
+.mx-dot::before {
+  content: "\00a0\00b7\00a0";
+}
+
+/* The left margin rule. It runs over full-bleed photographs rather than
+   under them, which is how June and July have it, so it sits above the
+   content in the stacking order. Orange, or teal on a BELIEVE page. */
+.mx-page__rule {
+  position: absolute;
+  left: var(--mx-rule-x);
+  top: calc(var(--mx-topbar-h) + var(--mx-head-h));
+  bottom: var(--mx-foot-h);
+  width: var(--mx-rule-w);
+  background: var(--mx-margin-rule);
+  z-index: 2;
+}
+
+.mx-page__body {
+  position: absolute;
+  top: calc(var(--mx-topbar-h) + var(--mx-head-h));
+  left: var(--mx-text-l);
+  right: var(--mx-text-r);
+  bottom: var(--mx-foot-h);
+  padding-top: var(--mx-body-top);
+  z-index: 1;
+}
+
+.mx-page__foot {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: var(--mx-foot-h);
+  padding: 0 var(--mx-text-r) 0 var(--mx-text-l);
+  background: var(--mx-charcoal);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--mx-label);
+  font-weight: 400;
+  font-size: var(--mx-footer-size);
+  letter-spacing: 0.01em;
+  z-index: 3;
+}
+
+.mx-page__folio {
+  font-weight: 700;
+  font-size: var(--mx-footer-size);
+}
+
+/* Escapes the text column out to the paper edge. Bands and banner
+   photographs are full bleed on these pages; running text never is. */
+.mx-bleed {
+  margin-left: calc(-1 * var(--mx-text-l));
+  margin-right: calc(-1 * var(--mx-text-r));
+}
+
+/* --------------------------------------------------------------------------
+   Type
+-------------------------------------------------------------------------- */
+
+/* Kicker labels: Barlow Condensed Bold 9 to 10pt, orange, uppercase,
+   inside the hero. */
+.mx-kicker {
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: var(--mx-kicker-size);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+}
+
+/* Hero headline: Playfair Display Bold, 28 to 36pt, two lines, with the
+   accent word in orange. Three steps inside that range rather than a free
+   number, because a publisher who can type a point size will eventually
+   type one that breaks the page. */
+.mx-display {
+  font-family: var(--mx-display);
+  font-weight: 700;
+  font-size: var(--mx-headline-size);
+  line-height: 1.12;
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+.mx-display--md {
+  font-size: calc(var(--mx-headline-size) * 0.93);
+}
+
+.mx-display--xl {
+  font-size: calc(var(--mx-headline-size) * 1.2);
+  line-height: 1.08;
+}
+
+/* The accent word, carried in a different colour. Both editions do this on
+   nearly every opener: the headline runs on and the colour changes at the
+   point the sentence turns. */
+.mx-display__turn {
+  color: var(--mx-orange);
+}
+
+/* Standfirst: Source Serif 4 Italic 12pt on 16pt, charcoal on cream.
+   Section 5's prose bullet lists standfirsts under Playfair and the
+   specification table puts them in Source Serif. The table wins, because
+   the document says to use it where values differ, but this is worth
+   raising with Dewald rather than deciding silently. */
+.mx-standfirst {
+  font-family: var(--mx-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--mx-standfirst-size);
+  line-height: 1.3333;
+  margin: 0;
+  padding: var(--mx-gap-min) 0;
+  border-top: 0.5pt solid var(--mx-border);
+  border-bottom: 0.5pt solid var(--mx-border);
+}
+
+.mx-standfirst--plain {
+  border: 0;
+  padding: 0;
+}
+
+.mx-p {
+  margin: 0 0 calc(var(--mx-para-gap) * var(--mx-fit, 1)) 0;
+}
+
+.mx-p:last-child {
+  margin-bottom: 0;
+}
+
+/* Subheadings: Barlow Condensed Bold 11 to 12pt, burnt orange, uppercase,
+   8mm above and 4mm below. */
+.mx-subhead {
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: var(--mx-subhead-size);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+  border-bottom: 0.5pt solid var(--mx-orange);
+  /* A block sized to its own words, so the orange underline hugs the text
+     without the element sitting on a line box. An inline-block here picked
+     up the body's leading above and below it, which is invisible in the
+     stylesheet and about three millimetres on the page. */
+  display: block;
+  width: fit-content;
+  line-height: 1.15;
+  margin: var(--mx-gap-subhead-real) 0 var(--mx-gap-subhead-below) 0;
+  padding-bottom: 0.6mm;
+}
+
+.mx-list {
+  margin: 0 0 2.6mm 0;
+  padding-left: 5mm;
+}
+
+.mx-list li {
+  margin-bottom: 1.2mm;
+}
+
+/* A pull quote is a coloured bar and a line of italic display type. The
+   bar's colour carries meaning: teal is Smart Value Club, orange is
+   everything else, and the renderer will not put both on one page. */
+.mx-pullquote {
+  display: flex;
+  gap: 4mm;
+  margin: 4mm 0;
+  align-items: stretch;
+}
+
+/* A 3pt left vertical rule, in teal or orange. */
+.mx-pullquote__bar {
+  flex: 0 0 3pt;
+  background: var(--mx-orange);
+}
+
+.mx-pullquote--teal .mx-pullquote__bar {
+  background: var(--mx-teal);
+}
+
+/* Playfair Display Italic, 14 to 16pt on 20pt. */
+.mx-pullquote__text {
+  font-family: var(--mx-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: var(--mx-quote-size);
+  line-height: 1.42;
+  margin: 0;
+  color: var(--mx-charcoal);
+}
+
+.mx-pullquote--orange .mx-pullquote__text {
+  color: var(--mx-orange);
+}
+
+/* A pull quote standing beside a picture.
+ *
+ * Not a float. A floated image hangs the text from its top edge, and on the
+ * published page the quote is centred against the picture's height, which
+ * is a different shape and reads as a different page. A flex row with the
+ * quote centred is what that actually is. */
+.mx-duo {
+  display: flex;
+  align-items: center;
+  gap: 5mm;
+  margin: 4mm 0;
+}
+
+.mx-duo .mx-pullquote {
+  margin: 0;
+}
+
+/* Captions: Barlow Condensed Regular 9 to 10pt on 11pt, mid grey.
+   Section 10 says a caption goes below every image, always. */
+.mx-caption {
+  font-family: var(--mx-label);
+  font-weight: 400;
+  font-size: var(--mx-caption-size);
+  line-height: 1.16;
+  color: var(--mx-caption);
+  margin: 1.6mm 0 0 0;
+}
+
+/* The italic caption. Set in the body serif rather than an obliqued
+   condensed, because Barlow Condensed's italic at 9.5pt on a grey is
+   noticeably harder to read than Source Serif's, and a caption exists to
+   be read. */
+.mx-caption--italic {
+  font-family: var(--mx-body);
+  font-style: italic;
+  font-size: 10pt;
+  line-height: 1.28;
+}
+
+/* --------------------------------------------------------------------------
+   Bands and banners
+-------------------------------------------------------------------------- */
+
+/* The charcoal band that carries a headline where there is no photograph
+   to carry it. Full bleed, edge to edge, exactly as on July page 13 and
+   June page 20. */
+.mx-band {
+  /* Hero bands are always charcoal. The only exception is BELIEVE, which
+     rebinds this variable at page level. */
+  background: var(--mx-band-bg, var(--mx-charcoal));
+  color: var(--mx-cream);
+  min-height: var(--mx-hero-h);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 6mm var(--mx-text-r) 6mm var(--mx-text-l);
+  border-bottom: 1.5pt solid var(--mx-orange);
+}
+
+.mx-band .mx-kicker {
+  color: var(--mx-orange);
+  display: block;
+  margin-bottom: 2mm;
+}
+
+.mx-band .mx-display {
+  color: #fff;
+}
+
+/* A full-bleed photograph with the headline set over it. The gradient is
+   a scrim, not decoration: it is what keeps white type legible over a
+   photograph the publisher chose rather than one we vetted. */
+/* Hero base rule: 1.5pt burnt orange, under every hero. */
+.mx-banner {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1.5pt solid var(--mx-orange);
+}
+
+.mx-banner__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* The scrim under type set over a photograph.
+ *
+ * Three strengths, and the publisher picks one per opener. It started as a
+ * single fixed gradient at 72 percent and that was too strong: it made
+ * every photograph noticeably darker than the same photograph in the
+ * published edition. A scrim has to be chosen against the picture, because
+ * a headline over a bright sky needs one and a headline over a shadow does
+ * not, and there is no honest default that works for both.
+ *
+ * "light" is the default because most Moxie openers put the type over the
+ * darker part of the frame already.
+ */
+.mx-banner__overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 5mm var(--mx-text-r) 5mm var(--mx-text-l);
+  background: linear-gradient(
+    to right,
+    rgba(15, 16, 16, 0.42) 0%,
+    rgba(15, 16, 16, 0.2) 42%,
+    rgba(15, 16, 16, 0) 72%
+  );
+}
+
+.mx-banner__overlay--scrim-none {
+  background: none;
+}
+
+.mx-banner__overlay--scrim-strong {
+  background: linear-gradient(
+    to right,
+    rgba(15, 16, 16, 0.74) 0%,
+    rgba(15, 16, 16, 0.48) 45%,
+    rgba(15, 16, 16, 0) 78%
+  );
+}
+
+.mx-banner__overlay--top {
+  justify-content: flex-start;
+}
+
+.mx-banner__overlay--band {
+  /* The July personality opener puts the type in a solid horizontal band
+     across the middle of the photograph rather than in a gradient, so the
+     picture stays readable above and below it. */
+  inset: auto 0 auto 0;
+  background: rgba(24, 22, 20, 0.78);
+  padding: 6mm var(--mx-text-r) 6mm var(--mx-text-l);
+}
+
+.mx-banner .mx-kicker {
+  color: var(--mx-orange);
+  display: block;
+  margin-bottom: 2.5mm;
+}
+
+.mx-banner .mx-display {
+  color: #fff;
+}
+
+.mx-banner__credit {
+  font-family: var(--mx-label);
+  font-weight: 400;
+  font-size: 10pt;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 3mm 0 0 0;
+  padding-top: 2.5mm;
+  border-top: 0.5pt solid rgba(255, 255, 255, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   Blocks the templates support
+-------------------------------------------------------------------------- */
+
+/* The four-across statistics strip on a partner page. A controlled block
+   with a fixed shape, not free layout: the publisher supplies up to four
+   number/label/note triples and they land in the same place every time. */
+.mx-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.6mm;
+  /* The gap shows the strip's own background through as a hairline between
+     cells, which is how July page 13 separates them. */
+  background: rgba(255, 255, 255, 0.16);
+  border-top: 0.6mm solid var(--mx-orange);
+  /* Set here rather than left to inherit. Without it the cells inherit the
+     page's charcoal text colour onto a charcoal background and the figures
+     are invisible, which is exactly what happened the first time this
+     rendered. */
+  color: #fff;
+}
+
+.mx-stats__cell {
+  background: var(--mx-charcoal);
+  padding: 4mm 4mm 5mm;
+}
+
+/* Device 02: large number in Barlow Condensed Bold 36 to 48pt, burnt
+   orange. Descriptor in Source Serif 4 Regular 9 to 10pt on 12pt, white on
+   charcoal. Four equal columns at 45.5mm, thin rules between. */
+.mx-stats__n {
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 38pt;
+  line-height: 0.95;
+  display: block;
+  /* A partner may carry its own colour here. Orange is the house value. */
+  color: var(--mx-stat-accent, var(--mx-orange));
+}
+
+.mx-stats__label {
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 9pt;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  display: block;
+  margin: 2mm 0 1.4mm;
+}
+
+.mx-stats__note {
+  font-family: var(--mx-body);
+  font-weight: 400;
+  font-size: 9.5pt;
+  line-height: 1.26;
+  color: rgba(255, 255, 255, 0.88);
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Device 03: the Moxie Tip box
+
+   "Near the bottom of the final page of every article." Full content width
+   always, never a side column, never omitted. Minimum height 22mm, with at
+   least 8mm clearance above the footer.
+
+   The only place light mint is allowed to appear, and only for the label
+   inside the teal box.
+-------------------------------------------------------------------------- */
+
+.mx-tip {
+  display: flex;
+  min-height: 22mm;
+  margin: var(--mx-gap-after-para) 0 0 0;
+  background: var(--mx-teal);
+  color: #fff;
+}
+
+.mx-tip__strip {
+  flex: 0 0 3mm;
+  background: var(--mx-orange);
+}
+
+.mx-tip__inner {
+  flex: 1 1 auto;
+  padding: 4mm 5mm;
+}
+
+.mx-tip__label {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 12pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mx-mint);
+  margin-bottom: 2mm;
+}
+
+.mx-tip__body {
+  font-family: var(--mx-body);
+  font-style: italic;
+  font-size: 12pt;
+  line-height: 1.3333;
+  margin: 0;
+}
+
+/* The Next Edition teaser, at the base of the contents page. */
+.mx-teaser {
+  background: var(--mx-teal);
+  color: #fff;
+  padding: 4mm 5mm 5mm;
+  margin-top: var(--mx-gap-after-para);
+}
+
+.mx-teaser__label {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 9.5pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mx-mint);
+  margin-bottom: 2mm;
+}
+
+.mx-teaser__title {
+  font-family: var(--mx-display);
+  font-weight: 700;
+  font-size: 18pt;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.mx-teaser__note {
+  font-family: var(--mx-body);
+  font-size: 11pt;
+  line-height: 1.35;
+  margin: 2mm 0 0 0;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* --------------------------------------------------------------------------
+   Device 01: the four-column fact grid, Cover Story opener only
+-------------------------------------------------------------------------- */
+
+.mx-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5pt;
+  background: rgba(255, 255, 255, 0.16);
+  margin: var(--mx-gap-after-para) 0 0 0;
+}
+
+.mx-facts__cell {
+  background: var(--mx-charcoal);
+  padding: 4mm;
+}
+
+.mx-facts__kicker {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 9pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+  margin-bottom: 2mm;
+}
+
+.mx-facts__word {
+  display: block;
+  font-family: var(--mx-display);
+  font-weight: 700;
+  font-size: 22pt;
+  line-height: 1;
+  color: #fff;
+  margin-bottom: 2mm;
+}
+
+.mx-facts__note {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 400;
+  font-size: 9.5pt;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+/* --------------------------------------------------------------------------
+   Device 05: the writer credit
+-------------------------------------------------------------------------- */
+
+.mx-writer {
+  display: flex;
+  gap: 4mm;
+  align-items: flex-start;
+  margin: var(--mx-gap-after-para) 0 0 0;
+  padding-top: var(--mx-gap-min);
+  border-top: 0.5pt solid var(--mx-border);
+}
+
+.mx-writer__photo {
+  flex: 0 0 24mm;
+}
+
+.mx-writer__photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mx-writer__label {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 9.5pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+}
+
+.mx-writer__name {
+  display: block;
+  font-family: var(--mx-display);
+  font-weight: 700;
+  font-size: 15pt;
+  line-height: 1.2;
+  margin: 1mm 0;
+}
+
+.mx-writer__bio {
+  font-family: var(--mx-body);
+  font-style: italic;
+  font-size: 11pt;
+  line-height: 1.36;
+  margin: 0;
+}
+
+/* Repeating labelled rows: the events calendar, a quiz, a member offer.
+   A date sits in an orange tab on the left and the entry runs beside it,
+   which is how June page 20 is built. Rows are a block rather than a
+   layout so a page can carry running text above them. */
+.mx-rows {
+  margin: 2mm 0 0 0;
+}
+
+.mx-rows__row {
+  display: flex;
+  gap: 5mm;
+  padding: 3mm 0;
+  border-bottom: 0.2mm solid var(--mx-hairline);
+}
+
+.mx-rows__row:first-child {
+  border-top: 0.2mm solid var(--mx-hairline);
+}
+
+.mx-rows__tag {
+  flex: 0 0 34mm;
+  text-align: center;
+}
+
+.mx-rows__tag-main {
+  display: block;
+  background: var(--mx-orange);
+  color: #fff;
+  font-family: var(--mx-label);
+  font-weight: 600;
+  font-size: 8.5pt;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 1.6mm 2mm;
+}
+
+.mx-rows__tag-note {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 600;
+  font-size: 8pt;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--mx-teal);
+  margin-top: 1.6mm;
+}
+
+.mx-rows__detail {
+  flex: 1 1 auto;
+}
+
+.mx-rows__title {
+  font-family: var(--mx-label);
+  font-weight: 600;
+  font-size: 11pt;
+  margin: 0 0 1mm 0;
+}
+
+.mx-rows__meta {
+  font-style: italic;
+  font-size: 10.5pt;
+  color: var(--mx-muted);
+  margin: 0 0 1.4mm 0;
+}
+
+.mx-rows__link {
+  font-family: var(--mx-label);
+  font-weight: 600;
+  font-size: 8.5pt;
+  color: var(--mx-orange);
+  margin: 0.8mm 0 0 0;
+}
+
+/* An image placed in the running text. Which side it sits on and whether
+   the text wraps around it are the publisher's controls, not a judgement
+   the renderer makes. */
+.mx-figure {
+  margin: 0 0 2.6mm 0;
+}
+
+.mx-figure--right {
+  float: right;
+  margin-left: 5mm;
+}
+
+.mx-figure--left {
+  float: left;
+  margin-right: 5mm;
+}
+
+.mx-figure--full {
+  float: none;
+  width: 100%;
+}
+
+.mx-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.mx-figure__overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 3mm 4mm;
+  font-family: var(--mx-sans);
+  font-weight: 700;
+  font-size: 13pt;
+  line-height: 1.2;
+  background: linear-gradient(to top, rgba(15, 16, 16, 0.75), rgba(15, 16, 16, 0));
+}
+
+.mx-figure__frame {
+  position: relative;
+}
+
+/* How a picture meets the page.
+ *
+ * A photograph dropped flat onto cream has no edge, so it reads as an
+ * accident rather than as a placement. These give it one, and which one is
+ * the publisher's choice per picture: a full bleed photograph wants none of
+ * them and an inset one usually wants something.
+ *
+ * The shadow is deliberately soft and close. A magazine is not a slide
+ * deck, and a heavy drop shadow on a printed page looks like a mistake. */
+.mx-figure--rule .mx-figure__frame {
+  border: 0.5pt solid var(--mx-border);
+}
+
+.mx-figure--shadow .mx-figure__frame {
+  box-shadow: 0 0.4mm 1.4mm rgba(30, 32, 32, 0.22);
+}
+
+/* Softened corners and a shadow.
+ *
+ * Against the reference, which says border radius 0 everywhere, so it is
+ * offered rather than used by default. That rule was written about buttons
+ * and boxes in the interface; a photograph is a different question, and it
+ * is the publisher's to answer. */
+.mx-figure--rounded .mx-figure__frame {
+  border-radius: 2mm;
+  overflow: hidden;
+  box-shadow: 0 0.4mm 1.4mm rgba(30, 32, 32, 0.2);
+}
+
+/* A white border with a shadow under it, the way a photograph sits in an
+   album. Reads as an object on the page rather than a hole in it. */
+.mx-figure--framed .mx-figure__frame {
+  background: #fff;
+  padding: 1.6mm;
+  box-shadow: 0 0.5mm 1.8mm rgba(30, 32, 32, 0.26);
+}
+
+.mx-figure--framed .mx-figure__overlay {
+  left: 1.6mm;
+  right: 1.6mm;
+  bottom: 1.6mm;
+}
+
+/* A supplied advertisement. The builder places artwork into the slot and
+   does not draw anything inside it. */
+.mx-ad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(30, 32, 32, 0.05);
+  overflow: hidden;
+}
+
+.mx-ad img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.mx-ad__empty {
+  font-family: var(--mx-label);
+  font-weight: 600;
+  font-size: 9pt;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--mx-muted);
+}
+
+/* --------------------------------------------------------------------------
+   The cover
+-------------------------------------------------------------------------- */
+
+.mx-cover {
+  background: var(--mx-charcoal);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.mx-cover__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dark at the top and bottom, clear through the middle, so the masthead and
+   the cover lines stay legible without flattening the photograph. */
+.mx-cover__scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(15, 16, 16, 0.82) 0%,
+    rgba(15, 16, 16, 0.25) 32%,
+    rgba(15, 16, 16, 0.35) 58%,
+    rgba(15, 16, 16, 0.88) 100%
+  );
+}
+
+.mx-cover__top,
+.mx-cover__lead,
+.mx-cover__also,
+.mx-cover__foot {
+  position: relative;
+  z-index: 1;
+  padding: 0 var(--mx-text-r) 0 var(--mx-text-l);
+}
+
+.mx-cover__top {
+  padding-top: 12mm;
+}
+
+.mx-cover__edition {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: var(--mx-kicker-size);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+  margin-bottom: 2mm;
+}
+
+.mx-cover__masthead {
+  display: block;
+  font-family: var(--mx-display);
+  font-weight: 700;
+  font-size: 62pt;
+  line-height: 0.94;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
+.mx-cover__section {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 400;
+  font-size: var(--mx-labelbar-size);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  margin-top: 2mm;
+}
+
+.mx-cover__lead {
+  margin-top: auto;
+  padding-bottom: 6mm;
+}
+
+.mx-cover__headline {
+  color: #fff;
+  max-width: 150mm;
+}
+
+.mx-cover__also {
+  padding-bottom: 8mm;
+}
+
+.mx-cover__also .mx-subhead {
+  color: var(--mx-orange);
+  border-bottom-color: var(--mx-orange);
+}
+
+.mx-cover__also .mx-rows__row {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.mx-cover__also .mx-rows__row:first-child {
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
+.mx-cover__also .mx-rows__title {
+  color: #fff;
+}
+
+.mx-cover__also .mx-rows__meta {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.mx-cover__foot {
+  padding-bottom: 8mm;
+  font-family: var(--mx-label);
+  font-size: var(--mx-footer-size);
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* --------------------------------------------------------------------------
+   The reader
+-------------------------------------------------------------------------- */
+
+.mx-reader {
+  background: #2a2725;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+.mx-reader__bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: var(--mx-charcoal);
+  color: #fff;
+  font-family: var(--mx-label);
+}
+
+.mx-reader__pub {
+  display: block;
+  font-size: 10.5pt;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+  font-weight: 700;
+}
+
+.mx-reader__title {
+  display: block;
+  font-family: var(--mx-display);
+  font-size: 15pt;
+  font-weight: 700;
+}
+
+.mx-reader__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.mx-reader__pages {
+  font-size: 10.5pt;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.mx-reader__pdf {
+  font-size: 10.5pt;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--mx-orange);
+  padding: 7px 12px;
+  text-decoration: none;
+}
+
+.mx-reader__deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 12px 0;
+}
+
+.mx-reader__sheet {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4), 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* The reader's code screen. */
+.mx-gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--mx-charcoal);
+  padding: 24px;
+}
+
+.mx-gate__box {
+  background: var(--mx-cream);
+  padding: 32px 30px;
+  max-width: 380px;
+  width: 100%;
+  border-top: 4mm solid var(--mx-orange);
+}
+
+.mx-gate__pub {
+  display: block;
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 10pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+}
+
+.mx-gate__title {
+  font-family: var(--mx-display);
+  font-weight: 700;
+  font-size: 26pt;
+  line-height: 1.1;
+  margin: 6px 0 12px;
+  color: var(--mx-charcoal);
+}
+
+.mx-gate__note {
+  font-family: var(--mx-body);
+  font-size: 11pt;
+  line-height: 1.5;
+  color: var(--mx-charcoal);
+  margin: 0 0 18px;
+}
+
+.mx-gate__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(30, 32, 32, 0.35);
+  background: #fff;
+  padding: 11px 12px;
+  font-family: var(--mx-label);
+  font-size: 13pt;
+  letter-spacing: 0.05em;
+}
+
+.mx-gate__button {
+  width: 100%;
+  margin-top: 10px;
+  border: 0;
+  background: var(--mx-orange);
+  color: #fff;
+  padding: 12px;
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 12pt;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Print, which is where the PDF comes from
+
+   The same pages the reader sees, one per sheet. Nothing is redrawn for
+   print, because an export that is generated separately from the thing it
+   claims to match drifts from it the week after it is written.
+-------------------------------------------------------------------------- */
+
+@page {
+  size: A4;
+  margin: 0;
+}
+
+.mx-print {
+  background: #f0ece7;
+}
+
+.mx-print__sheet {
+  margin: 0 auto 14px;
+  width: 210mm;
+}
+
+.mx-print__note {
+  max-width: 210mm;
+  margin: 0 auto;
+  padding: 16px;
+  font-family: var(--mx-label);
+  font-size: 12pt;
+  line-height: 1.5;
+}
+
+.mx-print__note button {
+  margin-top: 8px;
+  border: 1px solid rgba(30, 32, 32, 0.3);
+  background: #fff;
+  padding: 8px 14px;
+  font-size: 11pt;
+  cursor: pointer;
+}
+
+@media print {
+  .mx-print__note {
+    display: none;
+  }
+
+  .mx-print {
+    background: none;
+  }
+
+  .mx-print__sheet {
+    margin: 0;
+    /* Each page is its own sheet, and the last one must not push an empty
+       sheet out after it. */
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .mx-print__sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+
+  /* The pages are already A4. Any zoom applied for screen viewing has to
+     come off, or the printed page is a scaled copy in the corner of a
+     sheet. */
+  .mx-print .mx-page {
+    transform: none;
+  }
+
+  /* Backgrounds are the design, not decoration: without this a browser
+     drops the charcoal bands and the orange rules and prints a page that
+     is mostly white. */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The deck: fixed pages shown on a screen that is not A4
+-------------------------------------------------------------------------- */
+
+/* A page is a fixed physical size, so it is scaled to fit rather than
+   reflowed. The wrapper takes the scaled height so pages stack without
+   overlapping, which transform alone does not do. */
+.mx-deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6mm;
+}
+
+.mx-sheet {
+  position: relative;
+  width: calc(var(--mx-page-w) * var(--mx-zoom, 1));
+  height: calc(var(--mx-page-h) * var(--mx-zoom, 1));
+  flex: none;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16), 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.mx-sheet > .mx-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: scale(var(--mx-zoom, 1));
+  transform-origin: top left;
+}
