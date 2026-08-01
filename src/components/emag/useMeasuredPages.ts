@@ -69,24 +69,72 @@ export function useMeasuredPages(args: {
     const children = Array.from(probe.children) as HTMLElement[];
     if (children.length !== blocks.length) return;
 
-    const measured: Measured[] = blocks.map((block, i) => {
-      const el = children[i];
-      const style = window.getComputedStyle(el);
-      // Margins count. The gap under a paragraph is part of what that
-      // paragraph costs the page, and ignoring it makes every page one
-      // block too long.
-      const marginTop = parseFloat(style.marginTop) || 0;
-      const marginBottom = parseFloat(style.marginBottom) || 0;
+    // What a block costs the page is how far it pushes the next block down,
+    // not how tall its own box is.
+    //
+    // Those are not the same number, and the difference is not small. The
+    // old version added the element's own computed marginTop and
+    // marginBottom to its height, which sounds like the same thing and is
+    // wrong twice over. Adjacent margins collapse, so adding both
+    // over-counts the gap between two paragraphs. And a margin set on an
+    // element's inner child collapses out through it, so the outer element
+    // reports margin zero while really pushing everything below it down.
+    //
+    // Dewald's Editor's Letter, 1 August 2026, is the case that found it.
+    // Its pull quote measured 7.01mm and actually occupied 13.16mm, because
+    // its 4mm of breathing room lives on a child. Six millimetres vanished
+    // from an article the paginator then declared would fit on one page,
+    // and the last lines slid under the footer. The 4mm safety margin could
+    // not absorb a 6mm lie.
+    //
+    // Measuring the advance instead means the browser reports the spacing
+    // rather than this file trying to predict it. Collapsing, inner
+    // margins, and whatever the next block type does about its own spacing
+    // are all included for free, because they have already happened by the
+    // time the tape measure comes out.
+    const rects = children.map((el) => el.getBoundingClientRect());
+    const isFloat = children.map((el) => {
       // Read from what the browser actually did rather than from the
       // asset's settings, so the two can never disagree about whether
       // something is floating.
-      const floats = style.cssFloat === "left" || style.cssFloat === "right";
-      return {
-        block,
-        floats,
-        heightMm: (el.getBoundingClientRect().height + marginTop + marginBottom) * MM_PER_PX,
-      };
+      const f = window.getComputedStyle(el).cssFloat;
+      return f === "left" || f === "right";
     });
+    const measured: Measured[] = blocks.map((block, i) => {
+      // A floated picture is out of the flow: it advances nothing, so the
+      // advance would read as zero. Its own box is what matters, because
+      // the paginator tracks where its bottom edge falls.
+      if (isFloat[i]) {
+        const style = window.getComputedStyle(children[i]);
+        const marginTop = parseFloat(style.marginTop) || 0;
+        const marginBottom = parseFloat(style.marginBottom) || 0;
+        return {
+          block,
+          floats: true,
+          heightMm: (rects[i].height + marginTop + marginBottom) * MM_PER_PX,
+        };
+      }
+
+      // The next block that actually sits in the flow. Floats are stepped
+      // over rather than measured to, since they take no flow height and
+      // the space they appear to occupy belongs to the text beside them.
+      let next = -1;
+      for (let j = i + 1; j < children.length; j++) {
+        if (!isFloat[j]) {
+          next = j;
+          break;
+        }
+      }
+
+      // Nothing follows, so nothing is being pushed anywhere. Its own box
+      // is the honest answer: a trailing margin under the last block is
+      // space at the end of the article, which costs the page nothing.
+      const heightPx =
+        next === -1 ? rects[i].height : rects[next].top - rects[i].top;
+
+      return { block, floats: false, heightMm: heightPx * MM_PER_PX };
+    });
+
 
     const openerEl = openerRef.current;
     const openerHeightMm = openerEl ? openerEl.getBoundingClientRect().height * MM_PER_PX : 0;
@@ -101,9 +149,39 @@ export function useMeasuredPages(args: {
       tighten,
     });
 
+    // Does the sum of the parts equal the whole?
+    //
+    // The heights above are the only thing standing between an article and
+    // text sliding under the footer, and until 1 August 2026 nothing checked
+    // them against anything. A pull quote that under-measured by six
+    // millimetres went unnoticed all the way to Dewald's screen.
+    //
+    // The probe already knows the right answer: it is one column, and its
+    // own height is what the blocks really occupy. So the measurements are
+    // asked to agree with it. If they ever drift apart again this says so
+    // in the same place every other layout problem is reported, instead of
+    // waiting to be discovered as a symptom two steps downstream.
+    //
+    // Skipped when a picture floats, where the column's height and the flow
+    // height are legitimately different numbers.
+    const problems = [...result.problems];
+    if (!isFloat.some(Boolean) && children.length > 0) {
+      const columnMm = probe.getBoundingClientRect().height * MM_PER_PX;
+      const sumMm = measured.reduce((total, m) => total + m.heightMm, 0);
+      if (Math.abs(columnMm - sumMm) > 1) {
+        problems.push(
+          `The page measurements do not add up: the blocks measure ${sumMm.toFixed(
+            1
+          )}mm but occupy ${columnMm.toFixed(
+            1
+          )}mm. The page breaks below may be wrong. This is a fault in the builder, not in the article.`
+        );
+      }
+    }
+
     setState({
       pages: result.pages,
-      problems: result.problems,
+      problems,
       ready: true,
       measured,
       openerHeightMm,
