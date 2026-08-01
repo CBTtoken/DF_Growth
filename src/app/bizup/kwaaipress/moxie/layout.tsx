@@ -159,8 +159,12 @@ const FONT_VARIABLES = [
 
 // Kwaai Press is the product, named on 1 August 2026. Moxie is a
 // publication inside it, and the first one. The route still says moxie and
-// will become /emag/[publication] with the rest of the generalisation; the
-// name in front of a person is what matters today.
+// will become /kwaaipress/[publication] with the rest of the generalisation;
+// the name in front of a person is what matters today.
+//
+// This template reaches the screens below it but not the page.tsx beside
+// it, which is a Next rule rather than a bug here. That page sets its own
+// absolute title and says why.
 export const metadata: Metadata = {
   title: { default: "Kwaai Press", template: "%s | Kwaai Press" },
   // Nothing here is public yet and the workbench never should be. The

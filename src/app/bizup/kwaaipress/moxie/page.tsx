@@ -8,7 +8,21 @@ import { MOXIE } from "@/lib/emag/publication";
 // page that lists what does exist is more use than a placeholder that
 // pretends otherwise.
 
-export const metadata = { title: "Moxie eMag builder", robots: { index: false } };
+// Absolute, not a plain string, and the reason is a real trap.
+//
+// A layout's title template applies to segments BELOW it, never to the
+// page.tsx sitting beside it in the same segment. So this one page skipped
+// the layout's "| Kwaai Press" and fell all the way back to the root's
+// "| DigitalFlyer Growth", while every screen below it was correct. The tab
+// on the front door read DigitalFlyer Growth on a KatisoBiz hostname for a
+// product called Kwaai Press: three names, none of them the right one.
+//
+// Absolute opts out of every template above, which is what a front door
+// wants anyway.
+export const metadata = {
+  title: { absolute: "Kwaai Press: Moxie" },
+  robots: { index: false },
+};
 
 const built = [
   {
