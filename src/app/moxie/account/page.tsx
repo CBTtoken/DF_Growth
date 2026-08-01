@@ -38,10 +38,10 @@ export default async function AccountPage() {
 
       <section className="flex-1 bg-moxie-cream">
         <div className="mx-auto w-full max-w-2xl px-5 py-14 sm:px-8">
-          <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+          <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
             My account
           </p>
-          <h1 className="font-moxie-display mt-3 text-3xl font-bold text-moxie-charcoal">
+          <h1 className="font-moxie-display mt-2 text-2xl font-bold break-all text-moxie-charcoal sm:text-3xl">
             {reader.email}
           </h1>
 

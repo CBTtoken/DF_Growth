@@ -5,7 +5,7 @@ import { MoxieHeader, MoxieFooter } from "@/components/moxie/Chrome";
 import { EditionCard } from "@/components/moxie/EditionCard";
 import { coverUrl, getComingEdition, getLatestEdition, listEditions } from "@/lib/moxie/editions";
 import { getReader } from "@/lib/moxie/entitlement";
-import { moxieCanonical, moxiePath, MOXIE_ORIGIN } from "@/lib/moxie/host";
+import { moxieCanonical, moxiePath, MOXIE_ORIGIN, SVC_URL } from "@/lib/moxie/host";
 
 // The layout sets a title template, and a template applies to routes below
 // the layout, never to the page.tsx sitting beside it. Without absolute this
@@ -50,17 +50,20 @@ export default async function MoxieHomePage() {
   ]);
   const latestHref = latest ? await moxiePath(`/editions/${latest.slug}`) : editionsHref;
   const cover = latest ? coverUrl(latest) : null;
-  // Published only, and not the one already filling the hero.
+  // Every published edition, including the current one.
   //
-  // listEditions deliberately returns coming-soon editions too, because the
-  // archive page wants to show them. This section does not: August is not a
-  // previous edition, it has not happened yet, and it already has its own
-  // teaser at the foot of this page. Filtering only on "is not the latest"
-  // put August in here and left July out of both, which is exactly what it
-  // looked like from the outside.
-  const archive = editions
-    .filter((e) => e.status === "published" && e.id !== latest?.id)
-    .slice(0, 4);
+  // Two corrections in a row here, both worth recording. listEditions
+  // returns coming-soon editions as well, because the archive page wants
+  // them, so filtering only on "is not the latest" put August in this
+  // section and left July out of it. August is excluded now: it has not
+  // happened yet and has its own teaser at the foot of the page.
+  //
+  // July is deliberately back in, at Dewald's request. It is in the hero
+  // too, and that repetition is the point: somebody scrolling the covers
+  // should see the full run rather than a gap where the newest one is. The
+  // heading says "Every edition" rather than "Previous editions" so it is
+  // not claiming something it no longer does.
+  const archive = editions.filter((e) => e.status === "published").slice(0, 4);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -82,9 +85,15 @@ export default async function MoxieHomePage() {
       />
 
       <section className="bg-moxie-charcoal">
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
+        {/* Two things closed the gap under the menu, and the padding was the
+            smaller of them. The real cause was items-center: the cover is a
+            tall portrait, so centring the text column against it pushed the
+            headline about 100px down the page on desktop, which is what read
+            as a hole. Top aligned now, with the top padding also halved
+            against the bottom. */}
+        <div className="mx-auto grid max-w-6xl items-start gap-10 px-5 pb-14 pt-7 sm:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:pb-20 lg:pt-10">
           <div>
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
               {latest ? `${latest.title} · Out now` : "South Africa's family discovery magazine"}
             </p>
             <h1 className="font-moxie-display mt-4 text-4xl leading-[1.08] font-bold text-white sm:text-5xl lg:text-6xl">
@@ -113,15 +122,26 @@ export default async function MoxieHomePage() {
 
           {cover && (
             <div className="mx-auto w-full max-w-sm">
-              <Link href={latestHref}>
+              {/* The cover was already a link and already lifted on hover,
+                  and nobody could tell. Two things fix that, and the second
+                  matters more: a hover state does not exist on a phone, and
+                  the reference says this readership is predominantly mobile.
+                  So the prompt is a permanent bar across the foot of the
+                  cover, visible to everyone, and the hover effect is now a
+                  flourish on top rather than the only signal. */}
+              <Link href={latestHref} className="group relative block">
                 <Image
                   src={cover}
                   alt={`Moxie Magazine, ${latest?.title} cover`}
                   width={1191}
                   height={1684}
                   priority
-                  className="w-full shadow-2xl shadow-black/50 transition duration-300 hover:-translate-y-1"
+                  className="w-full shadow-2xl shadow-black/50 transition duration-300 group-hover:-translate-y-1"
                 />
+                <span className="font-moxie-label pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-moxie-orange px-4 py-3 text-sm font-bold uppercase tracking-[0.14em] text-white transition duration-300 group-hover:-translate-y-1">
+                  Read this edition
+                  <span aria-hidden>&rarr;</span>
+                </span>
               </Link>
             </div>
           )}
@@ -131,7 +151,7 @@ export default async function MoxieHomePage() {
       <section className="border-y border-moxie-border bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-5 py-9 sm:px-8">
           <div className="max-w-2xl">
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
               Reader submissions
             </p>
             <p className="font-moxie-display mt-2 text-2xl leading-snug font-bold text-moxie-charcoal sm:text-3xl">
@@ -156,7 +176,7 @@ export default async function MoxieHomePage() {
       {latest?.description && (
         <section className="bg-moxie-cream">
           <div className="mx-auto max-w-3xl px-5 py-14 text-center sm:px-8">
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
               In the {latest.title} edition
             </p>
             <p className="font-moxie-display mt-4 text-2xl leading-[1.4] text-moxie-charcoal sm:text-[1.7rem]">
@@ -177,18 +197,18 @@ export default async function MoxieHomePage() {
           <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+                <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
                   The archive
                 </p>
-                <h2 className="font-moxie-display mt-2 text-3xl font-bold text-moxie-charcoal">
-                  Previous editions
+                <h2 className="font-moxie-display mt-3 text-4xl font-bold sm:text-5xl text-moxie-charcoal">
+                  Every edition
                 </h2>
               </div>
               <Link
                 href={editionsHref}
                 className="font-moxie-label text-xs font-bold uppercase tracking-[0.16em] text-moxie-orange"
               >
-                See every edition
+                Open the archive
               </Link>
             </div>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -207,15 +227,15 @@ export default async function MoxieHomePage() {
       <section className="bg-moxie-teal">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-6 px-5 py-10 sm:px-8">
           <div>
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-mint">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-mint">
               Smart Value Club members
             </p>
             <p className="font-moxie-display mt-2 text-2xl font-bold text-white">
               Moxie is included with your membership
             </p>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/80">
-              Your Smart Value Club email carries an access code for each edition. Open the
-              edition and enter the code when you are asked for it.
+              Your <a href={SVC_URL} target="_blank" rel="noopener noreferrer" className="underline decoration-current/40 underline-offset-2 transition hover:decoration-current">Smart Value Club</a> email carries an access code for each edition. Open
+              the edition and enter the code when you are asked for it.
             </p>
           </div>
           <Link
@@ -230,10 +250,10 @@ export default async function MoxieHomePage() {
       {coming && (
         <section className="bg-moxie-cream">
           <div className="mx-auto max-w-3xl px-5 py-14 text-center sm:px-8">
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
               Next edition
             </p>
-            <h2 className="font-moxie-display mt-3 text-3xl font-bold text-moxie-charcoal">
+            <h2 className="font-moxie-display mt-3 text-4xl font-bold sm:text-5xl text-moxie-charcoal">
               {coming.title}
             </h2>
             {coming.description && (

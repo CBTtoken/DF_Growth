@@ -6,7 +6,7 @@ import { MoxieHeader, MoxieFooter } from "@/components/moxie/Chrome";
 import { coverUrl, getEdition, isFreeToRead } from "@/lib/moxie/editions";
 import { canRead, getReader } from "@/lib/moxie/entitlement";
 import { getEditionPages, readableText } from "@/lib/moxie/pages";
-import { moxieCanonical, moxiePath, MOXIE_ORIGIN } from "@/lib/moxie/host";
+import { moxieCanonical, moxiePath, MOXIE_ORIGIN, SVC_URL } from "@/lib/moxie/host";
 import { submitAccessCode } from "./code-actions";
 
 // Rendered per request, not cached. Every page here reads the session to
@@ -138,7 +138,7 @@ export default async function EditionPage({
           </div>
 
           <div>
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
               {isComing ? "Coming soon" : `Edition · ${edition.title}`}
             </p>
             <h1 className="font-moxie-display mt-3 text-4xl leading-[1.1] font-bold text-white sm:text-5xl">
@@ -225,15 +225,15 @@ export default async function EditionPage({
       {!isComing && !access.allowed && (
         <section className="bg-moxie-teal">
           <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8">
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-mint">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-mint">
               Smart Value Club members
             </p>
             <p className="font-moxie-display mt-2 text-2xl font-bold text-white">
               Enter your access code
             </p>
             <p className="mt-2 text-sm leading-relaxed text-white/80">
-              Your Smart Value Club email carries a code for this edition. Enter it once and this
-              device will not ask again.
+              Your <a href={SVC_URL} target="_blank" rel="noopener noreferrer" className="underline decoration-current/40 underline-offset-2 transition hover:decoration-current">Smart Value Club</a> email carries a code for this edition. Enter it once
+              and this device will not ask again.
             </p>
 
             <form
@@ -271,7 +271,7 @@ export default async function EditionPage({
       {leadIn && (
         <section className="bg-moxie-cream">
           <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
               From this edition
             </p>
             <p className="mt-4 text-lg leading-[1.7] text-moxie-charcoal">{leadIn}</p>

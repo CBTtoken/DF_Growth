@@ -33,7 +33,7 @@ export default async function WelcomePage() {
         <div className="mx-auto w-full max-w-xl px-5 py-20 text-center sm:px-8">
           {membership ? (
             <>
-              <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+              <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
                 You are in
               </p>
               <h1 className="font-moxie-display mt-3 text-4xl leading-tight font-bold text-moxie-charcoal">
@@ -52,7 +52,7 @@ export default async function WelcomePage() {
             </>
           ) : (
             <>
-              <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+              <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
                 Almost there
               </p>
               <h1 className="font-moxie-display mt-3 text-4xl leading-tight font-bold text-moxie-charcoal">

@@ -16,6 +16,16 @@ export const MOXIE_PREFIX = "/moxie";
 export const MOXIE_ORIGIN = "https://moxiemag.co.za";
 
 /**
+ * Smart Value Club, Moxie's parent brand.
+ *
+ * A separate business on a separate domain, so every mention of it on this
+ * site links out. Held here rather than typed into three pages, because a
+ * URL repeated by hand in three places is a URL that is wrong in one of
+ * them within a year.
+ */
+export const SVC_URL = "https://smartvalueclub.co.za/";
+
+/**
  * Whether a request arrived on one of Moxie's own hostnames.
  *
  * Matched on the first label, exactly as src/proxy.ts does, so the two

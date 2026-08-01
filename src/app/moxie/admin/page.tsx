@@ -41,10 +41,10 @@ export default async function MoxieAdminPage({
 
       <section className="flex-1 bg-moxie-cream">
         <div className="mx-auto w-full max-w-5xl px-5 py-12 sm:px-8">
-          <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+          <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
             Publisher
           </p>
-          <h1 className="font-moxie-display mt-2 text-3xl font-bold text-moxie-charcoal">
+          <h1 className="font-moxie-display mt-3 text-4xl font-bold sm:text-5xl text-moxie-charcoal">
             Moxie Magazine
           </h1>
 

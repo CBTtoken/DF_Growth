@@ -105,7 +105,7 @@ export default async function EditionTextPage({
 
       <section className="bg-moxie-charcoal">
         <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
-          <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+          <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
             Free to read · {edition.title}
           </p>
           <h1 className="font-moxie-display mt-3 text-4xl leading-[1.1] font-bold text-white sm:text-5xl">

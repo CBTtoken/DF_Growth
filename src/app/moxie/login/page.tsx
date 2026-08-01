@@ -40,7 +40,7 @@ export default async function MoxieLoginPage({
 
       <section className="flex flex-1 items-center bg-moxie-cream">
         <div className="mx-auto w-full max-w-md px-5 py-16 sm:px-8">
-          <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+          <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
             {joining ? "Create a free account" : "Welcome back"}
           </p>
           <h1 className="font-moxie-display mt-3 text-3xl leading-tight font-bold text-moxie-charcoal">

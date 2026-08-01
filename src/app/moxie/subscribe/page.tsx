@@ -5,7 +5,7 @@ import { MoxieHeader, MoxieFooter } from "@/components/moxie/Chrome";
 import { coverUrl, getLatestEdition } from "@/lib/moxie/editions";
 import { getMembership, getReader } from "@/lib/moxie/entitlement";
 import { MOXIE_PLANS } from "@/lib/moxie/membership";
-import { moxieCanonical, moxiePath } from "@/lib/moxie/host";
+import { moxieCanonical, moxiePath, SVC_URL } from "@/lib/moxie/host";
 import { startMembership } from "./actions";
 
 export const metadata: Metadata = {
@@ -43,7 +43,7 @@ export default async function SubscribePage({
       <section className="bg-moxie-charcoal">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[1.15fr_0.85fr] lg:py-20">
           <div>
-            <p className="font-moxie-label text-xs font-bold uppercase tracking-[0.22em] text-moxie-orange">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
               Membership
             </p>
             <h1 className="font-moxie-display mt-3 text-4xl leading-[1.08] font-bold text-white sm:text-5xl">
@@ -152,8 +152,8 @@ export default async function SubscribePage({
               Moxie is included with your membership
             </p>
             <p className="mt-2 text-sm leading-relaxed text-moxie-charcoal/70">
-              Your Smart Value Club email carries an access code for each edition. Open the
-              edition you want and enter the code when you are asked for it.
+              Your <a href={SVC_URL} target="_blank" rel="noopener noreferrer" className="underline decoration-current/40 underline-offset-2 transition hover:decoration-current">Smart Value Club</a> email carries an access code for each edition. Open
+              the edition you want and enter the code when you are asked for it.
             </p>
           </div>
         </div>
