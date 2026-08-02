@@ -2,6 +2,7 @@ export type DeskArea = "personal" | "business";
 export type DeskEffort = "shallow" | "deep";
 export type DeskStatus = "open" | "done" | "parked" | "killed";
 export type DeskStream = "own" | "client" | "life";
+export type DeskSprintStatus = "draft" | "ready" | "handed" | "shipped";
 export type DeskRecurrence = "none" | "weekly" | "monthly" | "quarterly" | "annually";
 
 export type DeskItem = {
@@ -19,6 +20,7 @@ export type DeskItem = {
   park_trigger: string | null;
   killed_at: string | null;
   recurrence: DeskRecurrence;
+  sprint_id: string | null;
   skip_count: number;
   notes: string | null;
   done_at: string | null;
@@ -38,6 +40,20 @@ export type DeskAsset = {
   where_login_lives: string | null;
   status: "active" | "cancel" | "unknown";
   notes: string | null;
+};
+
+// A sprint is a bundle of work with a brief attached, aimed at Claude Code.
+// It is the thing Export was mistaken for: Export is the whole picture for
+// context, a sprint is an instruction.
+export type DeskSprint = {
+  id: string;
+  name: string;
+  goal: string | null;
+  context: string | null;
+  status: DeskSprintStatus;
+  handed_at: string | null;
+  shipped_at: string | null;
+  created_at: string;
 };
 
 // A venture is a thing being built. The only field that matters is what done

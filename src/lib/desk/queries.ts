@@ -4,6 +4,7 @@ import type {
   DeskIdea,
   DeskItem,
   DeskNote,
+  DeskSprint,
   DeskState,
   DeskStream,
   DeskVenture,
@@ -278,4 +279,83 @@ export async function listIdeas(): Promise<DeskIdea[]> {
     return [];
   }
   return (data ?? []) as DeskIdea[];
+}
+
+export async function listSprints(): Promise<DeskSprint[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("desk_sprints")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("desk: listSprints failed", error);
+    return [];
+  }
+  return (data ?? []) as DeskSprint[];
+}
+
+export async function getSprint(id: string): Promise<DeskSprint | null> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.from("desk_sprints").select("*").eq("id", id).single();
+  if (error) {
+    console.error("desk: getSprint failed", error);
+    return null;
+  }
+  return data as DeskSprint;
+}
+
+export async function sprintItems(sprintId: string): Promise<DeskItem[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("desk_items")
+    .select("*")
+    .eq("sprint_id", sprintId)
+    .order("venture", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("desk: sprintItems failed", error);
+    return [];
+  }
+  return (data ?? []) as DeskItem[];
+}
+
+// Everything that could go into a sprint: open, not already in one. Sorted so
+// the things he has already thought about enough to write a next action for
+// come first.
+export async function sprintCandidates(): Promise<DeskItem[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("desk_items")
+    .select("*")
+    .eq("status", "open")
+    .is("sprint_id", null)
+    .order("venture", { ascending: true })
+    .order("created_at", { ascending: true })
+    .limit(500);
+
+  if (error) {
+    console.error("desk: sprintCandidates failed", error);
+    return [];
+  }
+  return (data ?? []) as DeskItem[];
+}
+
+// Counts for the sprint list, so a row can say what is in it without opening
+// it.
+export async function sprintSizes(): Promise<Map<string, number>> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.from("desk_items").select("sprint_id").not("sprint_id", "is", null);
+
+  const sizes = new Map<string, number>();
+  if (error) {
+    console.error("desk: sprintSizes failed", error);
+    return sizes;
+  }
+  for (const row of data ?? []) {
+    const id = (row as { sprint_id: string }).sprint_id;
+    sizes.set(id, (sizes.get(id) ?? 0) + 1);
+  }
+  return sizes;
 }

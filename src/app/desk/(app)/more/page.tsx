@@ -1,11 +1,12 @@
 import Link from "next/link";
 import {
   CalendarClock,
-  ClipboardList,
   HeartHandshake,
+  LineChart,
   ListTree,
+  LogOut,
+  PackageOpen,
   Receipt,
-  Share2,
 } from "lucide-react";
 import { AddToPhone } from "@/components/desk/AddToPhone";
 import { Screen, card } from "@/components/desk/Shell";
@@ -15,10 +16,22 @@ export const dynamic = "force-dynamic";
 
 const LINKS = [
   {
+    href: "/desk/sprints",
+    icon: PackageOpen,
+    title: "Sprints",
+    blurb: "Bundle work up and hand it to CC with a brief",
+  },
+  {
     href: "/desk/horizon",
     icon: CalendarClock,
     title: "Next 30 days",
     blurb: "Deadlines and renewals, in date order",
+  },
+  {
+    href: "/desk/tracking",
+    icon: LineChart,
+    title: "Business tracking",
+    blurb: "Where everything stands, as text, to paste into a chat",
   },
   {
     href: "/desk/register",
@@ -31,12 +44,6 @@ const LINKS = [
     icon: HeartHandshake,
     title: "If I go away",
     blurb: "What your family would need to know",
-  },
-  {
-    href: "/desk/export",
-    icon: Share2,
-    title: "Export",
-    blurb: "The whole state as text, to paste into a chat",
   },
   {
     href: "/desk/all",
@@ -71,7 +78,7 @@ export default function DeskMorePage() {
           type="submit"
           className="flex w-full items-center gap-3 rounded-2xl border border-neutral-200 bg-white p-4 text-sm font-semibold text-neutral-500"
         >
-          <ClipboardList size={18} className="text-neutral-400" />
+          <LogOut size={18} className="text-neutral-400" />
           Sign out
         </button>
       </form>

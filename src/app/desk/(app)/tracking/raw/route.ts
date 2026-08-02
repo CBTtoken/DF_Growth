@@ -1,7 +1,7 @@
 import { deskUserOrNull } from "@/lib/desk/auth";
 import { buildExport } from "@/lib/desk/export";
 
-// The same output as the Export screen, as plain text, behind the same
+// The same output as the Business tracking screen, as plain text, behind the same
 // session. A route handler is not covered by the layout's gate, so it checks
 // for itself.
 export const dynamic = "force-dynamic";

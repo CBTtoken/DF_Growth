@@ -471,3 +471,112 @@ export async function draftHandoff(who: string): Promise<string> {
 
   return lines.join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// Sprints. A bundle of work with a brief attached, aimed at Claude Code.
+// ---------------------------------------------------------------------------
+
+export async function createSprint(name: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase.from("desk_sprints").insert({ name: name.trim() || "Untitled sprint" });
+  revalidatePath("/desk/sprints");
+}
+
+export async function saveSprint(
+  id: string,
+  patch: { name?: string; goal?: string; context?: string }
+): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_sprints")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  revalidatePath("/desk/sprints");
+}
+
+export async function setSprintItems(sprintId: string, itemIds: string[]): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+
+  // Anything dropped goes back to the general pool rather than disappearing.
+  await supabase.from("desk_items").update({ sprint_id: null }).eq("sprint_id", sprintId);
+  if (itemIds.length > 0) {
+    await supabase.from("desk_items").update({ sprint_id: sprintId }).in("id", itemIds);
+  }
+
+  refresh();
+}
+
+export async function addToSprint(itemId: string, sprintId: string | null): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_items")
+    .update({ sprint_id: sprintId, updated_at: new Date().toISOString() })
+    .eq("id", itemId);
+  refresh();
+}
+
+// Handing over. The items become CC's, which takes them out of the Today
+// rotation and puts them on Waiting On under CC, where their age is visible
+// like anything else somebody else is holding.
+export async function handOverSprint(id: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+
+  await supabase
+    .from("desk_sprints")
+    .update({ status: "handed", handed_at: now, updated_at: now })
+    .eq("id", id);
+
+  await supabase
+    .from("desk_items")
+    .update({ blocked_by: "CC", blocked_since: today(), updated_at: now })
+    .eq("sprint_id", id)
+    .eq("status", "open");
+
+  refresh();
+}
+
+// Shipped. Everything in it is done, which is the one moment a batch of items
+// leaves the list together.
+export async function shipSprint(id: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  const now = new Date().toISOString();
+
+  await supabase
+    .from("desk_sprints")
+    .update({ status: "shipped", shipped_at: now, updated_at: now })
+    .eq("id", id);
+
+  await supabase
+    .from("desk_items")
+    .update({ status: "done", done_at: now, blocked_by: "me", blocked_since: null, updated_at: now })
+    .eq("sprint_id", id)
+    .eq("status", "open");
+
+  refresh();
+}
+
+export async function deleteSprint(id: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  // The items survive; only the bundle goes.
+  await supabase.from("desk_items").update({ sprint_id: null }).eq("sprint_id", id);
+  await supabase.from("desk_sprints").delete().eq("id", id);
+  revalidatePath("/desk/sprints");
+}
+
+// An item that should never have been on the list at all. Not done, not
+// parked, not killed: a mistake, and the one rule was written about
+// abandoning work, not about typos.
+export async function removeItem(id: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase.from("desk_items").delete().eq("id", id);
+  refresh();
+}

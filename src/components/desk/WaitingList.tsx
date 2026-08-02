@@ -3,8 +3,8 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ClipboardCheck, FileText } from "lucide-react";
-import { draftHandoff, nudgeItem, unblockItem } from "@/app/desk/(app)/actions";
+import { ClipboardCheck, FileText, Trash2 } from "lucide-react";
+import { draftHandoff, markDone, nudgeItem, removeItem, unblockItem } from "@/app/desk/(app)/actions";
 import { card, label, quietButton } from "@/components/desk/Shell";
 import { daysLabel, type DeskItem } from "@/lib/desk/types";
 
@@ -108,12 +108,45 @@ export function WaitingList({ items }: { items: DeskItem[] }) {
                     Nudge sent
                   </button>
 
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRows((current) => current.filter((r) => r.id !== item.id));
+                      startTransition(async () => {
+                        await markDone(item.id);
+                        router.refresh();
+                      });
+                    }}
+                    className={`${quietButton} px-3 py-2 text-xs`}
+                  >
+                    Done
+                  </button>
+
                   <Link
                     href={`/desk/item/${item.id}`}
                     className="px-2 py-2 text-xs text-neutral-400 underline"
                   >
                     Edit
                   </Link>
+
+                  {/* An item that should never have been here at all. Not
+                      done, not parked, not killed: a mistake. The one rule
+                      was written about abandoning work, not about typos. */}
+                  <button
+                    type="button"
+                    aria-label="Remove this item"
+                    onClick={() => {
+                      if (!confirm("Remove this item completely? Use Done if the work actually happened.")) return;
+                      setRows((current) => current.filter((r) => r.id !== item.id));
+                      startTransition(async () => {
+                        await removeItem(item.id);
+                        router.refresh();
+                      });
+                    }}
+                    className="ml-auto px-2 py-2 text-neutral-300 transition-colors hover:text-red-500"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               </li>
             ))}
