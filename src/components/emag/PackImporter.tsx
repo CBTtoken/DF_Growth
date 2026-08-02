@@ -96,6 +96,7 @@ export function PackImporter({
   }
 
   const toCreate = chosen.size;
+  const alreadyIn = preview?.articles.filter((a) => a.exists).length ?? 0;
 
   return (
     <div>
@@ -123,11 +124,6 @@ export function PackImporter({
         <button type="button" onClick={read} disabled={!source.trim() || busy} style={secondary}>
           {busy && !preview ? "Reading" : "Read it"}
         </button>
-        {preview && toCreate > 0 ? (
-          <button type="button" onClick={create} disabled={busy} style={primary}>
-            {busy ? "Creating" : `Create ${toCreate} article${toCreate === 1 ? "" : "s"}`}
-          </button>
-        ) : null}
         <span style={{ fontSize: 13, color: "#6b6864" }}>
           {source ? `${source.length.toLocaleString()} characters pasted` : ""}
         </span>
@@ -234,6 +230,48 @@ export function PackImporter({
               </li>
             ))}
           </ol>
+
+          {/* The action, at the bottom where the decision is actually made,
+              and stuck to the foot of the screen so it is reachable from
+              anywhere in a thirteen item list.
+
+              Dewald, 2 August 2026: "I can see the check marks but there is
+              no action, seems to be hidden." Two mistakes, and the second
+              was the worse one. The button sat above the paste box while the
+              ticking happens far below it. And when nothing was ticked I
+              hid it completely rather than saying why, so an edition where
+              everything had already been imported looked like a broken
+              screen instead of a finished job. A disabled button that
+              explains itself is never worse than no button. */}
+          <div style={actionBar}>
+            <button
+              type="button"
+              onClick={create}
+              disabled={busy || toCreate === 0}
+              style={{ ...primary, opacity: toCreate === 0 ? 0.5 : 1 }}
+            >
+              {busy
+                ? "Creating"
+                : toCreate === 0
+                  ? "Nothing ticked"
+                  : `Create ${toCreate} article${toCreate === 1 ? "" : "s"}`}
+            </button>
+
+            <span style={{ fontSize: 13, color: "#4a4744" }}>
+              {toCreate > 0 ? (
+                <>
+                  {toCreate} of {preview.articles.length} ticked.
+                  {alreadyIn > 0 ? ` ${alreadyIn} already in this edition.` : ""}
+                </>
+              ) : alreadyIn === preview.articles.length ? (
+                "Every article in this pack is already in this edition. There is nothing left to import."
+              ) : alreadyIn > 0 ? (
+                `Nothing ticked. ${alreadyIn} of these are already in this edition and cannot be added twice.`
+              ) : (
+                "Nothing ticked. Tick the articles you want and this will create them."
+              )}
+            </span>
+          </div>
         </div>
       ) : null}
     </div>
@@ -305,4 +343,20 @@ const blockTag: CSSProperties = {
   color: "#c85a1e",
   fontWeight: 700,
   marginRight: 7,
+};
+
+// Stuck to the foot of the screen while a preview is open, because the list
+// it belongs to is longer than the window and a button you have to go and
+// find is a button that looks missing.
+const actionBar: CSSProperties = {
+  position: "sticky",
+  bottom: 0,
+  display: "flex",
+  gap: 14,
+  alignItems: "center",
+  flexWrap: "wrap",
+  background: "#f2efea",
+  borderTop: "1px solid rgba(30,32,32,0.16)",
+  padding: "12px 2px",
+  marginTop: 10,
 };
