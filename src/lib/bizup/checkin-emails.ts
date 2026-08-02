@@ -12,7 +12,14 @@ import { bizupUnsubscribeUrl } from "@/lib/bizup/unsubscribe";
 //
 //   started   a draft exists and nothing was issued. The job is still warm.
 //             Asks what got in the way rather than telling them what to do,
-//             because at this size the answer is worth more than the nudge.
+//             because the answer is worth more than the nudge.
+//
+// Standing rule on the copy, from Dewald, 1 August 2026: never position
+// ourselves as new or the member as one of the first. Two lines in here did
+// exactly that, "you are one of our first members" and "we are still small
+// enough", and both are gone. A member is paying for a working product, not
+// joining an experiment, and every line should read as we are here to help
+// you get value out of this.
 //   idle      nothing created at all. Phrased as an offer of help, not a
 //             prompt to try harder.
 //   feedback  they issued something, so it worked. Asks what would make it
@@ -111,10 +118,9 @@ export async function sendStartedCheckin(
       </p>
 
       <p style="margin:0 0 14px;">
-        <strong>And if something got in the way, we would genuinely love to hear it.</strong> You
-        are one of our first members, so what you tell us now shapes what we build next. Was
-        something confusing, missing, or just more effort than it should have been? No answer is
-        too small or too blunt.
+        <strong>And if something got in the way, tell us and we will sort it out.</strong> Was
+        something confusing, missing, or just more effort than it should have been? That is exactly
+        what we are here for, and no answer is too small or too blunt.
       </p>
       ${replyLine()}
     `
@@ -159,19 +165,19 @@ export async function sendFeedbackCheckin(account: Account): Promise<boolean> {
       <p style="margin:0 0 14px;">Good day ${account.businessName},</p>
 
       <p style="margin:0 0 14px;">
-        You have sent your first document on KatisoBiz, which is the part most people never get to.
-        Nicely done.
+        You have sent your first document on KatisoBiz. That is the hard part done, and everything
+        after this one gets quicker.
       </p>
 
       <p style="margin:0 0 14px;">
-        <strong>We are constantly working on making this easier, and you are in the best position
-        to tell us how.</strong> Now that you have actually used it on a real job, what was
-        awkward? What took longer than it should have? What would you add tomorrow if you could?
+        <strong>We want you getting real value out of this, so tell us where it is not pulling its
+        weight yet.</strong> Now that you have used it on a real job, what was awkward? What took
+        longer than it should have? What would you add tomorrow if you could?
       </p>
 
       <p style="margin:0 0 14px;">
-        We are still small enough that a suggestion from you can be built the same week, and
-        several things in KatisoBiz today exist because a member asked for them.
+        Ask and we will look at it properly. Several things in KatisoBiz today exist because a
+        member asked for them.
       </p>
       ${replyLine()}
     `

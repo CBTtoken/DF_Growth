@@ -147,6 +147,56 @@ const STEPS = [
 //
 // One entry per screen in the top menu, in menu order, so a member can read
 // it with the app open next to them.
+/**
+ * The habits that separate a member who gets value out of this from one who
+ * signs up and stops.
+ *
+ * Added 1 August 2026 after Dewald started getting the same questions more
+ * than once. Every one of these is drawn from something real: a draft worth
+ * R55,020 that was never issued, quotes attached to no customer, and members
+ * typing the same price in every week rather than saving it once.
+ *
+ * Written as what to do and why it pays, not as rules.
+ */
+const BEST_PRACTICE = [
+  {
+    title: "Quote while you are still standing there",
+    body: "The quote that wins is usually the first one to arrive. Build it on your phone before you leave, issue it, and send it on WhatsApp from the driveway. A quote sent that evening competes with two others. One sent three days later competes with a decision already made.",
+  },
+  {
+    title: "Save a price the first time you type it",
+    body: "Anything you type onto a quote can be saved to your price list with one tap. Do it as you go and within a month your list writes most quotes for you. Members who skip this are still typing their callout fee by hand in week six.",
+  },
+  {
+    title: "Issue it, do not leave it in drafts",
+    body: "A draft has no number and cannot be sent. It is the single most common thing we see: a finished quote sitting in drafts because the last step was missed. If it is ready, press Issue this quote, then send it.",
+  },
+  {
+    title: "Attach a customer, even for a quick one",
+    body: "A quote with no customer cannot be sent, and it also cannot be chased, counted or turned into a statement later. You can create a customer by typing a name straight into the quote, so it costs you nothing.",
+  },
+  {
+    title: "Put a valid until date on every quote",
+    body: "It protects your pricing when material costs move, and it gives you a natural reason to follow up. We email you before it runs out so you can call rather than wonder.",
+  },
+  {
+    title: "Record the money the day it lands",
+    body: "Payments recorded late make every number on your reports wrong, and the one you will care about is what you are owed. Two minutes on a Friday keeps the chasing list honest.",
+  },
+  {
+    title: "Chase with a statement, not a phone call",
+    body: "For a customer who owes you for several jobs, a statement lists all of it on one page and is far harder to argue with than a phone call. It is under Reports.",
+  },
+  {
+    title: "Check the customer's email before you send by email",
+    body: "One wrong character and the document goes nowhere with no bounce you will notice. If in doubt, send it on WhatsApp, where you can see it delivered.",
+  },
+  {
+    title: "Put it on your home screen",
+    body: "The whole point of quoting on site is that it happens while you are there, and that only works if KatisoBiz is one tap away rather than a browser, a bookmark and a login. It takes ten seconds to add and there is nothing to download.",
+  },
+] as const;
+
 const SCREENS = [
   {
     name: "Home",
@@ -483,6 +533,103 @@ const FAQ_GROUPS = [
       },
     ],
   },
+  // The four groups below were added 1 August 2026, from the questions
+  // Dewald started getting more than once. Each answer was checked against
+  // the code before it was written: the login really is email and password,
+  // there really are exactly three notification emails, the public link
+  // really has no expiry, and multi-user really is not built.
+  {
+    heading: "Getting in, and staying in",
+    items: [
+      {
+        q: "How do I log in?",
+        a: "With the email address and password you chose when you signed up. There is no code to wait for and nothing to install.",
+      },
+      {
+        q: "I have forgotten my password",
+        a: "On the login screen press Forgot your password. We email you a link to set a new one. If the email does not arrive within a minute or two, check your spam folder before trying again.",
+      },
+      {
+        q: "Can I use it on my phone and my laptop?",
+        a: "Yes, as many devices as you like. It is the same account and the same information on all of them, so a quote you start on the laptop is on your phone straight away.",
+      },
+      {
+        q: "Can my wife or my assistant have their own login?",
+        a: "Not yet. Today one account means one login, so if somebody else needs to send quotes they would use the same details as you. Extra users are planned and we will tell you when they arrive.",
+      },
+      {
+        q: "I have changed my business name or my email",
+        a: "Business name, address and VAT number are all in Settings under your business details, and they change what prints at the top of new documents. Documents you have already issued do not change, which is deliberate: an issued document is a record of what you sent. To change the email you log in with, message us and we will do it for you.",
+      },
+    ],
+  },
+  {
+    heading: "What your customer sees",
+    items: [
+      {
+        q: "Does my customer need an app or an account?",
+        a: "No. They get a link. It opens on any phone or computer, with nothing to install and nothing to sign up for. If they would rather have a file, download the PDF from the document and send that instead. It is the same document.",
+      },
+      {
+        q: "What is actually on the page they open?",
+        a: "Your business details at the top, the line items and the total, and your banking details with your document number as the payment reference. It looks like the PDF, because it is the same document.",
+      },
+      {
+        q: "Can anyone find that page on Google?",
+        a: "No. The link is long and unguessable, and the page tells search engines not to index it. The only way to reach it is to have the link, which means the person you sent it to.",
+      },
+      {
+        q: "Do I know if they have looked at it?",
+        a: "Yes. The first time your customer opens the link we email you to say so, once, and the document is marked as Opened in your list. It is worth knowing before you follow up, because a quote nobody has opened is a different conversation from one they have read and gone quiet on.",
+      },
+      {
+        q: "Does the link ever stop working?",
+        a: "No, it stays live so an old quote can still be opened months later. If you send a corrected version, send the new link and use that one.",
+      },
+    ],
+  },
+  {
+    heading: "Emails we send you",
+    items: [
+      {
+        q: "What will KatisoBiz email me about?",
+        a: "Three things, and only when they actually happen. When a customer first opens a document you sent. When a quote is about to pass its valid until date and you have not marked it accepted or declined. And when an invoice goes past its due date. That is the lot.",
+      },
+      {
+        q: "Will you email my customers behind my back?",
+        a: "Never. The only thing we send your customer is the document you chose to send, and only when you press send. Reminders go to you, so you decide whether to chase.",
+      },
+      {
+        q: "I got a message asking how I am finding it",
+        a: "That is us checking in during your first few days, and a reply comes straight to a person. If something is in your way we would rather hear it than guess. There is an unsubscribe link at the bottom of every one.",
+      },
+      {
+        q: "How do I stop the emails?",
+        a: "Every email we send has an unsubscribe link at the bottom. It stops the check-ins and the notifications. It never stops the document emails your customers receive, because those are yours, not ours.",
+      },
+    ],
+  },
+  {
+    heading: "Your information",
+    items: [
+      {
+        q: "Who can see my quotes and invoices?",
+        a: "You, and anyone you send a link to. Nobody else using KatisoBiz can see your customers, your prices or your documents.",
+      },
+      {
+        q: "Can I get my own information out?",
+        a: "Yes. Reports has a CSV export of your documents, and the accountant package pulls everything for a period into one place. Both are yours to download whenever you like.",
+      },
+      {
+        q: "What happens to my documents if I stop paying?",
+        a: "They stay. Dropping to the free plan limits how many new documents you can issue each month, it does not take away what you have already done, and your history stays where it is.",
+      },
+      {
+        q: "How long do you keep my records?",
+        a: "Five years, because they are financial records and that is what the law expects of them. This is deliberately longer than we keep anything else, and it is set out in our privacy policy.",
+      },
+    ],
+  },
 ];
 
 export default function BizUpHelpPage() {
@@ -533,6 +680,30 @@ export default function BizUpHelpPage() {
             <Link href="/bizup" className="btn-outline px-6 py-3">
               Back to KatisoBiz
             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Between the steps and the screen tour on purpose. Somebody who has
+          just read how to send their first quote is exactly the person who
+          benefits from knowing which habits make the second one quicker. */}
+      <section className="border-t border-neutral-border px-4 py-14 sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <h2 className="text-2xl font-extrabold tracking-tight text-neutral-ink">
+            Getting the most out of it
+          </h2>
+          <p className="mt-2 text-neutral-mid">
+            Nine habits, from watching how members actually use it. None of them take longer than
+            the thing they replace.
+          </p>
+
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
+            {BEST_PRACTICE.map((tip) => (
+              <div key={tip.title} className="rounded-xl border border-neutral-border bg-white p-5">
+                <h3 className="text-base font-bold text-neutral-ink">{tip.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-neutral-mid">{tip.body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
