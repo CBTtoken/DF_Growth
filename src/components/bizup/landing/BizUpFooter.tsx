@@ -23,6 +23,8 @@ import { katisoPath } from "@/lib/bizup/product";
 
 export async function BizUpFooter() {
   const help = await katisoPath("/help");
+  const howItWorks = await katisoPath("/how-it-works");
+  const faq = await katisoPath("/faq");
 
   return (
     <footer className="border-t border-neutral-border bg-neutral-light">
@@ -58,9 +60,9 @@ export async function BizUpFooter() {
         <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-medium text-neutral-mid">
           <span className="font-extrabold text-neutral-ink">KatisoBiz</span>
           <a href="#pricing" className="hover:text-brand-blue">Pricing</a>
-          <a href="#how-it-works" className="hover:text-brand-blue">How it works</a>
+          <a href={howItWorks} className="hover:text-brand-blue">How it works</a>
           <Link href={help} className="hover:text-brand-blue">Help</Link>
-          <a href="#faq" className="hover:text-brand-blue">FAQ</a>
+          <a href={faq} className="hover:text-brand-blue">FAQ</a>
           <Link href="/terms" className="hover:text-brand-blue">Terms</Link>
           <Link href="/privacy" className="hover:text-brand-blue">Privacy</Link>
           <a href="mailto:info@digitalflyer.co.za" className="hover:text-brand-blue">Contact</a>
