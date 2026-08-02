@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
 import { ClientLandingPageView } from "@/components/landing/ClientLandingPageView";
 import { BrandHeader } from "@/components/brand/BrandHeader";
+import { shapeShopProduct } from "@/lib/shop/queries";
 
 // Combined spec Sec 6 (live page preview): an authenticated preview of the
 // client's own current data, reusing the exact same rendering path as the
@@ -89,7 +90,9 @@ export default async function DashboardPreviewPage({
         .maybeSingle(),
       admin
         .from("shop_products")
-        .select("id, title, description, base_price_cents, sale_count")
+        .select(
+          "id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
+        )
         .eq("growth_client_id", client.id)
         .eq("status", "active")
         .order("position", { ascending: true }),
@@ -117,7 +120,7 @@ export default async function DashboardPreviewPage({
       photos={photos ?? []}
       bookableUnits={bookableUnits ?? []}
       bookingRules={bookingRules ?? null}
-      shopProducts={shopProducts ?? []}
+      shopProducts={(shopProducts ?? []).map(shapeShopProduct)}
       clientSlug={growthClient.slug}
       mode="preview"
       templateOverride={templateOverride}

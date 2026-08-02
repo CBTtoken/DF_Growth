@@ -7,6 +7,7 @@ import { ClientPageNavBar } from "@/components/landing/ClientPageNavBar";
 import { getCustomPage, getCustomPageMeta } from "@/lib/custom-pages/registry";
 import type { PublicBookableUnit } from "@/components/landing/BookingSection";
 import type { PublicShopProduct } from "@/components/landing/ShopSection";
+import { shapeShopProduct } from "@/lib/shop/queries";
 import type { PublicReview } from "@/components/reviews/ReviewsSection";
 import { truncateOnWord } from "@/lib/text";
 import { getLiveAgentPage, getAgentSocialProof, getProofPages, getAgentPageByFormerSlug } from "@/lib/agent-page/data";
@@ -193,7 +194,7 @@ export default async function ClientLandingPage({
       client_photos!client_photos_growth_client_id_fkey(id, storage_path),
       bookable_units(id, name, unit_type, description, base_price_cents, capacity, duration_minutes),
       booking_operational_rules(operating_hours, buffer_minutes),
-      shop_products(id, title, description, base_price_cents, sale_count),
+      shop_products(id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)),
       reviews(id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name), board_identities(display_name))`
     )
     .eq("slug", clientSlug)
@@ -257,7 +258,10 @@ export default async function ClientLandingPage({
   // single object or null, unlike every other child table here which is a
   // genuine to-many relationship and embeds as an array.
   const bookingRules = client.booking_operational_rules as unknown as BookingRulesRow | null;
-  const shopProducts = client.shop_products as unknown as ShopProductRow[];
+  // Shaped through the same helper the shop's own routes use, so a product
+  // is one shape everywhere: image_paths defaulted from jsonb, and inactive
+  // variants dropped before anything can price against one.
+  const shopProducts: ShopProductRow[] = ((client.shop_products ?? []) as unknown[]).map(shapeShopProduct);
   const reviews = client.reviews as unknown as PublicReview[];
 
   if (!landingPage) return notFound();

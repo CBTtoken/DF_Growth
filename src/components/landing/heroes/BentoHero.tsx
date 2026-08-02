@@ -20,6 +20,7 @@ export function BentoHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
   highlights,
   ctaHref = "#lead-form",
 }: {
@@ -33,6 +34,8 @@ export function BentoHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  /** Set only when this business has products on sale. */
+  shopHref?: string;
   highlights: string[];
   ctaHref?: string;
 }) {
@@ -56,6 +59,7 @@ export function BentoHero({
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
           websiteUrl={websiteUrl}
+          shopHref={shopHref}
           textColor={textColor}
         />
         <a

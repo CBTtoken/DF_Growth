@@ -123,7 +123,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_delivery_mode, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error"
       )
       .eq("id", client.id)
       .single(),
@@ -206,13 +206,16 @@ export default async function DashboardPage() {
       .in("status", ["held", "confirmed"])
       .gte("starts_at", new Date().toISOString())
       .order("starts_at", { ascending: true }),
-    // Sec 3: "one variant per product" (Sprint 3 simplification, see
-    // shop-actions.ts) means the variant's stock_quantity is always this
-    // product's own real stock — flattened onto the product below rather
-    // than surfacing the join shape to the dashboard component.
+    // A product now carries pictures, a URL of its own, whether it is
+    // featured on the landing page, whether its stock is counted, and its
+    // named options. The single unnamed variant a plain product has is
+    // still where its stock lives, and is still flattened onto the product
+    // below rather than surfacing the join shape to the component.
     admin
       .from("shop_products")
-      .select("id, title, sku, description, base_price_cents, weight_kg, length_cm, width_cm, height_cm, status, shop_product_variants(stock_quantity)")
+      .select(
+        "id, slug, title, sku, description, base_price_cents, image_paths, is_featured, track_stock, weight_kg, length_cm, width_cm, height_cm, status, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
+      )
       .eq("growth_client_id", client.id)
       .order("position", { ascending: true }),
     admin
@@ -227,7 +230,7 @@ export default async function DashboardPage() {
     admin
       .from("shop_orders")
       .select(
-        "id, created_at, line_items, total_cents, customer_name, customer_email, customer_phone, delivery_address, payment_status, fulfilment_status, batch_number"
+        "id, created_at, line_items, total_cents, customer_name, customer_email, customer_phone, delivery_address, delivery_method, member_note, payment_status, fulfilment_status, batch_number"
       )
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false })
@@ -235,8 +238,23 @@ export default async function DashboardPage() {
   ]);
 
   const shopProductsFlat = (shopProducts ?? []).map((p) => {
-    const variants = p.shop_product_variants as unknown as { stock_quantity: number }[] | null;
-    return { ...p, stock_quantity: variants?.[0]?.stock_quantity ?? 0 };
+    const variants = (p.shop_product_variants ?? []) as unknown as {
+      id: string;
+      sku: string;
+      descriptor: Record<string, string> | null;
+      price_cents: number | null;
+      stock_quantity: number;
+      is_active: boolean;
+    }[];
+    // The unnamed variant is the plain product's own stock. A product with
+    // named options has none, and its stock is edited per option instead.
+    const plain = variants.find((v) => Object.keys(v.descriptor ?? {}).length === 0);
+    return {
+      ...p,
+      image_paths: (Array.isArray(p.image_paths) ? p.image_paths : []) as string[],
+      variants,
+      stock_quantity: plain?.stock_quantity ?? 0,
+    };
   });
 
   // Separate from the admin-client Promise.all above — this one needs the
@@ -660,10 +678,12 @@ export default async function DashboardPage() {
               />
               <ShopSection
                 shopEnabled={growthClient?.shop_enabled ?? false}
+                shopSlug={growthClient?.slug ?? null}
                 products={shopProductsFlat}
                 coupons={shopCoupons ?? []}
                 orders={shopOrders ?? []}
                 collectionAddress={(growthClient?.shop_collection_address as { line1: string; city: string; postalCode: string } | null) ?? null}
+                deliveryMode={growthClient?.shop_delivery_mode ?? "flat"}
                 flatDeliveryCents={growthClient?.shop_flat_delivery_cents ?? 0}
                 freeDeliveryOverCents={growthClient?.shop_free_delivery_over_cents ?? null}
                 bobgoConnectedAt={growthClient?.bobgo_connected_at ?? null}

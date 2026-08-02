@@ -12,6 +12,7 @@ export function HeroBrandBar({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
   textColor,
 }: {
   businessName: string;
@@ -19,6 +20,12 @@ export function HeroBrandBar({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  // Handoff Sec 1.1: the storefront is "connected to their existing
+  // landing page by a menu item that only appears if they have
+  // products." Undefined is how "no products" arrives here, so the
+  // link is absent rather than present and empty, and no page grows a
+  // menu it has no use for.
+  shopHref?: string;
   textColor: string;
 }) {
   const initials = businessName
@@ -97,6 +104,15 @@ export function HeroBrandBar({
             </a>
           )}
         </span>
+      )}
+      {shopHref && (
+        <a
+          href={shopHref}
+          className="ml-1 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold opacity-90 transition hover:opacity-100"
+          style={{ color: textColor, borderColor: `${textColor}59` }}
+        >
+          Shop
+        </a>
       )}
     </div>
   );

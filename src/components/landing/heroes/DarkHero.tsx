@@ -21,6 +21,7 @@ export function DarkHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
   photoUrl,
 }: {
   businessName: string;
@@ -32,6 +33,8 @@ export function DarkHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  /** Set only when this business has products on sale. */
+  shopHref?: string;
   photoUrl: string | null;
 }) {
   const bg = "#0a0a0f";
@@ -57,6 +60,7 @@ export function DarkHero({
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
           websiteUrl={websiteUrl}
+          shopHref={shopHref}
           textColor={textColor}
         />
         <a

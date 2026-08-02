@@ -17,6 +17,7 @@ export function GeometricHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -28,6 +29,8 @@ export function GeometricHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  /** Set only when this business has products on sale. */
+  shopHref?: string;
 }) {
   const bg = shade(secondaryColor, 0.85);
   const textColor = readableTextOn(bg);
@@ -60,6 +63,7 @@ export function GeometricHero({
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
           websiteUrl={websiteUrl}
+          shopHref={shopHref}
           textColor={textColor}
         />
       </div>

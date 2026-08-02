@@ -37,14 +37,19 @@ export async function assignBatchNumber(orderId: string, batchNumber: number): P
 
   if (error || !order) return { error: "Could not save, please try again." };
 
-  try {
-    await sendBatchAssignedEmail({
-      buyerName: order.customer_name,
-      email: order.customer_email,
-      batchNumber,
-    });
-  } catch (err) {
-    console.error("Batch assigned email failed", err);
+  // A buyer who gave only a phone number cannot be emailed, which is a
+  // legitimate outcome now that email is optional at checkout rather than a
+  // failure worth reporting.
+  if (order.customer_email) {
+    try {
+      await sendBatchAssignedEmail({
+        buyerName: order.customer_name,
+        email: order.customer_email,
+        batchNumber,
+      });
+    } catch (err) {
+      console.error("Batch assigned email failed", err);
+    }
   }
 
   revalidatePath("/dashboard");
@@ -189,7 +194,10 @@ export async function markBatchReadyForCollection(
  * Only paid ones. Somebody who has not paid is not having a book printed,
  * and should certainly not be told one is on its way.
  */
-async function paidOrdersInBatch(clientId: string, batchNumber: number) {
+async function paidOrdersInBatch(
+  clientId: string,
+  batchNumber: number
+): Promise<{ customer_name: string; customer_email: string }[]> {
   const admin = createAdminClient();
   const { data } = await admin
     .from("shop_orders")
@@ -197,7 +205,13 @@ async function paidOrdersInBatch(clientId: string, batchNumber: number) {
     .eq("growth_client_id", clientId)
     .eq("batch_number", batchNumber)
     .eq("payment_status", "paid");
-  return data ?? [];
+
+  // Only the ones there is an address for. Email became optional at
+  // checkout with the storefront sprint, so this list is now "everyone in
+  // the batch who can be emailed" rather than "everyone in the batch".
+  return (data ?? []).filter(
+    (order): order is { customer_name: string; customer_email: string } => Boolean(order.customer_email)
+  );
 }
 
 export async function markOrderShipped(orderId: string): Promise<ActionResult> {
@@ -215,11 +229,97 @@ export async function markOrderShipped(orderId: string): Promise<ActionResult> {
 
   if (error || !order) return { error: "Could not save, please try again." };
 
-  try {
-    await sendShippedEmail({ buyerName: order.customer_name, email: order.customer_email });
-  } catch (err) {
-    console.error("Shipped email failed", err);
+  // Email is optional at checkout now (Shop and Payments handoff Sec 1.3),
+  // so a buyer who only left a phone number simply is not emailed. The
+  // seller has their number and that was the arrangement.
+  if (order.customer_email) {
+    try {
+      await sendShippedEmail({ buyerName: order.customer_name, email: order.customer_email });
+    } catch (err) {
+      console.error("Shipped email failed", err);
+    }
   }
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+/**
+ * The seller says the money arrived.
+ *
+ * Handoff Sec 1.4. This is the single most important button on the whole
+ * unpaid path, which is the common one: the seller phones the buyer, the
+ * buyer does an EFT, and until this is pressed the order sits in the
+ * dashboard looking exactly like one nobody has dealt with. Without it the
+ * seller's own revenue figure is permanently wrong.
+ *
+ * Deliberately no email to the buyer. The seller has just spoken to them
+ * about the payment, so an automated "we have received your payment" adds
+ * nothing and risks arriving before the transfer has actually cleared.
+ */
+export async function markOrderPaid(orderId: string, paid: boolean): Promise<ActionResult> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: client.error };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("shop_orders")
+    .update({ payment_status: paid ? "paid" : "unpaid", updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .eq("growth_client_id", client.id);
+
+  if (error) return { error: "Could not save, please try again." };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+/**
+ * An order that is not going to happen.
+ *
+ * Cancelled rather than deleted. A buyer who changed their mind, or who
+ * never answered the phone, is still a real thing that happened, and the
+ * stock and the figures both need it to have an ending rather than a gap.
+ */
+export async function cancelOrder(orderId: string): Promise<ActionResult> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: client.error };
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("shop_orders")
+    .update({ fulfilment_status: "cancelled", updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .eq("growth_client_id", client.id);
+
+  if (error) return { error: "Could not save, please try again." };
+
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+
+/**
+ * The seller's own note against an order.
+ *
+ * Handoff Sec 1.4 asks for it, and the unpaid path is why it matters:
+ * "paying Friday, doing an EFT" is the state of that sale, and without
+ * somewhere to write it down that conversation exists only in the seller's
+ * head until it does not. Never shown to the buyer.
+ */
+export async function saveOrderNote(orderId: string, note: string): Promise<ActionResult> {
+  const client = await requireGrowthClientId();
+  if (client.error) return { error: client.error };
+
+  const trimmed = note.trim().slice(0, 2000);
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("shop_orders")
+    .update({ member_note: trimmed || null, updated_at: new Date().toISOString() })
+    .eq("id", orderId)
+    .eq("growth_client_id", client.id);
+
+  if (error) return { error: "Could not save, please try again." };
 
   revalidatePath("/dashboard");
   return { success: true };

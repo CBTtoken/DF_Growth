@@ -5,6 +5,12 @@ import { Search, ShoppingBag, ArrowRight } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { shopImageUrl } from "@/lib/shop/queries";
+
+/** image_paths is jsonb, so it arrives as unknown rather than an array. */
+function firstImage(paths: unknown): string | null {
+  return Array.isArray(paths) && typeof paths[0] === "string" ? paths[0] : null;
+}
 
 export const metadata: Metadata = {
   title: "Shop",
@@ -48,12 +54,21 @@ export default async function ShopPage({
   const admin = createAdminClient();
 
   // Only products belonging to an active client with Shop switched on.
+  //
+  // Custom-page clients are excluded, and Standing 365 is why: it is
+  // curated above as a FEATURED card pointing at its own bespoke checkout,
+  // and it was also appearing again in this list underneath, linking into a
+  // generic storefront that knows nothing about its personalised edition.
+  // One entry, pointing at the flow that actually sells the thing.
   let query = admin
     .from("shop_products")
-    .select("id, title, description, base_price_cents, growth_clients!inner(slug, business_name, shop_enabled, status)")
+    .select(
+      "id, slug, title, description, base_price_cents, image_paths, growth_clients!inner(slug, business_name, shop_enabled, status, landing_pages!inner(page_type))"
+    )
     .eq("status", "active")
     .eq("growth_clients.shop_enabled", true)
     .eq("growth_clients.status", "active")
+    .eq("growth_clients.landing_pages.page_type", "template")
     .order("created_at", { ascending: false })
     .limit(60);
 
@@ -280,11 +295,27 @@ export default async function ShopPage({
                 return (
                   <Link
                     key={product.id}
-                    href={`/${client.slug}#shop`}
+                    // The product's own page, not an anchor on the seller's
+                    // landing page. That anchor used to list every product a
+                    // member had; since the storefront sprint it is a row of
+                    // three featured items, so a link to it could easily
+                    // land somebody on a page not showing the thing they
+                    // just clicked. Every product has a real page now.
+                    href={`/${client.slug}/shop/${product.slug}`}
                     className="group flex flex-col overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-card transition duration-200 hover:-translate-y-0.5 hover:border-brand-blue/30 hover:shadow-card-hover"
                   >
-                    <div className="flex h-40 items-center justify-center bg-gradient-to-br from-brand-blue to-brand-blue-dark text-white" aria-hidden>
-                      <ShoppingBag size={30} />
+                    <div className="relative flex h-40 items-center justify-center overflow-hidden bg-gradient-to-br from-brand-blue to-brand-blue-dark text-white">
+                      {firstImage(product.image_paths) ? (
+                        <Image
+                          src={shopImageUrl(firstImage(product.image_paths)!)}
+                          alt={product.title}
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <ShoppingBag size={30} aria-hidden />
+                      )}
                     </div>
                     <div className="flex flex-1 flex-col p-4">
                       <h3 className="text-sm font-bold text-neutral-ink group-hover:text-brand-blue">{product.title}</h3>

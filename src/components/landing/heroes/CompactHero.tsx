@@ -19,6 +19,7 @@ export function CompactHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
   testimonialCount,
 }: {
   businessName: string;
@@ -31,6 +32,8 @@ export function CompactHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  /** Set only when this business has products on sale. */
+  shopHref?: string;
   testimonialCount: number;
 }) {
   const textColor = readableTextOn(secondaryColor);
@@ -45,6 +48,7 @@ export function CompactHero({
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
           websiteUrl={websiteUrl}
+          shopHref={shopHref}
           textColor={textColor}
         />
         <a

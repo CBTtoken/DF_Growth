@@ -18,6 +18,7 @@ export function ShowcaseHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
   packages,
   ctaHref = "#packages",
 }: {
@@ -31,6 +32,8 @@ export function ShowcaseHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  /** Set only when this business has products on sale. */
+  shopHref?: string;
   packages: { name: string; price: string | null }[];
   ctaHref?: string;
 }) {
@@ -55,6 +58,7 @@ export function ShowcaseHero({
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
           websiteUrl={websiteUrl}
+          shopHref={shopHref}
           textColor={textColor}
         />
         <a

@@ -20,6 +20,7 @@ export function ChecklistHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
   checklistItems,
 }: {
   businessName: string;
@@ -32,6 +33,8 @@ export function ChecklistHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  /** Set only when this business has products on sale. */
+  shopHref?: string;
   checklistItems: string[];
 }) {
   const textColor = readableTextOn(primaryColor);
@@ -46,6 +49,7 @@ export function ChecklistHero({
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
           websiteUrl={websiteUrl}
+          shopHref={shopHref}
           textColor={textColor}
         />
         <a

@@ -1,18 +1,52 @@
 import { z } from "zod";
 
-// docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md Sec 4.2: weight/dimensions are
-// required per SKU — needed for Bob Go courier rates once Sprint 5 wires
-// live shipping, collected now so that migration isn't a second pass over
-// every product later.
+// docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md Sec 4.2 asked for weight and
+// dimensions per SKU, required, so that Bob Go could quote a courier later.
+//
+// Made optional by the Shop and Payments handoff, Sec 1.4: "Everything a
+// member can do here must be doable by a member, unaided, on a phone."
+// Four courier measurements, required, standing between a member and their
+// first product is the single most likely place for that to fail. The
+// target member is selling an R80 item they made themselves and does not
+// have a tape measure in their hand.
+//
+// Nothing downstream breaks by letting these be zero. The Bob Go quote path
+// already treats a zero dimension as "cannot price this" and falls back to
+// the member's flat rate (src/app/[clientSlug]/shop-actions.ts), and the
+// dashboard already warns, next to the courier connect button, that
+// products without sizes will be quoted wrong. So the member is still told,
+// at the moment it actually matters to them, rather than at the moment they
+// are trying to list their first thing.
+//
+// A SKU is optional for the same reason. A solo seller does not have one,
+// and being asked for a code you have never heard of on the second field of
+// the form is where somebody puts the phone down. One is generated from the
+// title when it is left blank.
 export const shopProductSchema = z.object({
   title: z.string().trim().min(1, "Enter a product title").max(200),
-  sku: z.string().trim().min(1, "Enter a SKU").max(60),
+  sku: z.string().trim().max(60).optional().or(z.literal("")),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   basePrice: z.coerce.number().min(0, "Enter a price of 0 or more"),
-  weightKg: z.coerce.number().min(0.01, "Enter a weight in kg"),
-  lengthCm: z.coerce.number().min(1, "Enter a length in cm"),
-  widthCm: z.coerce.number().min(1, "Enter a width in cm"),
-  heightCm: z.coerce.number().min(1, "Enter a height in cm"),
+  weightKg: z.coerce.number().min(0).default(0),
+  lengthCm: z.coerce.number().min(0).default(0),
+  widthCm: z.coerce.number().min(0).default(0),
+  heightCm: z.coerce.number().min(0).default(0),
+  stockQuantity: z.coerce.number().int().min(0).default(0),
+  trackStock: z.coerce.boolean().default(false),
+});
+
+// An option a buyer picks between on the product page, for example a size
+// or a colour.
+//
+// Deliberately one label rather than a matrix of size against colour. A
+// member who genuinely sells four sizes in three colours can list twelve
+// options, and a member who sells "Small, Medium, Large" is not made to
+// learn what an attribute axis is first. Twelve rows is the worse outcome
+// only in theory; in practice the matrix builder is the thing nobody
+// finishes on a phone.
+export const shopVariantSchema = z.object({
+  label: z.string().trim().min(1, "Give this option a name").max(80),
+  price: z.coerce.number().min(0).optional(),
   stockQuantity: z.coerce.number().int().min(0).default(0),
 });
 
@@ -76,6 +110,9 @@ export const shopCollectionAddressSchema = z.object({
 // offering it, and is the kind of default that only gets noticed once
 // somebody has shipped fifty parcels for nothing.
 export const shopDeliverySchema = z.object({
+  // Handoff Sec 1.5. "flat" is the default everywhere so that a shop which
+  // existed before this field keeps behaving exactly as it did.
+  mode: z.enum(["collection_only", "flat", "quote_on_request"]).default("flat"),
   flatDelivery: z.coerce
     .number({ message: "Enter the delivery charge as a number" })
     .min(0, "Delivery cannot be less than zero")
@@ -88,17 +125,55 @@ export const shopDeliverySchema = z.object({
     .optional(),
 });
 
-// Sec 4: a customer's delivery address at checkout — same shape as
-// shop_orders.delivery_address.
-export const shopCheckoutSchema = z.object({
-  customerName: z.string().trim().min(1, "Enter your name").max(150),
-  customerEmail: z.string().email("Enter a valid email"),
-  customerPhone: z.string().trim().max(30).optional().or(z.literal("")),
-  line1: z.string().trim().min(1, "Enter your delivery address"),
-  line2: z.string().trim().max(200).optional().or(z.literal("")),
-  suburb: z.string().trim().max(100).optional().or(z.literal("")),
-  city: z.string().trim().min(1, "Enter your city"),
-  province: z.string().trim().max(100).optional().or(z.literal("")),
-  postalCode: z.string().trim().min(1, "Enter your postal code"),
-  couponCode: z.string().trim().max(30).optional().or(z.literal("")),
-});
+/**
+ * What a buyer is asked for at checkout.
+ *
+ * Handoff Sec 1.3: "Collect only: name, contact number, email if they want a
+ * receipt, delivery address if delivery is selected."
+ *
+ * That is a real change of shape from what was here before, which required
+ * an email and a full address from everybody and treated the phone number as
+ * optional. It had the two backwards for this market. On the no-gateway
+ * path, which is the common one, the phone number is the entire mechanism:
+ * the seller rings the buyer to arrange payment. The email is a nice to
+ * have and a buyer on a phone may well not have one they can type
+ * accurately.
+ *
+ * The address fields are validated conditionally rather than being made
+ * optional outright, because "optional" would let somebody choose delivery
+ * and then be delivered to nowhere.
+ */
+export const shopCheckoutSchema = z
+  .object({
+    customerName: z.string().trim().min(1, "Enter your name").max(150),
+    // Loose on format on purpose. South African numbers get written as
+    // 082 123 4567, +27 82 123 4567 and 0821234567 by the same person on
+    // the same day, and rejecting any of those helps nobody.
+    customerPhone: z
+      .string()
+      .trim()
+      .min(6, "Enter a phone number the seller can reach you on")
+      .max(30),
+    customerEmail: z.string().trim().email("Enter a valid email").optional().or(z.literal("")),
+    deliveryMethod: z.enum(["delivery", "collection"]).default("delivery"),
+    line1: z.string().trim().max(200).optional().or(z.literal("")),
+    line2: z.string().trim().max(200).optional().or(z.literal("")),
+    suburb: z.string().trim().max(100).optional().or(z.literal("")),
+    city: z.string().trim().max(100).optional().or(z.literal("")),
+    province: z.string().trim().max(100).optional().or(z.literal("")),
+    postalCode: z.string().trim().max(20).optional().or(z.literal("")),
+    couponCode: z.string().trim().max(30).optional().or(z.literal("")),
+    marketingConsent: z.coerce.boolean().default(false),
+  })
+  .superRefine((value, ctx) => {
+    if (value.deliveryMethod !== "delivery") return;
+    for (const [field, message] of [
+      ["line1", "Enter your delivery address"],
+      ["city", "Enter your city"],
+      ["postalCode", "Enter your postal code"],
+    ] as const) {
+      if (!value[field]) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field], message });
+      }
+    }
+  });

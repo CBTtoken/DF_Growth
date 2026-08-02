@@ -189,17 +189,14 @@ export async function ClientLandingPageView({
     </ScrollReveal>
   );
 
-  const shopSection = client.shop_enabled && shopProducts.length > 0 && (
+  // Handoff Sec 1.1: the landing page carries a short featured row and a
+  // link, and the shop itself lives at its own URL. What used to be here was
+  // the entire shop, cart and checkout included, on a page whose job is to
+  // introduce the business.
+  const hasShop = Boolean(client.shop_enabled) && shopProducts.length > 0;
+  const shopSection = hasShop && (
     <ScrollReveal>
-      <ShopSection
-        growthClientId={client.id}
-        ownerEmail={client.contact_email}
-        businessName={client.business_name}
-        primaryColor={primaryColor}
-        products={shopProducts}
-        flatDeliveryCents={client.shop_flat_delivery_cents ?? 0}
-        freeDeliveryOverCents={client.shop_free_delivery_over_cents ?? null}
-      />
+      <ShopSection clientSlug={clientSlug} primaryColor={primaryColor} products={shopProducts} />
     </ScrollReveal>
   );
 
@@ -271,6 +268,7 @@ export async function ClientLandingPageView({
           facebookUrl={client.facebook_url}
           instagramUrl={client.instagram_url}
           websiteUrl={client.website_url}
+          shopHref={hasShop ? `/${clientSlug}/shop` : undefined}
         />
         <ScrollReveal>
           <AboutSection
@@ -368,6 +366,10 @@ export async function ClientLandingPageView({
     facebookUrl: client.facebook_url,
     instagramUrl: client.instagram_url,
     websiteUrl: client.website_url,
+    // Undefined rather than a link when there is nothing to sell, so a
+    // business with no products never grows a menu item leading to an
+    // empty shop. Handoff Sec 1.1.
+    shopHref: hasShop ? `/${clientSlug}/shop` : undefined,
   };
 
   let sectionCount = 0;

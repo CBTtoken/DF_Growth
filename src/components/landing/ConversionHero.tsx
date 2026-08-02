@@ -20,6 +20,7 @@ export function ConversionHero({
   instagramUrl,
   websiteUrl,
   ctaHref = "#lead-form",
+  shopHref,
 }: {
   businessName: string;
   tagline: string | null;
@@ -36,6 +37,11 @@ export function ConversionHero({
   // #packages instead of the lead form — every other template uses the
   // default, unchanged from before this prop existed.
   ctaHref?: string;
+  // Handoff Sec 1.1: a menu item through to the storefront, present only
+  // when the business actually has products. This hero keeps its own copy
+  // of the brand bar rather than using HeroBrandBar (it predates that
+  // file), so the link has to be added in both places.
+  shopHref?: string;
 }) {
   const textColor = readableTextOn(primaryColor);
   const glow = shade(primaryColor, 0.3);
@@ -143,13 +149,24 @@ export function ConversionHero({
             </span>
           )}
         </div>
-        <a
-          href={ctaHref}
-          className="rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5"
-          style={{ backgroundColor: secondaryColor, color: ctaTextColor }}
-        >
-          {ctaLabel}
-        </a>
+        <div className="flex shrink-0 items-center gap-2">
+          {shopHref && (
+            <a
+              href={shopHref}
+              className="rounded-full border px-3 py-1.5 text-xs font-semibold opacity-90 transition hover:opacity-100"
+              style={{ color: textColor, borderColor: `${textColor}59` }}
+            >
+              Shop
+            </a>
+          )}
+          <a
+            href={ctaHref}
+            className="rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition hover:-translate-y-0.5"
+            style={{ backgroundColor: secondaryColor, color: ctaTextColor }}
+          >
+            {ctaLabel}
+          </a>
+        </div>
       </div>
 
       <div className="relative mx-auto flex max-w-4xl flex-col items-center gap-6 px-4 pb-24 pt-8 sm:pb-32">

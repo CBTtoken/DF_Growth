@@ -36,7 +36,8 @@ import {
 export type ExportableOrder = {
   created_at: string;
   customer_name: string;
-  customer_email: string;
+  /** Optional since the storefront sprint: a buyer may leave only a number. */
+  customer_email: string | null;
   customer_phone: string | null;
   line_items: OrderLine[];
   total_cents: number;

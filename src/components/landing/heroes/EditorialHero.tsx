@@ -17,6 +17,7 @@ export function EditorialHero({
   facebookUrl,
   instagramUrl,
   websiteUrl,
+  shopHref,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -28,6 +29,8 @@ export function EditorialHero({
   facebookUrl?: string | null;
   instagramUrl?: string | null;
   websiteUrl?: string | null;
+  /** Set only when this business has products on sale. */
+  shopHref?: string;
 }) {
   // A warm off-white paper tone derived from the client's own color rather
   // than a fixed stone/cream palette, so the editorial feel still looks
@@ -45,6 +48,7 @@ export function EditorialHero({
           facebookUrl={facebookUrl}
           instagramUrl={instagramUrl}
           websiteUrl={websiteUrl}
+          shopHref={shopHref}
           textColor={textColor}
         />
         <a
