@@ -4,7 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireEmagUser } from "@/lib/emag/access";
 import { listArticles } from "@/lib/emag/articles";
 import { MoxieNav } from "@/components/emag/MoxieNav";
-import { saveArticle } from "../../articles/actions";
+import { deleteArticle, saveArticle } from "../../articles/actions";
+import { DeleteArticleButton } from "@/components/emag/DeleteArticleButton";
 
 // An edition's articles. The way in to writing, and the way through to the
 // flatplan.
@@ -85,21 +86,41 @@ export default async function EditionPage({ params }: { params: Promise<{ id: st
             approved.
           </p>
         ) : (
+          // A row rather than one big link, because it now carries two
+          // actions. Dewald, 2 August 2026: "I can't find where to delete
+          // them?" Delete existed, at the foot of the article screen, below
+          // the whole editor and both page previews. Reachable in the sense
+          // that a thing at the bottom of a very long page is reachable.
+          //
+          // Deciding what to remove happens here, looking at the list, so
+          // this is where the button belongs. The one on the article screen
+          // stays, because that is where you end up when you open something
+          // and realise it is the wrong thing.
           articles.map((article) => (
-            <Link key={article.id} href={`/bizup/kwaaipress/moxie/articles/${article.id}`} style={card}>
-              <span style={{ flex: "1 1 auto", minWidth: 0 }}>
+            <div key={article.id} style={card}>
+              <Link
+                href={`/bizup/kwaaipress/moxie/articles/${article.id}`}
+                style={{ flex: "1 1 auto", minWidth: 0, textDecoration: "none", color: "inherit" }}
+              >
                 <span style={{ display: "block", fontWeight: 700, fontSize: 16 }}>
                   {article.title}
                 </span>
                 <span style={{ display: "block", fontSize: 13, color: "#6b6864", marginTop: 3 }}>
                   {[article.pillar, article.section, article.writer].filter(Boolean).join(" · ")}
                 </span>
-              </span>
+              </Link>
               <span style={{ fontSize: 13, color: article.status === "approved" ? "#1f6b2b" : "#6b6864", whiteSpace: "nowrap" }}>
                 {STATUS_WORDS[article.status]}
                 {article.page_count ? `, ${article.page_count} pages` : ""}
               </span>
-            </Link>
+              <DeleteArticleButton
+                articleId={article.id}
+                editionId={edition.id}
+                title={article.title}
+                onDelete={deleteArticle}
+                compact
+              />
+            </div>
           ))
         )}
 
