@@ -25,7 +25,7 @@ import { slugify } from "@/lib/slugify";
  * with no error anywhere, which is the worse of the two failures because
  * nobody notices it.
  */
-const RESERVED_PRODUCT_SLUGS = new Set(["checkout", "order"]);
+const RESERVED_PRODUCT_SLUGS = new Set(["checkout", "order", "orders"]);
 
 export async function uniqueProductSlug(
   growthClientId: string,

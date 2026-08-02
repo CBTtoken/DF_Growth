@@ -95,6 +95,51 @@ export async function sendShopOrderToMember(input: ShopOrderEmailInput): Promise
   }
 }
 
+/**
+ * The buyer asked where their orders got to.
+ *
+ * Sent only to the address that already owns the orders, which is what
+ * makes this safe without a password: knowing an email address gets you
+ * nothing unless you can also read that inbox. It is the same reasoning a
+ * magic link runs on, without asking anybody to create an account to buy a
+ * bracelet.
+ */
+export async function sendOrderLookupEmail({
+  to,
+  businessName,
+  orders,
+}: {
+  to: string;
+  businessName: string;
+  orders: { reference: string; placedOn: string; totalCents: number; status: string; url: string }[];
+}): Promise<void> {
+  const rows = orders
+    .map(
+      (order) =>
+        `<li><a href="${order.url}">Order ${escapeHtml(order.reference)}</a> · ${escapeHtml(
+          order.placedOn
+        )} · ${rands(order.totalCents)} · ${escapeHtml(order.status)}</li>`
+    )
+    .join("");
+
+  const result = await sendEmail({
+    to,
+    subject: `Your orders from ${businessName}`,
+    fromName: businessName,
+    html: `
+      <p>Good day,</p>
+      <p>Here are the orders placed from ${escapeHtml(businessName)} with this email address.</p>
+      <ul>${rows}</ul>
+      <p>Each link shows that order's current status. Keep this email if you want to check back later.</p>
+      <p>If you did not ask for this, you can ignore it. Nothing has changed on your orders.</p>
+    `,
+  });
+
+  if (!result.ok) {
+    console.error("Order lookup email failed", to, result.error);
+  }
+}
+
 export async function sendShopOrderToBuyer(input: ShopOrderEmailInput): Promise<void> {
   if (!input.buyerEmail) return;
 
@@ -124,7 +169,8 @@ export async function sendShopOrderToBuyer(input: ShopOrderEmailInput): Promise<
              <p>They will confirm how to pay when they speak to you. Nobody from this order will send
              you banking details by email, so treat any message that does as suspicious.</p>`
       }
-      <p><a href="${input.orderUrl}">View your order</a></p>
+      <p><a href="${input.orderUrl}">Track your order</a>. That link shows where it is up to
+      whenever you open it, so it is worth keeping.</p>
     `,
   });
 

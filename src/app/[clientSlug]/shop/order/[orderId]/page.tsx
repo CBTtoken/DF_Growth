@@ -77,6 +77,30 @@ export default async function OrderConfirmationPage({
         </p>
       </div>
 
+      {/* The way back, without an account.
+          This page is the order's own status: it shows live payment and
+          fulfilment state every time it is opened. A buyer who gave an email
+          also has it in their inbox and can ask for it again; a buyer who
+          gave only a phone number has this page and nothing else, so they
+          are told plainly to keep it. */}
+      <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
+        <p className="font-medium text-gray-800">Keep this page to check on your order</p>
+        <p className="mt-1 text-gray-600">
+          {order.customer_email
+            ? "It shows where your order is up to whenever you open it. We have also emailed you the link."
+            : "It shows where your order is up to whenever you open it. Bookmark it or send yourself the link, because you did not give an email address."}
+        </p>
+        {order.customer_email && (
+          <Link
+            href={`/${clientSlug}/shop/orders`}
+            className="mt-2 inline-block font-semibold underline-offset-2 hover:underline"
+            style={{ color: primaryColor }}
+          >
+            Lost the link? Have it emailed again
+          </Link>
+        )}
+      </div>
+
       {/* Said plainly, because the most common way somebody loses money on a
           sale like this is a stranger messaging them account details and
           claiming to be the seller. Handoff Sec 1.3 is why no banking

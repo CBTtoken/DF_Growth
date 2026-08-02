@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/shop/CartProvider";
+import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 import { placeShopOrder, type CheckoutState } from "@/app/[clientSlug]/shop-actions";
 import { deliveryChargeCents, deliveryChargeLabel, type ShopDeliverySettings } from "@/lib/shop/delivery";
 import { shopImageUrl } from "@/lib/shop/queries";
@@ -213,10 +214,34 @@ export function CheckoutForm({
           </button>
         )}
 
+        {/* Marketing is a separate, unticked question, and stays that way.
+            Bundling it into the act of buying is precisely the kind of
+            bundled consent POPIA does not accept. */}
         <label className="flex items-start gap-2.5 text-sm text-gray-600">
           <input type="checkbox" name="marketingConsent" className="mt-0.5 size-4 shrink-0" />
           <span>Let {businessName} tell me about new products and specials.</span>
         </label>
+
+        {/* Said before the button, not buried in a policy nobody opens.
+            POPIA asks that a person knows what is being collected, what for,
+            and who receives it, and the honest answer here is short: the
+            seller needs it to get the order to you, and the seller is who
+            gets it. Naming them rather than us also matters, because they
+            are the ones who will phone. */}
+        <p className="text-xs leading-relaxed text-gray-500">
+          Your name, number and address are used to fulfil this order and are shared with{" "}
+          {businessName}, who is the seller. DigitalFlyer stores them on their behalf and does not
+          sell them to anyone. See our{" "}
+          <Link href="/privacy" className="underline underline-offset-2 hover:text-gray-700">
+            privacy policy
+          </Link>
+          .
+        </p>
+
+        {/* Invisible unless Cloudflare thinks the visitor needs checking, so
+            an ordinary buyer never sees anything. Checkout was the last
+            public form here without one. */}
+        <TurnstileWidget />
 
         {state?.error?._form && (
           <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

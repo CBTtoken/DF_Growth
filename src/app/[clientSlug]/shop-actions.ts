@@ -6,7 +6,9 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { shopCheckoutSchema } from "@/lib/schemas/shop";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import { addressLineOf, notifyOrderPlaced } from "@/lib/shop/notify";
+import { sendOrderLookupEmail } from "@/lib/email/shop-order";
 import { getShopOwner, type ShopOwner } from "@/lib/shop/queries";
 import { deliveryChargeCents, needsDeliveryAddress } from "@/lib/shop/delivery";
 import { startMemberPayment } from "@/lib/shop/gateway";
@@ -60,6 +62,22 @@ export async function placeShopOrder(
     return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
   }
 
+  // The actual bot gate. Checkout was the only public form in this codebase
+  // without one, while reviews, board posts, events, agent applications and
+  // the KatisoBiz signup all had it. It was also the most worth abusing: a
+  // scripted flood of orders on the no-gateway path costs the member a
+  // morning of phoning numbers that do not answer, and holds stock on any
+  // product that counts it.
+  //
+  // Verified against Cloudflare rather than trusted for being present,
+  // because a token nobody checks is a hidden field anyone can type into.
+  const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  if (!turnstileOk) {
+    return {
+      error: { _form: ["We could not confirm you are a person. Please reload the page and try again."] },
+    };
+  }
+
   if (cart.length === 0) return { error: { _form: ["Your basket is empty."] } };
   if (cart.some((line) => !Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 999)) {
     return { error: { _form: ["Check the quantities in your basket."] } };
@@ -98,6 +116,27 @@ export async function placeShopOrder(
     return {
       error: {
         customerEmail: ["We need an email address to send your payment receipt to."],
+      },
+    };
+  }
+
+  // A durable check on top of the in-memory limiter above, which lives in
+  // one serverless instance's memory and resets on every cold start, so it
+  // cannot see a flood spread across instances or across an hour. This one
+  // asks the database.
+  //
+  // Keyed on the phone number rather than the address, because the abuse
+  // that actually costs a member their morning is one number ordering
+  // fifteen times, and because an office or a mobile network puts a lot of
+  // real buyers behind a single IP. Only unpaid orders count, so a genuine
+  // repeat customer who keeps paying is never blocked.
+  const waiting = await unpaidOrdersFromPhone(owner.id, parsed.data.customerPhone);
+  if (waiting >= 5) {
+    return {
+      error: {
+        _form: [
+          "You already have several orders waiting with this seller. Please speak to them before placing another.",
+        ],
       },
     };
   }
@@ -231,6 +270,98 @@ export async function placeShopOrder(
 
   revalidatePath("/dashboard");
   return { redirectTo: orderPath };
+}
+
+type LookupState = { error?: string; sent?: boolean } | null;
+
+/**
+ * "Where is my order", answered without an account.
+ *
+ * Every order already has its own unguessable status page. All this does is
+ * post those links back to the email address that placed the orders, which
+ * is why it needs no password: knowing an address gets a stranger nothing
+ * unless they can also read that inbox.
+ *
+ * The reply is deliberately the same whether or not anything was found.
+ * Telling somebody "no orders for that address" turns this into a way to
+ * ask a stranger's shop whether a particular person has bought from them,
+ * which is exactly the kind of disclosure POPIA is about.
+ */
+export async function emailMyOrders(
+  clientSlug: string,
+  _prevState: LookupState,
+  formData: FormData
+): Promise<LookupState> {
+  const ip = clientIpFromHeaders(await headers());
+  if (isRateLimited(`shop-lookup:${ip}`, 5, 15 * 60 * 1000)) {
+    return { error: "Too many attempts, please wait a few minutes and try again." };
+  }
+
+  const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  if (!turnstileOk) {
+    return { error: "We could not confirm you are a person. Please reload the page and try again." };
+  }
+
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email || !email.includes("@")) return { error: "Enter the email address you used." };
+
+  const owner = await getShopOwner(clientSlug);
+  if (!owner) return { error: "This shop is not available at the moment." };
+
+  const admin = createAdminClient();
+  // Twelve months, matching the retention policy for Growth data generally.
+  // Anything older has been kept long enough.
+  const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: orders } = await admin
+    .from("shop_orders")
+    .select("id, created_at, total_cents, payment_status, fulfilment_status")
+    .eq("growth_client_id", owner.id)
+    .ilike("customer_email", email)
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(25);
+
+  if (orders && orders.length > 0) {
+    await sendOrderLookupEmail({
+      to: email,
+      businessName: owner.business_name,
+      orders: orders.map((order) => ({
+        reference: order.id.split("-").pop()?.toUpperCase() ?? order.id,
+        placedOn: new Date(order.created_at).toLocaleDateString("en-ZA", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        }),
+        totalCents: order.total_cents,
+        status: describeStatus(order.payment_status, order.fulfilment_status),
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/${clientSlug}/shop/order/${order.id}`,
+      })),
+    });
+  }
+
+  // Same answer either way. See the note above.
+  return { sent: true };
+}
+
+function describeStatus(paymentStatus: string, fulfilmentStatus: string): string {
+  if (fulfilmentStatus === "cancelled") return "Cancelled";
+  if (fulfilmentStatus === "shipped" || fulfilmentStatus === "delivered") return "Sent";
+  return paymentStatus === "paid" ? "Paid, not sent yet" : "Waiting for payment";
+}
+
+/** How many orders this number already has waiting, unpaid, in the last hour. */
+async function unpaidOrdersFromPhone(growthClientId: string, phone: string): Promise<number> {
+  const admin = createAdminClient();
+  const { count } = await admin
+    .from("shop_orders")
+    .select("id", { count: "exact", head: true })
+    .eq("growth_client_id", growthClientId)
+    .eq("customer_phone", phone)
+    .eq("payment_status", "unpaid")
+    .gte("created_at", new Date(Date.now() - 60 * 60 * 1000).toISOString());
+
+  return count ?? 0;
 }
 
 // ============================================================

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CartProvider } from "@/components/shop/CartProvider";
 import { CartBar, ShopHeader } from "@/components/shop/ShopChrome";
@@ -44,15 +45,25 @@ export default async function ShopLayout({
       />
       <main className="min-h-[60vh] bg-white">{children}</main>
       <CartBar clientSlug={clientSlug} primaryColor={primaryColor} />
-      <ShopFooter businessName={owner.business_name} />
+      <ShopFooter businessName={owner.business_name} clientSlug={clientSlug} />
     </CartProvider>
   );
 }
 
-function ShopFooter({ businessName }: { businessName: string }) {
+function ShopFooter({ businessName, clientSlug }: { businessName: string; clientSlug: string }) {
   return (
     <footer className="border-t border-gray-100 bg-white py-6 text-center text-xs text-gray-400">
-      © {new Date().getFullYear()} {businessName}
+      © {new Date().getFullYear()} {businessName} ·{" "}
+      {/* A returning buyer needs somewhere to go, and it should not be an
+          account. Every order has its own status page; this is how somebody
+          who lost the link gets it back. */}
+      <Link href={`/${clientSlug}/shop/orders`} className="underline-offset-2 hover:text-gray-600 hover:underline">
+        Track an order
+      </Link>{" "}
+      ·{" "}
+      <Link href="/privacy" className="underline-offset-2 hover:text-gray-600 hover:underline">
+        Privacy
+      </Link>
     </footer>
   );
 }
