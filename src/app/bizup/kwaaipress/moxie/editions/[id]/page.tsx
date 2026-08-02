@@ -67,6 +67,9 @@ export default async function EditionPage({ params }: { params: Promise<{ id: st
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
           <h1 style={{ fontSize: 28, margin: "0 0 16px", fontWeight: 700 }}>{edition.title}</h1>
           <span style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/import`} style={{ color: "#c85a1e", fontWeight: 600, fontSize: 14 }}>
+              Import a copy pack
+            </Link>
             <Link href={`/bizup/kwaaipress/moxie/editions/${edition.id}/pictures`} style={{ color: "#c85a1e", fontWeight: 600, fontSize: 14 }}>
               Cover, adverts and access
             </Link>
