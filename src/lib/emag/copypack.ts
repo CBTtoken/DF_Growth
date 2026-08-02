@@ -1,4 +1,4 @@
-import type { Block, Opener, RichText } from "./types";
+import type { Block, Mark, Opener, RichText } from "./types";
 
 // Reading a copy pack: a whole edition's words, as the editor writes them.
 //
@@ -71,6 +71,23 @@ export type ParsedArticle = {
   notes: string[];
   /** Anything the parser could not place, so nothing disappears silently. */
   unplaced: string[];
+  /**
+   * True when this looks like a slot in the flatplan rather than a written
+   * article.
+   *
+   * Dewald, 2 August 2026: "it also added the ones with no content?" It did.
+   * Edition 03 holds three placeholders, and what they contain is not the
+   * article but a note about it: "Held by Dewald. Safari Moment entries from
+   * the July campaign." Written prose, so no word count or block count
+   * separates it from real copy.
+   *
+   * A missing headline does. Every written article in the pack has one and
+   * none of the three placeholders does, which makes sense: a piece nobody
+   * has written cannot have a headline yet. The importer uses this to leave
+   * them unticked rather than to hide them, because the judgement is the
+   * publisher's and the pack may simply have been formatted oddly.
+   */
+  looksUnwritten: boolean;
 };
 
 export type ParsedPack = {
@@ -80,7 +97,62 @@ export type ParsedPack = {
   warnings: string[];
 };
 
-const text = (value: string): RichText => ({ text: value });
+/**
+ * Markdown emphasis becomes real emphasis, not asterisks on the page.
+ *
+ * Dewald, 2 August 2026: "it adds all the formatting markdowns, instead of
+ * making them proper." He was right, and the fix was sitting in the build
+ * already. Emphasis is stored as character offsets beside the string, so
+ * bold in a pack becomes a bold mark and the asterisks simply stop existing.
+ *
+ * This is not a rewrite of anybody's words. Asterisks are markup, not
+ * language: removing them is the same act as not printing the angle brackets
+ * around an HTML tag. Every actual character of the sentence survives, which
+ * is what scripts/check-pack.mjs verifies.
+ *
+ * Nesting is not supported and is not worth supporting. A pack that bolds
+ * something inside an italic run degrades to the outer emphasis rather than
+ * throwing an error, which is the right failure for a tool nobody should
+ * have to debug.
+ */
+export function richFromMarkdown(source: string): RichText {
+  const marks: Mark[] = [];
+  let out = "";
+  let i = 0;
+
+  while (i < source.length) {
+    if (source.startsWith("**", i)) {
+      const close = source.indexOf("**", i + 2);
+      if (close > i + 2) {
+        const inner = source.slice(i + 2, close);
+        marks.push({ start: out.length, end: out.length + inner.length, kind: "bold" });
+        out += inner;
+        i = close + 2;
+        continue;
+      }
+    }
+
+    // A single asterisk, but never one that is part of an unmatched pair or
+    // sitting alone in a sentence, which is usually a footnote marker.
+    if (source[i] === "*") {
+      const close = source.indexOf("*", i + 1);
+      if (close > i + 1 && !source.startsWith("**", close)) {
+        const inner = source.slice(i + 1, close);
+        marks.push({ start: out.length, end: out.length + inner.length, kind: "italic" });
+        out += inner;
+        i = close + 1;
+        continue;
+      }
+    }
+
+    out += source[i];
+    i++;
+  }
+
+  return marks.length ? { text: out, marks } : { text: out };
+}
+
+const text = (value: string): RichText => richFromMarkdown(value);
 
 /** Strips a bold markdown label off the front of a line, if it is there. */
 function afterLabel(line: string, label: string): string | null {
@@ -147,6 +219,7 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
   // Paragraph lines waiting to be flushed as one block.
   let buffer: string[] = [];
   let tableRows: string[] = [];
+  let rowsBuffer: { tag: string; title: string }[] = [];
   // Set when a bare label such as **MOXIE TIP** has just been seen and the
   // next paragraph belongs to it rather than to the body.
   let pending: "tip" | null = null;
@@ -176,8 +249,16 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
     else current.unplaced.push(rows.join("\n"));
   };
 
+  const flushRows = () => {
+    if (!rowsBuffer.length) return;
+    const rows = rowsBuffer;
+    rowsBuffer = [];
+    if (current) current.blocks.push({ type: "rows", rows });
+  };
+
   const flushAll = () => {
     flushParagraph();
+    flushRows();
     flushTable();
   };
 
@@ -204,6 +285,7 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
         blocks: [],
         notes: [],
         unplaced: [],
+        looksUnwritten: false,
       };
       articles.push(current);
       continue;
@@ -236,13 +318,36 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
       continue;
     }
 
-    // Guidance for the publisher, never content.
-    const note = labels.notes.find((n) =>
-      new RegExp(`^>?\\s*\\*\\*${n}\\b`, "i").test(trimmed)
-    );
+    // Anything in a blockquote is guidance for the publisher, never content.
+    //
+    // This started as a list of known prefixes: DEVICE, DESIGN NOTE, LAYOUT
+    // NOTE. Dewald's Edition 03 has sixteen different ones, including CHECK
+    // BEFORE PRINT, FACT CHECK OUTSTANDING, CUT FROM THE ORIGINAL LIST and
+    // ASSETS SUPPLIED, and the ones my list did not know were printed into
+    // his articles as body text. A list of labels was always going to lose
+    // that race. The markdown already says what these are, so the blockquote
+    // itself is the rule and no vocabulary has to be kept in step.
+    //
+    // A pull quote inside a blockquote is the one exception, because there
+    // it is being quoted rather than noted.
+    if (trimmed.startsWith(">")) {
+      const inner = trimmed.replace(/^>\s*/, "");
+      const quoted = afterLabel(inner, labels.pullquote);
+      if (quoted !== null && quoted.length > 0) {
+        flushAll();
+        current.blocks.push({ type: "pullquote", content: text(quoted), tone: "orange" });
+        continue;
+      }
+      flushAll();
+      if (inner) current.notes.push(inner.replace(/\*\*/g, ""));
+      continue;
+    }
+
+    // The same guidance, unquoted.
+    const note = labels.notes.find((n) => new RegExp(`^\\*\\*${n}\\b`, "i").test(trimmed));
     if (note) {
       flushAll();
-      current.notes.push(trimmed.replace(/^>\s*/, "").replace(/\*\*/g, ""));
+      current.notes.push(trimmed.replace(/\*\*/g, ""));
       continue;
     }
 
@@ -341,6 +446,24 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
       continue;
     }
 
+    // A numbered or tagged entry: "**01** · What did the house smell like?"
+    //
+    // Dewald's Ten Questions page is ten of these in a row, and they arrived
+    // as ten paragraphs with literal asterisks in them. They are a rows
+    // block, which is exactly a tag beside a line, and consecutive ones
+    // belong to the same block.
+    //
+    // The tag is deliberately narrow: digits, or a short run of capitals. A
+    // wider rule swallowed "**facebook.com/moxiemag** · **editor@moxiemag
+    // .co.za**", which is a contact line and not a list at all.
+    const row = trimmed.match(/^\*\*(\d{1,3}|[A-Z]{1,12})\*\*\s*·\s*(.+)$/);
+    if (row) {
+      flushParagraph();
+      rowsBuffer.push({ tag: row[1], title: row[2].trim() });
+      continue;
+    }
+    if (rowsBuffer.length) flushRows();
+
     buffer.push(line);
   }
 
@@ -348,7 +471,10 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
 
   articles.forEach((article) => {
     if (!article.opener.headline) {
-      warnings.push(`"${article.heading}" has no headline in the pack.`);
+      article.looksUnwritten = true;
+      warnings.push(
+        `"${article.heading}" has no headline, so it looks like a slot rather than a written article. Left unticked.`
+      );
     }
     if (article.blocks.length === 0) {
       warnings.push(`"${article.heading}" produced no body text. Check its formatting.`);

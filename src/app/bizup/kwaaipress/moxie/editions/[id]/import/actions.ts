@@ -21,12 +21,40 @@ export type ImportPreview = {
     pillar: string;
     section: string;
     headline: string;
+    standfirst: string;
     counts: Record<string, number>;
     notes: string[];
     exists: boolean;
+    looksUnwritten: boolean;
+    /**
+     * The article as it will read, so a publisher can check the words rather
+     * than trust a block count.
+     *
+     * Dewald, 2 August 2026: "I can't preview or read anything, I can just
+     * see the comments and then create 5 articles?" Quite right. A summary
+     * saying "49 paragraphs" is a receipt, not a proof, and the one thing
+     * worth proving is that the right words landed in the right article.
+     */
+    body: { type: string; text: string }[];
   }[];
   warnings: string[];
 };
+
+/** A readable version of a block, for the preview only. */
+function readable(block: { type: string } & Record<string, unknown>): { type: string; text: string } {
+  const content = block.content as { text?: string } | undefined;
+  if (content?.text) return { type: block.type, text: content.text };
+  if (typeof block.text === "string") return { type: block.type, text: block.text };
+  if (Array.isArray(block.rows)) {
+    const rows = block.rows as { tag: string; title: string }[];
+    return { type: block.type, text: rows.map((r) => `${r.tag} · ${r.title}`).join("\n") };
+  }
+  if (Array.isArray(block.cells)) {
+    const cells = block.cells as { figure?: string; label?: string }[];
+    return { type: block.type, text: cells.map((c) => `${c.figure ?? ""} ${c.label ?? ""}`.trim()).join("\n") };
+  }
+  return { type: block.type, text: "" };
+}
 
 /** Matches a pack's pillar name to one of the publication's own keys. */
 function toPillar(name: string | undefined): PillarKey {
@@ -85,9 +113,12 @@ export async function previewPack(editionId: string, source: string): Promise<Im
         pillar: toPillar(a.pillar),
         section: a.section ?? a.heading,
         headline: a.opener.headline,
+        standfirst: a.opener.standfirst?.text ?? "",
         counts,
         notes: a.notes,
         exists: taken.has(titleOf(a).toLowerCase()),
+        looksUnwritten: a.looksUnwritten,
+        body: a.blocks.map((b) => readable(b as never)),
       };
     }),
     warnings: pack.warnings,
@@ -106,7 +137,16 @@ export async function previewPack(editionId: string, source: string): Promise<Im
  */
 export async function importPack(
   editionId: string,
-  source: string
+  source: string,
+  /**
+   * The headings the publisher ticked. Nothing else is created.
+   *
+   * Passing the choice rather than inferring it means the placeholder
+   * articles, and anything else he does not want this time, simply do not
+   * arrive. The parser's opinion about what looks unwritten only decides
+   * what starts ticked.
+   */
+  chosen?: string[]
 ): Promise<{ created: number; skipped: number }> {
   await requirePublisherForAction();
   const supabase = createAdminClient();
@@ -123,8 +163,14 @@ export async function importPack(
   let created = 0;
   let skipped = 0;
 
+  const wanted = chosen ? new Set(chosen) : null;
+
   for (const article of pack.articles) {
     const title = titleOf(article);
+    if (wanted && !wanted.has(article.heading)) {
+      skipped++;
+      continue;
+    }
     if (taken.has(title.toLowerCase())) {
       skipped++;
       continue;

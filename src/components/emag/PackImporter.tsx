@@ -36,10 +36,16 @@ export function PackImporter({
 }: {
   editionId: string;
   onPreview: (editionId: string, source: string) => Promise<ImportPreview>;
-  onImport: (editionId: string, source: string) => Promise<{ created: number; skipped: number }>;
+  onImport: (
+    editionId: string,
+    source: string,
+    chosen: string[]
+  ) => Promise<{ created: number; skipped: number }>;
 }) {
   const [source, setSource] = useState("");
   const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [chosen, setChosen] = useState<Set<string>>(new Set());
+  const [open, setOpen] = useState<string | null>(null);
   const [done, setDone] = useState<{ created: number; skipped: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, start] = useTransition();
@@ -49,10 +55,30 @@ export function PackImporter({
     setDone(null);
     start(async () => {
       try {
-        setPreview(await onPreview(editionId, source));
+        const result = await onPreview(editionId, source);
+        setPreview(result);
+        // Everything real starts ticked. Anything already in the edition, or
+        // that looks like an unwritten slot, starts unticked: the common case
+        // is to want it, and the dangerous case should need a deliberate act.
+        setChosen(
+          new Set(
+            result.articles
+              .filter((a) => !a.exists && !a.looksUnwritten)
+              .map((a) => a.heading)
+          )
+        );
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not read that pack.");
       }
+    });
+  }
+
+  function toggle(heading: string) {
+    setChosen((current) => {
+      const next = new Set(current);
+      if (next.has(heading)) next.delete(heading);
+      else next.add(heading);
+      return next;
     });
   }
 
@@ -60,7 +86,7 @@ export function PackImporter({
     setError(null);
     start(async () => {
       try {
-        const result = await onImport(editionId, source);
+        const result = await onImport(editionId, source, [...chosen]);
         setDone(result);
         setPreview(null);
       } catch (e) {
@@ -69,7 +95,7 @@ export function PackImporter({
     });
   }
 
-  const toCreate = preview?.articles.filter((a) => !a.exists).length ?? 0;
+  const toCreate = chosen.size;
 
   return (
     <div>
@@ -137,31 +163,72 @@ export function PackImporter({
           <ol style={{ listStyle: "none", margin: "12px 0 0", padding: 0 }}>
             {preview.articles.map((a, i) => (
               <li key={i} style={{ ...card, opacity: a.exists ? 0.55 : 1 }}>
+                <input
+                  type="checkbox"
+                  checked={chosen.has(a.heading)}
+                  disabled={a.exists}
+                  onChange={() => toggle(a.heading)}
+                  aria-label={`Create ${a.heading}`}
+                  style={{ marginTop: 4 }}
+                />
                 <span style={folio}>{a.pageRange}</span>
                 <span style={{ flex: "1 1 auto", minWidth: 0 }}>
                   <span style={{ display: "block", fontWeight: 700, fontSize: 15 }}>
                     {a.heading}
                     {a.exists ? (
-                      <span style={{ fontWeight: 400, color: "#6b6864" }}> · already in this edition, will be skipped</span>
+                      <span style={{ fontWeight: 400, color: "#6b6864" }}> · already in this edition</span>
+                    ) : a.looksUnwritten ? (
+                      <span style={{ fontWeight: 400, color: "#a8641a" }}> · no headline, looks like a slot rather than an article</span>
                     ) : null}
                   </span>
                   <span style={{ display: "block", fontSize: 13, color: "#6b6864", marginTop: 2 }}>
                     {a.headline || "No headline in the pack"}
                   </span>
+                  {a.standfirst ? (
+                    <span style={{ display: "block", fontSize: 12, color: "#8a8681", marginTop: 2, fontStyle: "italic" }}>
+                      {a.standfirst}
+                    </span>
+                  ) : null}
                   <span style={{ display: "block", fontSize: 12, color: "#8a8681", marginTop: 3 }}>
                     {a.pillar} · {a.section} · {describe(a.counts)}
                   </span>
-                  {a.notes.length ? (
-                    <details style={{ marginTop: 5 }}>
-                      <summary style={{ fontSize: 12, color: "#c85a1e", cursor: "pointer" }}>
-                        {a.notes.length} layout note{a.notes.length === 1 ? "" : "s"} for you, kept off the page
-                      </summary>
-                      <ul style={{ margin: "5px 0 0", paddingLeft: 18, fontSize: 12, color: "#6b6864" }}>
-                        {a.notes.map((n, j) => (
-                          <li key={j}>{n}</li>
-                        ))}
-                      </ul>
-                    </details>
+
+                  <div style={{ display: "flex", gap: 14, marginTop: 6, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => setOpen(open === a.heading ? null : a.heading)}
+                      style={linkButton}
+                    >
+                      {open === a.heading ? "Hide the words" : "Read the words"}
+                    </button>
+                    {a.notes.length ? (
+                      <span style={{ fontSize: 12, color: "#6b6864" }}>
+                        {a.notes.length} note{a.notes.length === 1 ? "" : "s"} kept off the page
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {open === a.heading ? (
+                    <div style={reader}>
+                      {a.body.map((b, j) => (
+                        <p key={j} style={{ margin: "0 0 8px", fontSize: 13, lineHeight: 1.5 }}>
+                          {b.type !== "p" ? (
+                            <span style={blockTag}>{BLOCK_NAMES[b.type] ?? b.type}</span>
+                          ) : null}
+                          <span style={{ whiteSpace: "pre-wrap" }}>{b.text}</span>
+                        </p>
+                      ))}
+                      {a.notes.length ? (
+                        <div style={{ borderTop: "1px solid rgba(30,32,32,0.14)", marginTop: 10, paddingTop: 8 }}>
+                          <strong style={{ fontSize: 12 }}>Notes for you, not printed</strong>
+                          <ul style={{ margin: "5px 0 0", paddingLeft: 18, fontSize: 12, color: "#6b6864" }}>
+                            {a.notes.map((n, j) => (
+                              <li key={j}>{n}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
                   ) : null}
                 </span>
               </li>
@@ -209,4 +276,33 @@ const secondary: CSSProperties = {
   padding: "9px 16px",
   fontSize: 14,
   cursor: "pointer",
+};
+
+const linkButton: CSSProperties = {
+  border: 0,
+  background: "none",
+  padding: 0,
+  fontSize: 12,
+  color: "#c85a1e",
+  fontWeight: 600,
+  cursor: "pointer",
+};
+
+const reader: CSSProperties = {
+  marginTop: 8,
+  padding: "10px 12px",
+  background: "#faf8f5",
+  border: "1px solid rgba(30,32,32,0.1)",
+  maxHeight: 340,
+  overflowY: "auto",
+};
+
+const blockTag: CSSProperties = {
+  display: "inline-block",
+  fontSize: 10,
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+  color: "#c85a1e",
+  fontWeight: 700,
+  marginRight: 7,
 };
