@@ -23,7 +23,7 @@ import type { AdFormat, LayoutKey, PillarKey } from "./publication";
 export type Mark = {
   start: number;
   end: number;
-  kind: "bold" | "italic";
+  kind: "bold" | "italic" | "highlight";
 };
 
 export type RichText = {

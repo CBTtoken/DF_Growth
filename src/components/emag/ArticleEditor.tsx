@@ -10,6 +10,7 @@ import { useOverflowCheck } from "./useOverflowCheck";
 import { describeTighten, suggestTighten } from "@/lib/emag/fit";
 import type { Asset, Block, Opener, RenderedPage } from "@/lib/emag/types";
 import type { LayoutKey, PillarKey } from "@/lib/emag/publication";
+import { MarkedText } from "./MarkedText";
 import type { Imprint } from "./Page";
 import type { CoEditorDraft, CoEditorTurn } from "@/lib/emag/coeditor";
 
@@ -1167,24 +1168,18 @@ function BlockFields({
 }) {
   switch (block.type) {
     case "p":
+      // The multi-paragraph paste is handled inside MarkedText, for the same
+      // reason it was handled here: by the time onChange fires the browser
+      // has merged the paste into one string and the paragraph boundaries
+      // are only recoverable from the clipboard itself.
       return (
-        <textarea
-          value={block.content.text}
-          onChange={(e) => onChange({ ...block, content: { ...block.content, text: e.target.value } })}
-          // Paste a whole article and it becomes one block per paragraph.
-          // Intercepted here rather than left to the change handler, because
-          // by the time onChange fires the browser has already merged the
-          // paste into one string and the paragraph boundaries are only
-          // recoverable from the clipboard itself.
-          onPaste={(e) => {
-            const text = e.clipboardData.getData("text/plain");
-            if (!text || !/\n[ \t]*\n/.test(text)) return;
-            e.preventDefault();
-            onPasteText(text);
-          }}
+        <MarkedText
+          content={block.content}
+          onChange={(content) => onChange({ ...block, content })}
+          onPasteText={onPasteText}
           rows={5}
           placeholder="Paste your text here. Several paragraphs at once is fine, they will separate on their own."
-          style={{ ...input, resize: "vertical" }}
+          style={input}
         />
       );
 
@@ -1200,11 +1195,11 @@ function BlockFields({
     case "pullquote":
       return (
         <>
-          <textarea
-            value={block.content.text}
-            onChange={(e) => onChange({ ...block, content: { text: e.target.value } })}
+          <MarkedText
+            content={block.content}
+            onChange={(content) => onChange({ ...block, content })}
             rows={3}
-            style={{ ...input, resize: "vertical" }}
+            style={input}
           />
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
             <label style={{ ...label, flex: "1 1 130px" }}>
@@ -1379,12 +1374,12 @@ function BlockFields({
 
     case "tip":
       return (
-        <textarea
-          value={block.content.text}
-          onChange={(e) => onChange({ ...block, content: { text: e.target.value } })}
+        <MarkedText
+          content={block.content}
+          onChange={(content) => onChange({ ...block, content })}
           rows={3}
           placeholder="Near the bottom of the last page of every article"
-          style={{ ...input, resize: "vertical" }}
+          style={input}
         />
       );
 
