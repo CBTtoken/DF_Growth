@@ -293,6 +293,9 @@ export default async function KatisoBizHowItWorksPage() {
             <Link href={faqHref} className="btn-outline px-6 py-3">
               Questions and answers
             </Link>
+            <Link href={helpHref} className="btn-outline px-6 py-3">
+              Full guide
+            </Link>
           </div>
         </div>
       </section>

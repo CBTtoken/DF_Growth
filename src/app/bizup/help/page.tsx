@@ -273,6 +273,38 @@ export default async function BizUpHelpPage() {
         </div>
       </section>
 
+      {/* First thing under the hero, not the last thing on the page.
+          Dewald's words: the important stuff was all hidden, and his members
+          are on phones and do not like searching. Somebody who arrived with
+          one question should be able to leave with the answer without
+          scrolling past a tutorial they did not ask for. */}
+      <section className="border-b border-neutral-border bg-neutral-surface px-4 py-8 sm:px-6">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-sm font-bold uppercase tracking-wide text-neutral-muted">
+            Looking for one answer?
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {FAQ_GROUPS.map((group) => (
+              <Link
+                key={group.heading}
+                href={`${faqHref}#${faqGroupId(group.heading)}`}
+                className="rounded-full border border-neutral-border bg-white px-3.5 py-2 text-sm font-semibold text-neutral-mid transition hover:border-brand-blue hover:text-brand-blue"
+              >
+                {group.heading}
+              </Link>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Link href={howHref} className="btn-accent px-5 py-2.5 text-sm">
+              Step-by-Step walkthrough
+            </Link>
+            <Link href={faqHref} className="btn-outline px-5 py-2.5 text-sm">
+              All {FAQ_GROUPS.reduce((total, group) => total + group.items.length, 0)} questions
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-2xl font-extrabold tracking-tight text-neutral-ink">
@@ -359,44 +391,6 @@ export default async function BizUpHelpPage() {
         </div>
       </section>
 
-      {/* The answers live on /faq now, not here.
-          
-          Two pages rendering the same seventy four answers is how a product
-          ends up telling somebody two different things, and Google splits
-          the ranking between them rather than picking one. So this page
-          teaches, /faq answers, and the content has one home. */}
-      <section className="border-t border-neutral-border px-4 py-14 sm:px-6">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="text-2xl font-extrabold tracking-tight text-neutral-ink">
-            Got a specific question?
-          </h2>
-          <p className="mt-2 text-neutral-mid">
-            {FAQ_GROUPS.reduce((total, group) => total + group.items.length, 0)} of them are
-            answered on one page, grouped so you can jump straight to the part you need.
-          </p>
-
-          <div className="mt-6 flex flex-wrap gap-2">
-            {FAQ_GROUPS.map((group) => (
-              <Link
-                key={group.heading}
-                href={`${faqHref}#${faqGroupId(group.heading)}`}
-                className="rounded-full border border-neutral-border px-3.5 py-1.5 text-xs font-semibold text-neutral-mid transition hover:border-brand-blue hover:text-brand-blue"
-              >
-                {group.heading}
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={faqHref} className="btn-accent-lg">
-              All questions and answers
-            </Link>
-            <Link href={howHref} className="btn-outline px-6 py-3">
-              See the walkthrough
-            </Link>
-          </div>
-        </div>
-      </section>
 
       <section className="px-4 py-14 sm:px-6">
         <div className="mx-auto max-w-3xl rounded-2xl border border-neutral-border bg-white p-6 text-center shadow-card">

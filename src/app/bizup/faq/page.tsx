@@ -90,6 +90,14 @@ export default async function KatisoBizFaqPage() {
             </a>{" "}
             and a person will answer.
           </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href={howHref} className="btn-accent px-5 py-2.5 text-sm">
+              Step-by-Step walkthrough
+            </Link>
+            <Link href={helpHref} className="btn-outline px-5 py-2.5 text-sm">
+              Full guide
+            </Link>
+          </div>
         </div>
       </section>
 

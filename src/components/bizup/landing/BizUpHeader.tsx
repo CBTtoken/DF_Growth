@@ -7,16 +7,35 @@ import { katisoPath } from "@/lib/bizup/product";
 // brand on the left, quiet text links that collapse away on small screens,
 // and the one real action as a button that never collapses.
 //
-// The links are in-page anchors rather than routes, because this is a
-// single-page landing. On a phone they hide and the sticky bottom CTA does
-// the work, which is the same trade Growth's own header makes.
+// Rebuilt 1 August 2026, and the reason matters. Every link in here was
+// hidden below the sm breakpoint, on the reasoning that a landing page on a
+// phone should push the one action and nothing else. That is defensible for
+// a visitor and wrong for a member, and Dewald's members are almost all on
+// phones: on a phone there was no way to reach the guide, the walkthrough or
+// the questions from the menu at all.
+//
+// So the menu now exists on a phone, as a details element rather than a
+// client component, which means it opens with JavaScript switched off and
+// costs nothing to load. Same choice the help page makes for its expanders.
 export async function BizUpHeader() {
-  const [home, help, login, signup] = await Promise.all([
+  const [home, help, login, signup, howItWorks, faq] = await Promise.all([
     katisoPath("/"),
     katisoPath("/help"),
     katisoPath("/login"),
     katisoPath("/signup"),
+    katisoPath("/how-it-works"),
+    katisoPath("/faq"),
   ]);
+
+  // One list, rendered twice: inline on a laptop, inside the menu on a
+  // phone. Ordered by what a stuck member wants first, which is the
+  // walkthrough, not the pricing.
+  const links = [
+    { href: howItWorks, label: "Step-by-Step" },
+    { href: faq, label: "FAQ" },
+    { href: help, label: "Help" },
+    { href: `${home}#pricing`, label: "Pricing" },
+  ];
 
   return (
     <>
@@ -40,32 +59,15 @@ export async function BizUpHeader() {
         </Link>
 
         <nav className="flex shrink-0 items-center gap-1.5 sm:gap-4">
-          <a
-            href="#how-it-works"
-            className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"
-          >
-            How it works
-          </a>
-          {/* A real page, not a section anchor: it is also the thing to
-              send someone who is stuck, so it needs its own address. */}
-          <Link
-            href={help}
-            className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"
-          >
-            Help
-          </Link>
-          <a
-            href="#pricing"
-            className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"
-          >
-            Pricing
-          </a>
-          <a
-            href="#faq"
-            className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"
-          >
-            FAQ
-          </a>
+          {links.map((link) => (
+            <Link
+              key={link.label}
+              href={link.href}
+              className="hidden whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:inline sm:text-sm"
+            >
+              {link.label}
+            </Link>
+          ))}
           <Link
             href={login}
             className="whitespace-nowrap text-xs font-medium text-neutral-mid transition hover:text-brand-blue sm:text-sm"
@@ -75,6 +77,32 @@ export async function BizUpHeader() {
           <Link href={signup} className="btn-accent px-4 py-2 text-xs sm:px-5 sm:py-2.5 sm:text-sm">
             Start free
           </Link>
+
+          {/* Phone only. A details element, so it works with no JavaScript
+              and there is no client component to ship. */}
+          <details className="relative sm:hidden">
+            <summary className="flex size-9 cursor-pointer list-none items-center justify-center rounded-lg border border-neutral-border text-neutral-mid marker:content-none">
+              <span aria-hidden className="text-lg leading-none">&#8801;</span>
+              <span className="sr-only">Menu</span>
+            </summary>
+            <div className="absolute right-0 top-full z-50 mt-2 flex w-52 flex-col gap-0.5 rounded-2xl border border-neutral-border bg-white p-2 shadow-lg">
+              {links.map((link) => (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  className="rounded-lg px-3 py-2.5 text-sm font-semibold text-neutral-mid hover:bg-neutral-surface hover:text-brand-blue"
+                >
+                  {link.label}
+                </Link>
+              ))}
+              <Link
+                href={login}
+                className="rounded-lg px-3 py-2.5 text-sm font-semibold text-neutral-mid hover:bg-neutral-surface hover:text-brand-blue"
+              >
+                Log in
+              </Link>
+            </div>
+          </details>
         </nav>
       </div>
     </header>
