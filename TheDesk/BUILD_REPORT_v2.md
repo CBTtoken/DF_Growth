@@ -154,3 +154,35 @@ is wrong.
 
 Everything else created during testing was deleted: nine throwaway items, one throwaway register
 row, one throwaway idea, and the throwaway login.
+
+---
+
+## 10. Added after the first v2 deploy, same day
+
+Two notes came back from testing, and both turned out to be the same missing idea.
+
+**Waiting could not let go of anything.** It could unblock or nudge, but an item added there by mistake
+had nowhere to go. Waiting now has Done and a bin, and so does the item screen. The bin deletes
+outright, with a confirm. That is a deliberate softening of the one rule: done, parked with a
+trigger, or killed with a date was written about abandoning work, and a typo is not work.
+
+**Export was being mistaken for a way to send work out.** It is renamed **Business tracking**, which
+is what it always was: the whole picture, as text, for touching base. It is context, not an
+instruction.
+
+**Sprints** is the thing that was actually missing. A sprint is a bundle of work with a brief
+attached, aimed at Claude Code:
+
+1. Something comes up mid-test, or a client asks for a change. Dump it as normal.
+2. Put it in a sprint, from the item screen or by ticking items on the sprint.
+3. Write what the sprint is for, and anything the build needs to know. Both save as you type.
+4. Copy the brief: the goal, each venture's end state, every item with its next physical step and
+   notes, a blank acceptance criteria section, and the house rules for this codebase.
+5. Paste it into a fresh Claude Code session in the DigitalFlyer Growth folder.
+6. Hand it to CC. The items become CC's, leave the Today rotation, and age on Waiting where they can
+   be seen.
+7. Mark it shipped when it comes back, and every item in it closes together.
+
+New table `desk_sprints`, plus `desk_items.sprint_id`. The whole loop was run end to end on
+throwaway items before deploying, and those items were deleted afterwards. One empty sprint called
+"Next build" is waiting, with a starter goal to rewrite.
