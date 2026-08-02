@@ -252,10 +252,11 @@ const SCREENS = [
 
 
 export default async function BizUpHelpPage() {
-  const [faqHref, howHref, signupHref] = await Promise.all([
+  const [faqHref, howHref, signupHref, homeHref] = await Promise.all([
     katisoPath("/faq"),
     katisoPath("/how-it-works"),
     katisoPath("/signup"),
+    katisoPath("/"),
   ]);
   return (
     <main className="flex flex-1 flex-col bg-white">
@@ -333,7 +334,7 @@ export default async function BizUpHelpPage() {
             <Link href={signupHref} className="btn-accent-lg">
               Create your first quote free
             </Link>
-            <Link href="/bizup" className="btn-outline px-6 py-3">
+            <Link href={homeHref} className="btn-outline px-6 py-3">
               Back to KatisoBiz
             </Link>
           </div>
