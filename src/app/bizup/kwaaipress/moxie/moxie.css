@@ -1334,3 +1334,18 @@
   transform: scale(var(--mx-zoom, 1));
   transform-origin: top left;
 }
+
+/* Highlight, the third kind of emphasis.
+ *
+ * A tint of the accent rather than the flat yellow a browser gives <mark>,
+ * which would be the one colour on the page that belongs to no palette.
+ * Kept pale enough that charcoal text on top still passes for body copy,
+ * because a highlight that has to be read around is not emphasis, it is an
+ * obstacle. Colour comes from the publication's own accent, so a second
+ * magazine inherits its own without touching this rule. */
+.mx-mark {
+  background: color-mix(in srgb, var(--mx-orange) 22%, transparent);
+  color: inherit;
+  padding: 0 0.08em;
+  border-radius: 1px;
+}

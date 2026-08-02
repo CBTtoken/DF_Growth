@@ -31,6 +31,12 @@ export function Text({ content }: { content: RichText }) {
     out.push(
       mark.kind === "bold" ? (
         <strong key={i}>{slice}</strong>
+      ) : mark.kind === "highlight" ? (
+        // A mark element rather than a span with a colour, so the emphasis
+        // survives being read aloud and being printed in one colour.
+        <mark key={i} className="mx-mark">
+          {slice}
+        </mark>
       ) : (
         <em key={i}>{slice}</em>
       )

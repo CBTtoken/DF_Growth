@@ -250,6 +250,54 @@ heading("Copyfitting never promises a saving it cannot deliver");
   }
 }
 
+heading("Emphasis survives the writer typing");
+// Marks are character offsets, so every edit to the text moves them. Get
+// this wrong and bold appears on words nobody emphasised, which is worse
+// than having no emphasis at all.
+{
+  const { toggleMark, clearMarks, shiftMarks, hasMark } = await import("../src/lib/emag/marks.ts");
+
+  const base = { text: "The women who raised us." };
+  const bold = toggleMark(base, 4, 9, "bold"); // "women"
+
+  check("marks the selected words and nothing else", bold.marks.length === 1 && bold.text.slice(bold.marks[0].start, bold.marks[0].end) === "women");
+  check("the text is never touched", bold.text === base.text);
+
+  // Typing before the mark must carry it along.
+  const after = shiftMarks(bold, "Only the women who raised us.");
+  check("typing before a mark moves it with the words", after.text.slice(after.marks[0].start, after.marks[0].end) === "women");
+
+  // Typing after it must not.
+  const later = shiftMarks(bold, "The women who raised all of us.");
+  check("typing after a mark leaves it alone", later.text.slice(later.marks[0].start, later.marks[0].end) === "women");
+
+  // Deleting the marked words must take the mark with them, or the mark
+  // ends up on whatever text slides into the gap.
+  const gone = shiftMarks(bold, "The  who raised us.");
+  check("deleting marked words removes the mark", (gone.marks ?? []).length === 0);
+
+  // Typing over them is a different act and inherits the emphasis, which is
+  // what every writing tool does and what a writer correcting a bold word
+  // expects. Asserted so the difference is a decision on the record rather
+  // than an accident of the diff.
+  const replaced = shiftMarks(bold, "The people who raised us.");
+  check("typing over marked words keeps the emphasis", replaced.text.slice(replaced.marks[0].start, replaced.marks[0].end) === "people");
+
+  // Toggling twice is the same as never having done it.
+  const off = toggleMark(bold, 4, 9, "bold");
+  check("applying twice takes it off again", (off.marks ?? []).length === 0);
+
+  // Un-emphasising the middle of a run splits it in two.
+  const sentence = toggleMark({ text: "one two three four" }, 0, 18, "bold");
+  const split = clearMarks(sentence, 4, 7);
+  check("clearing the middle of a run splits it", split.marks.length === 2);
+  check("and leaves the outer words marked", hasMark(split, 0, 3, "bold") && hasMark(split, 8, 18, "bold"));
+
+  // Three kinds, all reaching the renderer.
+  const three = toggleMark(toggleMark(toggleMark({ text: "abcdef" }, 0, 2, "bold"), 2, 4, "italic"), 4, 6, "highlight");
+  check("bold, italic and highlight can coexist", new Set(three.marks.map((m) => m.kind)).size === 3);
+}
+
 heading("The page furniture leaves the room it says it does");
 {
   const chrome = liveHeightMm({});

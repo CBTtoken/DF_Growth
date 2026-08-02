@@ -17,11 +17,20 @@ export function DeleteArticleButton({
   editionId,
   title,
   onDelete,
+  /**
+   * Sitting in a row on the edition list rather than alone under an editor.
+   *
+   * Same two clicks and the same confirmation wording. Only the resting
+   * state is quieter, because a list of two dozen articles with a loud
+   * Delete on every line reads as a screen about deleting things.
+   */
+  compact = false,
 }: {
   articleId: string;
   editionId: string;
   title: string;
   onDelete: (id: string, editionId: string) => Promise<void>;
+  compact?: boolean;
 }) {
   const [armed, setArmed] = useState(false);
   const [busy, startBusy] = useTransition();
@@ -29,8 +38,13 @@ export function DeleteArticleButton({
 
   if (!armed) {
     return (
-      <button type="button" onClick={() => setArmed(true)} style={quiet}>
-        Delete this article
+      <button
+        type="button"
+        onClick={() => setArmed(true)}
+        style={compact ? subtle : quiet}
+        aria-label={`Delete ${title}`}
+      >
+        {compact ? "Delete" : "Delete this article"}
       </button>
     );
   }
@@ -81,4 +95,14 @@ const danger = {
   fontSize: 13,
   fontWeight: 700,
   cursor: "pointer",
+};
+
+const subtle = {
+  border: "1px solid rgba(30,32,32,0.16)",
+  background: "transparent",
+  color: "#8a8681",
+  padding: "5px 10px",
+  fontSize: 12,
+  cursor: "pointer",
+  whiteSpace: "nowrap" as const,
 };
