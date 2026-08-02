@@ -1,6 +1,50 @@
 # CLAUDE.md: DigitalFlyer Growth
 Production build specification. Self-contained, hand directly to Claude Code. Sub-brand of DigitalFlyer SA.
 
+## 0.0 How we work in this repo
+
+Read this before touching anything. Several Claude sessions run against this
+repository at the same time, on different products, and they cannot see each
+other. These rules exist because that has already caused a rejected push and
+came close to causing worse.
+
+This repository holds more than one product: Growth, KatisoBiz, Kwaai Press,
+The Desk, and the Moxie site. They share auth, Supabase wiring and a
+deployment, which is why they share a repository. Do not "tidy" that by
+splitting them.
+
+**Never force push. Not with `--force`, not with `--force-with-lease`, not to
+main and not to a shared branch.** If a push is rejected, another session has
+done work you cannot see. Fetch, look at what landed, rebase on top, and
+check whether your files overlap theirs before continuing. A rejected push is
+the safety net working, not an obstacle.
+
+**Check what landed before you rebase.** `git diff --name-only HEAD...origin/main`
+tells you whether the other session touched anything you touched. If it did,
+read their version before assuming your change still makes sense.
+
+**Main deploys to production the moment it is pushed.** There is no staging
+step. Anything you put on main is live to customers, so main gets finished,
+verified work only. If you need a URL to test on, use a branch deployment.
+
+**Do not commit another session's work.** `git add -A` in this repository will
+sweep up whatever a parallel session has in the working tree. Add the paths
+you actually changed. If you find uncommitted work that is not yours, leave
+it alone and say so rather than committing or reverting it.
+
+**One workstream, one branch, named for the work.** Branch off current main,
+keep it short-lived, and merge deliberately. Long-lived branches drift: at the
+time of writing `handoff-02-contact-actions` is twenty commits ahead and
+twenty-three behind, and two of its commits also exist on main under different
+hashes because they had to be cherry-picked out.
+
+**Verify against the live site with a string the page actually renders.** Not
+a build log, not an HTTP 200 on a route that redirects. Both defects that
+reached Dewald's screen were invisible to a status code.
+
+**Ask before deleting anything shared**: a branch, a table, a bucket, a row of
+his data. Test data you created yourself is still his call.
+
 ## 0. Before you build anything
 
 This project integrates with Meta's Graph API, Pixel, and Conversions API. Meta changes these frequently and without much notice (attribution windows removed January 2026, Offline Conversions API retired in favor of CAPI/Datasets in May 2025, a new one-click CAPI option shipped April 2026). Verify current CAPI endpoint versions, required fields, and event deduplication rules against Meta's live developer documentation before implementing Section 7, even though the pattern below is correct as of this writing.
