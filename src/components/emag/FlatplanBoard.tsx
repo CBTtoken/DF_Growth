@@ -20,6 +20,22 @@ type Props = {
   problems: Problem[];
   canEdit: boolean;
   onSave: (editionId: string, orderedIds: string[]) => Promise<void>;
+  /**
+   * Takes a block out of this edition's running order.
+   *
+   * Dewald, 2 August 2026: "there is no way to remove or delete or mark what
+   * should not go in this edition". There was not. The server action had
+   * existed since the flatplan was built and nothing on the screen ever
+   * called it, so an article dragged into an edition was in it for good.
+   *
+   * Worth being exact about what this does, because the wording on the
+   * button is the only thing standing between a publisher and a bad
+   * assumption: it removes the block from THIS edition. The article, its
+   * pictures and its approved page breaks are untouched and can be put
+   * straight back, or held for next month, which is usually the actual
+   * intention.
+   */
+  onRemove: (editionId: string, blockId: string) => Promise<void>;
 };
 
 /**
@@ -58,12 +74,38 @@ function renumber(rows: Row[]): Row[] {
   });
 }
 
-export function FlatplanBoard({ editionId, blocks, problems, canEdit, onSave }: Props) {
+export function FlatplanBoard({
+  editionId,
+  blocks,
+  problems,
+  canEdit,
+  onSave,
+  onRemove,
+}: Props) {
   const [rows, setRows] = useState<Row[]>(() => renumber(blocks));
   const [dragging, setDragging] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  // Which row is asking "are you sure". Held per row rather than as one
+  // dialog, so the confirmation appears on the thing being removed and it
+  // is impossible to confirm the wrong one.
+  const [confirming, setConfirming] = useState<string | null>(null);
+
+  function remove(row: Row) {
+    setError(null);
+    setConfirming(null);
+    startSaving(async () => {
+      try {
+        await onRemove(editionId, row.id);
+        // Dropped from the local list too, rather than waiting for the
+        // server round trip, so the page numbers below it renumber at once.
+        setRows((current) => renumber(current.filter((r) => r.id !== row.id)));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Could not take that out of the edition.");
+      }
+    });
+  }
 
   function move(fromId: string, toId: string) {
     if (fromId === toId) return;
@@ -209,6 +251,39 @@ export function FlatplanBoard({ editionId, blocks, problems, canEdit, onSave }: 
                   >
                     Down
                   </button>
+
+                  {/* Two taps, because the first one is easy to hit while
+                      dragging. The confirmation says where the work goes
+                      rather than asking "are you sure", which tells a
+                      publisher nothing they did not already know. */}
+                  {confirming === row.id ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => remove(row)}
+                        disabled={saving}
+                        style={confirmButton}
+                      >
+                        Take out, keep the work
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirming(null)}
+                        style={nudgeButton}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setConfirming(row.id)}
+                      style={nudgeButton}
+                      aria-label={`Take ${row.label} out of this edition`}
+                    >
+                      Take out
+                    </button>
+                  )}
                 </span>
               ) : null}
             </li>
@@ -273,6 +348,19 @@ const nudgeButton = {
   background: "#fff",
   padding: "4px 9px",
   fontSize: 12,
+  cursor: "pointer",
+};
+
+// Orange rather than red. Taking a block out of an edition is a planning
+// decision, not a deletion, and dressing it as a danger would misrepresent
+// what the button does.
+const confirmButton = {
+  border: 0,
+  background: "#c85a1e",
+  color: "#fff",
+  padding: "4px 9px",
+  fontSize: 12,
+  fontWeight: 600,
   cursor: "pointer",
 };
 

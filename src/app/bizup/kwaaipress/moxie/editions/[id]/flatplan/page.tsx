@@ -5,7 +5,7 @@ import { requirePublisher } from "@/lib/emag/access";
 import { describeBlock, loadFlatplan, planPages } from "@/lib/emag/flatplan";
 import { FlatplanBoard, type Row } from "@/components/emag/FlatplanBoard";
 import { MoxieNav } from "@/components/emag/MoxieNav";
-import { saveOrder } from "./actions";
+import { saveOrder, removeBlock } from "./actions";
 
 // The flatplan. One screen, every block in the edition, drag to reorder.
 //
@@ -72,6 +72,7 @@ export default async function FlatplanPage({ params }: { params: Promise<{ id: s
           problems={plan.problems}
           canEdit={edition.status !== "published"}
           onSave={saveOrder}
+          onRemove={removeBlock}
         />
 
         {edition.status === "published" ? (

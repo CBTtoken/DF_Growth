@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getPublication, requireEmagUser } from "@/lib/emag/access";
 import { loadArticle } from "@/lib/emag/articles";
-import { MOXIE, type LayoutKey, type PillarKey } from "@/lib/emag/publication";
+import { MOXIE, type LayoutKey } from "@/lib/emag/publication";
 import { ArticleEditor } from "@/components/emag/ArticleEditor";
 import { PictureManager } from "@/components/emag/PictureManager";
 import { MoxieNav } from "@/components/emag/MoxieNav";
@@ -126,6 +126,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
   );
 }
 
-// Kept next to the page it serves rather than in publication.ts, because it
-// is only ever the default for a brand new article.
-export const DEFAULT_PILLAR: PillarKey = "discover";
+// A page.tsx may only export a fixed set of names, and an extra one is a
+// type error against Next's generated route types. This was an unused
+// DEFAULT_PILLAR that nothing imported, so it is simply gone rather than
+// moved. If a default pillar is ever needed again it belongs in
+// publication.ts with the rest of the publication's own values.

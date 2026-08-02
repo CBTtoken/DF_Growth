@@ -20,6 +20,57 @@ import type { LayoutKey } from "@/lib/emag/publication";
 
 const MM_PER_PX = 25.4 / 96;
 
+/**
+ * The page's own geometry, read from the page rather than assumed.
+ *
+ * This closed a fault that was invisible for as long as nobody used the
+ * feature that triggers it. The footer height and the top rule are editable
+ * on the Settings screen, but pagination called liveHeightMm({}) with no
+ * arguments, so it always assumed the 10mm footer and 4mm rule from the
+ * stylesheet. Change either one and every article in the publication runs
+ * over by exactly that difference, on every page, with no warning anywhere.
+ * Moxie has no overrides saved yet, which is the only reason it never
+ * showed.
+ *
+ * Threading the design values down through props would have worked and
+ * would have been the wrong fix. A hand-written list of fields has already
+ * caused two defects in this build, both times because somebody added a
+ * setting and did not add it to the list. The values are declared once, as
+ * custom properties, and the browser has already resolved them.
+ *
+ * Measured rather than parsed. A custom property comes back as the token as
+ * written, "10mm" today and possibly "38px" or "1cm" after somebody edits a
+ * unit in design.ts, and a parser that understands only millimetres would
+ * fail silently in exactly the same way this fix exists to prevent. Giving
+ * a probe the height and asking how tall it got is unit-proof.
+ */
+function readPageGeometry(host: HTMLElement) {
+  const probe = document.createElement("div");
+  probe.style.position = "absolute";
+  probe.style.visibility = "hidden";
+  probe.style.pointerEvents = "none";
+  host.appendChild(probe);
+
+  const mm = (cssVar: string, fallbackMm: number) => {
+    probe.style.height = `var(${cssVar})`;
+    const px = probe.getBoundingClientRect().height;
+    // An unknown variable leaves the height unset, which reads as zero. The
+    // stylesheet default is a better answer than a page of no height.
+    return px > 0 ? px * MM_PER_PX : fallbackMm;
+  };
+
+  const geometry = {
+    pageHeightMm: mm("--mx-page-h", 297),
+    topRuleMm: mm("--mx-topbar-h", 4),
+    labelBarMm: mm("--mx-head-h", 6),
+    footerMm: mm("--mx-foot-h", 10),
+    bodyTopMm: mm("--mx-body-top", 2),
+  };
+
+  host.removeChild(probe);
+  return geometry;
+}
+
 export type MeasureState = {
   pages: RenderedPage[];
   problems: string[];
@@ -139,13 +190,17 @@ export function useMeasuredPages(args: {
     const openerEl = openerRef.current;
     const openerHeightMm = openerEl ? openerEl.getBoundingClientRect().height * MM_PER_PX : 0;
 
+    // The live area, from this publication's own geometry rather than from
+    // the stylesheet defaults. See readPageGeometry.
+    const liveMm = liveHeightMm(readPageGeometry(probe));
+
     const result = paginate({
       head,
       layout,
       opener,
       openerHeightMm,
       blocks: measured,
-      liveHeightMm: liveHeightMm({}),
+      liveHeightMm: liveMm,
       tighten,
     });
 
@@ -185,7 +240,7 @@ export function useMeasuredPages(args: {
       ready: true,
       measured,
       openerHeightMm,
-      liveHeightMm: liveHeightMm({}),
+      liveHeightMm: liveMm,
     });
   }, [blocks, head, layout, opener, tighten, openerRef, probeRef]);
 

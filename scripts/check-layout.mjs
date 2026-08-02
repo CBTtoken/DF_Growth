@@ -21,6 +21,7 @@
 // forty assertions would be a dependency, a config file and a new thing to
 // learn, for something plain Node does perfectly well.
 
+import { readFileSync } from "node:fs";
 import { registerHooks } from "node:module";
 
 // The engine is TypeScript and imports its neighbours without file
@@ -254,6 +255,35 @@ heading("The page furniture leaves the room it says it does");
   const chrome = liveHeightMm({});
   check("the live area is under a full page", chrome > 0 && chrome < 297, `${chrome.toFixed(1)}mm`);
   check("and leaves room for the rule, the label bar and the footer", 297 - chrome >= 20, `${(297 - chrome).toFixed(1)}mm of furniture`);
+
+  // A taller footer must take room away, millimetre for millimetre.
+  const deeper = liveHeightMm({ footerMm: 30 });
+  check("a deeper footer takes the room from the live area", Math.abs((chrome - deeper) - 20) < 0.001, `${(chrome - deeper).toFixed(1)}mm less`);
+}
+
+heading("The measuring column reads the real page geometry");
+{
+  // Not a layout rule so much as a guard on one.
+  //
+  // The footer height and top rule are editable in Settings, and for a while
+  // pagination ignored them completely: it called liveHeightMm with no
+  // arguments and always assumed the stylesheet defaults. Nothing looked
+  // wrong, because no publication had overrides saved. The first one to edit
+  // a footer would have had every article in the magazine run over by
+  // exactly that difference, silently, on every page.
+  //
+  // The arithmetic above cannot catch that, because the fault was never in
+  // the arithmetic. It was in the one caller that never passed anything in.
+  // So this reads the source.
+  const src = readFileSync(new URL("../src/components/emag/useMeasuredPages.ts", import.meta.url), "utf8");
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+  const bare = code.match(/liveHeightMm\(\s*\{\s*\}\s*\)/g) ?? [];
+
+  // One is allowed, and only one: the initial state, set before any DOM
+  // exists to measure. Every call made while measuring must pass the
+  // geometry it read from the page.
+  check("pagination does not assume the default page furniture", bare.length <= 1, `${bare.length} bare call${bare.length === 1 ? "" : "s"}`);
+  check("the geometry is read from the rendered page", code.includes("readPageGeometry(probe)"));
 }
 
 console.log("");
