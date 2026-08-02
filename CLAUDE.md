@@ -45,6 +45,31 @@ reached Dewald's screen were invisible to a status code.
 **Ask before deleting anything shared**: a branch, a table, a bucket, a row of
 his data. Test data you created yourself is still his call.
 
+### Which code is safe to change, and which is load-bearing
+
+Each product owns three spaces and should stay inside them: a route prefix
+and hostname (routed in `src/proxy.ts`), a code folder pair
+(`src/lib/<product>` and `src/components/<product>`), and a table prefix in
+Supabase (`emag_*`, `desk_*`).
+
+They are not equally isolated, measured 2026-08-02 by counting the files
+outside each product that import its library:
+
+- `src/lib/emag` (Kwaai Press): **nothing outside it depends on it.** Safe to
+  change freely.
+- `src/lib/desk` (The Desk): **nothing outside it depends on it.** Same.
+- `src/lib/bizup` (KatisoBiz): **twenty files outside it depend on it**,
+  including login routing, the dashboard, the Paystack webhook, the admin
+  screens, two cron routes and The Board. This is the spine the rest grew
+  around. Changing a signature here can break a product you are not working
+  on, so read the callers first.
+- `src/lib/auth`, `src/lib/supabase` and `src/proxy.ts` are shared by
+  everything. Treat any change to them as affecting all five products.
+
+A new product should be built to look like Kwaai Press rather than like
+KatisoBiz: its own folders, its own table prefix, and no other product
+importing it.
+
 ## 0. Before you build anything
 
 This project integrates with Meta's Graph API, Pixel, and Conversions API. Meta changes these frequently and without much notice (attribution windows removed January 2026, Offline Conversions API retired in favor of CAPI/Datasets in May 2025, a new one-click CAPI option shipped April 2026). Verify current CAPI endpoint versions, required fields, and event deduplication rules against Meta's live developer documentation before implementing Section 7, even though the pattern below is correct as of this writing.
