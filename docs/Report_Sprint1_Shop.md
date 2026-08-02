@@ -124,6 +124,26 @@ Safe to delete whenever you like. Nothing else in the estate was touched.
 
 ---
 
+## ADDENDUM: BUYER PROTECTION AND POPIA (2 August, after Dewald's questions)
+
+Dewald asked whether we are protected against fake orders and bots, how delivery addresses are handled, and whether buyers should have to register an account before paying, for POPIA and to protect members. He chose to get the protection without the registration gate. Shipped and verified live in commit `8126f65`.
+
+**Turnstile is now on checkout.** It was the only public form in this codebase without it, while reviews, board posts, events, agent applications and the KatisoBiz signup all had it, and it was the most worth abusing. Verified live on the real domain: the widget solves invisibly in under half a second, so an ordinary buyer sees nothing, and a submission without a valid token is refused with no order created.
+
+**A repeat-order throttle that survives a cold start.** The existing in-memory limiter lives in one serverless instance and resets constantly, so it cannot see a flood spread over an hour or across instances. The new check asks the database, and keys on the phone number rather than the IP address, because an office or a mobile network puts a lot of real buyers behind one address. Five unpaid orders from one number to one seller within an hour is the ceiling. Only unpaid orders count, so a real repeat customer who keeps paying is never blocked.
+
+**A POPIA line at checkout**, above the button rather than buried in a policy: what is collected, what for, and that the seller is who receives it. Marketing stays a separate, unticked question, because bundling it into the act of buying is exactly the bundled consent POPIA does not accept.
+
+**Order tracking without an account.** Every order already had its own unguessable status page showing live payment and fulfilment state. It just was not offered as one. It is now named as the tracking link on the confirmation and in the buyer's email, with a "bookmark this" for the buyer who gave no email address, plus a lookup page that emails the links back to the address that placed the orders. No password: an email address is not a secret, but the inbox behind it is. The reply is identical whether or not anything was found, so this cannot be used to ask a stranger's shop whether a particular person has bought from them.
+
+**On the account question itself.** Requiring registration would have increased the POPIA obligation rather than reduced it, since it means holding more personal data on more people for longer, with access, correction, deletion and breach duties attached to all of it. It would not have stopped fraud either, because an unverified account takes twenty seconds to create. What it would reliably have done is lose first-time buyers on a phone, which is the one thing the handoff is most emphatic about.
+
+**Not built, needs a decision:** verifying the buyer's phone number. There is no SMS provider anywhere in this stack, and the WhatsApp integration only sends free-form text, which Meta permits only inside a 24-hour window the customer opens by messaging first. A cold verification code needs a paid WhatsApp authentication template plus Meta approval, or a new SMS vendor. Both are new paid services, so this is flagged rather than assumed.
+
+**Delivery addresses, unchanged by Dewald's call.** Structured fields, asked for only when the buyer picks delivery, checked for presence and nothing more. A typo produces a wrong courier quote. Google Places autocomplete stays deferred.
+
+---
+
 ## READY FOR SPRINT 2
 
 Sprint 1 is done and live, so the real client can go in now. The one thing they will not have until Sprint 2 is the ability to take card payments themselves, and until then their shop runs the no-gateway path, which is the normal case the handoff describes rather than a degraded one.
