@@ -220,9 +220,34 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
   let buffer: string[] = [];
   let tableRows: string[] = [];
   let rowsBuffer: { tag: string; title: string }[] = [];
+  // A heading waiting to find out whether it labels a table or introduces
+  // text. See the heading branch below.
+  let pendingHeading: string | null = null;
+  let listBuffer: string[] = [];
   // Set when a bare label such as **MOXIE TIP** has just been seen and the
   // next paragraph belongs to it rather than to the body.
   let pending: "tip" | null = null;
+
+  // Every block goes through here, so a heading that turned out to
+  // introduce text is emitted immediately before whatever it introduces.
+  const pushBlock = (block: Block) => {
+    if (!current) return;
+    if (pendingHeading) {
+      // Pushed straight onto the list, not back through pushBlock, which
+      // would call itself forever.
+      const heading = pendingHeading;
+      pendingHeading = null;
+      current.blocks.push({ type: "subhead", text: heading });
+    }
+    current.blocks.push(block);
+  };
+
+  const flushList = () => {
+    if (!listBuffer.length) return;
+    const items = listBuffer;
+    listBuffer = [];
+    pushBlock({ type: "list", items: items.map((i) => text(i)) });
+  };
 
   const flushParagraph = () => {
     if (!buffer.length) return;
@@ -231,11 +256,11 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
     if (!joined || !current) return;
 
     if (pending === "tip") {
-      current.blocks.push({ type: "tip", content: text(joined) });
+      pushBlock({ type: "tip", content: text(joined) });
       pending = null;
       return;
     }
-    current.blocks.push({ type: "p", content: text(joined) });
+    pushBlock({ type: "p", content: text(joined) });
   };
 
   const flushTable = () => {
@@ -245,7 +270,7 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
     if (!current) return;
 
     const block = tableToStats(rows);
-    if (block) current.blocks.push(block);
+    if (block) pushBlock(block);
     else current.unplaced.push(rows.join("\n"));
   };
 
@@ -253,11 +278,12 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
     if (!rowsBuffer.length) return;
     const rows = rowsBuffer;
     rowsBuffer = [];
-    if (current) current.blocks.push({ type: "rows", rows });
+    pushBlock({ type: "rows", rows });
   };
 
   const flushAll = () => {
     flushParagraph();
+    flushList();
     flushRows();
     flushTable();
   };
@@ -269,10 +295,25 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
     // A table accumulates until something that is not a table row.
     if (trimmed.startsWith("|")) {
       flushParagraph();
+      flushList();
+      // A heading immediately above a table was labelling it, like
+      // "FOUR-COLUMN FACT GRID". The grid says what it is; the label is
+      // instruction, not content.
+      pendingHeading = null;
       tableRows.push(trimmed);
       continue;
     }
     if (tableRows.length) flushTable();
+
+    // A bullet list. The recipe card is thirty-five of these, and they used
+    // to arrive as prose with dashes in front of it.
+    const bullet = trimmed.match(/^[-*+]\s+(.+)$/);
+    if (bullet) {
+      flushParagraph();
+      listBuffer.push(bullet[1].trim());
+      continue;
+    }
+    if (listBuffer.length && trimmed) flushList();
 
     // An article heading: "# PAGE 03 · EDITOR'S LETTER".
     const heading = trimmed.match(/^#\s+PAGES?\s+([0-9-]+)\s*·\s*(.+)$/i);
@@ -307,14 +348,31 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
       // "OPENER" names the layout rather than the section, so it is not a
       // subheading anybody should read.
       if (!/^opener$/i.test(title)) {
-        current.blocks.push({ type: "subhead", text: title });
+        pushBlock({ type: "subhead", text: title });
       }
       continue;
     }
 
-    // "### FOUR-COLUMN FACT GRID" labels the table that follows it.
-    if (/^#{2,4}\s/.test(trimmed)) {
+    // Any other heading.
+    //
+    // These used to be thrown away, on the theory that they only ever
+    // labelled a table. Dewald, 2 August 2026: "the recipe section, I see we
+    // skipped that part." Quite so. A recipe card is nothing but headings:
+    // "VETKOEK", "Makes 12 · Preparation 20 minutes", "FOR THE DOUGH", "FOR
+    // THE CURRIED MINCE", "METHOD". Dropping them turned a recipe into an
+    // unlabelled wall of ingredients.
+    //
+    // So a heading is a subheading, unless the next thing is a table, in
+    // which case it was labelling the table and the table speaks for itself.
+    // Held rather than emitted, because whether it is a label is not known
+    // until the following line arrives.
+    const other = trimmed.match(/^#{1,6}\s+(.+)$/);
+    if (other) {
       flushAll();
+      // Stripped of markup: a subheading is a plain string, so it cannot
+      // carry marks and must not carry asterisks either. The fidelity
+      // check caught three of these leaking through as "**30**".
+      pendingHeading = richFromMarkdown(other[1].trim()).text;
       continue;
     }
 
@@ -335,7 +393,7 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
       const quoted = afterLabel(inner, labels.pullquote);
       if (quoted !== null && quoted.length > 0) {
         flushAll();
-        current.blocks.push({ type: "pullquote", content: text(quoted), tone: "orange" });
+        pushBlock({ type: "pullquote", content: text(quoted), tone: "orange" });
         continue;
       }
       flushAll();
@@ -407,7 +465,7 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
     const quote = afterLabel(trimmed, labels.pullquote);
     if (quote !== null) {
       flushAll();
-      current.blocks.push({ type: "pullquote", content: text(quote), tone: "orange" });
+      pushBlock({ type: "pullquote", content: text(quote), tone: "orange" });
       continue;
     }
 
@@ -417,7 +475,7 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
       // No CTA block exists, so it lands as a paragraph and is reported.
       // Better a visible paragraph the publisher can restyle than a silently
       // invented block type.
-      current.blocks.push({ type: "p", content: text(cta) });
+      pushBlock({ type: "p", content: text(cta) });
       current.notes.push(`Call to action, placed as a paragraph: ${cta}`);
       continue;
     }
@@ -430,7 +488,7 @@ export function parseCopyPack(source: string, labels: PackLabels = MOXIE_LABELS)
       if (name.toUpperCase() === labels.tip.toUpperCase()) {
         pending = "tip";
       } else {
-        current.blocks.push({ type: "subhead", text: name });
+        pushBlock({ type: "subhead", text: name });
       }
       continue;
     }
