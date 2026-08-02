@@ -1,34 +1,38 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireDeskUser } from "@/lib/desk/auth";
-import { untriagedItems } from "@/lib/desk/queries";
+import { splitCapture } from "@/lib/desk/capture";
+import { listItems, listVentures, untriagedItems } from "@/lib/desk/queries";
 import { proposeTriage, type TriageProposal } from "@/lib/desk/triage";
+import { nextDueDate, type DeskItem } from "@/lib/desk/types";
 
 // Server Actions are POST endpoints in their own right, so each one checks
 // the session itself rather than relying on the layout that rendered the
 // form.
+//
+// The screens call most of these from a transition and update themselves
+// first, so what happens here is reconciliation, not the thing the operator
+// is waiting for.
 
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-// Capture. The only required field is the title, and a multi-line paste
-// becomes one item per line: no parsing, no structure, nothing clever.
+function refresh() {
+  revalidatePath("/desk", "layout");
+}
+
+// Capture. A blank line separates items, a single line break does not, and a
+// line that opens with a bullet or a number starts a new one.
 export async function captureItems(
   _prev: { saved?: number; error?: string } | null,
   formData: FormData
 ): Promise<{ saved?: number; error?: string }> {
   await requireDeskUser();
 
-  const raw = String(formData.get("dump") ?? "");
-  const titles = raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-
+  const titles = splitCapture(String(formData.get("dump") ?? ""));
   if (titles.length === 0) return { error: "Nothing to save." };
 
   const supabase = createAdminClient();
@@ -36,156 +40,186 @@ export async function captureItems(
 
   if (error) {
     console.error("desk: capture failed", error);
-    return { error: "Did not save. Try again." };
+    // The text stays in the box on failure. Losing what was typed is the one
+    // thing capture may never do.
+    return { error: "Did not save, so nothing was lost. Try again." };
   }
 
-  revalidatePath("/desk", "layout");
+  refresh();
   return { saved: titles.length };
 }
 
-export type SortState = { proposals?: TriageProposal[]; error?: string; accepted?: number } | null;
+export type SortState = {
+  proposals?: TriageProposal[];
+  error?: string;
+  accepted?: number;
+  dropped?: number;
+} | null;
 
-// Sort. One batched call for the whole set of untriaged items, and nothing
-// is written until Accept.
 export async function sortItems(_prev: SortState, _formData: FormData): Promise<SortState> {
   await requireDeskUser();
 
   const items = await untriagedItems();
   if (items.length === 0) return { error: "Everything already has a next action." };
 
-  const supabase = createAdminClient();
-  const { data: ventureRows } = await supabase
-    .from("desk_items")
-    .select("venture")
-    .not("venture", "is", null)
-    .limit(500);
+  const ventures = (await listVentures()).map((v) => v.name);
+  const { proposals, error, dropped } = await proposeTriage(items, ventures);
 
-  const ventures = [...new Set((ventureRows ?? []).map((row) => row.venture as string))].sort();
-
-  const { proposals, error } = await proposeTriage(items, ventures);
   if (error) return { error };
   if (proposals.length === 0) return { error: "Nothing came back to review." };
 
-  return { proposals };
+  return { proposals, dropped };
 }
 
-// Accept. Reads the edited rows out of the form, so a field the operator
-// changed on screen is what gets written, not what the model proposed.
-export async function acceptTriage(_prev: SortState, formData: FormData): Promise<SortState> {
+export type AcceptRow = {
+  id: string;
+  parts: {
+    title: string;
+    area: string;
+    stream: string;
+    venture: string;
+    effort: string;
+    next_action: string;
+  }[];
+};
+
+// Accept. The rows come from the screen, so a field the operator edited is
+// what gets written, not what the model proposed.
+//
+// A single part updates the item in place. Several parts turn one capture
+// into several items: the original keeps the first span and the rest are
+// inserted alongside it, each carrying its own fields.
+export async function acceptTriage(rows: AcceptRow[]): Promise<{ accepted: number; created: number }> {
   await requireDeskUser();
-
-  const ids = formData.getAll("id").map(String);
   const supabase = createAdminClient();
+
   let accepted = 0;
+  let created = 0;
 
-  for (const id of ids) {
-    const nextAction = String(formData.get(`next_action:${id}`) ?? "").trim();
-    const venture = String(formData.get(`venture:${id}`) ?? "").trim();
-    const area = String(formData.get(`area:${id}`) ?? "business");
-    const effort = String(formData.get(`effort:${id}`) ?? "shallow");
+  for (const row of rows) {
+    const parts = row.parts.filter((part) => part.next_action.trim().length > 0);
+    // A row with no next action anywhere is skipped rather than saved empty,
+    // so it stays in the untriaged pile for the next run.
+    if (parts.length === 0) continue;
 
-    // A row with no next action is skipped rather than saved empty, so it
-    // stays in the untriaged pile for the next run.
-    if (!nextAction) continue;
+    const shape = (part: AcceptRow["parts"][number]) => ({
+      title: part.title,
+      next_action: part.next_action.trim(),
+      venture: part.venture.trim() || null,
+      area: part.area === "personal" ? "personal" : "business",
+      stream: part.stream === "client" || part.stream === "life" ? part.stream : "own",
+      effort: part.effort === "deep" ? "deep" : "shallow",
+      updated_at: new Date().toISOString(),
+    });
 
-    const { error } = await supabase
-      .from("desk_items")
-      .update({
-        next_action: nextAction,
-        venture: venture || null,
-        area: area === "personal" ? "personal" : "business",
-        effort: effort === "deep" ? "deep" : "shallow",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+    const [first, ...rest] = parts;
 
+    const { error } = await supabase.from("desk_items").update(shape(first)).eq("id", row.id);
     if (error) {
       console.error("desk: accept failed", error);
       continue;
     }
     accepted++;
+
+    if (rest.length > 0) {
+      const { error: insertError } = await supabase.from("desk_items").insert(rest.map(shape));
+      if (insertError) console.error("desk: split insert failed", insertError);
+      else created += rest.length;
+    }
   }
 
-  revalidatePath("/desk", "layout");
-  return { accepted };
+  refresh();
+  return { accepted, created };
 }
 
-export async function markDone(formData: FormData) {
+// Done. A recurring item does not end here: it is closed and its next
+// instance is created on the next date, which is the whole reason recurrence
+// exists.
+export async function markDone(id: string): Promise<void> {
   await requireDeskUser();
-  const id = String(formData.get("id") ?? "");
-  const state = String(formData.get("state") ?? "normal");
-
   const supabase = createAdminClient();
+
+  const { data } = await supabase.from("desk_items").select("*").eq("id", id).single();
+  const item = data as DeskItem | null;
+
   await supabase
     .from("desk_items")
     .update({ status: "done", done_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq("id", id);
 
-  redirect(`/desk/today?state=${state}`);
+  if (item && item.recurrence !== "none") {
+    const due = nextDueDate(item.due_date, item.recurrence);
+    await supabase.from("desk_items").insert({
+      title: item.title,
+      area: item.area,
+      stream: item.stream,
+      venture: item.venture,
+      next_action: item.next_action,
+      effort: item.effort,
+      due_date: due,
+      recurrence: item.recurrence,
+      notes: item.notes,
+    });
+  }
+
+  refresh();
 }
 
-// Skip bumps the counter, which is what pushes the item down the order, and
-// hands back the next one immediately. The skipped id travels in the URL so
-// the very next card is guaranteed to be a different item even when only two
-// are left.
-export async function skipItem(formData: FormData) {
+// Skip bumps the counter, which is what pushes the item down the order.
+export async function skipItem(id: string, skipCount: number): Promise<void> {
   await requireDeskUser();
-  const id = String(formData.get("id") ?? "");
-  const state = String(formData.get("state") ?? "normal");
-  const count = Number(formData.get("skip_count") ?? 0);
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_items")
+    .update({ skip_count: skipCount + 1, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  refresh();
+}
+
+export async function blockItem(id: string, name: string): Promise<void> {
+  await requireDeskUser();
+  const who = name.trim();
+  if (!who) return;
 
   const supabase = createAdminClient();
   await supabase
     .from("desk_items")
-    .update({ skip_count: count + 1, updated_at: new Date().toISOString() })
+    .update({ blocked_by: who, blocked_since: today(), updated_at: new Date().toISOString() })
     .eq("id", id);
-
-  redirect(`/desk/today?state=${state}&skipped=${id}`);
+  refresh();
 }
 
-export async function blockItem(formData: FormData) {
+export async function unblockItem(id: string): Promise<void> {
   await requireDeskUser();
-  const id = String(formData.get("id") ?? "");
-  const state = String(formData.get("state") ?? "normal");
-  const name = String(formData.get("blocked_by") ?? "").trim();
-
-  if (!name) redirect(`/desk/today?state=${state}`);
-
-  const supabase = createAdminClient();
-  await supabase
-    .from("desk_items")
-    .update({ blocked_by: name, blocked_since: today(), updated_at: new Date().toISOString() })
-    .eq("id", id);
-
-  redirect(`/desk/today?state=${state}`);
-}
-
-export async function unblockItem(formData: FormData) {
-  await requireDeskUser();
-  const id = String(formData.get("id") ?? "");
-
   const supabase = createAdminClient();
   await supabase
     .from("desk_items")
     .update({ blocked_by: "me", blocked_since: null, updated_at: new Date().toISOString() })
     .eq("id", id);
-
-  revalidatePath("/desk/waiting");
+  refresh();
 }
 
 // Nudge sent. Resets the clock without moving the item, because the point of
 // the count is how long since the last push, not how long since the start.
-export async function nudgeItem(formData: FormData) {
+export async function nudgeItem(id: string): Promise<void> {
   await requireDeskUser();
-  const id = String(formData.get("id") ?? "");
-
   const supabase = createAdminClient();
   await supabase
     .from("desk_items")
     .update({ blocked_since: today(), updated_at: new Date().toISOString() })
     .eq("id", id);
+  refresh();
+}
 
-  revalidatePath("/desk/waiting");
+// Notes, editable wherever an item is open, without a separate screen.
+export async function saveNote(id: string, notes: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_items")
+    .update({ notes: notes.trim() || null, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  refresh();
 }
 
 // The full edit form. This is also where the one rule lives: an item leaves
@@ -211,10 +245,12 @@ export async function saveItem(
 
   const blockedBy = String(formData.get("blocked_by") ?? "me").trim() || "me";
   const existingSince = String(formData.get("blocked_since") ?? "").trim();
+  const stream = String(formData.get("stream") ?? "own");
 
   const patch: Record<string, unknown> = {
     title,
     area: String(formData.get("area") ?? "business") === "personal" ? "personal" : "business",
+    stream: stream === "client" || stream === "life" ? stream : "own",
     venture: String(formData.get("venture") ?? "").trim() || null,
     next_action: String(formData.get("next_action") ?? "").trim() || null,
     effort: String(formData.get("effort") ?? "shallow") === "deep" ? "deep" : "shallow",
@@ -223,6 +259,7 @@ export async function saveItem(
     // himself stops it.
     blocked_since: blockedBy === "me" ? null : existingSince || today(),
     due_date: String(formData.get("due_date") ?? "").trim() || null,
+    recurrence: String(formData.get("recurrence") ?? "none"),
     status,
     park_trigger: status === "parked" ? parkTrigger : null,
     notes: String(formData.get("notes") ?? "").trim() || null,
@@ -240,8 +277,29 @@ export async function saveItem(
     return { error: "Did not save. Check the fields and try again." };
   }
 
-  revalidatePath("/desk", "layout");
+  refresh();
   return { saved: true };
+}
+
+// What done looks like for a venture. The roadmap, without dates or a plan.
+export async function saveVenture(name: string, endState: string, stream: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+
+  await supabase.from("desk_ventures").upsert(
+    {
+      name,
+      end_state: endState.trim() || null,
+      stream: stream === "client" || stream === "life" ? stream : "own",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "name" }
+  );
+
+  // The stream lives on the items too, so changing it here moves the whole
+  // venture rather than only its heading.
+  await supabase.from("desk_items").update({ stream }).eq("venture", name);
+  refresh();
 }
 
 function assetPatch(formData: FormData): Record<string, unknown> {
@@ -290,4 +348,126 @@ export async function deleteAsset(formData: FormData) {
   const supabase = createAdminClient();
   await supabase.from("desk_assets").delete().eq("id", id);
   revalidatePath("/desk/register");
+}
+
+// The go-away section. Free text under headings he names himself.
+export async function saveGoAwayNote(id: string, heading: string, body: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_notes")
+    .update({ heading: heading.trim() || "Untitled", body, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  revalidatePath("/desk/go-away");
+}
+
+export async function addGoAwayNote(heading: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase.from("desk_notes").insert({ heading: heading.trim() || "Untitled", body: "" });
+  revalidatePath("/desk/go-away");
+}
+
+export async function deleteGoAwayNote(id: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase.from("desk_notes").delete().eq("id", id);
+  revalidatePath("/desk/go-away");
+}
+
+// Think. No status, no due date, nothing counting them.
+export async function addIdea(board: string, heading: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_ideas")
+    .insert({ board: board.trim() || "Ideas", heading: heading.trim() || null, body: "" });
+  revalidatePath("/desk/think");
+}
+
+export async function saveIdea(id: string, heading: string, body: string, board: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_ideas")
+    .update({
+      heading: heading.trim() || null,
+      body,
+      board: board.trim() || "Ideas",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+  revalidatePath("/desk/think");
+}
+
+export async function deleteIdea(id: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+  await supabase.from("desk_ideas").delete().eq("id", id);
+  revalidatePath("/desk/think");
+}
+
+// The one bridge out of Think. The idea stays where it is; a copy of it
+// becomes work.
+export async function ideaToItem(id: string): Promise<void> {
+  await requireDeskUser();
+  const supabase = createAdminClient();
+
+  const { data } = await supabase.from("desk_ideas").select("*").eq("id", id).single();
+  if (!data) return;
+
+  const title = [data.heading, data.body].filter(Boolean).join("\n").trim();
+  if (!title) return;
+
+  const { data: created } = await supabase
+    .from("desk_items")
+    .insert({ title, notes: `From Think, board: ${data.board}` })
+    .select("id")
+    .single();
+
+  if (created) {
+    await supabase.from("desk_ideas").update({ became_item_id: created.id }).eq("id", id);
+  }
+
+  refresh();
+}
+
+// The handoff draft. Much of what is in The Desk is work for Claude Code, not
+// for the operator, and this turns the CC group into the shape a handoff
+// starts from. It is a draft: context and acceptance criteria are written by
+// a human.
+export async function draftHandoff(who: string): Promise<string> {
+  await requireDeskUser();
+
+  const items = (await listItems({ status: "open", blockedByMe: false })).filter(
+    (item) => item.blocked_by.toLowerCase() === who.toLowerCase()
+  );
+
+  if (items.length === 0) return "";
+
+  const byVenture = new Map<string, DeskItem[]>();
+  for (const item of items) {
+    const key = item.venture?.trim() || "Unfiled";
+    byVenture.set(key, [...(byVenture.get(key) ?? []), item]);
+  }
+
+  const lines: string[] = [];
+  lines.push(`# Handoff draft, ${new Date().toISOString().slice(0, 10)}`);
+  lines.push("");
+  lines.push("Context and acceptance criteria still to be written by a human.");
+  lines.push("");
+
+  for (const venture of [...byVenture.keys()].sort()) {
+    lines.push(`## ${venture}`);
+    lines.push("");
+    for (const item of byVenture.get(venture)!) {
+      lines.push(`### ${item.title}`);
+      if (item.next_action) lines.push(`Next step: ${item.next_action}`);
+      if (item.notes) lines.push(`Notes: ${item.notes}`);
+      lines.push(`Effort: ${item.effort}`);
+      lines.push("");
+    }
+  }
+
+  return lines.join("\n");
 }

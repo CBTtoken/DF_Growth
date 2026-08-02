@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { getItem } from "@/lib/desk/queries";
 import { ItemForm } from "@/components/desk/ItemForm";
+import { Screen } from "@/components/desk/Shell";
 
-// Every field editable, because the seed data was extracted from the
-// operator's own written record and he will correct it.
+// Every field editable, because the seeded items were an extraction of his
+// own written record and he will correct them.
 export const dynamic = "force-dynamic";
 
 export default async function DeskItemPage({ params }: { params: Promise<{ id: string }> }) {
@@ -12,8 +13,8 @@ export default async function DeskItemPage({ params }: { params: Promise<{ id: s
   if (!item) notFound();
 
   return (
-    <div className="mx-auto max-w-2xl p-5">
+    <Screen back={{ href: "/desk/map", label: "Back" }}>
       <ItemForm item={item} />
-    </div>
+    </Screen>
   );
 }

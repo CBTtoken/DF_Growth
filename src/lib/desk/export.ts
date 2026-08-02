@@ -1,5 +1,5 @@
 import { listAssets, listItems } from "@/lib/desk/queries";
-import { daysLabel, type DeskAsset, type DeskItem } from "@/lib/desk/types";
+import { daysLabel, STREAMS, type DeskAsset, type DeskItem } from "@/lib/desk/types";
 
 // The bridge between this database and every Claude session the operator
 // works in, none of which can see it. Plain markdown, tight enough to paste
@@ -49,20 +49,31 @@ export async function buildExport(): Promise<string> {
   if (open.length === 0) {
     lines.push("Nothing open.");
   } else {
-    const byVenture = new Map<string, DeskItem[]>();
-    for (const item of open) {
-      const key = ventureOf(item);
-      byVenture.set(key, [...(byVenture.get(key) ?? []), item]);
-    }
-    for (const venture of [...byVenture.keys()].sort()) {
+    // Stream first, so anyone reading this can see at once how much of it is
+    // his own work and how much belongs to somebody else.
+    for (const stream of STREAMS) {
+      const inStream = open.filter((item) => item.stream === stream.key);
+      if (inStream.length === 0) continue;
+
       lines.push("");
-      lines.push(`### ${venture}`);
-      for (const item of byVenture.get(venture)!) {
-        const bits: string[] = [item.effort];
-        if (item.due_date) bits.push(`due ${item.due_date}`);
-        if (item.area === "personal") bits.push("personal");
-        lines.push(`- ${item.title} (${bits.join(", ")})`);
-        if (item.next_action) lines.push(`  next: ${item.next_action}`);
+      lines.push(`### ${stream.label} (${inStream.length})`);
+
+      const byVenture = new Map<string, DeskItem[]>();
+      for (const item of inStream) {
+        const key = ventureOf(item);
+        byVenture.set(key, [...(byVenture.get(key) ?? []), item]);
+      }
+
+      for (const venture of [...byVenture.keys()].sort()) {
+        lines.push("");
+        lines.push(`#### ${venture}`);
+        for (const item of byVenture.get(venture)!) {
+          const bits: string[] = [item.effort];
+          if (item.due_date) bits.push(`due ${item.due_date}`);
+          if (item.area === "personal") bits.push("personal");
+          lines.push(`- ${item.title.replace(/\n+/g, " ")} (${bits.join(", ")})`);
+          if (item.next_action) lines.push(`  next: ${item.next_action}`);
+        }
       }
     }
   }

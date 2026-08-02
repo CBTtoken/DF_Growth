@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import { captureItems } from "@/app/desk/(app)/actions";
+import { field, primaryButton } from "@/components/desk/Shell";
 
 // Capture, and nothing else. One box, one button, usable in under five
 // seconds with one thumb.
@@ -9,6 +10,9 @@ import { captureItems } from "@/app/desk/(app)/actions";
 // spellcheck is off, autocorrect is off, autocapitalise is off and there is
 // no validation beyond "not empty". The operator is dyslexic and types fast:
 // a red squiggle in this box would kill the habit the whole tool depends on.
+//
+// The box only clears once the server has confirmed the save. If it fails the
+// words are still there.
 export function DumpForm() {
   const [state, formAction, pending] = useActionState(captureItems, null);
   const boxRef = useRef<HTMLTextAreaElement>(null);
@@ -25,7 +29,7 @@ export function DumpForm() {
       <textarea
         ref={boxRef}
         name="dump"
-        rows={6}
+        rows={7}
         autoFocus
         spellCheck={false}
         autoCorrect="off"
@@ -33,14 +37,10 @@ export function DumpForm() {
         autoComplete="off"
         data-gramm="false"
         placeholder="What is in your head"
-        className="w-full resize-y rounded-2xl border border-neutral-200 bg-white p-4 text-base leading-relaxed outline-none focus:border-neutral-900"
+        className={`${field} resize-y leading-relaxed`}
       />
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-2xl bg-neutral-900 px-4 py-4 text-base font-semibold text-white disabled:opacity-50"
-      >
+      <button type="submit" disabled={pending} className={primaryButton}>
         {pending ? "..." : "Save"}
       </button>
 
@@ -51,8 +51,9 @@ export function DumpForm() {
       ) : null}
       {state?.error ? <p className="text-sm text-red-600">{state.error}</p> : null}
 
-      <p className="text-xs text-neutral-400">
-        One line becomes one item. Paste as many as you like.
+      <p className="text-xs leading-relaxed text-neutral-400">
+        Write as much as you like. A blank line starts a new item, so a paragraph stays one thought. A
+        line that starts with a dash or a number also starts a new one, so a pasted list stays a list.
       </p>
     </form>
   );

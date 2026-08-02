@@ -2,6 +2,18 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  // An escape hatch for building on Dewald's PC only.
+  //
+  // Windows Application Control blocks Next's native compiler binary there,
+  // so the build falls back to WebAssembly, and the WASM path crashes inside
+  // the type-checking step with "invalid type: unit value, expected usize".
+  // That is a toolchain bug, not a type error: `npx tsc --noEmit` on the same
+  // tree passes clean, and CI and Vercel both run the native binary.
+  //
+  // Off unless DESK_LOCAL_BUILD is set, so nothing about a real build
+  // changes. Set it only to produce a local production build for testing.
+  typescript: { ignoreBuildErrors: process.env.DESK_LOCAL_BUILD === "1" },
+
   images: {
     remotePatterns: [
       // Generated social assets and any future uploaded photos/logos live
@@ -75,7 +87,19 @@ const nextConfig: NextConfig = {
       // above, same silent-CSP-block risk: gtag.js loads from
       // googletagmanager.com and sends hits to google-analytics.com, both
       // need explicit allow-listing here or the tag silently never fires.
-      "script-src 'self' 'unsafe-inline' https://connect.facebook.net https://challenges.cloudflare.com https://www.googletagmanager.com",
+      // 'unsafe-eval' in development only. Next's dev-mode React Refresh
+      // runtime evaluates a string, so with this CSP the whole client bundle
+      // throws on load and nothing on any page hydrates locally: buttons do
+      // nothing, forms fall back to a full page post, and it looks exactly
+      // like an app built without JavaScript. Found 2 August 2026 while
+      // trying to test The Desk's instant Done and Skip, after the same
+      // symptom was misread as a browser problem a day earlier.
+      //
+      // Never reaches production: NODE_ENV is 'production' in every build
+      // Vercel runs, so the deployed header is byte for byte what it was.
+      `script-src 'self' 'unsafe-inline'${
+        process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""
+      } https://connect.facebook.net https://challenges.cloudflare.com https://www.googletagmanager.com`,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https://images.pexels.com https://*.supabase.co https://www.facebook.com https://www.googletagmanager.com",
       "font-src 'self' data:",

@@ -24,6 +24,9 @@ const APPS: Record<string, { word: string; background: string; accent: string; t
   board: { word: "Board", background: "#0f1b28", accent: "#e8821a", top: "DF" },
   messages: { word: "Chat", background: "#0f1b28", accent: "#1081b8", top: "DF" },
   katisobiz: { word: "Q & I", background: "#0f1b28", accent: "#10b981", top: "KB-DF" },
+  // The Desk is private, so its icon carries no DF wordmark: it sits on one
+  // person's home screen and says nothing to anyone looking over a shoulder.
+  desk: { word: "Desk", background: "#0f1b28", accent: "#eab308", top: "" },
 };
 
 export async function GET(request: Request, { params }: { params: Promise<{ app: string }> }) {

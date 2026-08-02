@@ -1,5 +1,13 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { DeskAsset, DeskItem, DeskState } from "@/lib/desk/types";
+import type {
+  DeskAsset,
+  DeskIdea,
+  DeskItem,
+  DeskNote,
+  DeskState,
+  DeskStream,
+  DeskVenture,
+} from "@/lib/desk/types";
 
 // Every read and write goes through the service-role client, behind the
 // single-user session gate. The tables have RLS on and no policies, so there
@@ -8,6 +16,7 @@ import type { DeskAsset, DeskItem, DeskState } from "@/lib/desk/types";
 export async function listItems(filter?: {
   status?: DeskItem["status"];
   blockedByMe?: boolean;
+  venture?: string;
 }): Promise<DeskItem[]> {
   const supabase = createAdminClient();
   let query = supabase.from("desk_items").select("*");
@@ -15,10 +24,9 @@ export async function listItems(filter?: {
   if (filter?.status) query = query.eq("status", filter.status);
   if (filter?.blockedByMe === true) query = query.eq("blocked_by", "me");
   if (filter?.blockedByMe === false) query = query.neq("blocked_by", "me");
+  if (filter?.venture) query = query.eq("venture", filter.venture);
 
-  const { data, error } = await query
-    .order("created_at", { ascending: true })
-    .limit(2000);
+  const { data, error } = await query.order("created_at", { ascending: true }).limit(2000);
 
   if (error) {
     console.error("desk: listItems failed", error);
@@ -37,56 +45,48 @@ export async function getItem(id: string): Promise<DeskItem | null> {
   return data as DeskItem;
 }
 
-// The one item. Not a list, not a shortlist, not a list of one with the
-// others below it.
+// The one item, and the two behind it.
 //
-// Wrecked and Sharp both take the oldest open item blocked by nobody but the
-// operator, split on effort. Normal ignores effort and goes by due date.
-// Skipped items sort later everywhere, which is what makes Skip a real
-// action rather than a way of hiding from the same card forever.
-export async function nextItem(state: DeskState, excludeId?: string): Promise<DeskItem | null> {
+// v1 fetched exactly one and made the browser wait for the server on every
+// Skip. The screen still shows one card and only one, but the next two ride
+// along so Done and Skip can swap instantly and reconcile behind.
+export async function nextItems(state: DeskState, exclude: string[] = []): Promise<DeskItem[]> {
   const supabase = createAdminClient();
 
-  let query = supabase
-    .from("desk_items")
-    .select("*")
-    .eq("status", "open")
-    .eq("blocked_by", "me");
+  let query = supabase.from("desk_items").select("*").eq("status", "open").eq("blocked_by", "me");
 
   if (state === "wrecked") query = query.eq("effort", "shallow");
   if (state === "sharp") query = query.eq("effort", "deep");
-  if (excludeId) query = query.neq("id", excludeId);
+  if (exclude.length > 0) query = query.not("id", "in", `(${exclude.join(",")})`);
 
   query = query.order("skip_count", { ascending: true });
-  if (state === "normal") {
-    query = query.order("due_date", { ascending: true, nullsFirst: false });
-  }
-  query = query.order("created_at", { ascending: true }).limit(1);
+  if (state === "normal") query = query.order("due_date", { ascending: true, nullsFirst: false });
+  query = query.order("created_at", { ascending: true }).limit(3);
 
   const { data, error } = await query;
   if (error) {
-    console.error("desk: nextItem failed", error);
-    return null;
+    console.error("desk: nextItems failed", error);
+    return [];
   }
-  return (data?.[0] as DeskItem) ?? null;
+  return (data ?? []) as DeskItem[];
 }
 
-// What was marked done today, in the operator's own timezone. South Africa
-// has no daylight saving, so a fixed +02:00 offset is correct all year and
-// avoids a timezone library for one query.
+function startOfDaySast(): string {
+  // South Africa has no daylight saving, so a fixed +02:00 offset is correct
+  // all year and avoids a timezone library for one query.
+  const sast = new Date(Date.now() + 2 * 60 * 60 * 1000);
+  return new Date(
+    Date.UTC(sast.getUTCFullYear(), sast.getUTCMonth(), sast.getUTCDate()) - 2 * 60 * 60 * 1000
+  ).toISOString();
+}
+
 export async function doneToday(): Promise<DeskItem[]> {
   const supabase = createAdminClient();
-  const now = new Date();
-  const sast = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-  const startOfDaySast = new Date(
-    Date.UTC(sast.getUTCFullYear(), sast.getUTCMonth(), sast.getUTCDate()) - 2 * 60 * 60 * 1000
-  );
-
   const { data, error } = await supabase
     .from("desk_items")
     .select("*")
     .eq("status", "done")
-    .gte("done_at", startOfDaySast.toISOString())
+    .gte("done_at", startOfDaySast())
     .order("done_at", { ascending: true });
 
   if (error) {
@@ -110,8 +110,6 @@ export async function listAssets(): Promise<DeskAsset[]> {
   return (data ?? []) as DeskAsset[];
 }
 
-// Items with no next action yet: the input to Sort, and the only thing the
-// LLM ever sees.
 export async function untriagedItems(): Promise<DeskItem[]> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
@@ -127,4 +125,157 @@ export async function untriagedItems(): Promise<DeskItem[]> {
     return [];
   }
   return (data ?? []) as DeskItem[];
+}
+
+export async function listVentures(): Promise<DeskVenture[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("desk_ventures")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("desk: listVentures failed", error);
+    return [];
+  }
+  return (data ?? []) as DeskVenture[];
+}
+
+export type VentureRollup = {
+  name: string;
+  stream: DeskStream;
+  endState: string | null;
+  status: DeskVenture["status"];
+  open: number;
+  waiting: number;
+  done: number;
+  parked: number;
+  deep: number;
+  shallow: number;
+  known: boolean;
+};
+
+// The grouped view's numbers, counted in one pass over the items rather than
+// one query per venture.
+//
+// deep and shallow count only what is open and on him, because the question
+// they answer is "what can I take on right now", not "what exists".
+export async function ventureRollups(): Promise<VentureRollup[]> {
+  const [items, ventures] = await Promise.all([listItems(), listVentures()]);
+
+  const rows = new Map<string, VentureRollup>();
+  const seed = (name: string, stream: DeskStream, venture?: DeskVenture) => {
+    if (!rows.has(name)) {
+      rows.set(name, {
+        name,
+        stream,
+        endState: venture?.end_state ?? null,
+        status: venture?.status ?? "active",
+        open: 0,
+        waiting: 0,
+        done: 0,
+        parked: 0,
+        deep: 0,
+        shallow: 0,
+        known: Boolean(venture),
+      });
+    }
+    return rows.get(name)!;
+  };
+
+  for (const venture of ventures) seed(venture.name, venture.stream, venture);
+
+  for (const item of items) {
+    const name = item.venture?.trim() || "Unfiled";
+    const row = seed(name, item.stream);
+
+    if (item.status === "done") row.done++;
+    else if (item.status === "parked") row.parked++;
+    else if (item.status === "open" && item.blocked_by !== "me") row.waiting++;
+    else if (item.status === "open") {
+      row.open++;
+      if (item.effort === "deep") row.deep++;
+      else row.shallow++;
+    }
+  }
+
+  return [...rows.values()].sort((a, b) => b.open - a.open || a.name.localeCompare(b.name));
+}
+
+export type HorizonRow = {
+  kind: "item" | "renewal";
+  id: string;
+  date: string;
+  title: string;
+  detail: string | null;
+  effort: DeskItem["effort"] | null;
+  area: DeskItem["area"];
+};
+
+// One flat list of everything dated inside the next 30 days, personal and
+// business together. Not a calendar: he has few appointments and many
+// deadlines, and a month grid is a browsing tool for the opposite problem.
+export async function horizon(days = 30): Promise<HorizonRow[]> {
+  const [items, assets] = await Promise.all([listItems({ status: "open" }), listAssets()]);
+  const cutoff = new Date(Date.now() + days * 86_400_000).toISOString().slice(0, 10);
+
+  const rows: HorizonRow[] = [];
+
+  for (const item of items) {
+    if (!item.due_date || item.due_date > cutoff) continue;
+    rows.push({
+      kind: "item",
+      id: item.id,
+      date: item.due_date,
+      title: item.title,
+      detail: item.venture,
+      effort: item.effort,
+      area: item.area,
+    });
+  }
+
+  for (const asset of assets) {
+    if (!asset.renewal_date || asset.renewal_date > cutoff || asset.status === "cancel") continue;
+    rows.push({
+      kind: "renewal",
+      id: asset.id,
+      date: asset.renewal_date,
+      title: `${asset.name} renews`,
+      detail: asset.provider,
+      effort: null,
+      area: asset.area,
+    });
+  }
+
+  return rows.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+}
+
+export async function listNotes(): Promise<DeskNote[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("desk_notes")
+    .select("*")
+    .order("position", { ascending: true });
+
+  if (error) {
+    console.error("desk: listNotes failed", error);
+    return [];
+  }
+  return (data ?? []) as DeskNote[];
+}
+
+export async function listIdeas(): Promise<DeskIdea[]> {
+  const supabase = createAdminClient();
+  const { data, error } = await supabase
+    .from("desk_ideas")
+    .select("*")
+    .order("board", { ascending: true })
+    .order("position", { ascending: true })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("desk: listIdeas failed", error);
+    return [];
+  }
+  return (data ?? []) as DeskIdea[];
 }

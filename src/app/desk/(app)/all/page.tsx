@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { listItems } from "@/lib/desk/queries";
-import type { DeskStatus } from "@/lib/desk/types";
+import { effortLabel, type DeskStatus } from "@/lib/desk/types";
+import { Screen, card } from "@/components/desk/Shell";
 
-// Everything, filterable, one tap to the full edit form. Not one of the four
-// screens: it exists so that every field of every item is reachable, which
-// matters most while the seed data is still being corrected.
+// Everything, filterable, one tap to the full edit form. Not one of the main
+// screens: it exists so that every field of every item is reachable.
 export const dynamic = "force-dynamic";
 
 const FILTERS: { key: DeskStatus | "all"; label: string }[] = [
@@ -22,13 +22,12 @@ export default async function DeskAllPage({
 }) {
   const { status } = await searchParams;
   const active = FILTERS.find((f) => f.key === status)?.key ?? "open";
-
   const items = await listItems(active === "all" ? undefined : { status: active });
 
   const chip = "rounded-full border px-3 py-1.5 text-xs font-semibold";
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-4 p-5">
+    <Screen title="Everything" back={{ href: "/desk/more", label: "More" }}>
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <Link
@@ -48,13 +47,10 @@ export default async function DeskAllPage({
       <ul className="flex flex-col gap-2">
         {items.map((item) => (
           <li key={item.id}>
-            <Link
-              href={`/desk/item/${item.id}`}
-              className="block rounded-2xl border border-neutral-200 bg-white p-4"
-            >
-              <p className="text-sm">{item.title}</p>
+            <Link href={`/desk/item/${item.id}`} className={`${card} block`}>
+              <p className="text-sm text-neutral-900 whitespace-pre-line">{item.title}</p>
               <p className="mt-1 text-xs text-neutral-400">
-                {item.venture ?? "unfiled"} &middot; {item.effort} &middot;{" "}
+                {item.venture ?? "unfiled"} &middot; {effortLabel(item.effort)} &middot;{" "}
                 {item.blocked_by === "me" ? "on me" : `waiting on ${item.blocked_by}`}
                 {item.status !== "open" ? ` · ${item.status}` : ""}
               </p>
@@ -64,6 +60,6 @@ export default async function DeskAllPage({
       </ul>
 
       {items.length === 0 ? <p className="text-sm text-neutral-500">Nothing here.</p> : null}
-    </div>
+    </Screen>
   );
 }

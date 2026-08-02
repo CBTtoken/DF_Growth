@@ -97,6 +97,11 @@ export function proxy(request: NextRequest) {
   if (firstLabel === "desk") {
     const { pathname } = request.nextUrl;
 
+    // API routes are never rewritten under any hostname. The Desk's home
+    // screen icon is generated at /api/icons/desk, and rewriting that to
+    // /desk/api/icons/desk would 404 the icon the manifest points at.
+    if (pathname.startsWith("/api/")) return NextResponse.next();
+
     // Files with an extension are served as-is, same rule as the KatisoBiz
     // branch: a page route never has a dot in its last segment.
     if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {

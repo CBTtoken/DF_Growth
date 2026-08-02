@@ -2,13 +2,15 @@ import Link from "next/link";
 import { addAsset, deleteAsset, saveAsset } from "@/app/desk/(app)/actions";
 import { listAssets } from "@/lib/desk/queries";
 import type { DeskAsset } from "@/lib/desk/types";
+import { Screen, card, label } from "@/components/desk/Shell";
 
-// Screen 4. Every domain, subscription and account he pays for, with what it
-// costs a month and when it renews. Editable in place, because the whole
-// value is in it being current.
+// Every domain, subscription and account he pays for, with what it costs a
+// month and when it renews. Editable in place, because the whole value is in
+// it being current.
 export const dynamic = "force-dynamic";
 
-const cell = "rounded-lg border border-neutral-200 px-2 py-2 text-sm outline-none focus:border-neutral-900";
+const cell =
+  "rounded-lg border border-neutral-200 px-2 py-2 text-sm outline-none focus:border-neutral-900";
 
 function rand(value: number): string {
   return `R${value.toLocaleString("en-ZA", { maximumFractionDigits: 0 })}`;
@@ -18,6 +20,12 @@ function daysToRenewal(date: string | null): number | null {
   if (!date) return null;
   return Math.floor((new Date(`${date}T00:00:00Z`).getTime() - Date.now()) / 86_400_000);
 }
+
+const TABS = [
+  { key: "business", label: "Business" },
+  { key: "personal", label: "Personal" },
+  { key: "all", label: "All" },
+] as const;
 
 function AssetRow({ asset }: { asset: DeskAsset }) {
   const days = daysToRenewal(asset.renewal_date);
@@ -109,10 +117,7 @@ function AssetRow({ asset }: { asset: DeskAsset }) {
             renews in {days} {days === 1 ? "day" : "days"}
           </span>
         ) : null}
-        <button
-          formAction={deleteAsset}
-          className="ml-auto rounded-lg px-3 py-2 text-xs text-neutral-400"
-        >
+        <button formAction={deleteAsset} className="ml-auto rounded-lg px-3 py-2 text-xs text-neutral-400">
           Remove
         </button>
       </div>
@@ -123,14 +128,15 @@ function AssetRow({ asset }: { asset: DeskAsset }) {
 export default async function DeskRegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ area?: string; sort?: string }>;
+  searchParams: Promise<{ tab?: string; sort?: string }>;
 }) {
-  const { area, sort } = await searchParams;
+  const { tab: tabParam, sort } = await searchParams;
+  const tab = TABS.find((t) => t.key === tabParam)?.key ?? "business";
+
   const all = await listAssets();
+  const inTab = tab === "all" ? all : all.filter((a) => a.area === tab);
 
-  const filtered = area === "personal" || area === "business" ? all.filter((a) => a.area === area) : all;
-
-  const sorted = [...filtered].sort((a, b) => {
+  const sorted = [...inTab].sort((a, b) => {
     if (sort === "cost") return Number(b.cost_zar_monthly ?? 0) - Number(a.cost_zar_monthly ?? 0);
     if (sort === "renewal") {
       if (!a.renewal_date) return 1;
@@ -148,52 +154,63 @@ export default async function DeskRegisterPage({
   });
   const rest = sorted.filter((a) => !renewingSoon.includes(a));
 
-  const active = all.filter((a) => a.status !== "cancel");
-  const sum = (rows: DeskAsset[]) =>
-    rows.reduce((total, a) => total + Number(a.cost_zar_monthly ?? 0), 0);
-  const business = sum(active.filter((a) => a.area === "business"));
-  const personal = sum(active.filter((a) => a.area === "personal"));
+  const active = inTab.filter((a) => a.status !== "cancel");
+  const total = active.reduce((sum, a) => sum + Number(a.cost_zar_monthly ?? 0), 0);
   const unpriced = active.filter((a) => a.cost_zar_monthly === null).length;
 
-  const chip = "rounded-full border px-3 py-1.5 text-xs font-semibold";
-  const on = "border-neutral-900 bg-neutral-900 text-white";
-  const off = "border-neutral-300 bg-white text-neutral-600";
+  const chip = "flex-1 rounded-xl px-3 py-2.5 text-center text-sm font-semibold transition-colors";
 
   return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-5 p-5">
-      <div className="rounded-2xl border border-neutral-200 bg-white p-5">
-        <p className="text-2xl font-semibold">{rand(business + personal)} a month</p>
+    <Screen title="Register" back={{ href: "/desk/more", label: "More" }}>
+      <div className="flex gap-2 rounded-2xl bg-neutral-200/70 p-1">
+        {TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={`/desk/register?tab=${t.key}${sort ? `&sort=${sort}` : ""}`}
+            className={`${chip} ${tab === t.key ? "bg-white text-neutral-900" : "text-neutral-500"}`}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </div>
+
+      <div className={card}>
+        <p className="text-3xl font-semibold text-neutral-900">{rand(total)}</p>
         <p className="mt-1 text-sm text-neutral-500">
-          {rand(business)} business, {rand(personal)} personal
+          a month, {tab === "all" ? "everything" : tab}
         </p>
         {unpriced > 0 ? (
           <p className="mt-2 text-xs text-neutral-400">
-            {unpriced} records have no cost captured, so this is a floor.
+            {unpriced} {unpriced === 1 ? "record has" : "records have"} no cost captured, so this is a
+            floor.
           </p>
         ) : null}
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Link href="/desk/register" className={`${chip} ${!area ? on : off}`}>
-          All
-        </Link>
-        <Link href="/desk/register?area=business" className={`${chip} ${area === "business" ? on : off}`}>
-          Business
-        </Link>
-        <Link href="/desk/register?area=personal" className={`${chip} ${area === "personal" ? on : off}`}>
-          Personal
-        </Link>
+      <div className="flex gap-2">
         <Link
-          href={`/desk/register?${area ? `area=${area}&` : ""}sort=renewal`}
-          className={`${chip} ${sort === "renewal" ? on : off}`}
+          href={`/desk/register?tab=${tab}&sort=renewal`}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+            sort === "renewal" ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 bg-white text-neutral-600"
+          }`}
         >
           By renewal
         </Link>
         <Link
-          href={`/desk/register?${area ? `area=${area}&` : ""}sort=cost`}
-          className={`${chip} ${sort === "cost" ? on : off}`}
+          href={`/desk/register?tab=${tab}&sort=cost`}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+            sort === "cost" ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 bg-white text-neutral-600"
+          }`}
         >
           By cost
+        </Link>
+        <Link
+          href={`/desk/register?tab=${tab}`}
+          className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${
+            !sort ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-300 bg-white text-neutral-600"
+          }`}
+        >
+          By name
         </Link>
       </div>
 
@@ -202,7 +219,7 @@ export default async function DeskRegisterPage({
       ))}
 
       <form action={addAsset} className="flex flex-col gap-2 rounded-2xl border border-dashed border-neutral-300 p-4">
-        <p className="text-xs uppercase tracking-wide text-neutral-400">Add one</p>
+        <p className={label}>Add one</p>
         <input name="name" spellCheck={false} placeholder="Name" className={cell} required />
         <div className="flex gap-2">
           <select name="type" defaultValue="subscription" className={cell}>
@@ -212,7 +229,7 @@ export default async function DeskRegisterPage({
             <option value="tool">tool</option>
             <option value="other">other</option>
           </select>
-          <select name="area" defaultValue="business" className={cell}>
+          <select name="area" defaultValue={tab === "personal" ? "personal" : "business"} className={cell}>
             <option value="business">business</option>
             <option value="personal">personal</option>
           </select>
@@ -228,6 +245,6 @@ export default async function DeskRegisterPage({
           Add
         </button>
       </form>
-    </div>
+    </Screen>
   );
 }
