@@ -91,7 +91,7 @@ export default async function DashboardPreviewPage({
       admin
         .from("shop_products")
         .select(
-          "id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
+          "id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, price_pending, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
         )
         .eq("growth_client_id", client.id)
         .eq("status", "active")

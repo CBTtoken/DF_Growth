@@ -391,7 +391,7 @@ async function priceCart(owner: ShopOwner, cart: CartLine[]): Promise<PricedCart
   const { data: products } = await admin
     .from("shop_products")
     .select(
-      "id, title, sku, base_price_cents, status, track_stock, weight_kg, length_cm, width_cm, height_cm, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
+      "id, title, sku, base_price_cents, status, track_stock, price_pending, weight_kg, length_cm, width_cm, height_cm, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
     )
     .in("id", cart.map((line) => line.productId))
     .eq("growth_client_id", owner.id);
@@ -407,6 +407,7 @@ async function priceCart(owner: ShopOwner, cart: CartLine[]): Promise<PricedCart
     base_price_cents: number;
     status: string;
     track_stock: boolean;
+    price_pending: boolean;
     weight_kg: number | null;
     length_cm: number | null;
     width_cm: number | null;
@@ -430,6 +431,17 @@ async function priceCart(owner: ShopOwner, cart: CartLine[]): Promise<PricedCart
     const product = (products as Row[]).find((p) => p.id === line.productId);
     if (!product || product.status !== "active") {
       return { error: "One of your items is no longer available." };
+    }
+
+    // The last line of defence on an unpriced product. The buy button is
+    // already absent from its page, so reaching here means a stale basket or
+    // somebody posting a product id by hand, and either way the answer is
+    // the same: the stand-in zero in the database is not a price and nothing
+    // gets sold for it.
+    if (product.price_pending) {
+      return {
+        error: `${product.title} does not have a price yet, so it cannot be ordered online. Please contact the seller.`,
+      };
     }
 
     const active = product.shop_product_variants.filter((v) => v.is_active);

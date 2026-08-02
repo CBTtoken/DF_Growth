@@ -5,7 +5,13 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useCart } from "@/components/shop/CartProvider";
 import { readableTextOn } from "@/lib/color";
-import { shopImageUrl, variantPriceCents, type ShopVariant, type StorefrontProduct } from "@/lib/shop/queries";
+import {
+  shopImageUrl,
+  variantPriceCents,
+  PRICE_ON_REQUEST,
+  type ShopVariant,
+  type StorefrontProduct,
+} from "@/lib/shop/queries";
 
 /**
  * The product page's interactive half: pictures, options, one buy action.
@@ -120,9 +126,13 @@ export function ProductDetail({
       <div className="flex flex-col gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">{product.title}</h1>
-          <p className="mt-2 text-2xl font-extrabold" style={{ color: primaryColor }}>
-            R{(priceCents / 100).toFixed(2)}
-          </p>
+          {product.price_pending ? (
+            <p className="mt-2 text-lg font-semibold text-gray-500">{PRICE_ON_REQUEST}</p>
+          ) : (
+            <p className="mt-2 text-2xl font-extrabold" style={{ color: primaryColor }}>
+              R{(priceCents / 100).toFixed(2)}
+            </p>
+          )}
         </div>
 
         {product.description && (
@@ -204,15 +214,28 @@ export function ProductDetail({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleAdd}
-          disabled={outOfStock}
-          className="w-full rounded-full px-6 py-4 text-base font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ backgroundColor: primaryColor, color: buttonText }}
-        >
-          {outOfStock ? "Sold out" : "Add to basket"}
-        </button>
+        {/* A product waiting for its price cannot be bought, and is not
+            offered as though it could be. The stand-in zero in the database
+            must never reach a basket. */}
+        {product.price_pending ? (
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-4 text-sm">
+            <p className="font-semibold text-gray-800">Not yet available to order online</p>
+            <p className="mt-1 text-gray-600">
+              We are still setting the price for this one. Get in touch and we will give you a
+              price and take your order directly.
+            </p>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={outOfStock}
+            className="w-full rounded-full px-6 py-4 text-base font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ backgroundColor: primaryColor, color: buttonText }}
+          >
+            {outOfStock ? "Sold out" : "Add to basket"}
+          </button>
+        )}
 
         {added && (
           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">

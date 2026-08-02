@@ -244,6 +244,20 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     sectionSurface: "light-default",
     servicesLayout: "checklist-compact",
   },
+  // A combination none of the ten above use: the editorial serif paired with
+  // soft cards, pill eyebrows and airy spacing. Storyteller is the other
+  // serif anchor and deliberately goes the opposite way, with hard editorial
+  // rules and no shadow, so the two do not read as the same page.
+  "dual-offer": {
+    id: "dual-offer",
+    headingFont: "serif-editorial",
+    cardRecipe: "soft-shadow",
+    eyebrowStyle: "pill-badge",
+    spacing: "airy",
+    sectionSurface: "light-default",
+    servicesLayout: "spotlight-tiles",
+    packagesLayout: "ambient-stack",
+  },
 };
 
 export function getAnchor(id: TemplateId): TemplateAnchor {

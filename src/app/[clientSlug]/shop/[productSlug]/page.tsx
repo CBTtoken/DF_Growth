@@ -45,7 +45,11 @@ export async function generateMetadata({
   if (!product) return {};
 
   const title = `${product.title} | ${owner.business_name}`;
-  const price = `R${(fromPriceCents(product) / 100).toFixed(2)}`;
+  // The stand-in zero never reaches a search result or a link preview
+  // either, so a product still waiting for its price says so instead.
+  const price = product.price_pending
+    ? "Contact us for a price"
+    : `R${(fromPriceCents(product) / 100).toFixed(2)}`;
   const description = truncateOnWord(
     product.description?.trim()
       ? `${product.description.trim()}`
@@ -184,8 +188,17 @@ function ProductSchema({
     : "https://schema.org/InStock";
   const seller = { "@type": "Organization", name: owner.business_name };
 
-  const offers =
-    low === high
+  // A product with no price yet publishes no offer at all.
+  //
+  // schema.org requires a price on an Offer, so the stand-in zero would go
+  // straight into the structured data and Google would be entitled to show
+  // "R0.00" in a search result for something that is not free. Omitting the
+  // offer costs the rich price snippet and keeps the product indexable,
+  // which is the right trade: the page still says what the thing is, and
+  // nothing anywhere claims a price nobody has set.
+  const offers = product.price_pending
+    ? undefined
+    : low === high
       ? {
           "@type": "Offer",
           url,

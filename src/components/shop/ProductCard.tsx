@@ -5,6 +5,7 @@ import {
   hasChoices,
   isSoldOut,
   shopImageUrl,
+  PRICE_ON_REQUEST,
   type StorefrontProduct,
 } from "@/lib/shop/queries";
 
@@ -69,14 +70,20 @@ export function ProductCard({
 
       <div className="flex flex-1 flex-col gap-1 p-3">
         <p className="line-clamp-2 text-sm font-semibold text-gray-900">{product.title}</p>
-        <p className="mt-auto pt-1 text-sm font-bold" style={{ color: primaryColor }}>
-          {/* "From" only when the options genuinely cost different amounts.
-              Printing "From R120" on a product with one price reads as a
-              starting figure that goes up later, which is the opposite of
-              what it says. */}
-          {hasChoices(product) && from !== product.base_price_cents ? "From " : ""}R
-          {(from / 100).toFixed(2)}
-        </p>
+        {product.price_pending ? (
+          // Never a zero. The stand-in figure in the database is not a price
+          // and must never be shown to a buyer as one.
+          <p className="mt-auto pt-1 text-sm font-semibold text-gray-500">{PRICE_ON_REQUEST}</p>
+        ) : (
+          <p className="mt-auto pt-1 text-sm font-bold" style={{ color: primaryColor }}>
+            {/* "From" only when the options genuinely cost different amounts.
+                Printing "From R120" on a product with one price reads as a
+                starting figure that goes up later, which is the opposite of
+                what it says. */}
+            {hasChoices(product) && from !== product.base_price_cents ? "From " : ""}R
+            {(from / 100).toFixed(2)}
+          </p>
+        )}
       </div>
     </Link>
   );

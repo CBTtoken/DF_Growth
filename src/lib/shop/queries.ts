@@ -33,6 +33,7 @@ export type StorefrontProduct = {
   image_paths: string[];
   is_featured: boolean;
   track_stock: boolean;
+  price_pending: boolean;
   position: number;
   created_at: string;
   variants: ShopVariant[];
@@ -57,7 +58,7 @@ export type ShopOwner = {
 };
 
 const PRODUCT_COLUMNS =
-  "id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)";
+  "id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, price_pending, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)";
 
 type RawProduct = Omit<StorefrontProduct, "variants" | "image_paths"> & {
   image_paths: unknown;
@@ -241,3 +242,19 @@ export function isSoldOut(product: StorefrontProduct): boolean {
   if (!product.track_stock) return false;
   return product.variants.every((v) => v.stock_quantity <= 0);
 }
+
+/**
+ * Whether this product can be put in a basket at all.
+ *
+ * A product waiting for its price is listed, described, indexed and
+ * shareable, but not orderable. That is the honest state for a member who
+ * has sent us their range before their price list: the page does its job of
+ * telling somebody the product exists, and nobody can buy it for the zero
+ * that is standing in for a real figure.
+ */
+export function isBuyable(product: StorefrontProduct): boolean {
+  return !product.price_pending && !isSoldOut(product);
+}
+
+/** What the price line says when there is not a price yet. */
+export const PRICE_ON_REQUEST = "Price on request";

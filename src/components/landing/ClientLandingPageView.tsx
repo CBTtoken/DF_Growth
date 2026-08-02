@@ -28,6 +28,7 @@ import { ChecklistHero } from "@/components/landing/heroes/ChecklistHero";
 import { BentoHero } from "@/components/landing/heroes/BentoHero";
 import { TimelineHero } from "@/components/landing/heroes/TimelineHero";
 import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
+import { DuoHero } from "@/components/landing/heroes/DuoHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -475,6 +476,20 @@ export async function ClientLandingPageView({
       {template.hero === "checklist" && <ChecklistHero {...heroProps} checklistItems={checklistItems} />}
       {template.hero === "bento" && <BentoHero {...heroProps} highlights={checklistItems} ctaHref={template.ctaHref} />}
       {template.hero === "timeline" && <TimelineHero {...heroProps} steps={checklistItems} ctaHref={template.ctaHref} />}
+      {template.hero === "duo" && (
+        <DuoHero
+          {...heroProps}
+          callPhone={client.call_phone}
+          whatsappPhone={client.whatsapp_phone || client.call_phone}
+          // The two doors read best when each says what is actually behind
+          // it, so the shop line names the range rather than saying "shop".
+          shopBlurb={
+            shopProducts.length > 0
+              ? `Browse ${shopProducts.length} product${shopProducts.length === 1 ? "" : "s"} and order online.`
+              : undefined
+          }
+        />
+      )}
       {template.hero === "showcase" && (
         <ShowcaseHero
           {...heroProps}

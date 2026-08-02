@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone } from "lucide-react";
+import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake } from "lucide-react";
 
 // Every "section" a template can arrange, beyond the hero (always first)
 // and the lead form (always last, since #lead-form is the CTA anchor every
@@ -29,7 +29,8 @@ export type TemplateId =
   | "step-by-step"
   | "vibrant-geo"
   | "multi-product"
-  | "app-dashboard";
+  | "app-dashboard"
+  | "dual-offer";
 
 export type HeroVariant =
   | "default"
@@ -42,7 +43,8 @@ export type HeroVariant =
   | "checklist"
   | "bento"
   | "timeline"
-  | "showcase";
+  | "showcase"
+  | "duo";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -156,6 +158,25 @@ export const templates: TemplateMeta[] = [
     icon: MonitorSmartphone,
     hero: "checklist",
     sections: ["about", "story", "services", "packages", "trust", "gallery", "location", "reviews"],
+  },
+  // Built for the first done-for-you client build (WeCare Products), and
+  // kept general because the shape recurs: a business that genuinely does
+  // two separate things and loses half its visitors when a page pretends it
+  // does one. A salon that sells product, a coach who runs workshops and
+  // sells courses, a farm with a shop and a venue.
+  //
+  // The hero ends in two doors instead of one, and the second appears only
+  // when the member actually has products, so a member who picks this
+  // template without a shop still gets a finished page.
+  {
+    id: "dual-offer",
+    name: "Two Sides of the Business",
+    archetype: "Twin call-to-action · warm editorial",
+    description:
+      "For a business that does two things. The hero offers both, and the shop door appears once you have products.",
+    icon: Handshake,
+    hero: "duo",
+    sections: ["about", "services", "story", "packages", "gallery", "trust", "location", "reviews"],
   },
 ];
 

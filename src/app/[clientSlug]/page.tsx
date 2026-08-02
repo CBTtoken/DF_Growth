@@ -150,7 +150,12 @@ export async function generateMetadata({
     title,
     description,
     alternates: { canonical: url },
-    openGraph: { title, description, url, images: [image] },
+    // Growth Build Kit B2 asks for og:locale en_ZA on a client page, and it
+    // was missing here while the shop routes already set it. It tells a
+    // scraper and a link preview which English this is, which is the
+    // difference between a South African buyer seeing a date and a price
+    // written the way they write them and seeing an American one.
+    openGraph: { title, description, url, images: [image], locale: "en_ZA", type: "website" },
     twitter: { card: "summary_large_image", title, description, images: [image] },
     verification: {
       google: client.google_site_verification ?? undefined,
@@ -194,7 +199,7 @@ export default async function ClientLandingPage({
       client_photos!client_photos_growth_client_id_fkey(id, storage_path),
       bookable_units(id, name, unit_type, description, base_price_cents, capacity, duration_minutes),
       booking_operational_rules(operating_hours, buffer_minutes),
-      shop_products(id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)),
+      shop_products(id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, price_pending, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)),
       reviews(id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name), board_identities(display_name))`
     )
     .eq("slug", clientSlug)
