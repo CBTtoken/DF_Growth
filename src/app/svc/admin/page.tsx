@@ -57,6 +57,7 @@ export default async function SvcAdminPage({
             ["/admin/payouts", "Payouts"],
             ["/admin/referrals", "Referrals and fraud"],
             ["/admin/demand", "Demand"],
+            ["/admin/draws", "Draws"],
           ].map(([path, label]) => (
             <AdminNavLink key={path} path={path} label={label} />
           ))}

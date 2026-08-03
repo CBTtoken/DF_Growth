@@ -110,6 +110,54 @@ export async function initializeSvcCheckout({
   return { authorizationUrl: data.data.authorization_url };
 }
 
+/**
+ * Draw ticket checkout (handoff 10.1): same interface, its own metadata
+ * kind so no webhook or verify path can mistake a ticket for a
+ * membership. Reachable only from the logged-in dashboard behind the
+ * server-side eligibility gate.
+ */
+export async function initializeSvcTicketCheckout({
+  email,
+  amountCents,
+  callbackUrl,
+  memberId,
+  drawId,
+  ticketCount,
+}: {
+  email: string;
+  amountCents: number;
+  callbackUrl: string;
+  memberId: string;
+  drawId: string;
+  ticketCount: number;
+}): Promise<{ authorizationUrl: string } | { error: string }> {
+  const key = svcPaystackSecretKey();
+  if (!key) return { error: "not_configured" };
+
+  const res = await fetch("https://api.paystack.co/transaction/initialize", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email,
+      amount: amountCents,
+      currency: "ZAR",
+      callback_url: callbackUrl,
+      metadata: {
+        kind: "svc_draw_tickets",
+        svc_member_id: memberId,
+        svc_draw_id: drawId,
+        svc_ticket_count: ticketCount,
+      },
+    }),
+  });
+  const data = await res.json();
+  if (!data.status || !data.data?.authorization_url) {
+    console.error("SVC ticket checkout initialize failed", data);
+    return { error: "initialize_failed" };
+  }
+  return { authorizationUrl: data.data.authorization_url };
+}
+
 export type VerifiedTransaction = {
   reference: string;
   amountCents: number;
@@ -121,6 +169,8 @@ export type VerifiedTransaction = {
     svc_subscription_id?: string;
     svc_package_id?: string;
     svc_interval?: string;
+    svc_draw_id?: string;
+    svc_ticket_count?: string | number;
   };
 };
 

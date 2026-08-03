@@ -248,6 +248,11 @@ export default async function SvcHomePage() {
               and every draw&apos;s result is published with the total number of
               entries, so you can see exactly how it was run.
             </p>
+            <div className="mt-6">
+              <Link href={await svcPath("/draw")} className={svcBtnOutlineOnDark}>
+                How the draw works, and past results
+              </Link>
+            </div>
           </div>
         </div>
       </section>

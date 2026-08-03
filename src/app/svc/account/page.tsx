@@ -9,8 +9,10 @@ import { createSvcClient } from "@/lib/svc/db";
 import { formatRand } from "@/lib/svc/data";
 import { listMemberIssues, savingsTotalCents, periodFor } from "@/lib/svc/ledger";
 import { getOrCreateReferralCode, memberReferralStats } from "@/lib/svc/referrals";
+import { memberDrawSummary } from "@/lib/svc/draw";
+import { drawPurchaseEligibility } from "@/lib/svc/draw-purchase";
 import { signOutSvc } from "../login/actions";
-import { submitDemandSignal } from "./actions";
+import { submitDemandSignal, buyDrawTickets } from "./actions";
 import { BenefitCard } from "@/components/svc/BenefitCard";
 import { svcBtnOutline, svcInput, svcLabel } from "@/components/svc/ui";
 
@@ -19,6 +21,103 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// The draw panel: entries so far by source, the live "R.. more and you
+// earn another entry" counter, the visible self-report cap, and, only
+// when the flag is on AND every server-side gate passes, the purchase
+// form (handoff 10.1: no purchase control renders anywhere outside this
+// logged-in dashboard).
+async function SvcDrawPanel({ memberId, ticketsParam }: { memberId: string; ticketsParam?: string }) {
+  const [summary, eligibility] = await Promise.all([
+    memberDrawSummary(memberId),
+    drawPurchaseEligibility(memberId),
+  ]);
+  if (!summary) return null;
+  const { draw, free, earned, purchased, total, frozen } = summary;
+
+  return (
+    <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
+      <h2 className="font-svc-heading text-lg font-bold">This month&apos;s draw</h2>
+      <p className="mt-1 text-sm text-svc-ink/75">
+        {draw.prize_description}
+        {draw.prize_value_cents ? ` (${formatRand(draw.prize_value_cents)})` : ""}. Entries freeze{" "}
+        {new Date(draw.cutoff_at).toLocaleString("en-ZA", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}.
+      </p>
+
+      {ticketsParam === "done" && (
+        <p className="mt-3 border-2 border-svc-green bg-svc-cream p-3 text-sm">Your extra entries are in.</p>
+      )}
+      {ticketsParam && ticketsParam !== "done" && (
+        <p className="mt-3 border-2 border-svc-blue bg-svc-cream p-3 text-sm">
+          {ticketsParam === "frozen" && "The draw has already frozen for this month."}
+          {ticketsParam === "package_below_floor" && "Extra entries need a qualifying membership tier."}
+          {ticketsParam === "no_cleared_payment" && "Extra entries open up once your first payment has cleared."}
+          {["failed", "count", "flag_off", "no_subscription", "no_draw"].includes(ticketsParam) &&
+            "That purchase could not be completed."}
+        </p>
+      )}
+
+      <dl className="mt-4 grid grid-cols-3 gap-px bg-svc-ink/10 text-center">
+        {[
+          ["Free", free],
+          ["Earned", frozen ? summary.earned.earnedTotal : earned.earnedTotal],
+          ["Purchased", purchased],
+        ].map(([label, value]) => (
+          <div key={label} className="bg-white/80 p-3">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-svc-ink/60">{label}</dt>
+            <dd className="mt-1 font-svc-heading text-xl font-bold">{value}</dd>
+          </div>
+        ))}
+      </dl>
+      <p className="mt-2 text-center text-sm font-semibold">
+        {total} {total === 1 ? "entry" : "entries"} in this month&apos;s draw{frozen ? " (frozen)" : ""}.
+      </p>
+
+      {!frozen && (
+        <div className="mt-3 space-y-1 text-sm text-svc-ink/75">
+          <p>
+            {formatRand(earned.centsToNextEntry)} more redeemed and you earn
+            another entry.
+          </p>
+          <p className="text-xs text-svc-ink/60">
+            Self-confirmed savings count for up to {earned.selfCap} entries a
+            month; you have used {Math.min(earned.selfEntriesUncapped, earned.selfCap)} of them
+            {earned.selfEntriesUncapped > earned.selfCap ? " (the cap is doing its work)" : ""}.
+          </p>
+        </div>
+      )}
+
+      {eligibility.eligible && draw.ticket_price_cents && (
+        <form action={buyDrawTickets} className="mt-4 border-t-2 border-svc-ink/10 pt-4">
+          <label htmlFor="ticket-count" className={svcLabel}>
+            Extra entries at {formatRand(draw.ticket_price_cents)} each
+          </label>
+          <div className="mt-2 flex gap-2">
+            <input
+              id="ticket-count"
+              name="count"
+              type="number"
+              min={1}
+              max={100}
+              defaultValue={5}
+              className={`${svcInput} w-28`}
+            />
+            <button
+              type="submit"
+              className="inline-flex min-h-12 flex-1 items-center justify-center bg-svc-green px-4 text-sm font-semibold text-white hover:bg-svc-ink"
+            >
+              Buy extra entries
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-svc-ink/60">
+            A members-only benefit of your club membership, which itself is
+            what carries the value.
+          </p>
+        </form>
+      )}
+    </section>
+  );
+}
+
 // The member dashboard (handoff 7.1 and section 5): the savings number
 // computed only from redeemed value, this month's benefits with their
 // state controls, the three-number referral view, and cancellation. One
@@ -26,7 +125,7 @@ export const metadata: Metadata = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cancelled?: string; ask?: string }>;
+  searchParams: Promise<{ cancelled?: string; ask?: string; tickets?: string }>;
 }) {
   const params = await searchParams;
   const member = await getCurrentMember();
@@ -263,6 +362,8 @@ export default async function AccountPage({
             </p>
           )}
         </section>
+
+        <SvcDrawPanel memberId={member!.id} ticketsParam={params.tickets} />
 
         {/* Demand capture: the one question that steers the next deal. */}
         <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">

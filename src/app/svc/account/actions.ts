@@ -66,6 +66,62 @@ export async function confirmBenefitUsed(formData: FormData) {
 }
 
 /**
+ * Buying draw entries (handoff 10.1). Every gate lives server-side in
+ * drawPurchaseEligibility; this action re-derives all of it and refuses
+ * politely, whatever the interface showed. Mock provider mints instantly;
+ * Paystack goes through the hosted page and the tickets callback.
+ */
+export async function buyDrawTickets(formData: FormData) {
+  const member = await requireMember();
+  const countRaw = Number(formData.get("count") ?? 0);
+  const count = Number.isInteger(countRaw) ? Math.min(Math.max(countRaw, 1), 100) : 0;
+
+  const back = await svcPath("/account");
+  if (count < 1) redirect(`${back}?tickets=count`);
+
+  const { drawPurchaseEligibility, recordTicketPurchase } = await import("@/lib/svc/draw-purchase");
+  const eligibility = await drawPurchaseEligibility(member.id);
+  if (!eligibility.eligible) {
+    redirect(`${back}?tickets=${eligibility.reason}`);
+  }
+
+  const draw = eligibility.draw;
+  const amountCents = (draw.ticket_price_cents ?? 0) * count;
+  if (amountCents <= 0) redirect(`${back}?tickets=flag_off`);
+
+  const { svcPaymentProvider, initializeSvcTicketCheckout } = await import("@/lib/svc/payments");
+
+  if (svcPaymentProvider() === "mock") {
+    await recordTicketPurchase({
+      drawId: draw.id,
+      memberId: member.id,
+      count,
+      amountCents,
+      reference: `mock_tickets_${Date.now()}`,
+    });
+    redirect(`${back}?tickets=done`);
+  }
+
+  const { headers: getHeaders } = await import("next/headers");
+  const { isSvcHost, SVC_ORIGIN } = await import("@/lib/svc/host");
+  const host = (await getHeaders()).get("host") ?? "";
+  const proto = host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https";
+  const origin = isSvcHost(host) ? SVC_ORIGIN : `${proto}://${host}`;
+  const callbackUrl = `${origin}${await svcPath("/account/tickets")}`;
+
+  const result = await initializeSvcTicketCheckout({
+    email: member.email,
+    amountCents,
+    callbackUrl,
+    memberId: member.id,
+    drawId: draw.id,
+    ticketCount: count,
+  });
+  if ("error" in result) redirect(`${back}?tickets=failed`);
+  redirect(result.authorizationUrl);
+}
+
+/**
  * Demand capture (handoff 7.4): "which shop or product should we get
  * coupons for next?" One insert, no fanfare; the aggregated view lives in
  * admin.

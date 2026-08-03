@@ -35,6 +35,24 @@ export async function POST(request: Request) {
   const data = event?.data ?? {};
   const metadata = data.metadata ?? {};
 
+  // Draw ticket purchases: same dedup as the callback path, so whichever
+  // of the two sees the payment first records it and the other finds a
+  // duplicate.
+  if (metadata.kind === "svc_draw_tickets" && event.event === "charge.success") {
+    const reference = String(data.reference ?? "");
+    if (reference && metadata.svc_member_id && metadata.svc_draw_id) {
+      const { recordTicketPurchase } = await import("@/lib/svc/draw-purchase");
+      await recordTicketPurchase({
+        drawId: metadata.svc_draw_id,
+        memberId: metadata.svc_member_id,
+        count: Number(metadata.svc_ticket_count ?? 1) || 1,
+        amountCents: typeof data.amount === "number" ? data.amount : 0,
+        reference,
+      });
+    }
+    return NextResponse.json({ received: true });
+  }
+
   // Only SVC's own checkouts are acted on. Anything else that lands here
   // is acknowledged so Paystack stops retrying, and logged so a
   // misconfigured webhook is visible.

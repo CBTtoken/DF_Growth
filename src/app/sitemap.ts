@@ -95,6 +95,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: svcUrl, changeFrequency: "weekly", priority: 1 },
       { url: `${svcUrl}/how-it-works`, changeFrequency: "monthly", priority: 0.9 },
       { url: `${svcUrl}/packages`, changeFrequency: "weekly", priority: 0.9 },
+      { url: `${svcUrl}/draw`, changeFrequency: "weekly", priority: 0.8 },
       { url: `${svcUrl}/about`, changeFrequency: "monthly", priority: 0.6 },
       { url: `${svcUrl}/faq`, changeFrequency: "monthly", priority: 0.7 },
       { url: `${svcUrl}/contact`, changeFrequency: "monthly", priority: 0.5 },
