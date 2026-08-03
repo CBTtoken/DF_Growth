@@ -18,6 +18,11 @@ export const SAMPLE_DATA = {
   servicesText: "Emergency Leak Repairs\nDrain Unblocking\nGeyser Installation\nPipe Relining",
   businessAddress: "142 Main Road, Sandton, Johannesburg",
   industry: "Plumbing",
+  // For heroes that surface direct contact (duo, jobcard) — 010 xxx 0xxx is
+  // a non-routable placeholder shape, deliberately not a diallable business.
+  callPhone: "010 555 0148",
+  contactEmail: "hello@thabosplumbing.co.za",
+  city: "Sandton",
   packages: [
     { name: "Callout & Diagnosis", price: "R350", description: "A qualified plumber at your door within the hour." },
     { name: "Standard Repair", price: "From R650", description: "Most common repairs, parts and labour included." },

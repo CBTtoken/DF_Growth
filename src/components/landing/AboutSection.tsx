@@ -58,6 +58,44 @@ export function AboutSection({
 
   const isDark = anchor.sectionSurface === "dark";
 
+  if (anchor.aboutLayout === "statement") {
+    // Fieldwork anchor: about as a stamped statement, not a two-column
+    // brochure block. The copy itself is set at pull-quote scale behind a
+    // heavy accent rule, with the business name and tagline as small mono
+    // plate labels above it — on a trade page the paragraph IS the pitch,
+    // so it gets headline treatment.
+    return (
+      <section
+        id="about"
+        className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"}`}
+      >
+        <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
+              {eyebrowNumber} · Who you are dealing with
+            </p>
+            {tagline && (
+              <p className={`font-mono text-xs uppercase tracking-[0.2em] ${isDark ? "text-gray-400" : "text-gray-400"}`}>
+                {tagline}
+              </p>
+            )}
+          </div>
+          <div className="mt-8 border-l-[6px] pl-6 sm:pl-10" style={{ borderColor: accentColor }}>
+            <p
+              className={`max-w-3xl text-xl font-semibold leading-snug tracking-tight sm:text-[1.75rem] sm:leading-[1.35] ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}
+            >
+              {aboutText}
+            </p>
+            <p className="mt-6 flex items-center gap-2.5 font-mono text-xs font-bold uppercase tracking-[0.28em]" style={{ color: accentColor }}>
+              <span aria-hidden className="inline-block h-0.5 w-8" style={{ backgroundColor: accentColor }} />
+              {businessName}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section
       id="about"

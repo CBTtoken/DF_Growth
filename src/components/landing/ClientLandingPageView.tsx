@@ -29,6 +29,7 @@ import { BentoHero } from "@/components/landing/heroes/BentoHero";
 import { TimelineHero } from "@/components/landing/heroes/TimelineHero";
 import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
 import { DuoHero } from "@/components/landing/heroes/DuoHero";
+import { JobCardHero } from "@/components/landing/heroes/JobCardHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -336,7 +337,7 @@ export async function ClientLandingPageView({
   }
 
   let photoUrl: string | null = null;
-  if (template.hero === "split" || template.hero === "dark" || template.hero === "duo") {
+  if (template.hero === "split" || template.hero === "dark" || template.hero === "duo" || template.hero === "jobcard") {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
     // does that. No selection falls back to the client's stored fallback
@@ -489,6 +490,16 @@ export async function ClientLandingPageView({
               ? `Browse ${shopProducts.length} product${shopProducts.length === 1 ? "" : "s"} and order online.`
               : undefined
           }
+        />
+      )}
+      {template.hero === "jobcard" && (
+        <JobCardHero
+          {...heroProps}
+          callPhone={client.call_phone}
+          whatsappPhone={client.whatsapp_phone || client.call_phone}
+          contactEmail={client.contact_email}
+          city={client.city}
+          photoUrl={photoUrl}
         />
       )}
       {template.hero === "showcase" && (

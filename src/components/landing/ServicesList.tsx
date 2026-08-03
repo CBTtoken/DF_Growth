@@ -118,6 +118,45 @@ export function ServicesList({
         })}
       </div>
     );
+  } else if (layout === "work-index") {
+    // Fieldwork anchor: the services ledger. Not cards at all — full-width
+    // rule-separated rows with an oversized mono index and headline-weight
+    // type, the way a capability list reads on a contractor's spec sheet.
+    // Odd rows indent on desktop so the column of indices staggers, which
+    // keeps a long list from reading as a table.
+    body = (
+      <ol className="mt-10 border-t-2 border-gray-900">
+        {services.map((service, i) => (
+          <li
+            key={i}
+            className={`group flex items-baseline gap-5 border-b border-gray-300 py-5 sm:gap-8 sm:py-6 ${
+              i % 2 === 1 ? "sm:pl-14" : ""
+            }`}
+          >
+            <span
+              className="font-mono text-2xl font-bold tabular-nums sm:text-4xl"
+              style={{ color: accentColor }}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span
+              className={`text-lg font-bold leading-snug tracking-tight sm:text-2xl ${
+                isDark ? "text-white" : "text-gray-900"
+              } ${HEADING_FONT_CLASS[anchor.headingFont]}`}
+            >
+              {service}
+            </span>
+            <span
+              aria-hidden
+              className="ml-auto hidden -translate-x-2 font-mono text-xl opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100 sm:block"
+              style={{ color: accentColor }}
+            >
+              →
+            </span>
+          </li>
+        ))}
+      </ol>
+    );
   } else if (layout === "checklist-compact") {
     // feature-grid / app-dashboard anchors: a dense single-column list
     // rather than a grid of cards — more services readable at a glance,
@@ -160,10 +199,10 @@ export function ServicesList({
     <section id="services" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-gray-50"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · What we offer
+          {eyebrowNumber} · {layout === "work-index" ? "Scope of work" : "What we offer"}
         </p>
         <h2 className={`mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${headingClass}`}>
-          Everything you need, in one place.
+          {layout === "work-index" ? "The work we take on." : "Everything you need, in one place."}
         </h2>
 
         {body}

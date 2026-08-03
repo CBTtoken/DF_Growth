@@ -20,6 +20,8 @@ import { ChecklistHero } from "@/components/landing/heroes/ChecklistHero";
 import { BentoHero } from "@/components/landing/heroes/BentoHero";
 import { TimelineHero } from "@/components/landing/heroes/TimelineHero";
 import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
+import { DuoHero } from "@/components/landing/heroes/DuoHero";
+import { JobCardHero } from "@/components/landing/heroes/JobCardHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -201,6 +203,27 @@ export default async function TemplatePreviewPage({
           {...heroProps}
           packages={packages.map((p) => ({ name: p.name, price: p.price }))}
           ctaHref={template.ctaHref}
+        />
+      )}
+      {/* These two were only ever reachable on the live page before — the
+          picker preview needs them too, or a member choosing either sees a
+          heroless page and reasonably concludes the template is broken. */}
+      {template.hero === "duo" && (
+        <DuoHero
+          {...heroProps}
+          callPhone={SAMPLE_DATA.callPhone}
+          whatsappPhone={SAMPLE_DATA.callPhone}
+          photoUrl={SAMPLE_DATA.photoUrl}
+        />
+      )}
+      {template.hero === "jobcard" && (
+        <JobCardHero
+          {...heroProps}
+          callPhone={SAMPLE_DATA.callPhone}
+          whatsappPhone={SAMPLE_DATA.callPhone}
+          contactEmail={SAMPLE_DATA.contactEmail}
+          city={SAMPLE_DATA.city}
+          photoUrl={SAMPLE_DATA.photoUrl}
         />
       )}
       {template.hero === "default" && (

@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake } from "lucide-react";
+import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench } from "lucide-react";
 
 // Every "section" a template can arrange, beyond the hero (always first)
 // and the lead form (always last, since #lead-form is the CTA anchor every
@@ -30,7 +30,8 @@ export type TemplateId =
   | "vibrant-geo"
   | "multi-product"
   | "app-dashboard"
-  | "dual-offer";
+  | "dual-offer"
+  | "fieldwork";
 
 export type HeroVariant =
   | "default"
@@ -44,7 +45,8 @@ export type HeroVariant =
   | "bento"
   | "timeline"
   | "showcase"
-  | "duo";
+  | "duo"
+  | "jobcard";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -177,6 +179,28 @@ export const templates: TemplateMeta[] = [
     icon: Handshake,
     hero: "duo",
     sections: ["about", "services", "story", "packages", "gallery", "trust", "location", "reviews"],
+  },
+  // Built for the second done-for-you client build (Jetting Worx), and kept
+  // general because this shape recurs even more than dual-offer's: a trade
+  // that works at the customer's premises on an urgent, physical problem —
+  // pressure cleaning, drain jetting, plumbing, pest control, electrical,
+  // rubble removal. The visitor usually has the problem *right now*, so the
+  // page reads like a job sheet rather than a brochure: what we do, how a
+  // call-out runs, then proof and coverage, with a phone number and WhatsApp
+  // tappable inside the hero.
+  //
+  // The section order is deliberate lead-gen sequencing: the work itself
+  // comes first (services), then how a job runs (howItWorks), and only then
+  // the "about us" a brochure would have led with.
+  {
+    id: "fieldwork",
+    name: "Fieldwork",
+    archetype: "Industrial · job-sheet utility",
+    description:
+      "For trades that work on site. Reads like a serious contractor's job sheet: the work first, then how a call-out runs.",
+    icon: Wrench,
+    hero: "jobcard",
+    sections: ["services", "howItWorks", "about", "gallery", "story", "packages", "trust", "location", "reviews"],
   },
 ];
 

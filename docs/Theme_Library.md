@@ -61,3 +61,34 @@ and it changes nothing for members on any other template.
 **Reuse it for:** a salon that sells product, a coach who runs workshops and
 sells courses, a farm with a shop and a venue, a practitioner who consults
 and retails. Anywhere the business genuinely has two front doors.
+
+### Fieldwork (`fieldwork`)
+
+- **Added:** 3 August 2026, second build through the Growth Build Kit
+- **Built for:** Jetting Worx, high-pressure cleaning and drain jetting in
+  Edenvale, working across Gauteng
+- **Hero:** `jobcard`
+- **Anchor:** display-condensed headings, stamped `steel-plate` cards (hard
+  offset shadow, not blur), a new `stencil-tag` eyebrow (thick accent rule
+  hard against mono caps), standard spacing on a light surface.
+
+**What it does that none of the others do.** This is the first anchor with a
+structural override on five sections, not just services, which is a direct
+answer to the WeCare feedback that below the hero every template still read
+the same. Services render as a full-width numbered ledger (`work-index`),
+about as a stamped pull-statement behind a heavy rule (`statement`), how-it-
+works as one continuous job line with mono markers (`jobline`), the gallery
+as an evidence board with REF labels and one documentary-scale frame
+(`evidence-board`), and location as the page's single dark dispatch-board
+band (`coverage-panel`). The hero reads like the top of a job sheet: stencil
+name, blunt uppercase headline, and three ways to start the job (form, call,
+WhatsApp) plus a dispatch strip of real record fields only (city, phone,
+email; empty fields drop their cell).
+
+Like `dual-offer`, it puts tappable contact in the hero, the Build Kit rule
+for done-for-you builds; nothing changes for members on other templates.
+
+**Reuse it for:** any trade that works at the customer's premises on an
+urgent, physical problem. Plumbing, pest control, electrical, rubble removal,
+paving, roofing, tree felling. The visitor has the problem right now and is
+holding a phone; the page behaves accordingly.

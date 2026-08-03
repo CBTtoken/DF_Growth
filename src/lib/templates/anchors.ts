@@ -57,7 +57,7 @@ export const HEADING_FONT_CLASS: Record<HeadingFontKey, string> = {
   "mono-technical": "font-[family-name:var(--font-anchor-mono)]",
 };
 
-export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel";
+export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate";
 
 // "soft-shadow" is today's existing default card look, unchanged — every
 // other recipe is a genuinely different container treatment. "dark-panel"
@@ -75,9 +75,15 @@ export const CARD_RECIPE_CLASS: Record<CardRecipeId, string> = {
   "outlined-accent": "rounded-2xl border-2 border-brand/30 bg-white",
   "editorial-rule": "border-l-4 border-brand/60 bg-transparent pl-5",
   "dark-panel": "rounded-2xl border border-white/10 bg-white/5 text-white backdrop-blur-sm",
+  // Fieldwork build: a hard offset shadow instead of a blur — the soft
+  // recipes read "friendly SaaS", this one reads like a stamped plate. The
+  // shadow colour is a fixed light steel so it stays subtle on the light
+  // surfaces this recipe is used on; nothing about it depends on the
+  // member's own colours.
+  "steel-plate": "rounded-md border border-gray-300 bg-white shadow-[4px_4px_0_0_#e2e8f0]",
 };
 
-export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps";
+export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps" | "stencil-tag";
 
 // "mono-numbered" is the exact byte-for-byte class every section component
 // uses today (font-mono text-sm font-semibold uppercase tracking-[0.2em]
@@ -87,6 +93,10 @@ export const EYEBROW_STYLE_CLASS: Record<EyebrowStyle, string> = {
   "pill-badge": "inline-flex rounded-full bg-brand/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand",
   "rule-line": "inline-block border-b border-gray-200 pb-2 text-xs font-semibold uppercase tracking-[0.3em] text-gray-400",
   "plain-caps": "text-xs font-bold uppercase tracking-widest text-gray-400",
+  // Fieldwork build: reads like a stencilled label on a crate — a thick
+  // rule in the accent colour (border-current picks up the eyebrow's
+  // style={{ color }}) hard against the text, no pill, no lowercase.
+  "stencil-tag": "inline-flex items-center border-l-4 border-current pl-2.5 font-mono text-xs font-bold uppercase tracking-[0.28em]",
 };
 
 export type SpacingDensity = "airy" | "standard" | "tight";
@@ -137,13 +147,22 @@ export interface TemplateAnchor {
   // default JSX shape."
   packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack";
   reviewsLayout?: "list-detail" | "hero-stat";
-  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles";
+  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index";
   // Dark Mode pilot rebuild: TrustBadges previously had no layout axis at
   // all (a deliberate earlier decision to keep the axis count bounded) —
   // reversed here because direct client feedback named structural sameness
   // as the actual problem. "strip" is today's exact existing horizontal-
   // scroll card treatment, kept byte-identical as the default.
   trustLayout?: "strip" | "spotlight-quote";
+  // Fieldwork build: three more sections gain a structural axis, for the
+  // same reason trustLayout got one — the WeCare build's direct feedback
+  // was that below the hero the page still read like every other template,
+  // and tokens alone (font, card, eyebrow) can't fix structural sameness.
+  // As with every other axis, undefined means "existing default JSX".
+  aboutLayout?: "split-grid" | "statement";
+  howItWorksLayout?: "cards" | "jobline";
+  locationLayout?: "map-split" | "coverage-panel";
+  galleryLayout?: "square-grid" | "evidence-board";
 }
 
 export const anchors: Record<TemplateId, TemplateAnchor> = {
@@ -257,6 +276,25 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     sectionSurface: "light-default",
     servicesLayout: "numbered-rows",
     packagesLayout: "ambient-stack",
+  },
+  // Fieldwork: the industrial job-sheet anchor. Display-condensed headings
+  // over a mono stencil eyebrow, stamped-plate cards, and — unlike every
+  // anchor before it — a structural override on four sections, not just
+  // services. No other anchor combines display-condensed with steel-plate
+  // or stencil-tag; feature-grid is the nearest neighbour and it reads
+  // dense-editorial, not industrial.
+  fieldwork: {
+    id: "fieldwork",
+    headingFont: "display-condensed",
+    cardRecipe: "steel-plate",
+    eyebrowStyle: "stencil-tag",
+    spacing: "standard",
+    sectionSurface: "light-default",
+    servicesLayout: "work-index",
+    aboutLayout: "statement",
+    howItWorksLayout: "jobline",
+    locationLayout: "coverage-panel",
+    galleryLayout: "evidence-board",
   },
 };
 
