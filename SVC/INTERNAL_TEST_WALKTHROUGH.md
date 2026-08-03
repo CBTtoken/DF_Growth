@@ -38,9 +38,14 @@ account instead (Part 2). If several of you test on it at once you will
 see each other's clicks.
 
 **How the menu behaves (not a bug):** logged out, the menu shows Log in
-and Join now. Logged in, those disappear and you get My dashboard (and
-Admin, if your login is on the admin list) from every page. You are
-never logged out by navigating around.
+and Join now. Logged in, those disappear and you get My dashboard, Log
+out (and Admin, if your login is on the admin list) from every page. You
+are never logged out by navigating around.
+
+**Switching accounts** (say, from the shared admin account to your own
+member account): press Log out in the menu, then log in or join as the
+other account. The login page skips itself for anyone already signed
+in, so logging out first is the way to swap.
 
 **One rule for everyone: do not use the "Unlock your coupons" step with
 your own real cell number for now.** That step writes to the coupon
