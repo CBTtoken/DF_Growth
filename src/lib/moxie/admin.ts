@@ -249,6 +249,138 @@ export async function ownerStats(): Promise<OwnerStats> {
   };
 }
 
+/**
+ * The reads drill-down: who opened what, when, and how they got in.
+ *
+ * Dewald, 3 August: "can an admin drill down on the stats?" A count you
+ * cannot open is a rumour, so each one opens into the rows behind it.
+ */
+export type ReadsDrilldown = {
+  perDay: { day: string; count: number }[];
+  perEdition: { title: string; total: number; last30d: number; uniqueSignedIn: number }[];
+  recent: { at: string; editionTitle: string; who: string; how: string }[];
+};
+
+const HOW_LABEL: Record<string, string> = {
+  free_window: "free window",
+  membership: "membership",
+  purchase: "bought this edition",
+  access_code: "access code",
+};
+
+export async function readsDrilldown(): Promise<ReadsDrilldown> {
+  const admin = createAdminClient();
+  const [{ data: reads }, { data: editions }] = await Promise.all([
+    admin.from("moxie_reads").select("edition_id, user_id, access_reason, created_at").order("created_at", { ascending: false }),
+    admin.from("moxie_editions").select("id, title"),
+  ]);
+  const titles = new Map((editions ?? []).map((e) => [e.id, e.title]));
+  const rows = reads ?? [];
+  const cutoff30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+
+  const perDay: { day: string; count: number }[] = [];
+  for (let i = 13; i >= 0; i--) {
+    const d = new Date(Date.now() - i * 86_400_000);
+    const key = d.toISOString().slice(0, 10);
+    perDay.push({
+      day: d.toLocaleDateString("en-ZA", { weekday: "short", day: "numeric" }),
+      count: rows.filter((r) => r.created_at.slice(0, 10) === key).length,
+    });
+  }
+
+  const byEdition = new Map<string, { total: number; last30d: number; users: Set<string> }>();
+  for (const r of rows) {
+    const e = byEdition.get(r.edition_id) ?? { total: 0, last30d: 0, users: new Set<string>() };
+    e.total += 1;
+    if (r.created_at >= cutoff30) e.last30d += 1;
+    if (r.user_id) e.users.add(r.user_id);
+    byEdition.set(r.edition_id, e);
+  }
+
+  // Emails for the recent list, resolved once per distinct person.
+  const recentRows = rows.slice(0, 100);
+  const emailById = new Map<string, string>();
+  for (const id of new Set(recentRows.map((r) => r.user_id).filter(Boolean) as string[])) {
+    const { data } = await admin.auth.admin.getUserById(id);
+    emailById.set(id, data?.user?.email ?? "unknown account");
+  }
+
+  return {
+    perDay,
+    perEdition: [...byEdition.entries()]
+      .map(([id, v]) => ({
+        title: titles.get(id) ?? "Unknown edition",
+        total: v.total,
+        last30d: v.last30d,
+        uniqueSignedIn: v.users.size,
+      }))
+      .sort((a, b) => b.total - a.total),
+    recent: recentRows.map((r) => ({
+      at: r.created_at,
+      editionTitle: titles.get(r.edition_id) ?? "Unknown edition",
+      who: r.user_id ? (emailById.get(r.user_id) ?? "unknown account") : "Not signed in",
+      how: HOW_LABEL[r.access_reason] ?? r.access_reason,
+    })),
+  };
+}
+
+/**
+ * The people drill-down: every known reader, what they have read, and
+ * whether any money has ever followed. "Never paid" is the upsell list.
+ */
+export type ReaderRow = {
+  email: string;
+  since: string;
+  reads: number;
+  lastReadAt: string | null;
+  membership: "active" | "past_due" | "cancelled" | "never paid";
+};
+
+export async function readersDrilldown(): Promise<ReaderRow[]> {
+  const admin = createAdminClient();
+  const [{ data: reads }, { data: subs }] = await Promise.all([
+    admin.from("moxie_reads").select("user_id, created_at"),
+    admin.from("moxie_subscriptions").select("user_id, email, status"),
+  ]);
+
+  const readStats = new Map<string, { count: number; last: string; first: string }>();
+  for (const r of reads ?? []) {
+    if (!r.user_id) continue;
+    const s = readStats.get(r.user_id) ?? { count: 0, last: r.created_at, first: r.created_at };
+    s.count += 1;
+    if (r.created_at > s.last) s.last = r.created_at;
+    if (r.created_at < s.first) s.first = r.created_at;
+    readStats.set(r.user_id, s);
+  }
+
+  const subByUser = new Map((subs ?? []).map((s) => [s.user_id, s.status]));
+
+  // Everyone tagged as a Moxie reader at signup, plus anyone who has read
+  // or subscribed: three honest sources, merged by account.
+  const people = new Map<string, ReaderRow>();
+  let page = 1;
+  for (;;) {
+    const { data } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    for (const u of data.users) {
+      const tagged = Boolean(u.user_metadata?.moxie_reader);
+      const stats = readStats.get(u.id);
+      const sub = subByUser.get(u.id);
+      if (!tagged && !stats && !sub) continue;
+      people.set(u.id, {
+        email: u.email ?? "unknown",
+        since: (u.user_metadata?.moxie_reader_since as string | undefined) ?? stats?.first ?? u.created_at,
+        reads: stats?.count ?? 0,
+        lastReadAt: stats?.last ?? null,
+        membership: (sub as ReaderRow["membership"]) ?? "never paid",
+      });
+    }
+    if (data.users.length < 1000) break;
+    page++;
+  }
+
+  return [...people.values()].sort((a, b) => (b.lastReadAt ?? b.since).localeCompare(a.lastReadAt ?? a.since));
+}
+
 export type TeamRow = {
   userId: string;
   email: string | null;

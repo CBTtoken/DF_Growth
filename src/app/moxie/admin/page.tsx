@@ -54,16 +54,19 @@ export default async function MoxieAdminPage({
   // behind them check again server-side either way.
   const canOperate = access.role === "publisher";
 
-  const [editions, members, memberList, team, stats2, csvBase, adminBase, membersCsvHref] = await Promise.all([
-    listEditionsForAdmin(),
-    membershipSummary(),
-    listMembers(),
-    listTeam(),
-    ownerStats(),
-    moxiePath("/admin/codes"),
-    moxiePath("/admin"),
-    moxiePath("/admin/members"),
-  ]);
+  const [editions, members, memberList, team, stats2, csvBase, adminBase, membersCsvHref, readsHref, readersHref] =
+    await Promise.all([
+      listEditionsForAdmin(),
+      membershipSummary(),
+      listMembers(),
+      listTeam(),
+      ownerStats(),
+      moxiePath("/admin/codes"),
+      moxiePath("/admin"),
+      moxiePath("/admin/members"),
+      moxiePath("/admin/reads"),
+      moxiePath("/admin/readers"),
+    ]);
 
   const rand = (cents: number) =>
     `R${(cents / 100).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -116,22 +119,29 @@ export default async function MoxieAdminPage({
           <h2 className="font-moxie-display mt-10 text-2xl font-bold text-moxie-charcoal">
             The funnel
           </h2>
+          {/* Every tile is a door: a count you cannot open is a rumour. */}
           <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
             {[
-              { label: "Reads, 30 days", value: stats2.reads30d, note: `${stats2.readsTotal} ever` },
-              { label: "Signed-in readers", value: stats2.uniqueSignedInReaders, note: "unique people" },
-              { label: "Reader accounts", value: stats2.readerAccounts, note: `${stats2.readersNeverPaid} never paid` },
-              { label: "Paying members", value: members.active, note: `${members.annual} on annual` },
-              { label: "Payment failed", value: members.pastDue, note: "worth a nudge" },
-              { label: "Dropped off", value: members.cancelled, note: "cancelled" },
+              { label: "Reads, 30 days", value: stats2.reads30d, note: `${stats2.readsTotal} ever`, href: readsHref },
+              { label: "Signed-in readers", value: stats2.uniqueSignedInReaders, note: "unique people", href: `${readersHref}?filter=reading` },
+              { label: "Reader accounts", value: stats2.readerAccounts, note: `${stats2.readersNeverPaid} never paid`, href: `${readersHref}?filter=never_paid` },
+              { label: "Paying members", value: members.active, note: `${members.annual} on annual`, href: `${adminBase}?filter=active#members` },
+              { label: "Payment failed", value: members.pastDue, note: "worth a nudge", href: `${adminBase}?filter=past_due#members` },
+              { label: "Dropped off", value: members.cancelled, note: "cancelled", href: `${adminBase}?filter=cancelled#members` },
             ].map((s) => (
-              <div key={s.label} className="border border-moxie-border bg-white p-5">
+              <Link
+                key={s.label}
+                href={s.href}
+                className="group border border-moxie-border bg-white p-5 transition hover:border-moxie-orange"
+              >
                 <p className="font-moxie-display text-3xl font-bold text-moxie-charcoal">{s.value}</p>
                 <p className="font-moxie-label mt-1 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/60">
                   {s.label}
                 </p>
-                <p className="mt-1 text-xs text-moxie-charcoal/50">{s.note}</p>
-              </div>
+                <p className="mt-1 text-xs text-moxie-charcoal/50">
+                  {s.note} <span className="text-moxie-orange opacity-0 transition group-hover:opacity-100">&rarr;</span>
+                </p>
+              </Link>
             ))}
           </div>
           <p className="mt-3 max-w-2xl text-xs leading-relaxed text-moxie-charcoal/50">
@@ -186,7 +196,7 @@ export default async function MoxieAdminPage({
 
           {/* The members themselves, not just their count. Dewald, 3 August:
               "we can't see the members, see their subscriptions and so on". */}
-          <div className="mt-12 flex flex-wrap items-center justify-between gap-3">
+          <div id="members" className="mt-12 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-moxie-display text-2xl font-bold text-moxie-charcoal">Members</h2>
             {canOperate && memberList.length > 0 && (
               <a
