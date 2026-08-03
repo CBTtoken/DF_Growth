@@ -23,6 +23,73 @@ export function shade(hex: string, amount: number): string {
   return rgbToHex(r + (t - r) * p, g + (t - g) * p, b + (t - b) * p);
 }
 
+/**
+ * A supporting accent, derived from the member's own colour.
+ *
+ * Dewald, 2026-08-03, looking at the first client page built on a single
+ * brand colour: "be careful that her site is not all green it will look
+ * terrible and too dark, don't be afraid to match a different colour that
+ * will work together across the site."
+ *
+ * He is right, and a fixed second colour is the wrong fix: it would be
+ * chosen to suit one member's green and then clash with the next member's
+ * red. So the supporting accent is derived by rotating the hue and warming
+ * it, which keeps the relationship rather than the colour. A green primary
+ * yields a clay terracotta, a blue yields a warm amber, a red yields a
+ * teal. Every one of them is a real complementary pairing rather than a
+ * second shade of the same hue.
+ *
+ * Saturation and lightness are pulled towards a mid, slightly muted range
+ * on purpose, so the accent supports rather than competes: an accent as
+ * loud as the brand colour just gives a page two brand colours.
+ */
+export function supportingAccent(hex: string, rotation = 215): string {
+  const [h, s, l] = hexToHsl(hex);
+  const hue = (h + rotation) % 360;
+  // Muted and mid, whatever came in. A near-black brand colour must still
+  // produce an accent you can actually see, and a neon one must not produce
+  // a second thing shouting.
+  //
+  // 215 rather than a textbook 180: a straight complement of green is a
+  // hard magenta, which is the pairing nobody wants. This lands green on
+  // clay, blue on olive gold, red on blue and purple on green, all of which
+  // are pairings you would actually choose.
+  const sat = Math.min(0.55, Math.max(0.38, s));
+  const light = Math.min(0.55, Math.max(0.44, l));
+  return hslToHex(hue, sat, light);
+}
+
+function hexToHsl(hex: string): [number, number, number] {
+  const [r255, g255, b255] = hexToRgb(hex);
+  const r = r255 / 255, g = g255 / 255, b = b255 / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  const d = max - min;
+  if (d === 0) return [0, 0, l];
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+  let h: number;
+  if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
+  else if (max === g) h = ((b - r) / d + 2) * 60;
+  else h = ((r - g) / d + 4) * 60;
+  return [h, s, l];
+}
+
+function hslToHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+  const sector = Math.floor(h / 60) % 6;
+  const [r, g, b] = [
+    [c, x, 0],
+    [x, c, 0],
+    [0, c, x],
+    [0, x, c],
+    [x, 0, c],
+    [c, 0, x],
+  ][sector];
+  return rgbToHex((r + m) * 255, (g + m) * 255, (b + m) * 255);
+}
+
 // Simple relative luminance check to decide whether white or near-black
 // text reads better against a given background color.
 export function readableTextOn(hex: string): string {

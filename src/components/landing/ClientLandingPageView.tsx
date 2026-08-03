@@ -336,7 +336,7 @@ export async function ClientLandingPageView({
   }
 
   let photoUrl: string | null = null;
-  if (template.hero === "split" || template.hero === "dark") {
+  if (template.hero === "split" || template.hero === "dark" || template.hero === "duo") {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
     // does that. No selection falls back to the client's stored fallback
@@ -481,6 +481,7 @@ export async function ClientLandingPageView({
           {...heroProps}
           callPhone={client.call_phone}
           whatsappPhone={client.whatsapp_phone || client.call_phone}
+          photoUrl={photoUrl}
           // The two doors read best when each says what is actually behind
           // it, so the shop line names the range rather than saying "shop".
           shopBlurb={
