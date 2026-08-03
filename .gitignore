@@ -70,3 +70,6 @@ supabase/.temp/
 # production builds failed with "Can't resolve @/lib/bobgo/client" while the
 # file sat happily on my machine and git add reported nothing wrong.
 /BobGo/
+
+# Word lock files, created whenever a .md is opened in Word.
+~$*

@@ -3,10 +3,19 @@ Production build specification. Self-contained, hand directly to Claude Code. Su
 
 ## 0.0 How we work in this repo
 
-Read this before touching anything. Several Claude sessions run against this
-repository at the same time, on different products, and they cannot see each
-other. These rules exist because that has already caused a rejected push and
-came close to causing worse.
+**First, make sure you are in the right repository.** `ESTATE.md` at the root
+is the only cross-repository document: which folder holds what, which is live
+where, and which folder catches people out. A session was once opened in a
+folder called `Claude Projects`, which is the FortisLex application, and spent
+its first minutes working out that the job belonged here instead.
+
+`docs/DOCUMENT_INDEX.md` says where every specification and handoff lives, and
+which ones have been superseded.
+
+Read the rest of this section before touching anything. Several Claude
+sessions run against this repository at the same time, on different products,
+and they cannot see each other. These rules exist because that has already
+caused a rejected push and came close to causing worse.
 
 This repository holds more than one product: Growth, KatisoBiz, Kwaai Press,
 The Desk, and the Moxie site. They share auth, Supabase wiring and a
