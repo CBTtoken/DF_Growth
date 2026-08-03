@@ -36,15 +36,18 @@ export function ShopHeader({
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <Link href={`/${clientSlug}`} className="flex min-w-0 items-center gap-2.5">
           {logoUrl ? (
-            <span className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-md bg-white p-0.5 ring-1 ring-black/10">
-              <Image
-                src={logoUrl}
-                alt={businessName}
-                width={36}
-                height={36}
-                className="size-full object-contain"
-              />
-            </span>
+            // Height-constrained, width free. A real small-business logo is
+            // very often a wide banner lockup with its own background baked
+            // in, and forcing one of those into a 36px square renders it as
+            // an unreadable smudge. Letting it keep its own proportions costs
+            // nothing for a square logo and saves a wide one.
+            <Image
+              src={logoUrl}
+              alt={businessName}
+              width={240}
+              height={80}
+              className="h-9 w-auto max-w-[180px] shrink-0 rounded object-contain sm:max-w-[220px]"
+            />
           ) : (
             <span
               className="grid size-9 shrink-0 place-items-center rounded-md font-mono text-xs font-bold"
