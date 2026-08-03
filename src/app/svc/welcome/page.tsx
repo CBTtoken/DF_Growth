@@ -29,8 +29,25 @@ export default async function WelcomePage({
   const homeHref = await svcPath("/");
 
   let activated = false;
+
+  // The mock provider activates inside the checkout action and arrives
+  // here with no reference; an already-active subscription is the honest
+  // signal for that path (and for a Paystack webhook that beat the
+  // redirect here).
+  if (member) {
+    const { createSvcClient } = await import("@/lib/svc/db");
+    const { data: activeSub } = await createSvcClient()
+      .from("subscription")
+      .select("id")
+      .eq("member_id", member.id)
+      .eq("status", "active")
+      .limit(1)
+      .maybeSingle();
+    if (activeSub) activated = true;
+  }
+
   const reference = params.reference ?? params.trxref;
-  if (reference && member) {
+  if (!activated && reference && member) {
     const verified = await verifySvcTransaction(reference);
     if (
       verified &&

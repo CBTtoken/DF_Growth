@@ -6,7 +6,8 @@ import { createSvcClient } from "@/lib/svc/db";
 import { svcPath, isSvcHost, SVC_ORIGIN } from "@/lib/svc/host";
 import { getCurrentMember } from "@/lib/svc/member";
 import { getPackageBySlug } from "@/lib/svc/data";
-import { initializeSvcCheckout } from "@/lib/svc/payments";
+import { initializeSvcCheckout, svcPaymentProvider } from "@/lib/svc/payments";
+import { activateSvcMembership } from "@/lib/svc/activation";
 
 /**
  * Creates the pending subscription and hands the member to Paystack's
@@ -61,6 +62,30 @@ export async function startCheckout(formData: FormData) {
       redirect(`${await svcPath("/join/checkout")}?package=${encodeURIComponent(slug)}&error=failed`);
     }
     subscriptionId = created!.id;
+  }
+
+  // The mock provider (SVC_PAYMENT_PROVIDER=mock, non-production only,
+  // enforced at module load in lib/svc/payments.ts): no external call, the
+  // subscription activates immediately under an unmistakably fake
+  // reference, and the subscription row is stamped provider "mock" so
+  // admin can never mistake it for a paying member.
+  if (svcPaymentProvider() === "mock") {
+    await db
+      .from("subscription")
+      .update({ provider: "mock", updated_at: new Date().toISOString() })
+      .eq("id", subscriptionId!);
+
+    await activateSvcMembership({
+      reference: `mock_${Date.now()}`,
+      eventType: "mock.checkout",
+      memberId: member!.id,
+      subscriptionId: subscriptionId!,
+      amountCents: pkg!.monthly_price_cents,
+      interval: "monthly",
+      payload: { source: "mock_provider", note: "TEST DATA, no real payment" },
+    });
+
+    redirect(await svcPath("/welcome"));
   }
 
   // The callback returns to whichever hostname the member is actually on,

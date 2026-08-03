@@ -18,14 +18,35 @@ import "server-only";
 
 export type SvcBillingInterval = "monthly" | "annual";
 
+export type SvcPaymentProviderName = "paystack" | "mock";
+
+/**
+ * The mock provider exists because SVC's own Paystack account is stuck in
+ * KYB review (4 August): it lets the whole membership flow be walked with
+ * no payment infrastructure at all. It is HARD-BLOCKED outside Preview
+ * and Development: this module refuses to load with mock configured in a
+ * Production deployment, so it cannot ship live by oversight. VERCEL_ENV
+ * is the check on purpose; NODE_ENV reads "production" on preview
+ * deployments too and would false-alarm.
+ */
+if (process.env.SVC_PAYMENT_PROVIDER === "mock" && process.env.VERCEL_ENV === "production") {
+  throw new Error(
+    "SVC_PAYMENT_PROVIDER=mock is set in a Production deployment. The mock payment provider is test-only; remove the env var from Production."
+  );
+}
+
+export function svcPaymentProvider(): SvcPaymentProviderName {
+  return process.env.SVC_PAYMENT_PROVIDER === "mock" ? "mock" : "paystack";
+}
+
 export function svcPaystackSecretKey(): string | null {
   return process.env.SVC_PAYSTACK_SECRET_KEY ?? null;
 }
 
-/** True when the configured key is a Paystack test key. */
+/** Whether a checkout can proceed at all in this environment. */
 export function svcPaymentsConfigured(): boolean {
-  const key = svcPaystackSecretKey();
-  return !!key;
+  if (svcPaymentProvider() === "mock") return true;
+  return !!svcPaystackSecretKey();
 }
 
 /**

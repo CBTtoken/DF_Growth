@@ -801,7 +801,25 @@ alter table svc.coupon_code enable row level security;
    the three-dots menu, Redeploy. Env vars only take effect on a fresh
    deploy.
 
-## STEP 6: Paystack, using the existing DF TEST account (5 minutes)
+## STEP 6, EASIEST OPTION: the mock payment provider (1 minute, no Paystack needed at all)
+
+**Added 4 August, with SVC's own Paystack stuck in KYB review.** The
+platform now has a test-only payment mode that needs no Paystack account
+of any kind:
+
+1. In Vercel env vars (Step 5), add one more: SVC_PAYMENT_PROVIDER with
+   the value mock. Preview environment only. Redeploy.
+2. Checkout then shows "Activate my membership (test mode, no payment)",
+   no card is asked for, and the membership activates instantly.
+3. Every membership created this way is stamped "TEST DATA, no real
+   payment" in the admin ledger, so it can never be mistaken for a real
+   member later.
+4. It is hard-blocked in Production: a production deployment carrying
+   SVC_PAYMENT_PROVIDER=mock refuses to serve payments at all, so this
+   cannot accidentally ship live. The day a real Paystack key exists,
+   delete this env var and the Paystack path below takes over unchanged.
+
+## STEP 6, ALTERNATIVE: Paystack, using the existing DF TEST account (5 minutes)
 
 **Revised 4 August after Dewald confirmed a new SVC account is not an
 option right now.** The platform no longer needs a webhook to activate

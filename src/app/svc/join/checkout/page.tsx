@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { svcPath } from "@/lib/svc/host";
 import { getCurrentMember } from "@/lib/svc/member";
 import { getPackageBySlug, formatRand } from "@/lib/svc/data";
-import { svcPaymentsConfigured } from "@/lib/svc/payments";
+import { svcPaymentsConfigured, svcPaymentProvider } from "@/lib/svc/payments";
 import { startCheckout } from "./actions";
 import { svcBtnPrimary } from "@/components/svc/ui";
 
@@ -69,7 +69,9 @@ export default async function CheckoutPage({
               <form action={startCheckout} className="mt-6">
                 <input type="hidden" name="package" value={pkg.slug} />
                 <button type="submit" className={svcBtnPrimary}>
-                  Pay {formatRand(pkg.monthly_price_cents)} securely
+                  {svcPaymentProvider() === "mock"
+                    ? "Activate my membership (test mode, no payment)"
+                    : `Pay ${formatRand(pkg.monthly_price_cents)} securely`}
                 </button>
               </form>
             ) : (
@@ -82,8 +84,9 @@ export default async function CheckoutPage({
               </div>
             )}
             <p className="mt-3 text-xs text-svc-ink/60">
-              Secure payment via Paystack. Test mode while the club is in its
-              private build.
+              {svcPaymentProvider() === "mock"
+                ? "Test mode: no money moves and no card is asked for. Real payments switch on when the club's payment account clears."
+                : "Secure payment via Paystack. Test mode while the club is in its private build."}
             </p>
           </div>
         )}

@@ -37,7 +37,7 @@ export default async function MemberLedgerPage({
     savingsTotalCents(member!.id),
     db
       .from("subscription")
-      .select("status, billing_interval, started_at, current_period_end, cancelled_at, cancel_reason, package:package_id (name)")
+      .select("status, billing_interval, provider, started_at, current_period_end, cancelled_at, cancel_reason, package:package_id (name)")
       .eq("member_id", member!.id)
       .order("created_at", { ascending: false }),
     db
@@ -83,6 +83,16 @@ export default async function MemberLedgerPage({
                 {s.status}
                 {s.current_period_end &&
                   `, paid to ${new Date(s.current_period_end).toLocaleDateString("en-ZA")}`}
+                {s.provider === "mock" && (
+                  <span className="ml-2 inline-block bg-svc-amber px-2 py-0.5 text-xs font-bold uppercase text-svc-ink">
+                    TEST DATA, no real payment
+                  </span>
+                )}
+                {s.provider === "comp" && (
+                  <span className="ml-2 inline-block bg-svc-blue px-2 py-0.5 text-xs font-bold uppercase text-white">
+                    Comped
+                  </span>
+                )}
                 {s.cancel_reason && (
                   <span className="block text-svc-ink/60">Cancel reason: {s.cancel_reason}</span>
                 )}
