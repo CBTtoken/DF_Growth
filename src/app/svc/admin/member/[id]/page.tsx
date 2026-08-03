@@ -29,7 +29,9 @@ export default async function MemberLedgerPage({
   const db = createSvcClient();
   const { data: member } = await db
     .from("member")
-    .select("id, first_name, surname, cell_number, cell_verified_at, email, status, joined_at, referral_code")
+    .select(
+      "id, first_name, surname, cell_number, cell_verified_at, email, status, joined_at, referral_code, mifuel_userid, mifuel_productlinkid, mifuel_provisioned_at, mifuel_last_error"
+    )
     .eq("id", id)
     .maybeSingle();
   if (!member) notFound();
@@ -80,6 +82,20 @@ export default async function MemberLedgerPage({
         </p>
         <p className="mt-2 text-base">
           Real savings to date: <span className="font-bold text-svc-green">{formatRand(savings.total)}</span>
+        </p>
+        <p className="mt-1 text-sm">
+          Coupon platform:{" "}
+          {member!.mifuel_provisioned_at ? (
+            <span className="font-semibold text-svc-green">
+              linked (their userid {member!.mifuel_userid}
+              {member!.mifuel_productlinkid ? `, productlink ${member!.mifuel_productlinkid}` : ""}, since{" "}
+              {new Date(member!.mifuel_provisioned_at).toLocaleString("en-ZA")})
+            </span>
+          ) : member!.mifuel_last_error ? (
+            <span className="font-semibold text-svc-blue">refused: {member!.mifuel_last_error}</span>
+          ) : (
+            <span className="text-svc-ink/60">not linked yet</span>
+          )}
         </p>
 
         <section className="mt-6 border-2 border-svc-ink/15 bg-white/60 p-5">
