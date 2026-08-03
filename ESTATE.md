@@ -10,6 +10,9 @@ belonged to a different repository entirely.
 
 Read this first. It is the only cross-repository document.
 
+Its companion is `STACK.md`: what everything runs on, what we pay for, and
+where the limits are.
+
 Last verified 3 August 2026.
 
 ---
