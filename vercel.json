@@ -1,5 +1,6 @@
 {
   "regions": ["dub1"],
+  "ignoreCommand": "node scripts/should-build.mjs",
   "crons": [
     {
       "path": "/api/cron/daily",
