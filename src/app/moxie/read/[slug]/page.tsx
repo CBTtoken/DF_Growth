@@ -7,6 +7,7 @@ import { getEdition } from "@/lib/moxie/editions";
 import { canRead, getReader } from "@/lib/moxie/entitlement";
 import { getEditionPages, signEditionPages } from "@/lib/moxie/pages";
 import { moxiePath } from "@/lib/moxie/host";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // The reader is never indexed. It is the gated part, the pages are served
 // through expiring signed URLs, and a crawler would only ever see a wall.
@@ -37,6 +38,19 @@ export default async function ReadPage({ params }: { params: Promise<{ slug: str
     moxiePath(`/editions/${slug}`),
     moxiePath("/editions"),
   ]);
+
+  // Circulation, counted where it happens. One row per opening of the
+  // reader: user id when signed in, nothing else about the person. Best
+  // effort by design; a failed count must never cost somebody the page.
+  {
+    const admin = createAdminClient();
+    const { error: readError } = await admin.from("moxie_reads").insert({
+      edition_id: edition.id,
+      user_id: reader?.id ?? null,
+      access_reason: access.reason,
+    });
+    if (readError) console.error("Could not record the read", readError);
+  }
 
   if (signed.length === 0) {
     return (

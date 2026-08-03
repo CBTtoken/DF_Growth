@@ -72,17 +72,30 @@ export async function handleMoxieEvent(event: {
     const subscriptionCode = data.subscription_code as string | undefined;
     if (!subscriptionCode || !email) return true;
 
-    await admin
-      .from("moxie_subscriptions")
-      .update({
-        paystack_subscription_code: subscriptionCode,
-        paystack_customer_code: customer?.customer_code ?? null,
-        paystack_plan_code: planCode ?? null,
-        status: "active",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("email", email)
-      .in("status", ["active", "past_due"]);
+    // Found live, 3 August 2026: Paystack fires subscription.create and
+    // charge.success within the same second, and it is charge.success that
+    // creates our row. When create arrived first, this update matched
+    // nothing, succeeded silently, and the row kept a null subscription
+    // code, which is exactly the key every cancellation event matches on.
+    // Dewald's own test cancel vanished into that hole. One short retry
+    // closes the race; the cancellation handler below also learned to fall
+    // back to email so any row that still slips through stays cancellable.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const { data: updated } = await admin
+        .from("moxie_subscriptions")
+        .update({
+          paystack_subscription_code: subscriptionCode,
+          paystack_customer_code: customer?.customer_code ?? null,
+          paystack_plan_code: planCode ?? null,
+          status: "active",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("email", email)
+        .in("status", ["active", "past_due"])
+        .select("id");
+      if ((updated?.length ?? 0) > 0) break;
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 2500));
+    }
     return true;
   }
 
@@ -93,14 +106,42 @@ export async function handleMoxieEvent(event: {
   if (event.event === "subscription.disable" || event.event === "subscription.not_renew") {
     const subscriptionCode = data.subscription_code as string | undefined;
     if (!subscriptionCode) return true;
-    await admin
+    const change = {
+      status: event.event === "subscription.disable" ? "cancelled" : "active",
+      cancelled_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const { data: matched } = await admin
       .from("moxie_subscriptions")
-      .update({
-        status: event.event === "subscription.disable" ? "cancelled" : "active",
-        cancelled_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq("paystack_subscription_code", subscriptionCode);
+      .update(change)
+      .eq("paystack_subscription_code", subscriptionCode)
+      .select("id");
+
+    // The healing path for a row that lost the create race and has no code:
+    // the event itself carries the customer's email, and where it does not,
+    // Paystack will say whose subscription this is. A cancellation must
+    // never be lost to a missing foreign key.
+    if ((matched?.length ?? 0) === 0) {
+      let fallbackEmail: string | null | undefined = email;
+      if (!fallbackEmail && process.env.PAYSTACK_SECRET_KEY) {
+        try {
+          const res = await fetch(`https://api.paystack.co/subscription/${subscriptionCode}`, {
+            headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
+          });
+          const body = (await res.json()) as { data?: { customer?: { email?: string } } };
+          fallbackEmail = body.data?.customer?.email?.toLowerCase();
+        } catch (err) {
+          console.error("Could not look up subscription for cancellation fallback", err);
+        }
+      }
+      if (fallbackEmail) {
+        await admin
+          .from("moxie_subscriptions")
+          .update({ ...change, paystack_subscription_code: subscriptionCode })
+          .eq("email", fallbackEmail)
+          .in("status", ["active", "past_due"]);
+      }
+    }
     return true;
   }
 

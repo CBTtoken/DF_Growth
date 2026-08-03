@@ -7,6 +7,7 @@ import {
   listMembers,
   listTeam,
   membershipSummary,
+  ownerStats,
   requireTeamAccess,
 } from "@/lib/moxie/admin";
 import { moxiePath } from "@/lib/moxie/host";
@@ -53,14 +54,21 @@ export default async function MoxieAdminPage({
   // behind them check again server-side either way.
   const canOperate = access.role === "publisher";
 
-  const [editions, members, memberList, team, csvBase, adminBase] = await Promise.all([
+  const [editions, members, memberList, team, stats2, csvBase, adminBase, membersCsvHref] = await Promise.all([
     listEditionsForAdmin(),
     membershipSummary(),
     listMembers(),
     listTeam(),
+    ownerStats(),
     moxiePath("/admin/codes"),
     moxiePath("/admin"),
+    moxiePath("/admin/members"),
   ]);
+
+  const rand = (cents: number) =>
+    `R${(cents / 100).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const readsByEdition = new Map(stats2.editionReads.map((r) => [r.editionId, r]));
+  const incomeMax = Math.max(1, ...stats2.incomeByMonth.map((m) => m.cents));
 
   const filter = MEMBER_FILTERS.some((f) => f.id === rawFilter) ? rawFilter! : "all";
   const filteredMembers = memberList.filter((m) => {
@@ -78,12 +86,6 @@ export default async function MoxieAdminPage({
     }
   });
 
-  const stats = [
-    { label: "Active members", value: members.active },
-    { label: "On annual", value: members.annual },
-    { label: "Payment failed", value: members.pastDue },
-    { label: "Cancelled", value: members.cancelled },
-  ];
 
   return (
     <main className="flex flex-1 flex-col">
@@ -109,24 +111,92 @@ export default async function MoxieAdminPage({
             </p>
           )}
 
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {stats.map((s) => (
+          {/* The funnel, left to right the way a reader travels: read it,
+              made an account, paid, wobbled, left. */}
+          <h2 className="font-moxie-display mt-10 text-2xl font-bold text-moxie-charcoal">
+            The funnel
+          </h2>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { label: "Reads, 30 days", value: stats2.reads30d, note: `${stats2.readsTotal} ever` },
+              { label: "Signed-in readers", value: stats2.uniqueSignedInReaders, note: "unique people" },
+              { label: "Reader accounts", value: stats2.readerAccounts, note: `${stats2.readersNeverPaid} never paid` },
+              { label: "Paying members", value: members.active, note: `${members.annual} on annual` },
+              { label: "Payment failed", value: members.pastDue, note: "worth a nudge" },
+              { label: "Dropped off", value: members.cancelled, note: "cancelled" },
+            ].map((s) => (
               <div key={s.label} className="border border-moxie-border bg-white p-5">
-                <p className="font-moxie-display text-3xl font-bold text-moxie-charcoal">
-                  {s.value}
-                </p>
+                <p className="font-moxie-display text-3xl font-bold text-moxie-charcoal">{s.value}</p>
                 <p className="font-moxie-label mt-1 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/60">
                   {s.label}
                 </p>
+                <p className="mt-1 text-xs text-moxie-charcoal/50">{s.note}</p>
               </div>
             ))}
+          </div>
+          <p className="mt-3 max-w-2xl text-xs leading-relaxed text-moxie-charcoal/50">
+            Reads and reader accounts are counted from 3 August 2026, when counting started.
+            Nothing before that date is guessed at.
+          </p>
+
+          {/* Money, from real movements only: webhook-recorded subscription
+              charges and paid once-off purchases. A comped membership never
+              appears here, which is the point of counting money rather than
+              members. */}
+          <h2 className="font-moxie-display mt-12 text-2xl font-bold text-moxie-charcoal">
+            Income
+          </h2>
+          <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr_2fr]">
+            <div className="border border-moxie-border bg-white p-5">
+              <p className="font-moxie-display text-3xl font-bold text-moxie-charcoal">
+                {rand(stats2.incomeThisMonthCents)}
+              </p>
+              <p className="font-moxie-label mt-1 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/60">
+                This month
+              </p>
+            </div>
+            <div className="border border-moxie-border bg-white p-5">
+              <p className="font-moxie-display text-3xl font-bold text-moxie-charcoal">
+                {rand(stats2.incomeLastMonthCents)}
+              </p>
+              <p className="font-moxie-label mt-1 text-[0.68rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/60">
+                Last month
+              </p>
+            </div>
+            <div className="border border-moxie-border bg-white p-5">
+              <p className="font-moxie-label text-[0.68rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/60">
+                Six months
+              </p>
+              <div className="mt-3 flex h-16 items-end gap-2">
+                {stats2.incomeByMonth.map((m) => (
+                  <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
+                    <div
+                      className="w-full bg-moxie-orange"
+                      style={{ height: `${Math.max(3, Math.round((m.cents / incomeMax) * 100))}%`, opacity: m.cents === 0 ? 0.15 : 1 }}
+                      title={`${m.month}: ${rand(m.cents)}`}
+                    />
+                    <span className="font-moxie-label text-[0.55rem] font-bold uppercase tracking-[0.1em] text-moxie-charcoal/50">
+                      {m.month}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* The members themselves, not just their count. Dewald, 3 August:
               "we can't see the members, see their subscriptions and so on". */}
-          <h2 className="font-moxie-display mt-12 text-2xl font-bold text-moxie-charcoal">
-            Members
-          </h2>
+          <div className="mt-12 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-moxie-display text-2xl font-bold text-moxie-charcoal">Members</h2>
+            {canOperate && memberList.length > 0 && (
+              <a
+                href={membersCsvHref}
+                className="font-moxie-label border border-moxie-border bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-[0.14em] text-moxie-charcoal transition hover:bg-moxie-cream"
+              >
+                Export CSV
+              </a>
+            )}
+          </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
             {MEMBER_FILTERS.map((f) => (
@@ -180,7 +250,11 @@ export default async function MoxieAdminPage({
                       <td className="px-4 py-3">{m.interval === "annual" ? "Annual" : "Monthly, R49"}</td>
                       <td className="px-4 py-3">{date(m.started_at)}</td>
                       <td className="px-4 py-3">
-                        {m.status === "cancelled" ? `Cancelled ${date(m.cancelled_at)}` : date(m.current_period_end)}
+                        {m.status === "cancelled"
+                          ? `Cancelled ${date(m.cancelled_at)}`
+                          : m.cancelled_at
+                            ? `Ends ${date(m.current_period_end)}, not renewing`
+                            : date(m.current_period_end)}
                       </td>
                     </tr>
                   ))}
@@ -211,13 +285,23 @@ export default async function MoxieAdminPage({
                         : ""}
                     </p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-moxie-display text-lg font-bold text-moxie-charcoal">
-                      {e.codesRedeemed} / {e.codesTotal}
-                    </p>
-                    <p className="font-moxie-label text-[0.62rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/55">
-                      codes redeemed
-                    </p>
+                  <div className="flex gap-8 text-right">
+                    <div>
+                      <p className="font-moxie-display text-lg font-bold text-moxie-charcoal">
+                        {readsByEdition.get(e.id)?.last30d ?? 0}
+                      </p>
+                      <p className="font-moxie-label text-[0.62rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/55">
+                        reads, 30 days
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-moxie-display text-lg font-bold text-moxie-charcoal">
+                        {e.codesRedeemed} / {e.codesTotal}
+                      </p>
+                      <p className="font-moxie-label text-[0.62rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/55">
+                        codes redeemed
+                      </p>
+                    </div>
                   </div>
                 </div>
 

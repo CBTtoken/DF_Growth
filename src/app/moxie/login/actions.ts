@@ -69,6 +69,11 @@ export async function signUp(formData: FormData) {
     email,
     password,
     email_confirm: true,
+    // Owner analytics, 3 August 2026: marks this account as a Moxie reader
+    // so the funnel can count "signed up but never paid" honestly. Only
+    // accounts created from here carry it, so the dashboard says the count
+    // starts from this date rather than pretending to know the past.
+    user_metadata: { moxie_reader: true, moxie_reader_since: new Date().toISOString() },
   });
 
   if (createError) {

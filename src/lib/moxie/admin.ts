@@ -150,6 +150,105 @@ export async function listMembers(): Promise<MemberRow[]> {
   return (data ?? []) as MemberRow[];
 }
 
+/**
+ * The magazine owner's questions, answered from real rows only.
+ *
+ * Dewald, 3 August: "what is really important for a magazine owner to see
+ * and do from admin... who read the magazine, signed up but did not pay,
+ * dropped off, active, income, readers stats". Every number here has a
+ * table behind it, and the two counters whose history only starts today
+ * (reads, tagged reader accounts) say so on the screen rather than
+ * pretending to know the past.
+ */
+export type OwnerStats = {
+  readsTotal: number;
+  reads30d: number;
+  uniqueSignedInReaders: number;
+  readerAccounts: number;
+  readersNeverPaid: number;
+  incomeByMonth: { month: string; cents: number }[];
+  incomeThisMonthCents: number;
+  incomeLastMonthCents: number;
+  editionReads: { editionId: string; total: number; last30d: number }[];
+};
+
+export async function ownerStats(): Promise<OwnerStats> {
+  const admin = createAdminClient();
+  const cutoff30 = new Date(Date.now() - 30 * 86_400_000).toISOString();
+
+  const [{ data: reads }, { data: billing }, { data: purchases }, { data: subs }] = await Promise.all([
+    admin.from("moxie_reads").select("edition_id, user_id, created_at"),
+    admin.from("moxie_billing_events").select("amount_cents, created_at"),
+    admin.from("moxie_purchases").select("amount_cents, created_at, status"),
+    admin.from("moxie_subscriptions").select("user_id"),
+  ]);
+
+  const readRows = reads ?? [];
+  const readsTotal = readRows.length;
+  const reads30d = readRows.filter((r) => r.created_at >= cutoff30).length;
+  const uniqueSignedInReaders = new Set(readRows.filter((r) => r.user_id).map((r) => r.user_id)).size;
+
+  const editionMap = new Map<string, { total: number; last30d: number }>();
+  for (const r of readRows) {
+    const entry = editionMap.get(r.edition_id) ?? { total: 0, last30d: 0 };
+    entry.total += 1;
+    if (r.created_at >= cutoff30) entry.last30d += 1;
+    editionMap.set(r.edition_id, entry);
+  }
+
+  // Reader accounts: tagged at signup from 3 August 2026. Paged the same
+  // way every auth listing on this project is, and matched locally.
+  const everSubscribed = new Set((subs ?? []).map((s) => s.user_id));
+  let readerAccounts = 0;
+  let readersNeverPaid = 0;
+  let page = 1;
+  for (;;) {
+    const { data } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    for (const u of data.users) {
+      if (u.user_metadata?.moxie_reader) {
+        readerAccounts += 1;
+        if (!everSubscribed.has(u.id)) readersNeverPaid += 1;
+      }
+    }
+    if (data.users.length < 1000) break;
+    page++;
+  }
+
+  // Income: real money movements only. Billing events are the webhook's
+  // record of subscription charges; purchases count once paid. A manually
+  // granted membership carries no event, so it never inflates this.
+  const money: { cents: number; at: string }[] = [
+    ...(billing ?? []).map((b) => ({ cents: b.amount_cents ?? 0, at: b.created_at })),
+    ...(purchases ?? [])
+      .filter((p) => p.status === "paid")
+      .map((p) => ({ cents: p.amount_cents ?? 0, at: p.created_at })),
+  ];
+
+  const monthKey = (iso: string) => iso.slice(0, 7);
+  const now = new Date();
+  const incomeByMonth: { month: string; cents: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+    const key = d.toISOString().slice(0, 7);
+    incomeByMonth.push({
+      month: d.toLocaleDateString("en-ZA", { month: "short", year: i >= 11 ? "numeric" : undefined, timeZone: "UTC" }),
+      cents: money.filter((m) => monthKey(m.at) === key).reduce((s, m) => s + m.cents, 0),
+    });
+  }
+
+  return {
+    readsTotal,
+    reads30d,
+    uniqueSignedInReaders,
+    readerAccounts,
+    readersNeverPaid,
+    incomeByMonth,
+    incomeThisMonthCents: incomeByMonth[5]?.cents ?? 0,
+    incomeLastMonthCents: incomeByMonth[4]?.cents ?? 0,
+    editionReads: [...editionMap.entries()].map(([editionId, v]) => ({ editionId, ...v })),
+  };
+}
+
 export type TeamRow = {
   userId: string;
   email: string | null;
