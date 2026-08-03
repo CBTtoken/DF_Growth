@@ -101,7 +101,15 @@ Try these on purpose; they should all fail politely:
 
 ## PART 5: THE ADMIN SIDE (20 minutes, admin emails only)
 
-Open /svc/admin on the test site. Six sections plus the day-one tools:
+**Getting admin access as a tester:** there is no admin username and
+password, and no shared login. Admin is an allowlist of email addresses.
+Sign up as a normal member first (Part 2) with your real email, then ask
+Dewald to add that email to the admin list; after the next redeploy your
+own login also opens /svc/admin. (Dewald: Vercel, Environment Variables,
+edit the Preview SVC_ADMIN_EMAILS entry, add the tester's email comma
+separated, redeploy the preview.) Remove testers the same way afterwards.
+
+Open /svc/admin on the test site. Seven sections plus the day-one tools:
 
 1. **The issue run**: press "Run the issue now". Every paid-up member
    gets the month's benefits; pressing it twice issues nothing twice.

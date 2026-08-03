@@ -68,6 +68,11 @@ export async function setMemberSuspension(formData: FormData) {
     .eq("id", memberId);
   if (error) console.error("SVC suspension change failed", error);
 
+  // Best effort mirror to the coupon platform (their statuses: 3
+  // Suspended, 2 Active); never blocks the local action.
+  const { syncMifuelStatus } = await import("@/lib/svc/mifuel");
+  await syncMifuelStatus(memberId, suspend ? 3 : 2, suspend ? "Suspended by SVC admin" : "Reactivated by SVC admin");
+
   redirect(`${await svcPath(`/admin/member/${memberId}`)}`);
 }
 

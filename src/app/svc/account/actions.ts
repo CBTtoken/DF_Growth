@@ -66,6 +66,50 @@ export async function confirmBenefitUsed(formData: FormData) {
 }
 
 /**
+ * The coupon unlock: the identity fields MiFuel's member API makes
+ * mandatory (title, date of birth, ID number), collected once at the
+ * moment they matter rather than at signup where every field costs
+ * joins. Saving provisions the member on MiFuel immediately.
+ */
+export async function saveCouponIdentity(formData: FormData) {
+  const member = await requireMember();
+  const title = String(formData.get("title") ?? "");
+  const dob = String(formData.get("dob") ?? "").trim();
+  const idType = formData.get("idType") === "passport" ? "passport" : "sa_id";
+  const idNumber = String(formData.get("idNumber") ?? "").replace(/\s+/g, "");
+
+  const back = await svcPath("/account/coupons");
+
+  if (!["Mr", "Mrs", "Miss"].includes(title)) redirect(`${back}?unlock=title`);
+  const dobDate = new Date(dob);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dob) || Number.isNaN(dobDate.getTime()) || dobDate > new Date()) {
+    redirect(`${back}?unlock=dob`);
+  }
+  if (idType === "sa_id" && !/^\d{13}$/.test(idNumber)) redirect(`${back}?unlock=id`);
+  if (idType === "passport" && !/^[A-Za-z0-9]{5,20}$/.test(idNumber)) redirect(`${back}?unlock=id`);
+
+  const db = createSvcClient();
+  const { error } = await db
+    .from("member")
+    .update({
+      title,
+      date_of_birth: dob,
+      id_type: idType,
+      id_number: idNumber,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", member.id);
+  if (error) {
+    console.error("SVC coupon identity save failed", error);
+    redirect(`${back}?unlock=failed`);
+  }
+
+  const { provisionMifuelMember } = await import("@/lib/svc/mifuel");
+  const result = await provisionMifuelMember(member.id);
+  redirect(`${back}?unlock=${result.ok ? "linked" : `error_${result.error}`}`);
+}
+
+/**
  * Buying draw entries (handoff 10.1). Every gate lives server-side in
  * drawPurchaseEligibility; this action re-derives all of it and refuses
  * politely, whatever the interface showed. Mock provider mints instantly;
