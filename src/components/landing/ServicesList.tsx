@@ -124,24 +124,26 @@ export function ServicesList({
     // type, the way a capability list reads on a contractor's spec sheet.
     // Odd rows indent on desktop so the column of indices staggers, which
     // keeps a long list from reading as a table.
+    // Weights and rules softened after Dewald's live review (3 Aug): the
+    // first cut's heavy top rule and bold rows read dark and aggressive.
     body = (
-      <ol className="mt-10 border-t-2 border-gray-900">
+      <ol className="mt-10 border-t border-gray-300">
         {services.map((service, i) => (
           <li
             key={i}
-            className={`group flex items-baseline gap-5 border-b border-gray-300 py-5 sm:gap-8 sm:py-6 ${
+            className={`group flex items-baseline gap-5 border-b border-gray-200 py-5 sm:gap-8 sm:py-6 ${
               i % 2 === 1 ? "sm:pl-14" : ""
             }`}
           >
             <span
-              className="font-mono text-2xl font-bold tabular-nums sm:text-4xl"
+              className="font-mono text-2xl font-semibold tabular-nums sm:text-3xl"
               style={{ color: accentColor }}
             >
               {String(i + 1).padStart(2, "0")}
             </span>
             <span
-              className={`text-lg font-bold leading-snug tracking-tight sm:text-2xl ${
-                isDark ? "text-white" : "text-gray-900"
+              className={`text-lg font-semibold leading-snug tracking-tight sm:text-xl ${
+                isDark ? "text-white" : "text-gray-800"
               } ${HEADING_FONT_CLASS[anchor.headingFont]}`}
             >
               {service}

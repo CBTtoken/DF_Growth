@@ -96,7 +96,9 @@ export const EYEBROW_STYLE_CLASS: Record<EyebrowStyle, string> = {
   // Fieldwork build: reads like a stencilled label on a crate — a thick
   // rule in the accent colour (border-current picks up the eyebrow's
   // style={{ color }}) hard against the text, no pill, no lowercase.
-  "stencil-tag": "inline-flex items-center border-l-4 border-current pl-2.5 font-mono text-xs font-bold uppercase tracking-[0.28em]",
+  // Sized up after Dewald's live review (3 Aug): at text-xs with 0.28em
+  // tracking the section labels were genuinely hard to read.
+  "stencil-tag": "inline-flex items-center border-l-4 border-current pl-3 font-mono text-sm font-bold uppercase tracking-[0.18em] sm:text-base",
 };
 
 export type SpacingDensity = "airy" | "standard" | "tight";

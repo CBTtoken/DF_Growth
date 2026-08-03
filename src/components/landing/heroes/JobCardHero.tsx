@@ -125,8 +125,12 @@ export function JobCardHero({
             >
               {businessName}
             </p>
+            {/* Normal case and one weight down from the first cut — Dewald's
+                live review: all-caps extrabold read dark and aggressive.
+                The condensed display face carries the industrial tone on
+                its own. */}
             <h1
-              className="mt-4 text-4xl font-extrabold uppercase leading-[0.98] tracking-tight font-[family-name:var(--font-anchor-display)] sm:text-6xl lg:text-[4.2rem]"
+              className="mt-4 text-[2.5rem] font-bold leading-[1.04] tracking-tight font-[family-name:var(--font-anchor-display)] sm:text-5xl lg:text-6xl"
               style={{ color: onField }}
             >
               {headline}
@@ -146,7 +150,7 @@ export function JobCardHero({
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <a
                 href={ctaHref}
-                className="inline-flex items-center justify-center rounded-md px-7 py-4 text-base font-bold uppercase tracking-wide shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
+                className="inline-flex items-center justify-center rounded-md px-7 py-4 text-base font-bold shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl"
                 style={{ backgroundColor: primaryColor, color: onPrimary }}
               >
                 {ctaLabel}

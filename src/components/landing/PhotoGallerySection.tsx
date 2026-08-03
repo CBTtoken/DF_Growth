@@ -110,7 +110,7 @@ export function PhotoGallerySection({
                 <button
                   type="button"
                   onClick={() => setOpenIndex(i)}
-                  className={`group relative block w-full overflow-hidden border-2 ${isDark ? "border-gray-700" : "border-gray-900"} ${
+                  className={`group relative block w-full overflow-hidden border ${isDark ? "border-gray-700" : "border-gray-300"} ${
                     i === 0 ? "aspect-[4/3]" : "aspect-square"
                   }`}
                 >

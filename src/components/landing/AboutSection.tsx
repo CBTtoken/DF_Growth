@@ -82,7 +82,7 @@ export function AboutSection({
           </div>
           <div className="mt-8 border-l-[6px] pl-6 sm:pl-10" style={{ borderColor: accentColor }}>
             <p
-              className={`max-w-3xl text-xl font-semibold leading-snug tracking-tight sm:text-[1.75rem] sm:leading-[1.35] ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}
+              className={`max-w-3xl text-xl font-medium leading-relaxed tracking-tight sm:text-2xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}
             >
               {aboutText}
             </p>
