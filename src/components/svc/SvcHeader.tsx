@@ -23,7 +23,15 @@ const NAV = [
   { href: "/contact", label: "Contact" },
 ];
 
-export function SvcHeader({ prefix }: { prefix: string }) {
+export function SvcHeader({
+  prefix,
+  signedIn = false,
+  isAdmin = false,
+}: {
+  prefix: string;
+  signedIn?: boolean;
+  isAdmin?: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const p = (path: string) => (path === "/" ? (prefix === "" ? "/" : prefix) : `${prefix}${path}`);
 
@@ -48,18 +56,39 @@ export function SvcHeader({ prefix }: { prefix: string }) {
               {item.label}
             </Link>
           ))}
-          <Link
-            href={p("/login")}
-            className="text-sm font-medium text-white hover:text-svc-amber"
-          >
-            Log in
-          </Link>
-          <Link
-            href={p("/join")}
-            className="inline-flex min-h-11 items-center bg-svc-amber px-5 text-sm font-semibold text-svc-ink hover:bg-white"
-          >
-            Join now
-          </Link>
+          {signedIn ? (
+            <>
+              {isAdmin && (
+                <Link
+                  href={p("/admin")}
+                  className="text-sm font-medium text-white hover:text-svc-amber"
+                >
+                  Admin
+                </Link>
+              )}
+              <Link
+                href={p("/account")}
+                className="inline-flex min-h-11 items-center bg-svc-amber px-5 text-sm font-semibold text-svc-ink hover:bg-white"
+              >
+                My dashboard
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href={p("/login")}
+                className="text-sm font-medium text-white hover:text-svc-amber"
+              >
+                Log in
+              </Link>
+              <Link
+                href={p("/join")}
+                className="inline-flex min-h-11 items-center bg-svc-amber px-5 text-sm font-semibold text-svc-ink hover:bg-white"
+              >
+                Join now
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* The burger, top right, 48px tap target. */}
@@ -96,22 +125,47 @@ export function SvcHeader({ prefix }: { prefix: string }) {
                 {item.label}
               </Link>
             ))}
-            <Link
-              href={p("/login")}
-              onClick={() => setOpen(false)}
-              className="border-b border-white/15 px-6 py-5 text-lg font-semibold text-white"
-            >
-              Log in
-            </Link>
-            <div className="px-6 py-6">
-              <Link
-                href={p("/join")}
-                onClick={() => setOpen(false)}
-                className="flex min-h-12 w-full items-center justify-center bg-svc-amber px-6 text-lg font-semibold text-svc-ink"
-              >
-                Join now
-              </Link>
-            </div>
+            {signedIn ? (
+              <>
+                {isAdmin && (
+                  <Link
+                    href={p("/admin")}
+                    onClick={() => setOpen(false)}
+                    className="border-b border-white/15 px-6 py-5 text-lg font-semibold text-white"
+                  >
+                    Admin
+                  </Link>
+                )}
+                <div className="px-6 py-6">
+                  <Link
+                    href={p("/account")}
+                    onClick={() => setOpen(false)}
+                    className="flex min-h-12 w-full items-center justify-center bg-svc-amber px-6 text-lg font-semibold text-svc-ink"
+                  >
+                    My dashboard
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={p("/login")}
+                  onClick={() => setOpen(false)}
+                  className="border-b border-white/15 px-6 py-5 text-lg font-semibold text-white"
+                >
+                  Log in
+                </Link>
+                <div className="px-6 py-6">
+                  <Link
+                    href={p("/join")}
+                    onClick={() => setOpen(false)}
+                    className="flex min-h-12 w-full items-center justify-center bg-svc-amber px-6 text-lg font-semibold text-svc-ink"
+                  >
+                    Join now
+                  </Link>
+                </div>
+              </>
+            )}
           </nav>
         </div>
       )}

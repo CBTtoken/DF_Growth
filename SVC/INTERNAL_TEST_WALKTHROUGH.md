@@ -179,9 +179,12 @@ Open /svc/admin on the test site. Seven sections plus the day-one tools:
 
 So nobody reports these as bugs:
 
-- **Real coupons from the supplier**: waiting on their API credentials
-  and documentation. The manual path above is the designed fallback and
-  works end to end.
+- **Real coupons from the supplier**: the supplier link is live for
+  registering members, but browsing and redeeming their actual coupons
+  inside SVC waits on two things from their side (with Adriaan): the
+  coupon API documentation, and a sandbox so we can test without
+  touching their live platform. Until then the coupon packs you see are
+  the manual path, which is the designed fallback and works end to end.
 - **SMS one-time codes**: email until an SMS provider is chosen.
 - **Real payments**: simulated in this environment on purpose; the real
   Paystack path exists and switches on with SVC's own account.

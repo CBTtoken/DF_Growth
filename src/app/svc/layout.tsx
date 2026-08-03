@@ -63,6 +63,23 @@ export default async function SvcLayout({ children }: { children: React.ReactNod
   const host = (await headers()).get("host") ?? "";
   const prefix = isSvcHost(host) ? "" : SVC_PREFIX;
 
+  // Session state for the header, so a signed-in member sees "My
+  // dashboard" instead of "Log in", and an admin always has a way back to
+  // admin from any screen. Without this the header read as "logged out"
+  // the moment anyone left the member area, which was reported as a bug
+  // because it genuinely looked like one.
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const signedIn = !!user;
+  let isAdmin = false;
+  if (signedIn) {
+    const { getSvcAdmin } = await import("@/lib/svc/admin");
+    isAdmin = !!(await getSvcAdmin());
+  }
+
   return (
     // bg-svc-cream because plain white page backgrounds are banned (handoff
     // section 4). font-svc-body is a Tailwind utility rather than an inline
@@ -73,7 +90,7 @@ export default async function SvcLayout({ children }: { children: React.ReactNod
     <div
       className={`${montserrat.variable} ${poppins.variable} flex min-h-full flex-1 flex-col bg-svc-cream font-svc-body text-svc-ink`}
     >
-      <SvcHeader prefix={prefix} />
+      <SvcHeader prefix={prefix} signedIn={signedIn} isAdmin={isAdmin} />
       <main className="flex-1">{children}</main>
       <SvcFooter prefix={prefix} />
     </div>
