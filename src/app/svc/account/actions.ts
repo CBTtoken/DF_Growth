@@ -89,6 +89,20 @@ export async function saveCouponIdentity(formData: FormData) {
   if (idType === "passport" && !/^[A-Za-z0-9]{5,20}$/.test(idNumber)) redirect(`${back}?unlock=id`);
 
   const db = createSvcClient();
+
+  // The provider's own rule (Adriaan, 4 August): the product is ordered
+  // on MiFuel only after the client has actually paid. Server-enforced,
+  // not just hidden from the screen.
+  const { data: paidSub } = await db
+    .from("subscription")
+    .select("id")
+    .eq("member_id", member.id)
+    .in("status", ["active", "cancelled"])
+    .gte("current_period_end", new Date().toISOString())
+    .limit(1)
+    .maybeSingle();
+  if (!paidSub) redirect(`${back}?unlock=unpaid`);
+
   const { error } = await db
     .from("member")
     .update({

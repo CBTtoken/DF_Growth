@@ -33,18 +33,26 @@ export default async function CouponsPage({
   const accountHref = await svcPath("/account");
 
   // The provider link state, shown only when MiFuel credentials exist in
-  // this environment.
+  // this environment. Gated on a PAID membership per the provider's own
+  // instruction (Adriaan, 4 August): the product is ordered on MiFuel
+  // only after the client has actually paid on our side.
   let providerLinked = false;
   let needsUnlock = false;
   if (mifuelConfigured()) {
     const db = createSvcClient();
-    const { data: identity } = await db
-      .from("member")
-      .select("mifuel_provisioned_at")
-      .eq("id", member!.id)
-      .maybeSingle();
+    const [{ data: identity }, { data: paidSub }] = await Promise.all([
+      db.from("member").select("mifuel_provisioned_at").eq("id", member!.id).maybeSingle(),
+      db
+        .from("subscription")
+        .select("id")
+        .eq("member_id", member!.id)
+        .in("status", ["active", "cancelled"])
+        .gte("current_period_end", new Date().toISOString())
+        .limit(1)
+        .maybeSingle(),
+    ]);
     providerLinked = !!identity?.mifuel_provisioned_at;
-    needsUnlock = !providerLinked;
+    needsUnlock = !providerLinked && !!paidSub;
   }
 
   const monthName = new Date(`${periodFor()}T00:00:00Z`).toLocaleDateString("en-ZA", {
