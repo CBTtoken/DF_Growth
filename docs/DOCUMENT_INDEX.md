@@ -44,6 +44,7 @@ Last verified 3 August 2026.
 | Document | Where |
 |---|---|
 | `Report_WeCare_Products.md` | `docs/` |
+| `Report_JettingWorx.md` | `docs/` |
 | `WeCare_Client_Email.md` | `docs/` |
 | `Partner_Outreach_Emails.md` | `docs/` |
 
