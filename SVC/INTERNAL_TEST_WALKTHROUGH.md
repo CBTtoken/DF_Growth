@@ -17,6 +17,30 @@ each number can only join once.
 There are two hats to test in: MEMBER (anyone) and ADMIN (only accounts
 on the admin list; ask Dewald to add your email if you need it).
 
+## THE SHARED TESTER ACCOUNT (fastest way in)
+
+A ready-made account exists so you can skip signup entirely:
+
+- **Email:** info+svctester@digitalflyer.co.za
+- **Password:** SVC-Tester-2026
+- Log in at /login on the test site (email and password tab).
+
+It arrives fully set up: verified cell number, an active membership (no
+payment needed), and once the daily issue has run it holds the month's
+benefits. It is also on the admin list, so /svc/admin works from it.
+
+Notes on this account: system emails it triggers land in Dewald's inbox
+(the address is an alias), the cell number 082 000 0001 is deliberately
+fake, and the coupon-platform link step is intentionally not available
+on it. If several of you test at once you will see each other's clicks;
+for a clean solo run, sign up your own account instead (Part 2).
+
+**One rule for everyone: do not use the "Unlock your coupons" step with
+your own real cell number for now.** That step writes to the coupon
+supplier's LIVE platform, and if your number is already registered there
+it would overwrite your real record with test details. That step is
+Dewald-only until the supplier confirms a test environment.
+
 ---
 
 ## PART 1: THE PUBLIC SITE (5 minutes, no account needed)
