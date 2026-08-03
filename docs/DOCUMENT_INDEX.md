@@ -58,7 +58,8 @@ Last verified 3 August 2026.
 `WORDPRESS_EXPORT_CHECKLIST.md`.
 
 **The Desk** lives in `TheDesk/`: handoffs v1 and v2, build reports v1 and v2,
-and the health check addendum.
+the health check addendum (`Handoff_Desk_HealthCheck.md`) and its phase 2
+report (`Report_Desk_HealthCheck_Phase2.md`).
 
 **The Board** lives in `The Board/`: handoff v1, phase reports 1 to 3, and a
 tester brief.
@@ -113,6 +114,10 @@ backup that covers the repository. If this laptop died they would be gone.
 | `WhatsApp/` in full, including `Handoff_WhatsApp_Lead_Switchboard_v1.md` | never added |
 | `BizUp/docs/katisobiz-site-audit-fixes*.md`, three files | never added |
 | `docs/AGENT-QUESTIONS-ANSWERED.md`, `docs/PRODUCT-BRIEF-FOR-AGENTS.md`, `docs/Database/`, `docs/New Builds/` | never added |
+
+`TheDesk/Handoff_Desk_HealthCheck.md` was on this list until 3 August 2026,
+when it was committed alongside the phase 2 report that builds from it. The
+rest still needs Dewald's call.
 
 The Bob Go one is the odd case: something deliberately gitignored the folder.
 Worth deciding whether that was intentional, because the outstanding Bob Go

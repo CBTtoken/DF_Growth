@@ -142,7 +142,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "How do I get paid for a booking or order?",
         answer:
-          "Two ways, and you choose. Connect your own Paystack account and buyers pay by card at checkout, with the money going straight to you. We never sit in the middle of it. If you have not got a gateway, the order still goes through: it is recorded, we email you the buyer's details, and you arrange payment with them directly. Plenty of members run exactly like that.",
+          "Two ways, and you choose. If you have your own Paystack account, send us the key and we connect it: buyers then pay by card at checkout, with the money going straight to you. We never sit in the middle of it. If you have not got a gateway, the order still goes through: it is recorded, we email you the buyer's details, and you arrange payment with them directly. Plenty of members run exactly like that.",
       },
       {
         question: "How do I add products to my Shop?",
