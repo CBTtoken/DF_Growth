@@ -1,0 +1,139 @@
+name: Weekly restore test
+
+# TheDesk/Handoff_Desk_HealthCheck.md section 5.4: a backup that has never
+# been restored is not a backup. Every Sunday, half an hour after the weekly
+# backup, this dumps the live database, restores it into a throwaway
+# Postgres that lives only for this job, verifies row counts on the main
+# tables against live, and writes the outcome to desk_backup_restores,
+# which is what the /desk/health screen reads. Runs here rather than in a
+# Vercel function because a dump-and-restore will not finish inside a
+# function timeout (handoff section 9).
+#
+# No new secrets: SUPABASE_DB_URL is the same repo secret the backup
+# workflow already uses, and the result row is written over that same
+# connection, so nothing needs to call back into the app.
+
+on:
+  schedule:
+    - cron: "30 3 * * 0"
+  workflow_dispatch:
+
+jobs:
+  restore-test:
+    runs-on: ubuntu-latest
+
+    services:
+      throwaway:
+        # postgis/postgis rather than plain postgres because the live schema
+        # uses PostGIS and btree_gist; the image ships both. The container
+        # is destroyed with the job, which is the "destroy the throwaway"
+        # half of section 5.4.
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_PASSWORD: throwaway
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    env:
+      THROWAWAY_URL: postgresql://postgres:throwaway@localhost:5432/restoretest
+      # The tables whose data existing is the point of the whole exercise.
+      TABLES: growth_clients leads bizup_accounts bizup_documents shop_orders emag_articles desk_items
+
+    steps:
+      # Same recipe as weekly-db-backup.yml, same reason: the live server is
+      # Postgres 17 and pg_dump refuses to dump from a server newer than
+      # itself, so the matching client comes from the PostgreSQL apt repo.
+      - name: Install postgresql-client 17
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
+
+      # Both schemas, deliberately. Public alone will not restore cleanly:
+      # its foreign keys and policies reference auth.users and auth.uid(),
+      # so auth comes along and the restored copy stands on its own feet.
+      - name: Dump live database
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
+            --schema=public --schema=auth \
+            --no-owner --no-privileges -F c -f restore-test.dump
+
+      # Counted immediately after the dump, so the comparison window is as
+      # small as the network allows and live drift stays negligible.
+      - name: Record live row counts
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          for t in $TABLES; do
+            n=$(/usr/lib/postgresql/17/bin/psql "$SUPABASE_DB_URL" -t -A -c "select count(*) from public.$t")
+            echo "$t $n" >> live_counts.txt
+          done
+          cat live_counts.txt
+
+      - name: Restore into the throwaway
+        run: |
+          /usr/lib/postgresql/17/bin/psql postgresql://postgres:throwaway@localhost:5432/postgres \
+            -c "create database restoretest"
+          /usr/lib/postgresql/17/bin/psql "$THROWAWAY_URL" \
+            -c "create extension if not exists postgis" \
+            -c "create extension if not exists btree_gist" \
+            -c "create extension if not exists pgcrypto" \
+            -c "create extension if not exists \"uuid-ossp\""
+          # Ownership, ACLs and Supabase-managed odds and ends produce
+          # warnings on a vanilla target; they are counted and reported
+          # rather than hidden, and the verdict below rests on row counts,
+          # not on a clean exit.
+          set +e
+          /usr/lib/postgresql/17/bin/pg_restore --no-owner --no-privileges \
+            -d "$THROWAWAY_URL" restore-test.dump 2> restore_errors.txt
+          echo "PG_RESTORE_EXIT=$?" >> "$GITHUB_ENV"
+          set -e
+          echo "RESTORE_WARNINGS=$(grep -c 'error:' restore_errors.txt || true)" >> "$GITHUB_ENV"
+          tail -20 restore_errors.txt || true
+
+      - name: Verify row counts and report the outcome
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          PSQL=/usr/lib/postgresql/17/bin/psql
+          ok=true
+          json="{"
+          sep=""
+          while read -r t live; do
+            restored=$($PSQL "$THROWAWAY_URL" -t -A -c "select count(*) from public.$t" 2>/dev/null || echo "-1")
+            # Within five rows or two percent of live: the dump and the live
+            # count are moments apart, and the platform keeps writing.
+            allowed=$(( live / 50 > 5 ? live / 50 : 5 ))
+            diff=$(( live - restored )); diff=${diff#-}
+            if [ "$restored" -lt 0 ] || [ "$diff" -gt "$allowed" ]; then
+              ok=false
+              echo "MISMATCH $t: live=$live restored=$restored"
+            else
+              echo "ok $t: live=$live restored=$restored"
+            fi
+            json="$json$sep\"$t\": {\"live\": $live, \"restored\": $restored}"
+            sep=", "
+          done < live_counts.txt
+          json="$json}"
+
+          notes="Public and auth schemas, data restored into a throwaway Postgres 17 with PostGIS. pg_restore reported $RESTORE_WARNINGS error line(s), expected on a vanilla target (ownership, Supabase-managed objects); the verdict rests on the row counts."
+          $PSQL "$SUPABASE_DB_URL" -c "insert into public.desk_backup_restores (started_at, finished_at, kind, succeeded, row_counts, notes) values (now() - interval '2 minutes', now(), 'full', $ok, '$json'::jsonb, '$notes')"
+          $ok
+
+      # A run that died before reporting must still leave a row, or the
+      # health check would read silence as "no restore attempted" instead of
+      # "the restore is failing", and those are different problems.
+      - name: Report a failed run
+        if: failure()
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          /usr/lib/postgresql/17/bin/psql "$SUPABASE_DB_URL" -c "insert into public.desk_backup_restores (started_at, finished_at, kind, succeeded, notes) values (now() - interval '2 minutes', now(), 'full', false, 'The weekly restore test failed before it could verify row counts. See the GitHub Actions log for run ${{ github.run_id }}.')" || true

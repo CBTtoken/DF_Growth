@@ -22,16 +22,51 @@ const unknown = (check: string, category: HealthResult["category"], result: stri
 // ============================================================
 
 /**
- * Vercel spend for the current billing cycle.
+ * Vercel spend for the current month, from the FOCUS billing charges API.
+ *
+ * Phase 2: the upcoming-invoice endpoint the first pass tried does not
+ * exist for this plan (404). What does exist is `/v1/billing/charges`,
+ * which streams FOCUS-format line items at one-day granularity, so the
+ * month's real spend is the sum of its BilledCost lines. Verified live
+ * against this team before this code shipped.
  *
  * Build CPU is the line that matters here. It was 59 hours in the August
  * cycle, $12.56 of a $15.08 infrastructure total, with everything else in
- * cents, so a jump in this number is almost always a jump in builds.
+ * cents, so a jump in this number is almost always a jump in builds. The
+ * result names the biggest line for exactly that reason.
  */
+async function vercelChargesTotal(
+  headers: Record<string, string>,
+  teamId: string,
+  fromMs: number,
+  toMs: number
+): Promise<{ total: number; top: { name: string; cost: number } | null }> {
+  const from = new Date(fromMs).toISOString();
+  const to = new Date(toMs).toISOString();
+  const res = await fetch(
+    `https://api.vercel.com/v1/billing/charges?teamId=${teamId}&from=${from}&to=${to}`,
+    { headers }
+  );
+  if (!res.ok) throw new Error(`Vercel returned ${res.status} for billing charges.`);
+
+  const byService = new Map<string, number>();
+  let total = 0;
+  for (const line of (await res.text()).split("\n")) {
+    if (!line.trim()) continue;
+    const row = JSON.parse(line) as { BilledCost?: number; ServiceName?: string };
+    const cost = Number(row.BilledCost ?? 0);
+    total += cost;
+    const name = row.ServiceName ?? "other";
+    byService.set(name, (byService.get(name) ?? 0) + cost);
+  }
+  const top = [...byService.entries()].sort((a, b) => b[1] - a[1])[0];
+  return { total, top: top && top[1] > 0 ? { name: top[0], cost: top[1] } : null };
+}
+
 const vercelSpend: HealthCheck = {
   check: "vercel_spend",
   category: "usage",
-  label: "Vercel spend this cycle",
+  label: "Vercel spend this month",
   async run() {
     const token = process.env.VERCEL_TOKEN;
     if (!token) return unknown("vercel_spend", "usage", "No Vercel token is set, so spend cannot be read.");
@@ -45,25 +80,44 @@ const vercelSpend: HealthCheck = {
     // usage under it costs nothing extra, and over it is a real bill.
     const INCLUDED_CREDIT_USD = 20;
 
-    const res = await fetch(`https://api.vercel.com/v1/teams/${team.id}/billing/invoices/upcoming`, { headers });
-    if (!res.ok) {
-      // Not every plan exposes this. Say so rather than reporting zero.
-      return unknown(
-        "vercel_spend",
-        "usage",
-        `Vercel returned ${res.status} for the upcoming invoice, so spend could not be read.`
-      );
+    const now = new Date();
+    const monthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+    const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    if (today <= monthStart) {
+      return ok("vercel_spend", "usage", "The month started today, so there is nothing to measure yet.");
     }
-    const invoice = await res.json();
-    const total = Number(invoice?.total ?? invoice?.amount ?? 0);
-    const { status } = judgeTrajectory(total, INCLUDED_CREDIT_USD);
+
+    // This month so far, and last month over the same number of whole days,
+    // which is the handoff's "materially above last month at the same point
+    // in the cycle" comparison. Whole days only, because the charges API is
+    // day-granular.
+    const elapsedMs = today - monthStart;
+    const prevStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1);
+    const prevEnd = Math.min(prevStart + elapsedMs, monthStart);
+
+    const [current, previous] = await Promise.all([
+      vercelChargesTotal(headers, team.id, monthStart, today),
+      vercelChargesTotal(headers, team.id, prevStart, prevEnd).catch(() => null),
+    ]);
+
+    let { status } = judgeTrajectory(current.total, INCLUDED_CREDIT_USD);
+    let comparison = "";
+    if (previous) {
+      // Materially above: half again more than last month at this point, and
+      // by more than a dollar, so a two cent month never cries wolf.
+      const materially = current.total > previous.total * 1.5 && current.total - previous.total > 1;
+      if (materially && status === "ok") status = "warn";
+      comparison = ` Last month at this point: $${previous.total.toFixed(2)}${materially ? ", so this month is running well ahead" : ""}.`;
+    }
+    const topLine = current.top ? ` Biggest line: ${current.top.name} at $${current.top.cost.toFixed(2)}.` : "";
 
     return {
       check: "vercel_spend",
       category: "usage",
       status,
-      result: describeUsage(total, INCLUDED_CREDIT_USD, "USD of included credit"),
-      raw: invoice,
+      result:
+        describeUsage(current.total, INCLUDED_CREDIT_USD, "USD of included credit") + "." + topLine + comparison,
+      raw: { total: current.total, previousTotal: previous?.total ?? null, top: current.top },
     };
   },
 };

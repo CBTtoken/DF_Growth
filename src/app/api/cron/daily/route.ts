@@ -8,13 +8,17 @@ import { GET as bizupNotifications } from "../bizup-notifications/route";
 import { GET as bizupCheckins } from "../bizup-checkins/route";
 import { GET as retentionReport } from "../retention/route";
 import { GET as boardCleanup } from "../board-cleanup/route";
+import { runHealthChecks } from "@/lib/desk/health/run";
 
 // Every scheduled job shares one invocation instead of the separate
 // function budgets they had as individual endpoints, and several of them
 // loop over members sending emails via Resend, so the combined run gets
 // generous headroom rather than hitting the default function timeout
-// partway through a send.
-export const maxDuration = 60;
+// partway through a send. Raised from 60 when the health checks joined
+// this run: they fetch five public sites with a 15 second timeout each
+// (in parallel, but a bad day is a slow day) plus two Vercel billing
+// reads, and a timeout here would take the other jobs' results with it.
+export const maxDuration = 120;
 // Reads the Authorization header, so it must never be statically cached.
 export const dynamic = "force-dynamic";
 
@@ -68,6 +72,26 @@ export async function GET(request: Request) {
   }
 
   const results: Record<string, unknown> = {};
+
+  // The Desk health check's daily run (handoff section 4: a daily run that
+  // turns failures into Desk items). Not a route handler like the others,
+  // so it runs directly; runHealthChecks stores its own results and raises
+  // its own items, and warn creates nothing, same as the button.
+  try {
+    const health = await runHealthChecks();
+    results["healthChecks"] = {
+      status: 200,
+      body: {
+        ran: health.length,
+        fails: health.filter((r) => r.status === "fail").length,
+        warns: health.filter((r) => r.status === "warn").length,
+      },
+    };
+  } catch (err) {
+    console.error("Daily cron job healthChecks threw", err);
+    results["healthChecks"] = { status: 500, error: String(err) };
+  }
+
   for (const [name, handler] of jobs) {
     try {
       // A fresh Request per job carrying the same authorization the job's
