@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { captureLead } from "@/app/[clientSlug]/actions";
 import { TrackEvent } from "@/components/analytics/TrackEvent";
 import { readableTextOn, ensureContrast } from "@/lib/color";
+import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 
 // South African cell numbers are typically entered locally ("082 123
 // 4567"), but wa.me links need the full international number with no
@@ -188,6 +189,9 @@ export function LeadForm({
 
                 {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 
+                {/* Invisible unless Cloudflare wants a closer look, so an ordinary
+                    person never sees anything. */}
+                <TurnstileWidget />
                 <button
                   type="submit"
                   disabled={pending}

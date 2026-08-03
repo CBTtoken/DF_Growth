@@ -7,6 +7,7 @@ import { leadSchema } from "@/lib/schemas/lead";
 import { sendCapiEvent } from "@/lib/meta/capi";
 import { sendEmail } from "@/lib/email/resend";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import { trackBetaEvent } from "@/lib/metrics/track";
 
 type LeadState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
@@ -27,6 +28,20 @@ export async function captureLead(
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`lead:${ip}`, 5, 10 * 60 * 1000)) {
     return { error: { _form: ["Too many submissions, please wait a few minutes and try again."] } };
+  }
+
+  // The bot gate on a form any stranger can post to.
+  //
+  // Dewald, 3 August 2026: blocking bots, scammers and automated abuse is a
+  // core priority across every build. This form had only an IP rate limit,
+  // which lives in one serverless instance's memory and resets on every cold
+  // start, so it never really counted.
+  //
+  // Verified against Cloudflare rather than trusted for being present: a
+  // token nobody checks is a hidden field anyone can type into.
+  const turnstileOk = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  if (!turnstileOk) {
+    return { error: { _form: ["We could not confirm you are a person. Please reload the page and try again."] } };
   }
 
   const parsed = leadSchema.safeParse({

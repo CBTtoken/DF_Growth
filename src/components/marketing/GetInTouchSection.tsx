@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { submitHomepageInquiry } from "@/app/pricing/get-in-touch-actions";
+import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 
 // Public Beta Polish Sprint Sec 5: the marketing homepage's own "Get in
 // Touch" block, distinct from any client page's lead form — this is a
@@ -89,6 +90,9 @@ export function GetInTouchSection() {
 
                 {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
 
+                {/* Invisible unless Cloudflare wants a closer look, so an ordinary
+                    person never sees anything. */}
+                <TurnstileWidget />
                 <button
                   type="submit"
                   disabled={pending}

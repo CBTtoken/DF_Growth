@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, useActionState } from "react";
 import { createBookingHold } from "@/app/[clientSlug]/booking-actions";
 import { readableTextOn } from "@/lib/color";
+import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 
 export type PublicBookableUnit = {
   id: string;
@@ -374,6 +375,10 @@ export function BookingSection({
               )}
 
               {state?.error?._form && <p className="text-sm text-red-600">{state.error._form[0]}</p>}
+
+              {/* Invisible unless Cloudflare wants a closer look, so an
+                  ordinary visitor never sees anything. */}
+              <TurnstileWidget />
 
               <button
                 type="submit"

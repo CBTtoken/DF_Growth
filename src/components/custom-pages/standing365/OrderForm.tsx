@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { submitBookOrder } from "@/components/custom-pages/standing365/actions";
+import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 
 // Real feedback: 300 read as too tight for a real personal message, and a
 // gift message someone actually cares about getting right deserves the
@@ -234,6 +235,10 @@ export function OrderForm({
         </label>
 
         {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
+
+        {/* Invisible unless Cloudflare wants a closer look, so an ordinary
+            buyer never sees anything. */}
+        <TurnstileWidget />
 
         <button
           type="submit"

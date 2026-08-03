@@ -54,6 +54,30 @@ reached Dewald's screen were invisible to a status code.
 **Ask before deleting anything shared**: a branch, a table, a bucket, a row of
 his data. Test data you created yourself is still his call.
 
+**Every anonymous form gets a Turnstile check. No exceptions.** Dewald, 3
+August 2026: blocking bots, scammers and automated abuse is a core priority
+across every build.
+
+If a stranger can post to it without logging in, the server action verifies a
+Turnstile token before it does anything, and the form renders
+`<TurnstileWidget />`. Both halves, or it does not work: a widget with no
+server check is decoration, and a server check with no widget locks real
+people out.
+
+A rate limit is not a substitute. `isRateLimited` lives in one serverless
+instance's memory and resets on every cold start, so it stops one impatient
+browser tab and nothing else. Keep it, it is useful, but it is not the gate.
+
+Audited on 3 August and closed: the lead form on every member page, booking,
+the Standing 365 order form, and the homepage enquiry all had a rate limit and
+no human check. Growth member signup is the one deliberate exception, because
+an account is only created after a real Paystack payment succeeds, which no
+bot can fake. Anything behind a login is out of scope for this rule.
+
+The check goes in the server action, verified against Cloudflare, never
+trusted for being present. A token nobody checks is a hidden field anyone can
+type into.
+
 ### Which code is safe to change, and which is load-bearing
 
 Each product owns three spaces and should stay inside them: a route prefix
