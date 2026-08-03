@@ -23,6 +23,25 @@ export default async function LoginPage({
   searchParams: Promise<{ mode?: string; error?: string }>;
 }) {
   const params = await searchParams;
+
+  // Already signed in? There is nothing to log into: members go to their
+  // dashboard, memberless admins to admin. Showing the form to an
+  // authenticated visitor is what made ordinary navigation read as
+  // "logged out, log in again".
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) {
+    const { getMemberByAuthUser } = await import("@/lib/svc/member");
+    const { redirect } = await import("next/navigation");
+    const member = await getMemberByAuthUser(user.id);
+    if (member) redirect(await svcPath("/account"));
+    const { getSvcAdmin } = await import("@/lib/svc/admin");
+    if (await getSvcAdmin()) redirect(await svcPath("/admin"));
+    redirect(await svcPath("/account"));
+  }
   const cellMode = params.mode === "cell";
   const joinHref = await svcPath("/join");
   const loginHref = await svcPath("/login");
