@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { signOutSvc } from "@/app/svc/login/actions";
 
 /**
  * SVC's site header, phone first per handoff section 5: the header stays
@@ -72,6 +73,11 @@ export function SvcHeader({
               >
                 My dashboard
               </Link>
+              <form action={signOutSvc}>
+                <button type="submit" className="text-sm font-medium text-white/70 hover:text-svc-amber">
+                  Log out
+                </button>
+              </form>
             </>
           ) : (
             <>
@@ -145,6 +151,11 @@ export function SvcHeader({
                     My dashboard
                   </Link>
                 </div>
+                <form action={signOutSvc} className="border-t border-white/15 px-6 py-5">
+                  <button type="submit" className="text-lg font-semibold text-white/80">
+                    Log out
+                  </button>
+                </form>
               </>
             ) : (
               <>
