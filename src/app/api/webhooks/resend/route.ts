@@ -63,6 +63,19 @@ export async function POST(request: Request) {
     const results = await Promise.all([
       admin.from("growth_clients").update({ [field]: now }).in("contact_email", recipients),
       admin.from("bizup_accounts").update({ [field]: now, updated_at: now }).in("email", recipients),
+      // Cold outreach build, 3 August 2026: any bounce means gone,
+      // permanently, and a complaint doubly so. The suppression list is
+      // what every marketing send checks, so writing it here is what makes
+      // the rule real rather than aspirational. ignoreDuplicates because a
+      // suppression is never downgraded by a later event.
+      admin.from("marketing_suppressions").upsert(
+        recipients.map((r) => ({
+          email: r.toLowerCase(),
+          reason: event.type === "email.complained" ? "complained" : "bounced",
+          detail: `Resend webhook ${event.type}`,
+        })),
+        { onConflict: "email", ignoreDuplicates: true }
+      ),
     ]);
 
     for (const { error } of results) {

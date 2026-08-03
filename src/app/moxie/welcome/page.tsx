@@ -14,16 +14,68 @@ export const metadata: Metadata = {
 // has landed yet, and a cached answer to that is worthless.
 export const dynamic = "force-dynamic";
 
-export default async function WelcomePage() {
+export default async function WelcomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ joined?: string; next?: string }>;
+}) {
+  const { joined, next } = await searchParams;
   const reader = await getReader();
   const membership = reader ? await getMembership(reader.id) : null;
   const latest = await getLatestEdition();
 
-  const [readHref, editionsHref, welcomeHref] = await Promise.all([
+  // Same-site continuation only, the login form's own rule.
+  const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : "/editions";
+
+  const [readHref, editionsHref, welcomeHref, nextHref, subscribeHref] = await Promise.all([
     latest ? moxiePath(`/read/${latest.slug}`) : moxiePath("/editions"),
     moxiePath("/editions"),
     moxiePath("/welcome"),
+    moxiePath(safeNext),
+    moxiePath("/subscribe"),
   ]);
+
+  // A fresh reader account, straight from the join form. Not the payment
+  // return: that reader has no joined flag and gets the webhook-wait copy
+  // below. Dewald, 3 August: signing up ended in silence, which read as
+  // the flow being broken. This is the thank you.
+  if (joined && reader && !membership) {
+    return (
+      <main className="flex flex-1 flex-col">
+        <MoxieHeader signedIn />
+        <section className="flex flex-1 items-center bg-moxie-cream">
+          <div className="mx-auto w-full max-w-xl px-5 py-20 text-center sm:px-8">
+            <p className="font-moxie-label text-base font-bold uppercase tracking-[0.2em] text-moxie-orange">
+              You are in
+            </p>
+            <h1 className="font-moxie-display mt-3 text-4xl leading-tight font-bold text-moxie-charcoal">
+              Welcome to Moxie
+            </h1>
+            <p className="mt-4 text-lg leading-relaxed text-moxie-charcoal/75">
+              Your reader account is ready and a welcome email is on its way to {reader.email}.
+              As a signed-in reader you can open any edition once it reaches its free window.
+              Members read every edition the day it comes out.
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <Link
+                href={nextHref}
+                className="font-moxie-label inline-flex bg-moxie-orange px-8 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:bg-moxie-orange/85"
+              >
+                Carry on reading
+              </Link>
+              <Link
+                href={subscribeHref}
+                className="font-moxie-label inline-flex border border-moxie-charcoal/25 px-8 py-4 text-sm font-bold uppercase tracking-[0.12em] text-moxie-charcoal transition hover:bg-moxie-charcoal/5"
+              >
+                Membership, R49 a month
+              </Link>
+            </div>
+          </div>
+        </section>
+        <MoxieFooter />
+      </main>
+    );
+  }
 
   return (
     <main className="flex flex-1 flex-col">

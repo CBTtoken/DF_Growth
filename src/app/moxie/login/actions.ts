@@ -3,7 +3,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { moxiePath } from "@/lib/moxie/host";
+import { moxiePath, MOXIE_ORIGIN } from "@/lib/moxie/host";
+import { sendEmail } from "@/lib/email/resend";
 
 /**
  * Reader accounts.
@@ -82,10 +83,46 @@ export async function signUp(formData: FormData) {
     }
   }
 
+  // Only a genuinely new account gets the welcome treatment. An existing
+  // reader who used the join form again just signs in and carries on.
+  const isNew = !createError;
+
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     redirect(await moxiePath(`/login?error=exists&next=${encodeURIComponent(next)}`));
+  }
+
+  if (isNew) {
+    // Dewald, 3 August: registered as a new reader and got no thank you and
+    // no email, which read as the whole flow being broken. The account was
+    // fine; the silence was the bug. The email is best effort and never
+    // blocks the signup: the reader is already signed in either way.
+    const { ok, error: mailError } = await sendEmail({
+      to: email,
+      subject: "Welcome to Moxie",
+      fromName: "Moxie Magazine",
+      replyTo: "editor@moxiemag.co.za",
+      html: `
+        <p style="font-size:15px;line-height:1.65;color:#1f2937;margin:0 0 16px;">Good day,</p>
+        <p style="font-size:15px;line-height:1.65;color:#1f2937;margin:0 0 16px;">
+          Your Moxie reader account is ready. Moxie is South Africa's family discovery magazine:
+          science, nature, history, travel, food and puzzles, written for curious minds aged 8 to 80,
+          with a new edition on the 1st of every month.
+        </p>
+        <p style="font-size:15px;line-height:1.65;color:#1f2937;margin:0 0 16px;">
+          As a signed-in reader you can open any edition once it reaches the free window.
+          Members read every edition the day it comes out, for R49 a month.
+        </p>
+        <p style="margin:24px 0;">
+          <a href="${MOXIE_ORIGIN}/editions" style="display:inline-block;background:#c85a1e;color:#ffffff;font-size:15px;font-weight:700;padding:13px 26px;text-decoration:none;">Browse the editions</a>
+        </p>
+        <p style="font-size:15px;line-height:1.65;color:#1f2937;margin:0;">Have the Moxie.<br />The Moxie team</p>
+      `,
+    });
+    if (!ok) console.error("Moxie welcome email failed", mailError);
+
+    redirect(await moxiePath(`/welcome?joined=1&next=${encodeURIComponent(next)}`));
   }
 
   redirect(await moxiePath(next));
