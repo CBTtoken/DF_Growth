@@ -128,8 +128,58 @@ export default async function AccountPage({
   searchParams: Promise<{ cancelled?: string; ask?: string; tickets?: string }>;
 }) {
   const params = await searchParams;
+
+  // Two different "no member" cases, and only one of them belongs at the
+  // login screen. No session at all: go log in. A signed-in account with
+  // no SVC membership (an admin-only login, a Moxie reader): show them
+  // where they are instead of bouncing them back to login, which loops
+  // and reads as a broken flash.
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect(`${await svcPath("/login")}`);
+
   const member = await getCurrentMember();
-  if (!member) redirect(`${await svcPath("/login")}`);
+  if (!member) {
+    const { getSvcAdmin } = await import("@/lib/svc/admin");
+    const isAdmin = !!(await getSvcAdmin());
+    const joinHref = await svcPath("/join");
+    const adminHref = await svcPath("/admin");
+    return (
+      <div className="bg-svc-cream px-4 py-12 sm:py-16">
+        <div className="mx-auto w-full max-w-md">
+          <h1 className="font-svc-heading text-3xl font-bold">You are signed in</h1>
+          <p className="mt-3 text-base leading-relaxed text-svc-ink/75">
+            This login ({user.email}) has no Smart Value Club membership
+            attached to it{isAdmin ? ", but it does have admin access" : ""}.
+          </p>
+          <div className="mt-6 space-y-3">
+            {isAdmin && (
+              <Link
+                href={adminHref}
+                className="inline-flex min-h-12 w-full items-center justify-center bg-svc-green px-6 text-base font-semibold text-white hover:bg-svc-ink"
+              >
+                Go to admin
+              </Link>
+            )}
+            <Link
+              href={joinHref}
+              className="inline-flex min-h-12 w-full items-center justify-center border-2 border-svc-green px-6 text-base font-semibold text-svc-green hover:bg-svc-green hover:text-white"
+            >
+              Join as a member
+            </Link>
+            <form action={signOutSvc}>
+              <button type="submit" className={svcBtnOutline}>
+                Log out
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const db = createSvcClient();
   const [{ data: subscription }, issues, savings, referralStats, referralCode] = await Promise.all([

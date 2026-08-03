@@ -24,9 +24,23 @@ export async function signInWithEmail(formData: FormData) {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
     redirect(`${await svcPath("/login")}?error=invalid`);
+  }
+
+  // An admin login with no SVC membership (Dewald's own account is one)
+  // goes straight to admin rather than to a dashboard that has nothing
+  // to show. Everyone else lands on the dashboard, which now handles the
+  // signed-in-but-not-a-member state itself instead of bouncing back to
+  // login, which read as a broken flash.
+  if (data?.user) {
+    const { getMemberByAuthUser } = await import("@/lib/svc/member");
+    const member = await getMemberByAuthUser(data.user.id);
+    if (!member) {
+      const { getSvcAdmin } = await import("@/lib/svc/admin");
+      if (await getSvcAdmin()) redirect(await svcPath("/admin"));
+    }
   }
 
   redirect(await svcPath("/account"));
