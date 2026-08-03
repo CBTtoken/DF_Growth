@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Moxie's own tab icon: a thick charcoal M on the magazine's cream,
+       drawn as a path rather than typed as text so it renders identically
+       on every machine. Placed as a segment icon so only /moxie (and the
+       moxiemag.co.za host that rewrites onto it) wears it; the rest of the
+       platform keeps the DigitalFlyer icon. -->
+  <rect width="64" height="64" rx="8" fill="#f7f3ee"/>
+  <path d="M13 52 V13 L32 37 L51 13 V52" fill="none" stroke="#1e2020" stroke-width="11" stroke-linecap="square" stroke-linejoin="miter"/>
+</svg>
