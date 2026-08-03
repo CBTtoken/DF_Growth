@@ -120,6 +120,7 @@ export default async function TemplatePreviewPage({
             accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
+            photoUrl={anchor.aboutLayout === "statement" ? SAMPLE_DATA.photoUrl : null}
           />
         );
       case "story":

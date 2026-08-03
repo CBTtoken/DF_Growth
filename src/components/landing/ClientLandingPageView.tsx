@@ -384,6 +384,19 @@ export async function ClientLandingPageView({
   // Every other anchor is "light-default", so this is a no-op for them.
   const anchorAccentColor = ensureContrast(primaryColor, anchor.sectionSurface === "dark" ? "#0b1220" : "#ffffff");
 
+  // The "statement" about layout shows a work photo beside the pitch. First
+  // gallery photo that isn't already the hero, so the top of the page never
+  // repeats itself; falls back to the industry photo, then to text-only.
+  const aboutPhoto =
+    anchor.aboutLayout === "statement"
+      ? photos.find((p) => p.id !== client.hero_photo_id)
+      : undefined;
+  const aboutPhotoUrl = aboutPhoto
+    ? `${photosStorageBase}/${aboutPhoto.storage_path}`
+    : anchor.aboutLayout === "statement"
+      ? (client.fallback_photo_url ?? null)
+      : null;
+
   const renderSection = (key: SectionKey) => {
     const number = nextNumber(hasContent[key]);
     switch (key) {
@@ -396,6 +409,7 @@ export async function ClientLandingPageView({
             accentColor={anchorAccentColor}
             eyebrowNumber={number}
             anchor={anchor}
+            photoUrl={aboutPhotoUrl}
           />
         );
       case "story":

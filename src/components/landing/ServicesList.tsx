@@ -124,36 +124,20 @@ export function ServicesList({
     // type, the way a capability list reads on a contractor's spec sheet.
     // Odd rows indent on desktop so the column of indices staggers, which
     // keeps a long list from reading as a table.
-    // Weights and rules softened after Dewald's live review (3 Aug): the
-    // first cut's heavy top rule and bold rows read dark and aggressive.
+    // Reworked twice on Dewald's live review (3 Aug): the staggered
+    // single-column ledger with display-font rows read messy and over the
+    // top at real page width. Now a calm two-column index at reading
+    // weight — the mono number carries the ledger feel, the row text is
+    // ordinary body type, and every row aligns the same way.
     body = (
-      <ol className="mt-10 border-t border-gray-300">
+      <ol className="mt-10 grid gap-x-14 border-t border-gray-300 sm:grid-cols-2">
         {services.map((service, i) => (
-          <li
-            key={i}
-            className={`group flex items-baseline gap-5 border-b border-gray-200 py-5 sm:gap-8 sm:py-6 ${
-              i % 2 === 1 ? "sm:pl-14" : ""
-            }`}
-          >
-            <span
-              className="font-mono text-2xl font-semibold tabular-nums sm:text-3xl"
-              style={{ color: accentColor }}
-            >
+          <li key={i} className="flex items-baseline gap-4 border-b border-gray-200 py-4 sm:py-5">
+            <span className="font-mono text-base font-semibold tabular-nums sm:text-lg" style={{ color: accentColor }}>
               {String(i + 1).padStart(2, "0")}
             </span>
-            <span
-              className={`text-lg font-semibold leading-snug tracking-tight sm:text-xl ${
-                isDark ? "text-white" : "text-gray-800"
-              } ${HEADING_FONT_CLASS[anchor.headingFont]}`}
-            >
+            <span className={`text-base font-medium leading-snug sm:text-lg ${isDark ? "text-gray-200" : "text-gray-800"}`}>
               {service}
-            </span>
-            <span
-              aria-hidden
-              className="ml-auto hidden -translate-x-2 font-mono text-xl opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100 sm:block"
-              style={{ color: accentColor }}
-            >
-              →
             </span>
           </li>
         ))}

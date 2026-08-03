@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { TemplateAnchor } from "@/lib/templates/anchors";
 import {
   HEADING_FONT_CLASS,
@@ -19,6 +20,7 @@ export function AboutSection({
   accentColor,
   eyebrowNumber,
   anchor,
+  photoUrl,
 }: {
   businessName: string;
   tagline: string | null;
@@ -26,6 +28,8 @@ export function AboutSection({
   accentColor: string;
   eyebrowNumber: string;
   anchor?: TemplateAnchor;
+  /** Only consumed by the "statement" layout; other layouts ignore it. */
+  photoUrl?: string | null;
 }) {
   if (!aboutText) return null;
 
@@ -59,11 +63,12 @@ export function AboutSection({
   const isDark = anchor.sectionSurface === "dark";
 
   if (anchor.aboutLayout === "statement") {
-    // Fieldwork anchor: about as a stamped statement, not a two-column
-    // brochure block. The copy itself is set at pull-quote scale behind a
-    // heavy accent rule, with the business name and tagline as small mono
-    // plate labels above it — on a trade page the paragraph IS the pitch,
-    // so it gets headline treatment.
+    // Fieldwork anchor, reworked on Dewald's live review (3 Aug): the first
+    // cut set the whole paragraph in display type at pull-quote scale and
+    // read as a wall of bold. Now the pitch sits at reading weight behind
+    // the accent rule, with a work photo beside it in a plate-labelled
+    // frame — the visitor sees the problem being sorted while they read.
+    // No photo supplied simply means the text takes the full measure.
     return (
       <section
         id="about"
@@ -74,22 +79,43 @@ export function AboutSection({
             <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
               {eyebrowNumber} · Who you are dealing with
             </p>
-            {tagline && (
-              <p className={`font-mono text-xs uppercase tracking-[0.2em] ${isDark ? "text-gray-400" : "text-gray-400"}`}>
-                {tagline}
-              </p>
-            )}
           </div>
-          <div className="mt-8 border-l-[6px] pl-6 sm:pl-10" style={{ borderColor: accentColor }}>
-            <p
-              className={`max-w-3xl text-xl font-medium leading-relaxed tracking-tight sm:text-2xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}
-            >
-              {aboutText}
-            </p>
-            <p className="mt-6 flex items-center gap-2.5 font-mono text-xs font-bold uppercase tracking-[0.28em]" style={{ color: accentColor }}>
-              <span aria-hidden className="inline-block h-0.5 w-8" style={{ backgroundColor: accentColor }} />
-              {businessName}
-            </p>
+          <div className={`mt-8 grid gap-10 ${photoUrl ? "md:grid-cols-[1.05fr_0.95fr] md:items-center" : ""}`}>
+            <div className="border-l-[6px] pl-6 sm:pl-8" style={{ borderColor: accentColor }}>
+              {tagline && (
+                <p
+                  className={`mb-4 text-lg font-semibold tracking-tight sm:text-xl ${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`}
+                >
+                  {tagline}
+                </p>
+              )}
+              <p className={`max-w-2xl text-base leading-relaxed sm:text-lg ${SURFACE_BODY_CLASS[anchor.sectionSurface]}`}>
+                {aboutText}
+              </p>
+              <p className="mt-6 flex items-center gap-2.5 font-mono text-xs font-bold uppercase tracking-[0.28em]" style={{ color: accentColor }}>
+                <span aria-hidden className="inline-block h-0.5 w-8" style={{ backgroundColor: accentColor }} />
+                {businessName}
+              </p>
+            </div>
+            {photoUrl && (
+              <figure>
+                <div className={`relative aspect-[4/3] w-full overflow-hidden border ${isDark ? "border-gray-700" : "border-gray-300"}`}>
+                  <Image
+                    src={photoUrl}
+                    alt={`${businessName} at work`}
+                    fill
+                    sizes="(max-width: 768px) 90vw, 40vw"
+                    className="object-cover"
+                  />
+                </div>
+                <figcaption
+                  className="mt-1.5 font-mono text-[0.6rem] font-bold uppercase tracking-[0.25em]"
+                  style={{ color: accentColor }}
+                >
+                  On site
+                </figcaption>
+              </figure>
+            )}
           </div>
         </div>
       </section>
