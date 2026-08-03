@@ -31,10 +31,20 @@ a parent folder for all Claude work, which is what the name suggests. Its
 `CLAUDE.md` is the FortisLex build spec and is correct for FortisLex only.
 
 If you are opened there and the work is not FortisLex, you are in the wrong
-repository. Stop and change directory before doing anything else.
+repository. Change directory before doing anything else.
 
-**Worth renaming to `FortisLex-app` when convenient.** Only Dewald should do
-it, and not while a session is running inside it.
+**Do not rename this folder, and do not suggest renaming it.** Sessions are
+launched from there on purpose. The assistant's memory namespace is derived
+from that exact path, so renaming the folder would orphan every memory file
+and each session would start knowing nothing. Launching from a project
+subfolder instead has the same effect.
+
+An earlier version of this document recommended the rename. It was wrong, and
+the reason it was wrong is not visible from the folder itself, which is
+exactly why it is written down here.
+
+The name is confusing and stays confusing. `WHERE-AM-I.md` in that folder is
+the mitigation: it costs nothing and it survives.
 
 ### Folders that look like projects and are not
 
