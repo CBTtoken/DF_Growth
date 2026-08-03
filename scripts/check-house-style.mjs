@@ -50,23 +50,151 @@ function walk(dir, out = []) {
 }
 
 /**
+ * Whether the slash at `pos` opens a regex literal rather than dividing.
+ *
+ * The standard heuristic: look back past whitespace at the last meaningful
+ * character. If it could end an expression (a name, a number, a closing
+ * bracket) then the slash is division. Anything else and it is a regex.
+ *
+ * The keyword list is the exception that has to be named, because those end
+ * in a letter and so look like the end of an expression while actually
+ * expecting one to follow.
+ */
+function startsRegex(src, pos) {
+  let j = pos - 1;
+  while (j >= 0 && /\s/.test(src[j])) j--;
+  if (j < 0) return true;
+
+  const prev = src[j];
+  if (/[)\]}]/.test(prev)) return false;
+  if (/[A-Za-z0-9_$]/.test(prev)) {
+    let k = j;
+    while (k >= 0 && /[A-Za-z0-9_$]/.test(src[k])) k--;
+    const word = src.slice(k + 1, j + 1);
+    return KEYWORDS_BEFORE_REGEX.has(word);
+  }
+  return true;
+}
+
+const KEYWORDS_BEFORE_REGEX = new Set([
+  "return", "typeof", "instanceof", "in", "of", "new", "delete",
+  "void", "case", "do", "else", "yield", "await",
+]);
+
+/**
  * Replaces every comment with spaces, leaving strings and code intact.
  *
  * Spaces rather than deletion so line and column numbers still line up with
  * the real file when something is reported.
+ *
+ * Rewritten 3 August 2026, after this check had been failing CI on every
+ * push and every one of its reports was a false positive. Three separate
+ * bugs, all the same shape: the scanner misread one character, went looking
+ * for a partner that was not there, and swallowed the rest of the file. It
+ * then reported em dashes sitting harmlessly in comments as reader-visible
+ * text.
+ *
+ *   1. A quotation mark inside a comment opened a phantom string, because
+ *      strings were tested before comments. This codebase writes quoted
+ *      instructions inside comments constantly, so that was a landmine
+ *      under most of it. One file had 52 phantom spans.
+ *
+ *   2. A regex literal containing a quote, /["\r]/g in seed-ratecard.mjs,
+ *      did the same thing. Regex literals were not understood at all.
+ *
+ *   3. A template literal containing a nested template literal inside its
+ *      ${ ... }. The old scanner just hunted for the next backtick, so it
+ *      closed the outer template on the inner one's opening backtick. That
+ *      is what was reporting lead-notification comments in actions.ts.
+ *
+ * The fix for all three is a mode stack instead of a flat scan, plus
+ * bounding ordinary strings to a single line so that a future misread can
+ * only ever spoil the line it is on rather than everything after it.
  */
 function blankComments(src) {
   const out = src.split("");
-  let i = 0;
   const n = src.length;
+  let i = 0;
+
+  // "code" is ordinary source. "template" is inside backticks. Entering a
+  // ${ ... } interpolation pushes back to code, and its matching } pops.
+  const stack = [{ mode: "code", depth: 0 }];
+  const top = () => stack[stack.length - 1];
+
+  const blank = (from, to) => {
+    for (let k = from; k < to; k++) {
+      if (src[k] !== "\n") out[k] = " ";
+    }
+  };
 
   while (i < n) {
     const c = src[i];
     const next = src[i + 1];
 
-    // Strings and template literals: skipped whole, so their contents are
-    // preserved and anything comment-like inside them is ignored.
-    if (c === '"' || c === "'" || c === "`") {
+    if (top().mode === "template") {
+      if (c === "\\") {
+        i += 2;
+        continue;
+      }
+      if (c === "$" && next === "{") {
+        stack.push({ mode: "code", depth: 0 });
+        i += 2;
+        continue;
+      }
+      if (c === "`") {
+        stack.pop();
+        i++;
+        continue;
+      }
+      i++;
+      continue;
+    }
+
+    // Comments before strings. A string containing "//" still opens with its
+    // quote, and that quote is still reached first, so nothing is lost.
+    if (c === "/" && next === "/") {
+      const from = i;
+      while (i < n && src[i] !== "\n") i++;
+      blank(from, i);
+      continue;
+    }
+
+    if (c === "/" && next === "*") {
+      const from = i;
+      i += 2;
+      while (i < n && !(src[i] === "*" && src[i + 1] === "/")) i++;
+      i = Math.min(n, i + 2);
+      blank(from, i);
+      continue;
+    }
+
+    if (c === "/" && startsRegex(src, i)) {
+      i++;
+      let inClass = false;
+      while (i < n) {
+        const r = src[i];
+        if (r === "\\") {
+          i += 2;
+          continue;
+        }
+        if (r === "[") inClass = true;
+        else if (r === "]") inClass = false;
+        else if (r === "/" && !inClass) {
+          i++;
+          break;
+        } else if (r === "\n") break;
+        i++;
+      }
+      continue;
+    }
+
+    if (c === "`") {
+      stack.push({ mode: "template" });
+      i++;
+      continue;
+    }
+
+    if (c === '"' || c === "'") {
       const quote = c;
       i++;
       while (i < n) {
@@ -78,35 +206,29 @@ function blankComments(src) {
           i++;
           break;
         }
-        // A template literal can hold ${ ... } with more code in it. Left
-        // alone: at worst a comment inside an interpolation is not blanked,
-        // which can only cause a false report, never a missed one.
+        // A quoted string cannot span a line in JavaScript. Stopping here is
+        // what keeps a misread quote local instead of contagious.
+        if (src[i] === "\n") break;
         i++;
       }
       continue;
     }
 
-    if (c === "/" && next === "/") {
-      while (i < n && src[i] !== "\n") {
-        out[i] = " ";
-        i++;
-      }
+    // Brace depth, so the } that closes an interpolation is told apart from
+    // any } inside it.
+    if (c === "{") {
+      top().depth++;
+      i++;
       continue;
     }
-
-    if (c === "/" && next === "*") {
-      out[i] = " ";
-      out[i + 1] = " ";
-      i += 2;
-      while (i < n && !(src[i] === "*" && src[i + 1] === "/")) {
-        if (src[i] !== "\n") out[i] = " ";
+    if (c === "}") {
+      if (top().depth === 0 && stack.length > 1) {
+        stack.pop();
         i++;
+        continue;
       }
-      if (i < n) {
-        out[i] = " ";
-        out[i + 1] = " ";
-        i += 2;
-      }
+      if (top().depth > 0) top().depth--;
+      i++;
       continue;
     }
 
@@ -116,15 +238,6 @@ function blankComments(src) {
   return out.join("");
 }
 
-/**
- * Line numbers occupied by console.* and Sentry.capture* calls.
- *
- * These are diagnostics, read by us while operating the thing and never by
- * a member or a customer, so the copy rule does not apply to them. Matched
- * by balancing brackets rather than per line, because the ones that matter
- * are exactly the calls long enough to wrap, where the dash sits on a
- * continuation line with nothing on it to recognise.
- */
 function diagnosticLines(src) {
   const exempt = new Set();
   const pattern = /(console\.(log|error|warn|info|debug)|Sentry\.capture\w*)\s*\(/g;
@@ -160,6 +273,98 @@ function diagnosticLines(src) {
 
   return exempt;
 }
+
+/**
+ * The scanner's own tests, run every time before it scans anything.
+ *
+ * This check spent days failing CI on nothing but false positives, caused by
+ * three separate scanner bugs that all looked identical from the outside: a
+ * dash sitting in an ordinary comment, reported as reader-visible text. Each
+ * one was a character the scanner misread, sending it hunting for a partner
+ * that did not exist and swallowing the rest of the file behind it.
+ *
+ * A check nobody trusts is worse than no check, because a red build that is
+ * always wrong teaches everyone to ignore red builds. So the three cases that
+ * broke it are pinned here, along with the ordinary ones, and the scanner
+ * refuses to run at all if it gets any of them wrong.
+ *
+ * No test framework, matching check-layout.mjs: plain assertions in plain
+ * Node do this perfectly well and add nothing to install.
+ */
+function selfTest() {
+  const DASH_CHAR = String.fromCharCode(8212);
+  const BT = String.fromCharCode(96);
+  const cases = [
+    {
+      name: "a dash in a line comment is exempt",
+      src: `// note ${DASH_CHAR} here\nconst a = 1;\n`,
+      expectFlagged: false,
+    },
+    {
+      name: "a dash in a block comment is exempt",
+      src: `/* note ${DASH_CHAR} here */\nconst a = 1;\n`,
+      expectFlagged: false,
+    },
+    {
+      name: "a dash in a string is caught",
+      src: `const a = "note ${DASH_CHAR} here";\n`,
+      expectFlagged: true,
+    },
+    {
+      name: "a dash in a template literal is caught",
+      src: `const a = ${BT}note ${DASH_CHAR} here${BT};\n`,
+      expectFlagged: true,
+    },
+    {
+      // Bug one: quotes inside comments opened phantom strings, because
+      // strings were tested before comments.
+      name: "a quote inside a comment does not leak into later comments",
+      src: `// he said "hello"\n// and then ${DASH_CHAR} this\nconst a = 1;\n`,
+      expectFlagged: false,
+    },
+    {
+      // Bug two: a regex literal containing a quote, seen live as /["\r]/g.
+      name: "a quote inside a regex does not leak",
+      src: `const a = x.replace(/["\\r]/g, "");\n// then ${DASH_CHAR} this\n`,
+      expectFlagged: false,
+    },
+    {
+      // Bug three: a template literal holding another template literal
+      // inside its interpolation, seen live in a lead notification email.
+      name: "a nested template literal does not leak",
+      src: `const a = ${BT}outer ${"${"}x ? ${BT}inner${BT} : ""} end${BT};\n// then ${DASH_CHAR} this\n`,
+      expectFlagged: false,
+    },
+    {
+      name: "an apostrophe in a comment does not leak",
+      src: `// it doesn't matter\n// and then ${DASH_CHAR} this\nconst a = 1;\n`,
+      expectFlagged: false,
+    },
+  ];
+
+  const broken = [];
+  for (const c of cases) {
+    const stripped = blankComments(c.src);
+    const exempt = diagnosticLines(stripped);
+    const flagged = stripped.split("\n").some((line, idx) => {
+      DASH.lastIndex = 0;
+      return DASH.test(line) && !exempt.has(idx + 1);
+    });
+    if (flagged !== c.expectFlagged) {
+      broken.push(`${c.name}: expected ${c.expectFlagged ? "a report" : "no report"}, got the opposite`);
+    }
+  }
+
+  if (broken.length > 0) {
+    console.error("The em dash scanner is broken, so nothing was checked.\n");
+    broken.forEach((b) => console.error("  " + b));
+    console.error("\nFix scripts/check-house-style.mjs before trusting this check.");
+    process.exit(2);
+  }
+}
+
+selfTest();
+
 
 const failures = [];
 
