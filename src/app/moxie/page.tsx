@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MoxieHeader, MoxieFooter } from "@/components/moxie/Chrome";
 import { EditionCard } from "@/components/moxie/EditionCard";
 import { coverUrl, getComingEdition, getLatestEdition, listEditions } from "@/lib/moxie/editions";
-import { getReader } from "@/lib/moxie/entitlement";
+import { getMembership, getReader } from "@/lib/moxie/entitlement";
 import { moxieCanonical, moxiePath, MOXIE_ORIGIN, SVC_URL } from "@/lib/moxie/host";
 
 // The layout sets a title template, and a template applies to routes below
@@ -48,6 +48,19 @@ export default async function MoxieHomePage() {
     moxiePath("/subscribe"),
     moxiePath("/editions"),
   ]);
+
+  // Dewald, 3 August: a paying member was being shown "Subscribe R49 a
+  // month" on their own magazine's front page. The membership is read once
+  // here and decides both the hero's second button and the status line the
+  // header menu shows.
+  const membership = reader ? await getMembership(reader.id) : null;
+  const membershipLabel = membership
+    ? membership.current_period_end
+      ? `Membership active, renews ${new Date(membership.current_period_end).toLocaleDateString("en-ZA", { day: "numeric", month: "long", year: "numeric" })}`
+      : "Membership active"
+    : reader
+      ? "Free reader account"
+      : undefined;
   const latestHref = latest ? await moxiePath(`/editions/${latest.slug}`) : editionsHref;
   const cover = latest ? coverUrl(latest) : null;
   // Every published edition, including the current one.
@@ -78,7 +91,7 @@ export default async function MoxieHomePage() {
 
   return (
     <main className="flex flex-1 flex-col">
-      <MoxieHeader signedIn={Boolean(reader)} />
+      <MoxieHeader signedIn={Boolean(reader)} membershipLabel={membershipLabel} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
@@ -111,13 +124,27 @@ export default async function MoxieHomePage() {
               >
                 Read the latest edition
               </Link>
-              <Link
-                href={subscribeHref}
-                className="font-moxie-label inline-flex items-center border border-moxie-cream/30 px-7 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-moxie-cream transition hover:bg-white/10"
-              >
-                Subscribe R49 a month
-              </Link>
+              {membership ? (
+                <Link
+                  href={editionsHref}
+                  className="font-moxie-label inline-flex items-center border border-moxie-cream/30 px-7 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-moxie-cream transition hover:bg-white/10"
+                >
+                  Browse every edition
+                </Link>
+              ) : (
+                <Link
+                  href={subscribeHref}
+                  className="font-moxie-label inline-flex items-center border border-moxie-cream/30 px-7 py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-moxie-cream transition hover:bg-white/10"
+                >
+                  Subscribe R49 a month
+                </Link>
+              )}
             </div>
+            {membershipLabel && membership ? (
+              <p className="font-moxie-label mt-4 text-xs font-bold uppercase tracking-[0.16em] text-moxie-orange">
+                {membershipLabel}
+              </p>
+            ) : null}
           </div>
 
           {cover && (

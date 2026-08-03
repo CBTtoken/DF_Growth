@@ -17,7 +17,19 @@ export function MoxieTopRule() {
   return <div className="h-2 w-full bg-moxie-orange" aria-hidden />;
 }
 
-export async function MoxieHeader({ signedIn = false }: { signedIn?: boolean }) {
+export async function MoxieHeader({
+  signedIn = false,
+  membershipLabel,
+}: {
+  signedIn?: boolean;
+  /**
+   * The reader's standing in one line ("Membership active, renews 1
+   * September 2026" or "Free reader account"), shown at the top of the
+   * member menu. Optional because only pages that already read the
+   * membership pass it; the menu simply omits the line elsewhere.
+   */
+  membershipLabel?: string;
+}) {
   const [home, editions, subscribe, account, login] = await Promise.all([
     moxiePath("/"),
     moxiePath("/editions"),
@@ -48,7 +60,7 @@ export async function MoxieHeader({ signedIn = false }: { signedIn?: boolean }) 
               Subscribe
             </Link>
             {signedIn ? (
-              <MemberMenu accountHref={account} />
+              <MemberMenu accountHref={account} membershipLabel={membershipLabel} />
             ) : (
               <Link
                 href={login}
@@ -78,7 +90,7 @@ export async function MoxieHeader({ signedIn = false }: { signedIn?: boolean }) 
  * public front door via MOXIE_ORIGIN, never a preview hostname, because a
  * shared link outlives the session that shared it.
  */
-function MemberMenu({ accountHref }: { accountHref: string }) {
+function MemberMenu({ accountHref, membershipLabel }: { accountHref: string; membershipLabel?: string }) {
   const shareText = `Have you seen Moxie? South Africa's family discovery magazine, a new edition on the 1st of every month. ${MOXIE_ORIGIN}`;
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
   const facebook = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(MOXIE_ORIGIN)}`;
@@ -93,6 +105,14 @@ function MemberMenu({ accountHref }: { accountHref: string }) {
         Member ▾
       </summary>
       <div className="absolute right-0 z-50 mt-2 w-64 border border-white/10 bg-moxie-charcoal py-2 shadow-2xl">
+        {membershipLabel ? (
+          <>
+            <p className="px-4 pb-2 pt-2 text-[0.62rem] normal-case tracking-[0.08em] text-moxie-cream/70">
+              {membershipLabel}
+            </p>
+            <div className="mx-4 mb-1 border-t border-white/10" aria-hidden />
+          </>
+        ) : null}
         <p className="px-4 pb-1 pt-2 text-[0.6rem] tracking-[0.2em] text-moxie-orange">
           Share Moxie with friends
         </p>
