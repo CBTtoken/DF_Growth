@@ -177,14 +177,21 @@ export default async function MoxieAdminPage({
               <p className="font-moxie-label text-[0.68rem] font-bold uppercase tracking-[0.14em] text-moxie-charcoal/60">
                 Six months
               </p>
-              <div className="mt-3 flex h-16 items-end gap-2">
+              {/* The bar lives inside a flex-1 chart area so its percentage
+                  height has something definite to resolve against. Height
+                  on the column itself resolved against auto and every bar
+                  quietly rendered at zero, which is the "charts look
+                  broken" Dewald spotted on the first version. */}
+              <div className="mt-3 flex h-16 items-stretch gap-2">
                 {stats2.incomeByMonth.map((m) => (
                   <div key={m.month} className="flex flex-1 flex-col items-center gap-1">
-                    <div
-                      className="w-full bg-moxie-orange"
-                      style={{ height: `${Math.max(3, Math.round((m.cents / incomeMax) * 100))}%`, opacity: m.cents === 0 ? 0.15 : 1 }}
-                      title={`${m.month}: ${rand(m.cents)}`}
-                    />
+                    <div className="flex w-full flex-1 items-end">
+                      <div
+                        className="w-full bg-moxie-orange"
+                        style={{ height: `${Math.max(4, Math.round((m.cents / incomeMax) * 100))}%`, opacity: m.cents === 0 ? 0.15 : 1 }}
+                        title={`${m.month}: ${rand(m.cents)}`}
+                      />
+                    </div>
                     <span className="font-moxie-label text-[0.55rem] font-bold uppercase tracking-[0.1em] text-moxie-charcoal/50">
                       {m.month}
                     </span>

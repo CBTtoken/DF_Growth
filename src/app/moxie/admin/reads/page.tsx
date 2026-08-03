@@ -48,16 +48,21 @@ export default async function ReadsDrilldownPage() {
             The last fourteen days
           </h2>
           <div className="mt-4 border border-moxie-border bg-white p-5">
-            <div className="flex h-24 items-end gap-1.5">
+            {/* Same fix as the income strip: the bar's percentage height
+                resolves against a definite flex-1 chart area, not against
+                the auto-height column that collapsed every bar to zero. */}
+            <div className="flex h-24 items-stretch gap-1.5">
               {data.perDay.map((d, i) => (
                 <div key={i} className="flex flex-1 flex-col items-center gap-1">
                   <span className="font-moxie-label text-[0.6rem] font-bold text-moxie-charcoal/70">
-                    {d.count > 0 ? d.count : ""}
+                    {d.count > 0 ? d.count : " "}
                   </span>
-                  <div
-                    className="w-full bg-moxie-orange"
-                    style={{ height: `${Math.max(3, Math.round((d.count / dayMax) * 100))}%`, opacity: d.count === 0 ? 0.15 : 1 }}
-                  />
+                  <div className="flex w-full flex-1 items-end">
+                    <div
+                      className="w-full bg-moxie-orange"
+                      style={{ height: `${Math.max(4, Math.round((d.count / dayMax) * 100))}%`, opacity: d.count === 0 ? 0.15 : 1 }}
+                    />
+                  </div>
                   <span className="font-moxie-label text-[0.52rem] font-bold uppercase tracking-[0.08em] text-moxie-charcoal/50">
                     {d.day}
                   </span>
