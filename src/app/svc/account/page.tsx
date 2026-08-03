@@ -1,127 +1,285 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { svcPath } from "@/lib/svc/host";
+import { svcPath, isSvcHost, SVC_ORIGIN } from "@/lib/svc/host";
+import { MOXIE_ORIGIN } from "@/lib/moxie/host";
 import { getCurrentMember } from "@/lib/svc/member";
 import { createSvcClient } from "@/lib/svc/db";
 import { formatRand } from "@/lib/svc/data";
+import { listMemberIssues, savingsTotalCents, periodFor } from "@/lib/svc/ledger";
+import { getOrCreateReferralCode, memberReferralStats } from "@/lib/svc/referrals";
 import { signOutSvc } from "../login/actions";
+import { BenefitCard } from "@/components/svc/BenefitCard";
 import { svcBtnOutline } from "@/components/svc/ui";
 
 export const metadata: Metadata = {
-  title: "My account",
+  title: "My dashboard",
   robots: { index: false, follow: false },
 };
 
-// Sprint 1's minimal account view: who you are and where your membership
-// stands. The real member dashboard (benefits, savings counter, referral
-// numbers, demand capture) is Sprint 2, on top of the ledger.
-export default async function AccountPage() {
+// The member dashboard (handoff 7.1 and section 5): the savings number
+// computed only from redeemed value, this month's benefits with their
+// state controls, the three-number referral view, and cancellation. One
+// primary action per screen; everything else visibly secondary.
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cancelled?: string }>;
+}) {
+  const params = await searchParams;
   const member = await getCurrentMember();
   if (!member) redirect(`${await svcPath("/login")}`);
 
   const db = createSvcClient();
-  const { data: subscription } = await db
-    .from("subscription")
-    .select("status, current_period_end, package:package_id (name, monthly_price_cents)")
-    .eq("member_id", member!.id)
-    .in("status", ["pending_payment", "active", "past_due"])
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const [{ data: subscription }, issues, savings, referralStats, referralCode] = await Promise.all([
+    db
+      .from("subscription")
+      .select("status, current_period_end, cancelled_at, package:package_id (name, monthly_price_cents)")
+      .eq("member_id", member!.id)
+      .in("status", ["pending_payment", "active", "past_due", "cancelled"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    listMemberIssues(member!.id),
+    savingsTotalCents(member!.id),
+    memberReferralStats(member!.id),
+    getOrCreateReferralCode(member!.id),
+  ]);
 
-  const pkg = subscription?.package as unknown as {
-    name: string;
-    monthly_price_cents: number;
-  } | null;
+  const pkg = subscription?.package as unknown as { name: string; monthly_price_cents: number } | null;
+  const paidUp =
+    subscription &&
+    (subscription.status === "active" ||
+      (subscription.status === "cancelled" &&
+        subscription.current_period_end &&
+        new Date(subscription.current_period_end).getTime() > Date.now()));
 
+  const availableFace = issues
+    .filter((i) => i.status !== "redeemed" && i.status !== "expired")
+    .reduce((sum, i) => sum + i.face_value_cents, 0);
+
+  const host = (await headers()).get("host") ?? "";
+  const onSvcHost = isSvcHost(host);
+  const moxieHref = onSvcHost ? MOXIE_ORIGIN : "/moxie";
+  const couponsHref = await svcPath("/account/coupons");
+  const cancelHref = await svcPath("/account/cancel");
   const checkoutHref = await svcPath("/join/checkout");
 
+  const referralLink = referralCode
+    ? `${onSvcHost ? SVC_ORIGIN : ""}${await svcPath("/join")}?ref=${referralCode}`
+    : null;
+  const whatsappShare = referralLink
+    ? `https://wa.me/?text=${encodeURIComponent(
+        `I am saving with Smart Value Club: real grocery coupons for the stores we already shop at. Join with my link: ${
+          referralLink.startsWith("http") ? referralLink : `${SVC_ORIGIN}/join?ref=${referralCode}`
+        }`
+      )}`
+    : null;
+
+  const monthName = new Date(`${periodFor()}T00:00:00Z`).toLocaleDateString("en-ZA", {
+    month: "long",
+    year: "numeric",
+  });
+
   return (
-    <div className="bg-svc-cream px-4 py-12 sm:py-16">
+    <div className="bg-svc-cream px-4 py-10 sm:py-14">
       <div className="mx-auto w-full max-w-2xl">
-        <h1 className="font-svc-heading text-3xl font-bold">
-          Good day {member!.first_name}
-        </h1>
+        <h1 className="font-svc-heading text-3xl font-bold">Good day {member!.first_name}</h1>
 
-        <div className="mt-8 space-y-6">
-          <section className="border-2 border-svc-ink/15 bg-white/60 p-6">
-            <h2 className="font-svc-heading text-lg font-bold">Your membership</h2>
-            {subscription && pkg ? (
-              <div className="mt-3 space-y-1 text-base">
-                <p>
-                  {pkg.name}, {formatRand(pkg.monthly_price_cents)} a month.
-                </p>
-                <p>
-                  Status:{" "}
-                  <span className="font-semibold">
-                    {subscription.status === "active" && "Active"}
-                    {subscription.status === "pending_payment" && "Waiting for payment"}
-                    {subscription.status === "past_due" && "Payment overdue"}
-                  </span>
-                </p>
-                {subscription.current_period_end && (
-                  <p className="text-sm text-svc-ink/70">
-                    Paid up to{" "}
-                    {new Date(subscription.current_period_end).toLocaleDateString("en-ZA", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
-                    .
-                  </p>
-                )}
-                {subscription.status === "pending_payment" && (
-                  <p className="pt-2">
-                    <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
-                      Complete your payment
-                    </Link>
-                  </p>
-                )}
-              </div>
-            ) : (
-              <p className="mt-3 text-base leading-relaxed">
-                No membership yet.{" "}
-                <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
-                  Complete your joining
-                </Link>{" "}
-                and your benefits start with the next monthly issue.
+        {params.cancelled && (
+          <p className="mt-4 border-2 border-svc-blue bg-white/60 p-4 text-sm leading-relaxed">
+            Your membership is cancelled and will not bill again. Your benefits
+            stay live until the end of the period you have paid for. You are
+            welcome back anytime.
+          </p>
+        )}
+
+        {/* The savings number, handoff 7.1: redeemed value only. A member
+            who has redeemed nothing sees what is available instead, never
+            a projection. */}
+        <section className="mt-6 border-4 border-svc-green bg-white/60 p-6 text-center">
+          {savings.total > 0 ? (
+            <>
+              <p className="text-sm font-semibold uppercase tracking-wide text-svc-ink/60">
+                You have saved
               </p>
-            )}
-          </section>
+              <p className="mt-1 font-svc-heading text-4xl font-bold text-svc-green">
+                {formatRand(savings.total)}
+              </p>
+              <p className="mt-1 text-sm text-svc-ink/70">
+                with SVC since{" "}
+                {new Date(savings.since!).toLocaleDateString("en-ZA", { month: "long", year: "numeric" })},
+                counted only from benefits you actually used.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-semibold uppercase tracking-wide text-svc-ink/60">
+                Waiting to be used this month
+              </p>
+              <p className="mt-1 font-svc-heading text-4xl font-bold text-svc-green">
+                {availableFace > 0 ? formatRand(availableFace) : "R0"}
+              </p>
+              <p className="mt-1 text-sm text-svc-ink/70">
+                {availableFace > 0
+                  ? "in face value sitting in your account. Use a benefit and your real savings start counting here."
+                  : "Your savings counter starts the first time you use a benefit. We never show you a made-up number."}
+              </p>
+            </>
+          )}
+        </section>
 
-          <section className="border-2 border-svc-ink/15 bg-white/60 p-6">
-            <h2 className="font-svc-heading text-lg font-bold">Your details</h2>
-            <dl className="mt-3 space-y-1 text-base">
-              <div className="flex gap-2">
-                <dt className="font-semibold">Cell number:</dt>
-                <dd>
-                  {member!.cell_number}
-                  {member!.cell_verified_at ? " (verified)" : " (not yet verified)"}
-                </dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="font-semibold">Email:</dt>
-                <dd>{member!.email}</dd>
-              </div>
-            </dl>
-          </section>
-
-          <section className="border-2 border-svc-ink/15 bg-white/60 p-6">
-            <h2 className="font-svc-heading text-lg font-bold">Coming with the next sprint</h2>
-            <p className="mt-3 text-base leading-relaxed text-svc-ink/75">
-              Your coupons, your savings counter, your draw entries and your
-              referral link will all live here. The club is in its private
-              build phase; you are early, and that is a good thing.
+        {/* Membership state. */}
+        <section className="mt-6 border-2 border-svc-ink/15 bg-white/60 p-6">
+          <h2 className="font-svc-heading text-lg font-bold">Your membership</h2>
+          {subscription && pkg ? (
+            <div className="mt-2 space-y-1 text-base">
+              <p>
+                {pkg.name}, {formatRand(pkg.monthly_price_cents)} a month.{" "}
+                <span className="font-semibold">
+                  {subscription.status === "active" && "Active."}
+                  {subscription.status === "pending_payment" && "Waiting for payment."}
+                  {subscription.status === "past_due" && "Payment overdue."}
+                  {subscription.status === "cancelled" && (paidUp ? "Cancelled, paid up." : "Cancelled.")}
+                </span>
+              </p>
+              {subscription.current_period_end && (
+                <p className="text-sm text-svc-ink/70">
+                  Paid to{" "}
+                  {new Date(subscription.current_period_end).toLocaleDateString("en-ZA", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  .
+                </p>
+              )}
+              {subscription.status === "pending_payment" && (
+                <p className="pt-1">
+                  <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
+                    Complete your payment
+                  </Link>
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="mt-2 text-base leading-relaxed">
+              No membership yet.{" "}
+              <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
+                Complete your joining
+              </Link>
+              .
             </p>
-          </section>
+          )}
+        </section>
 
+        {/* This month's benefits. */}
+        <section className="mt-6">
+          <div className="flex items-end justify-between">
+            <h2 className="font-svc-heading text-xl font-bold">Your benefits for {monthName}</h2>
+            <Link href={couponsHref} className="text-sm font-semibold text-svc-blue underline">
+              My coupons
+            </Link>
+          </div>
+          {issues.length === 0 ? (
+            <p className="mt-3 border-2 border-svc-ink/15 bg-white/60 p-5 text-base leading-relaxed text-svc-ink/75">
+              {paidUp
+                ? "Your benefits for this month are on their way and land with the next daily issue. We will email you the moment they are ready."
+                : "Benefits are issued to paid-up members on the 1st of every month. Complete your membership and yours arrive with the next issue."}
+            </p>
+          ) : (
+            <div className="mt-3 space-y-4">
+              {issues.map((issue) => (
+                <BenefitCard key={issue.id} issue={issue} back="/account" moxiePathPrefix={moxieHref} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* The referral view: three numbers, not a tree (handoff sec 8). */}
+        <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
+          <h2 className="font-svc-heading text-lg font-bold">Tell a friend, earn a thank-you</h2>
+          {referralLink ? (
+            <>
+              <p className="mt-2 text-sm leading-relaxed text-svc-ink/75">
+                Share your link. When someone joins with it and their
+                membership is active, you earn a small monthly amount as
+                credit toward your own membership.
+              </p>
+              <p className="mt-3 break-all border-2 border-svc-ink/15 bg-svc-cream px-3 py-2 font-mono text-sm">
+                {referralLink.startsWith("http") ? referralLink : `${SVC_ORIGIN}/join?ref=${referralCode}`}
+              </p>
+              <div className="mt-3">
+                {whatsappShare && (
+                  <a
+                    href={whatsappShare}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-12 w-full items-center justify-center bg-svc-green px-5 text-sm font-semibold text-white hover:bg-svc-ink sm:w-auto"
+                  >
+                    Share on WhatsApp
+                  </a>
+                )}
+              </div>
+              <dl className="mt-5 grid grid-cols-3 gap-px bg-svc-ink/10 text-center">
+                {referralStats.joinedByLevel.map((l) => (
+                  <div key={l.level} className="bg-white/80 p-3">
+                    <dt className="text-xs font-semibold uppercase tracking-wide text-svc-ink/60">
+                      Level {l.level}
+                    </dt>
+                    <dd className="mt-1 font-svc-heading text-xl font-bold">{l.count}</dd>
+                  </div>
+                ))}
+              </dl>
+              <dl className="mt-3 space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <dt>This month&apos;s earning</dt>
+                  <dd className="font-semibold">{formatRand(referralStats.thisMonthCents)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Total earned</dt>
+                  <dd className="font-semibold">{formatRand(referralStats.totalEarnedCents)}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Applied or paid out</dt>
+                  <dd className="font-semibold">{formatRand(referralStats.paidOutCents)}</dd>
+                </div>
+                <div className="flex justify-between border-t-2 border-svc-ink/10 pt-1">
+                  <dt>Current balance</dt>
+                  <dd className="font-semibold text-svc-green">{formatRand(referralStats.balanceCents)}</dd>
+                </div>
+              </dl>
+              <p className="mt-3 text-xs text-svc-ink/60">
+                Referrals are optional and your benefits never depend on them.
+                The full rules, with a worked example, are on the how it works
+                page; the same words apply here.
+              </p>
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-svc-ink/75">
+              Your share link appears here once your account is fully set up.
+            </p>
+          )}
+        </section>
+
+        {/* Account housekeeping. */}
+        <section className="mt-8 space-y-3">
           <form action={signOutSvc}>
             <button type="submit" className={svcBtnOutline}>
               Log out
             </button>
           </form>
-        </div>
+          {subscription?.status === "active" && (
+            <p className="text-sm text-svc-ink/60">
+              Need to leave?{" "}
+              <Link href={cancelHref} className="font-semibold text-svc-blue underline">
+                Cancel your membership
+              </Link>
+              . No fees, benefits stay live to the end of your paid period.
+            </p>
+          )}
+        </section>
       </div>
     </div>
   );

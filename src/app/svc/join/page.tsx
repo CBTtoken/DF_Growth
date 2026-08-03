@@ -28,10 +28,11 @@ const ERRORS: Record<string, string> = {
 export default async function JoinPage({
   searchParams,
 }: {
-  searchParams: Promise<{ package?: string; error?: string }>;
+  searchParams: Promise<{ package?: string; error?: string; ref?: string }>;
 }) {
   const params = await searchParams;
   const slug = params.package ?? "svc-membership";
+  const ref = (params.ref ?? "").toUpperCase().slice(0, 16);
   const pkg = await getPackageBySlug(slug);
   const loginHref = await svcPath("/login");
 
@@ -63,6 +64,7 @@ export default async function JoinPage({
 
         <form action={startSignup} className="mt-8 space-y-5">
           <input type="hidden" name="package" value={slug} />
+          {ref && <input type="hidden" name="ref" value={ref} />}
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label htmlFor="firstName" className={svcLabel}>First name</label>

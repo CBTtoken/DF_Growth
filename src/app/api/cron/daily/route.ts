@@ -8,6 +8,7 @@ import { GET as bizupNotifications } from "../bizup-notifications/route";
 import { GET as bizupCheckins } from "../bizup-checkins/route";
 import { GET as retentionReport } from "../retention/route";
 import { GET as boardCleanup } from "../board-cleanup/route";
+import { GET as svcMonthlyIssue } from "../../svc/cron/monthly-issue/route";
 import { runHealthChecks } from "@/lib/desk/health/run";
 
 // Every scheduled job shares one invocation instead of the separate
@@ -62,6 +63,10 @@ export async function GET(request: Request) {
     // decision, because a want-ad and a finished chat were both told up
     // front that they last ten days. Never touches a business post.
     ["boardCleanup", boardCleanup],
+    // SVC's benefit issue run. Daily on purpose: idempotent by the
+    // (member, benefit, period) unique key, so the 1st issues the new
+    // month and every other day back-fills members who activated since.
+    ["svcMonthlyIssue", svcMonthlyIssue],
   ];
   // Screenshot refresh only needs to run weekly — real pages don't change
   // often enough to justify a daily capture, and running it daily would

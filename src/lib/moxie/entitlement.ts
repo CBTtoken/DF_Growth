@@ -90,6 +90,19 @@ export async function canRead(edition: MoxieEdition): Promise<Access> {
     if (joined <= published) return { allowed: true, reason: "membership" };
   }
 
+  // Smart Value Club members whose package includes the magazine read it
+  // with the same account, same joined-date rule. Through an interface,
+  // never a join (SVC handoff 3.2), and it fails to null rather than
+  // throwing, so Moxie cannot be broken by SVC's rollout state. This is
+  // the Moxie-audit plan's "logins converge" step landing.
+  const { svcMagazineAccessStart } = await import("@/lib/svc/moxie-bridge");
+  const svcStart = await svcMagazineAccessStart(reader.id);
+  if (svcStart) {
+    const joined = new Date(svcStart).getTime();
+    const published = new Date(edition.published_at).getTime();
+    if (joined <= published) return { allowed: true, reason: "membership" };
+  }
+
   // Nothing writes moxie_purchases today: Dewald dropped the single-issue
   // sale in favour of two membership tiers on 1 August 2026. Honoured here
   // anyway so that if a one-off sale ever returns, an existing buyer is not

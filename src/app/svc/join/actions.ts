@@ -8,6 +8,7 @@ import { createSvcClient } from "@/lib/svc/db";
 import { svcPath } from "@/lib/svc/host";
 import { normalizeCell, getMemberByCell, getCurrentMember } from "@/lib/svc/member";
 import { createAndSendOtp, verifyOtp } from "@/lib/svc/otp";
+import { createReferralChain } from "@/lib/svc/referrals";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { clientIpFromHeaders, isRateLimited } from "@/lib/rate-limit";
 
@@ -32,9 +33,14 @@ export async function startSignup(formData: FormData) {
   const popia = formData.get("popia") === "on";
   const marketing = formData.get("marketing") === "on";
   const pkg = String(formData.get("package") ?? "svc-membership");
+  // The referral code rides the whole flow as an opaque string and is
+  // only acted on at verification time, where the chain is built against
+  // a verified cell number (handoff section 8).
+  const ref = String(formData.get("ref") ?? "").trim().toUpperCase().slice(0, 16);
+  const refQuery = ref ? `&ref=${encodeURIComponent(ref)}` : "";
 
   const back = async (error: string) =>
-    redirect(`${await svcPath("/join")}?package=${encodeURIComponent(pkg)}&error=${error}`);
+    redirect(`${await svcPath("/join")}?package=${encodeURIComponent(pkg)}&error=${error}${refQuery}`);
 
   if (!firstName || !surname || !email) await back("missing");
   if (password.length < 8) await back("weak");
@@ -130,21 +136,25 @@ export async function startSignup(formData: FormData) {
     await back("otp_failed");
   }
 
-  redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}`);
+  redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}${refQuery}`);
 }
 
 /**
  * Signup, step two: the code comes back and the cell number is verified.
+ * This is also the moment the referral chain is written, because matching
+ * is on verified cell numbers and relationships are set at signup, once.
  */
 export async function verifySignupOtp(formData: FormData) {
   const code = String(formData.get("code") ?? "").trim();
   const pkg = String(formData.get("package") ?? "svc-membership");
+  const ref = String(formData.get("ref") ?? "").trim();
 
   const member = await getCurrentMember();
   if (!member) redirect(await svcPath("/join"));
 
+  const refKeep = ref ? `&ref=${encodeURIComponent(ref)}` : "";
   const back = async (error: string) =>
-    redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}&error=${error}`);
+    redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}&error=${error}${refKeep}`);
 
   if (!/^[0-9]{6}$/.test(code)) await back("format");
 
@@ -161,20 +171,30 @@ export async function verifySignupOtp(formData: FormData) {
     await back("failed");
   }
 
+  if (ref) {
+    // Best effort: a bad or self-referring code is silently ignored, the
+    // signup itself never fails on it.
+    await createReferralChain(member!.id, ref).catch((err) =>
+      console.error("SVC referral chain failed", err)
+    );
+  }
+
   redirect(`${await svcPath("/join/checkout")}?package=${encodeURIComponent(pkg)}`);
 }
 
 /** A fresh code, rate limited so the resend button cannot be hammered. */
 export async function resendSignupOtp(formData: FormData) {
   const pkg = String(formData.get("package") ?? "svc-membership");
+  const ref = String(formData.get("ref") ?? "").trim().toUpperCase().slice(0, 16);
+  const refKeep = ref ? `&ref=${encodeURIComponent(ref)}` : "";
   const member = await getCurrentMember();
   if (!member) redirect(await svcPath("/join"));
 
   const ip = clientIpFromHeaders(await headers());
   if (isRateLimited(`svc-otp-resend:${member!.id}:${ip}`, 3, 10 * 60 * 1000)) {
-    redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}&error=slow`);
+    redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}&error=slow${refKeep}`);
   }
 
   await createAndSendOtp({ cell: member!.cell_number, purpose: "signup", email: member!.email });
-  redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}&resent=1`);
+  redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}&resent=1${refKeep}`);
 }

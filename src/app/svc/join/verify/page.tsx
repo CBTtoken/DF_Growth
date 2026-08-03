@@ -22,9 +22,10 @@ const ERRORS: Record<string, string> = {
 export default async function VerifyPage({
   searchParams,
 }: {
-  searchParams: Promise<{ package?: string; error?: string; resent?: string }>;
+  searchParams: Promise<{ package?: string; error?: string; resent?: string; ref?: string }>;
 }) {
   const params = await searchParams;
+  const ref = (params.ref ?? "").toUpperCase().slice(0, 16);
   const member = await getCurrentMember();
   if (!member) redirect(await svcPath("/join"));
   if (member.cell_verified_at) {
@@ -53,6 +54,7 @@ export default async function VerifyPage({
 
         <form action={verifySignupOtp} className="mt-8 space-y-5">
           <input type="hidden" name="package" value={pkg} />
+          {ref && <input type="hidden" name="ref" value={ref} />}
           <div>
             <label htmlFor="code" className={svcLabel}>Your 6 digit code</label>
             <input
@@ -74,6 +76,7 @@ export default async function VerifyPage({
 
         <form action={resendSignupOtp} className="mt-4">
           <input type="hidden" name="package" value={pkg} />
+          {ref && <input type="hidden" name="ref" value={ref} />}
           <button type="submit" className="min-h-12 text-sm font-semibold text-svc-blue underline">
             Send me a fresh code
           </button>
