@@ -183,10 +183,11 @@ the prefix when DNS moves later).
 
 1. Open supabase.com, log in, open the **DF-Growth** project.
 2. Left sidebar: **SQL Editor**, then **New query**.
-3. Open the file `supabase/migrations/20260803230000_svc_schema.sql` from
-   the repo, copy ALL of it, paste it into the editor, press **Run**.
-   The complete SQL is also in Appendix A at the bottom of this report,
-   so you can copy it straight from here without opening the code file.
+3. Copy ALL of Appendix A at the bottom of this report, paste it into
+   the editor, press **Run**. Then do the same with Appendix B (a few
+   lines, added by the 4 August handoff revision). If you already ran
+   Appendix A earlier, run ONLY Appendix B now; do not run Appendix A a
+   second time, it would duplicate the seeded packages.
 4. You should see "Success. No rows returned".
 
 ### Step 2: Expose the svc schema to the API (1 minute)
@@ -253,7 +254,42 @@ confirmation email arrive and `/account` show Active.
 | `SVC_OTP_CHANNEL` | `email` (default) now, `sms` when a provider exists | Vercel |
 | `SVC_OTP_PEPPER` | Optional extra secret for OTP hashing (falls back to the Supabase secret) | Vercel |
 
-## 9. WHERE SPRINT 2 STARTS
+## 9. ADDENDUM, 4 AUGUST: THE REVISED HANDOFF (12.1 STACKING) IS IN
+
+You supplied SVC_Platform_Rebuild_Handoff (1).md, whose one substantive
+addition is section 12.1: the stacking message (SVC coupons work on top of
+Xtra Savings and Smart Shopper) becomes the lead claim, gated on WRITTEN
+confirmation from the coupon provider per retailer (new Appendix A
+question 14). Implemented as follows:
+
+- The hero, the trust line under the CTA, the sentence under the value
+  breakdown, and a new FAQ entry all carry the stacking message.
+- Because no retailer confirmation exists yet, every one of them renders
+  the SOFT form ("designed to work alongside") today, exactly as 12.1
+  instructs. The strong form ("stacks on top") is already written into
+  the code behind a per-retailer flag.
+- Each retailer coupon pack row now has a stacking_confirmed flag
+  (migration 20260804001000, Appendix B below). The homepage renders the
+  strong or soft line PER RETAILER CARD from that flag, so one confirmed
+  retailer can say "stacks on top" while another still says
+  "alongside", per the handoff. The whole-site headline switches to
+  strong only when every retailer is confirmed.
+- When a retailer's written confirmation arrives, record it with one
+  statement in the Supabase SQL editor. For Dis-Chem, for example:
+
+```sql
+update svc.benefit set stacking_confirmed = true
+where name = 'Dis-Chem coupon pack';
+```
+
+  For Checkers/Shoprite use name = 'Checkers / Shoprite coupon pack', and
+  for Pick n Pay use name = 'Pick n Pay coupon pack'. The copy swaps by
+  itself on the next page load; no deploy.
+- Add to the MiFuel conversation, per Q14: does their coupon discount
+  apply on top of the retailer's own loyalty pricing at the till, per
+  retailer, in writing.
+
+## 10. WHERE SPRINT 2 STARTS
 
 The member dashboard on top of the ledger: benefit issue run on the 1st,
 the "I used this" control, the savings counter, the coupon manual-import
@@ -902,5 +938,34 @@ begin
     (v_svc_package, 2, 250),
     (v_svc_package, 3, 150);
 end $$;
+
+```
+
+## APPENDIX B: THE STACKING FLAG MIGRATION (safe to run before or after Appendix A, never re-run Appendix A itself)
+
+```sql
+-- The stacking claim, per handoff section 12.1 (added in the 3 August
+-- revision): SVC coupons are designed to work on top of a retailer's own
+-- loyalty savings, and that becomes the site's lead message ONCE the
+-- coupon provider confirms it in writing per retailer (Appendix A
+-- question 14). Retailer till logic can differ, so confirmation is
+-- tracked per retailer, and the public page renders the strong claim
+-- ("stacks on top of") or the soft claim ("designed to work alongside")
+-- per retailer card rather than one blanket statement.
+--
+-- The flag lives on the benefit row because the retailer coupon packs are
+-- the retailer-shaped rows in this schema. Flipping one to true is the
+-- admin act of recording that retailer's written confirmation; the copy
+-- swaps by itself on the next page load.
+--
+-- A separate file from the Sprint 1 schema migration on purpose: if that
+-- one has already been run, re-running it would duplicate the seed rows,
+-- so this must be runnable on its own. Safe in either order.
+
+alter table svc.benefit
+  add column if not exists stacking_confirmed boolean not null default false;
+
+comment on column svc.benefit.stacking_confirmed is
+  'For coupon_pack benefits: written confirmation from the coupon provider that coupons apply on top of this retailer''s own loyalty savings (handoff 12.1, Appendix A Q14). Until true, public copy uses the soft form.';
 
 ```

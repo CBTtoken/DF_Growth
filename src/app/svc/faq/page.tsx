@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { svcCanonical, svcPath } from "@/lib/svc/host";
+import { listPublicPackages, stackingClaim } from "@/lib/svc/data";
 import { svcBtnPrimary } from "@/components/svc/ui";
 
 export const metadata: Metadata = {
@@ -56,13 +57,29 @@ export default async function FaqPage() {
   const joinHref = await svcPath("/join");
   const contactHref = await svcPath("/contact");
 
+  // The stacking question (handoff 12.1). The flat "coupons apply on top"
+  // answer is gated on written per-retailer confirmation; until then the
+  // soft form renders, from the same flag the homepage reads.
+  const packages = await listPublicPackages("svc");
+  const strong = stackingClaim(packages[0] ?? null) === "strong";
+  const faqs: { q: string; a: string }[] = [
+    FAQS[0],
+    {
+      q: "Do SVC coupons replace my Xtra Savings or Smart Shopper card?",
+      a: strong
+        ? "No. Use your loyalty card as normal. SVC coupons apply on top, at the same till, same trip."
+        : "No. Keep using your loyalty card exactly as you do now. SVC coupons are separate and designed to work alongside it, and we confirm the exact till behaviour with each retailer as we roll out.",
+    },
+    ...FAQS.slice(1),
+  ];
+
   // FAQPage structured data, so a search result can show the questions
   // directly. Plain strings only, built from the same array the page
   // renders, which keeps the two from drifting apart.
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: FAQS.map((f) => ({
+    mainEntity: faqs.map((f) => ({
       "@type": "Question",
       name: f.q,
       acceptedAnswer: { "@type": "Answer", text: f.a },
@@ -90,7 +107,7 @@ export default async function FaqPage() {
 
       <section className="bg-svc-cream px-4 py-12 sm:py-16">
         <div className="mx-auto w-full max-w-4xl space-y-6">
-          {FAQS.map((f) => (
+          {faqs.map((f) => (
             <div key={f.q} className="border-2 border-svc-ink/10 bg-white/50 p-6">
               <h2 className="font-svc-heading text-lg font-bold">{f.q}</h2>
               <p className="mt-2 text-base leading-relaxed text-svc-ink/80">{f.a}</p>

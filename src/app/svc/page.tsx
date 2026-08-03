@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { svcCanonical, svcPath } from "@/lib/svc/host";
-import { listPublicPackages, formatRand } from "@/lib/svc/data";
+import { listPublicPackages, formatRand, stackingClaim } from "@/lib/svc/data";
 import { svcBtnPrimary, svcBtnGreen, svcBtnOutlineOnDark } from "@/components/svc/ui";
 
 export const metadata: Metadata = {
@@ -21,6 +21,12 @@ export default async function SvcHomePage() {
   const monthly = main ? formatRand(main.monthly_price_cents) : null;
   const faceValue = main && main.faceValueCents > 0 ? formatRand(main.faceValueCents) : null;
 
+  // Handoff 12.1: stacking is the lead message, but the flat claim is
+  // gated on written per-retailer confirmation (Appendix A Q14). Until
+  // every retailer's confirmation is recorded, the soft form renders.
+  const claim = stackingClaim(main);
+  const strong = claim === "strong";
+
   const joinHref = await svcPath("/join");
   const packagesHref = await svcPath("/packages");
   const howHref = await svcPath("/how-it-works");
@@ -36,12 +42,17 @@ export default async function SvcHomePage() {
             South Africa&apos;s savings membership
           </p>
           <h1 className="mt-3 max-w-2xl font-svc-heading text-3xl font-bold leading-tight sm:text-5xl">
-            Real coupons for the stores you already shop at.
+            {strong
+              ? "These coupons work on top of your own store savings."
+              : "Coupons designed to work alongside your own store savings."}
           </h1>
           <p className="mt-4 max-w-xl text-base leading-relaxed text-white/85 sm:text-lg">
-            Monthly grocery and pharmacy coupons for Dis-Chem, Checkers, Shoprite
-            and Pick n Pay, plus the Moxie digital magazine and a members draw.
-            {monthly ? ` From ${monthly} a month.` : ""} No contracts. Cancel anytime.
+            You already have Xtra Savings or Smart Shopper.{" "}
+            {strong
+              ? "SVC coupons stack on top of them. Same trip, same card, extra money off."
+              : "SVC coupons are designed to work alongside them. Same trip, same card."}{" "}
+            Dis-Chem, Checkers, Shoprite and Pick n Pay.
+            {monthly ? ` ${monthly} a month.` : ""}
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <Link href={joinHref} className={svcBtnPrimary}>
@@ -51,7 +62,12 @@ export default async function SvcHomePage() {
               See what you get
             </Link>
           </div>
-          <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/75">
+          <p className="mt-4 text-sm font-semibold text-white/85">
+            {strong
+              ? "Not instead of your loyalty card. On top of it."
+              : "Not instead of your loyalty card. Alongside it."}
+          </p>
+          <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/75">
             <li>No contracts or lock-ins</li>
             <li>Cancel anytime</li>
             <li>Secure payment</li>
@@ -86,6 +102,11 @@ export default async function SvcHomePage() {
             counts your real savings in Rand. We would rather show you that
             number than promise you this one.
           </p>
+          <p className="mt-2 max-w-2xl text-sm font-semibold leading-relaxed text-svc-blue">
+            {strong
+              ? "This is on top of whatever your store card already saves you."
+              : "This is designed to work alongside whatever your store card already saves you."}
+          </p>
 
           {main && main.benefits.length > 0 && (
             <div className="mt-8 grid gap-px bg-svc-ink/10 sm:grid-cols-2">
@@ -95,6 +116,16 @@ export default async function SvcHomePage() {
                     <h3 className="font-svc-heading text-base font-bold">{b.name}</h3>
                     {b.description && (
                       <p className="mt-1 text-sm leading-relaxed text-svc-ink/70">{b.description}</p>
+                    )}
+                    {/* Per retailer, per the 12.1 verification gate: the
+                        strong line renders only for a retailer whose
+                        written confirmation is recorded in admin. */}
+                    {b.benefit_type === "coupon_pack" && (
+                      <p className="mt-1 text-xs font-semibold text-svc-green">
+                        {b.stacking_confirmed
+                          ? "Stacks on top of this store's own loyalty savings."
+                          : "Designed to work alongside this store's own loyalty savings."}
+                      </p>
                     )}
                   </div>
                   {b.face_value_cents > 0 && (

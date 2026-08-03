@@ -21,6 +21,10 @@ export type SvcBenefit = {
   benefit_type: string;
   face_value_cents: number;
   display_order: number;
+  // Handoff 12.1: written per-retailer confirmation that coupons apply on
+  // top of the retailer's own loyalty savings. Gates the strong "stacks on
+  // top" copy; false renders the soft "designed to work alongside" form.
+  stacking_confirmed: boolean;
 };
 
 export type SvcPackage = {
@@ -47,6 +51,7 @@ type PackageRow = Omit<SvcPackage, "benefits" | "faceValueCents"> & {
       description: string | null;
       benefit_type: string;
       active: boolean;
+      stacking_confirmed: boolean | null;
     } | null;
   }[];
 };
@@ -61,6 +66,7 @@ function shapePackage(row: PackageRow): SvcPackage {
       benefit_type: pb.benefit!.benefit_type,
       face_value_cents: pb.face_value_cents,
       display_order: pb.display_order,
+      stacking_confirmed: pb.benefit!.stacking_confirmed === true,
     }))
     .sort((a, b) => a.display_order - b.display_order);
 
@@ -81,7 +87,18 @@ function shapePackage(row: PackageRow): SvcPackage {
 
 const PACKAGE_SELECT =
   "id, brand, name, slug, public_description, monthly_price_cents, annual_price_cents, free_draw_entries, display_order, " +
-  "package_benefit (display_order, face_value_cents, benefit (id, name, description, benefit_type, active))";
+  "package_benefit (display_order, face_value_cents, benefit (id, name, description, benefit_type, active, stacking_confirmed))";
+
+/**
+ * The stacking claim state across a package's coupon benefits (handoff
+ * 12.1). "strong" only when every retailer coupon pack carries written
+ * confirmation; anything less renders the soft form site-wide, and the
+ * per-retailer cards make the distinction visible.
+ */
+export function stackingClaim(pkg: SvcPackage | null): "strong" | "soft" {
+  const coupons = pkg?.benefits.filter((b) => b.benefit_type === "coupon_pack") ?? [];
+  return coupons.length > 0 && coupons.every((b) => b.stacking_confirmed) ? "strong" : "soft";
+}
 
 /** Current, active packages for a brand, in display order. */
 export async function listPublicPackages(brand: "svc" | "moxie" = "svc"): Promise<SvcPackage[]> {
