@@ -586,6 +586,11 @@ export function ArticleEditor(props: Props) {
               >
                 <option value="hero-opener">A photograph</option>
                 <option value="band-opener">A charcoal band</option>
+                {/* The standing business-document look: modest ruled header,
+                    tabular rows, no display type. Built for the rate card,
+                    reusable by anything that is a price list rather than a
+                    story. */}
+                <option value="rate-card">A clean rate card</option>
               </select>
             </label>
           </div>

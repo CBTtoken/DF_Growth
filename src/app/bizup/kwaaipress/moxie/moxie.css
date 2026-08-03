@@ -1355,3 +1355,128 @@
   padding: 0 0.08em;
   border-radius: 1px;
 }
+
+/* =========================================================================
+   THE RATE CARD LAYOUT
+
+   Dewald, 3 August 2026: "remove all the big font and noise and just make
+   it a decent easy to read professional rate card... a standard template
+   we can easily update the pricing in future editions."
+
+   So: a business document. One modest ruled header, thin hairlines, prices
+   in quiet tabular rows, nothing shouting. Everything here restyles the
+   SAME blocks every article uses (rows, lists, stats, subheads), which is
+   what makes it a standing template: next edition opens the article,
+   changes the numbers, approves. No design work involved.
+   ========================================================================= */
+
+.mx-ratecard__head {
+  border-bottom: 1.2pt solid var(--mx-orange);
+  padding-bottom: 3mm;
+}
+.mx-ratecard__kicker {
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 8pt;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--mx-orange);
+  display: block;
+}
+.mx-ratecard__title {
+  font-family: var(--mx-label);
+  font-weight: 700;
+  font-size: 16pt;
+  line-height: 1.1;
+  color: var(--mx-charcoal);
+  margin: 1.6mm 0 0;
+}
+.mx-ratecard__turn {
+  color: var(--mx-orange);
+}
+.mx-ratecard__standfirst {
+  font-size: 9pt;
+  line-height: 1.5;
+  color: #5c5852;
+  margin: 1.6mm 0 0;
+  max-width: 150mm;
+}
+
+/* The body: everything a notch smaller and a lot quieter. */
+.mx-ratecard {
+  font-size: 9pt;
+}
+.mx-ratecard p {
+  font-size: 9pt;
+  line-height: 1.5;
+}
+
+/* Subheads become full-width ruled section labels, charcoal not orange:
+   on a price list the words are labels, the rule does the separating. */
+.mx-ratecard .mx-subhead {
+  width: 100%;
+  font-size: 9pt;
+  letter-spacing: 0.08em;
+  color: var(--mx-charcoal);
+  border-bottom: 0.5pt solid var(--mx-charcoal);
+  margin: 5mm 0 1.6mm;
+  padding-bottom: 1mm;
+}
+
+/* Price and detail rows: the orange tag plate becomes a quiet left-aligned
+   figure, the row itself a thin-ruled table line. */
+.mx-ratecard .mx-rows__row {
+  gap: 4mm;
+  padding: 1.8mm 0;
+}
+.mx-ratecard .mx-rows__tag {
+  flex: 0 0 26mm;
+  text-align: left;
+}
+.mx-ratecard .mx-rows__tag-main {
+  background: none;
+  color: var(--mx-charcoal);
+  font-size: 9.5pt;
+  letter-spacing: 0.02em;
+  padding: 0;
+}
+.mx-ratecard .mx-rows__title {
+  font-size: 9pt;
+  line-height: 1.5;
+}
+
+/* Spec lists sit in two columns so a format's details take three lines,
+   not eight. */
+.mx-ratecard .mx-list {
+  columns: 2;
+  column-gap: 8mm;
+  font-size: 8.5pt;
+}
+.mx-ratecard .mx-list li {
+  break-inside: avoid;
+}
+
+/* The audience stats: an information strip, not a billboard. Light cells,
+   charcoal figures at reading scale. */
+.mx-ratecard .mx-stats {
+  background: none;
+  border-top: 0.5pt solid var(--mx-charcoal);
+  border-bottom: 0.5pt solid var(--mx-border);
+  color: var(--mx-charcoal);
+  gap: 0;
+}
+.mx-ratecard .mx-stats__cell {
+  background: none;
+  padding: 2.4mm 3mm 2.6mm 0;
+}
+.mx-ratecard .mx-stats__n {
+  font-size: 12pt;
+  line-height: 1.1;
+  color: var(--mx-charcoal);
+}
+.mx-ratecard .mx-stats__label {
+  font-size: 7pt;
+  letter-spacing: 0.06em;
+  color: #5c5852;
+  margin: 0.8mm 0 0;
+}

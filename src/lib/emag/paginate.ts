@@ -110,7 +110,12 @@ export function paginate(input: PaginateInput): PaginateResult {
     floatBottom = 0;
 
     pages.push({
-      layout: isFirst ? input.layout : "runon",
+      // Continuation pages are run-on pages, except for the rate card: its
+      // pages carry their tabular styling on every page, and "runon" is
+      // produced nowhere else and consumed nowhere that cares (the sections
+      // reference screen describes it, nothing renders differently off it
+      // beyond the opener, which continuation pages never have anyway).
+      layout: isFirst ? input.layout : input.layout === "rate-card" ? "rate-card" : "runon",
       head: input.head,
       opener: isFirst ? input.opener : undefined,
       blocks: current,

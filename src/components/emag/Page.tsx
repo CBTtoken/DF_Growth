@@ -204,6 +204,37 @@ export function MoxiePage({
     return <AdvertPage page={page} />;
   }
 
+  // The rate card: a business document, not an editorial page. Dewald,
+  // 3 August: "remove all the big font and noise and just make it a decent
+  // easy to read professional rate card". So no hero band and no display
+  // headline: a modest ruled header, then the same blocks as any article
+  // restyled into calm tabular rows by the .mx-ratecard scope. The data
+  // stays ordinary article blocks, which is the whole point: next edition's
+  // prices are edited in the builder, not redesigned.
+  if (page.layout === "rate-card") {
+    return (
+      <PageFrame page={page} imprint={imprint}>
+        {opener ? (
+          <header className="mx-ratecard__head">
+            {opener.kicker ? <span className="mx-ratecard__kicker">{opener.kicker}</span> : null}
+            <h1 className="mx-ratecard__title">
+              {opener.headline}
+              {opener.headlineTurn ? <span className="mx-ratecard__turn"> {opener.headlineTurn}</span> : null}
+            </h1>
+            {opener.standfirst ? (
+              <p className="mx-ratecard__standfirst">
+                <Text content={opener.standfirst} />
+              </p>
+            ) : null}
+          </header>
+        ) : null}
+        <div className="mx-ratecard">
+          <Blocks blocks={page.blocks} assets={assets} />
+        </div>
+      </PageFrame>
+    );
+  }
+
   return (
     <PageFrame page={page} imprint={imprint}>
       {page.preBlocks?.length ? (

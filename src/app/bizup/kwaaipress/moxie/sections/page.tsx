@@ -49,6 +49,10 @@ const LAYOUTS: Record<LayoutKey, { name: string; what: string }> = {
     name: "Advertisement",
     what: "A slot holding supplied artwork at full page, half horizontal, half vertical or quarter. Two quarters share a page. Moxie never designs the advertisement.",
   },
+  "rate-card": {
+    name: "Rate card",
+    what: "A calm, tabular business document rather than an editorial page: modest header, thin rules, prices in clean rows. The same blocks as any article, so next edition's prices are edited, not redesigned.",
+  },
 };
 
 export default function MoxieSectionsPage() {

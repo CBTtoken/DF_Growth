@@ -38,7 +38,8 @@ export type LayoutKey =
   | "band-opener"
   | "runon"
   | "list"
-  | "advert";
+  | "advert"
+  | "rate-card";
 
 export type Pillar = {
   key: PillarKey;
