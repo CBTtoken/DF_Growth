@@ -20,7 +20,7 @@ Last verified 3 August 2026.
 |---|---|---|
 | `Personal/Projects/Claude Projects` | `fortislex-mvp` | **FortisLex.** The folder name is misleading, see below. |
 | `Personal/Projects/DigitalFlyer Growth` | `DF_Growth` | **Growth, KatisoBiz, Kwaai Press, The Board, The Desk, moxiemag.co.za.** The big one. |
-| `Personal/Projects/DigitalFlyer WhatsApp` | `DF-WhatsApp` | WhatsApp work |
+| `Personal/Projects/DigitalFlyer WhatsApp` | `DF-WhatsApp` | WhatsApp, live at `df-whats-app.vercel.app` |
 | `Personal/Projects/Vowie` | `Vowie` | Vowie |
 | `Helplift/helplift-app` | `helplift` | HelpLift |
 
@@ -70,12 +70,31 @@ Note the trap: `FortisLex/` has no code in it. The FortisLex code is in
 | Moxie public site | `moxiemag.co.za` | DF_Growth | `cjqvelgarwfiskgtmrkm` |
 | The Board | inside Growth | DF_Growth | `cjqvelgarwfiskgtmrkm` |
 | The Desk | `/desk`, one user | DF_Growth | `cjqvelgarwfiskgtmrkm` |
-| HelpLift | `helplift.vercel.app` | helplift | `ojfigdbjrpojuqcrkagc` |
-| FortisLex | private demo | fortislex-mvp | `nexixfgdpitzvpgtrneb` |
+| HelpLift | `www.helplift.co.za` | helplift | `ojfigdbjrpojuqcrkagc` |
+| FortisLex | `fortislex.co.za` | fortislex-mvp | `nexixfgdpitzvpgtrneb` |
 
 Five products share one Supabase project and one deployment. That is
 deliberate, it is why they share a repository, and `CLAUDE.md` section 0.0
 says plainly not to "tidy" it by splitting them.
+
+### On Vercel, everything is one team
+
+All four Vercel projects live under the single **`digital-flyer`** team:
+
+| Vercel project | Serves |
+|---|---|
+| `df-growth` | Growth, KatisoBiz, Kwaai Press, The Board, The Desk, moxiemag |
+| `helplift` | HelpLift |
+| `fortislex-mvp` | FortisLex |
+| `df-whats-app` | WhatsApp |
+
+**One team-scoped API token reaches all four.** There is no per-project token
+in Vercel, so a token scoped to `digital-flyer` is the whole estate and three
+separate tokens are not needed.
+
+If a token dialog warns about `NON_SAML`, it is safe to ignore. It means the
+token cannot reach teams protected by SAML single sign-on, which is an
+Enterprise feature not in use here.
 
 ---
 
