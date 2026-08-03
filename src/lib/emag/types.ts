@@ -152,6 +152,15 @@ export type Asset = {
   heightMm?: number;
   /** Optional text set over the image, with its own colour. */
   overlay?: { text: string; color: string };
+  /**
+   * Where the picture's subject sits, as percentages of its width and
+   * height. Only matters where a picture is cropped to fill a fixed frame,
+   * which is the article banner and the edition cover: object-fit centres
+   * the crop by default, and a centred crop is what cuts the face out of a
+   * portrait shot. 50/50 when unset, which is exactly the old behaviour.
+   */
+  focalX?: number;
+  focalY?: number;
 };
 
 // ---------------------------------------------------------------------------

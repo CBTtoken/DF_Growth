@@ -96,6 +96,11 @@ export function paginate(input: PaginateInput): PaginateResult {
   // be checked once at the end rather than guessed at while filling.
   const leftover: number[] = [];
 
+  // What each page actually held, kept for the runt rule below: a page
+  // carrying one small block on its own is a fault the publisher should
+  // see, the same way overflow already is.
+  const pageContents: { count: number; usedMm: number }[] = [];
+
   const closePage = () => {
     // A picture hanging below the last line of text beside it is space the
     // page really used, so the page is as full as whichever reached lowest.
@@ -112,6 +117,7 @@ export function paginate(input: PaginateInput): PaginateResult {
       tighten: input.tighten,
     });
     leftover.push(available - used);
+    pageContents.push({ count: current.length, usedMm: used });
     current = [];
     used = 0;
     available = input.liveHeightMm;
@@ -225,6 +231,26 @@ export function paginate(input: PaginateInput): PaginateResult {
       );
     }
   });
+
+  // The runt rule. A Moxie Tip or a single paragraph forming a page on its
+  // own is not a page, it is an overspill wearing a page number, and it was
+  // slipping through because only overflow and mid-article gaps were ever
+  // reported. A quarter of the live area is the same threshold the Tighten
+  // suggestion uses to call a last page a runt.
+  //
+  // Only when the article has more than one page: a genuinely short article
+  // that fits on one small page is fine. A full-page picture never triggers
+  // it, because a page it fills is a page it earned.
+  if (pageContents.length > 1) {
+    pageContents.forEach((page, i) => {
+      if (page.count === 1 && page.usedMm < input.liveHeightMm * 0.25) {
+        const only = pages[i]?.blocks[0];
+        problems.push(
+          `Page ${i + 1} holds a single ${only ? describe(only) : "block"} on its own. Use Tighten to pull it back onto the page before it, or cut a few lines above it.`
+        );
+      }
+    });
+  }
 
   return { pages, problems };
 }

@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { describeSize, downscaleForPrint } from "@/lib/emag/downscale";
 import type { Asset } from "@/lib/emag/types";
+import { FocalPointPicker } from "@/components/emag/FocalPointPicker";
 
 // Uploading a picture and saying where it goes.
 //
@@ -125,6 +126,8 @@ export function PictureManager({ articleId, assets, onRequestUpload, onSave, onD
           widthPct: next.widthPct,
           heightMm: next.heightMm,
           overlay: next.overlay,
+          focalX: next.focalX,
+          focalY: next.focalY,
         });
       } catch (e) {
         setError(e instanceof Error ? e.message : "Could not save that change.");
@@ -350,6 +353,19 @@ export function PictureManager({ articleId, assets, onRequestUpload, onSave, onD
               </select>
             </label>
           </div>
+
+          {/* Only a cropped picture has a crop to steer: a hero fills a
+              fixed height, a cover fills the page. An inline picture keeps
+              its own shape, so the picker would do nothing there. */}
+          {asset.heightMm || asset.slot === "cover" || asset.slot === "banner" ? (
+            <FocalPointPicker
+              src={asset.src}
+              alt={asset.alt}
+              focalX={asset.focalX}
+              focalY={asset.focalY}
+              onChange={(x, y) => patch(asset, { focalX: x, focalY: y })}
+            />
+          ) : null}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "flex-end" }}>
             <label style={{ ...label, flex: "2 1 180px" }}>

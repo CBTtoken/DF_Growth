@@ -323,7 +323,12 @@
   display: block;
   width: fit-content;
   line-height: 1.15;
-  margin: var(--mx-gap-subhead-real) 0 var(--mx-gap-subhead-below) 0;
+  /* The gaps around a subhead join the copyfitting squeeze (--mx-fit),
+     second lever after leading. Kwaai Press orphan-page pass, 3 Aug 2026:
+     when three lines strand on their own page, the space around subheads
+     is the next most invisible place to reclaim them from. */
+  margin: calc(var(--mx-gap-subhead-real) * var(--mx-fit, 1)) 0
+    calc(var(--mx-gap-subhead-below) * var(--mx-fit, 1)) 0;
   padding-bottom: 0.6mm;
 }
 
@@ -342,7 +347,8 @@
 .mx-pullquote {
   display: flex;
   gap: 4mm;
-  margin: 4mm 0;
+  /* Joins --mx-fit for the same reason as the subhead margins above. */
+  margin: calc(4mm * var(--mx-fit, 1)) 0;
   align-items: stretch;
 }
 

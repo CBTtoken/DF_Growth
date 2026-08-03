@@ -91,6 +91,8 @@ type AssetRow = {
   width_pct: number | null;
   height_mm: number | null;
   overlay: { text: string; color: string } | null;
+  focal_x: number | null;
+  focal_y: number | null;
 };
 
 function toAsset(row: AssetRow): Asset {
@@ -107,5 +109,7 @@ function toAsset(row: AssetRow): Asset {
     widthPct: row.width_pct ?? undefined,
     heightMm: row.height_mm ?? undefined,
     overlay: row.overlay ?? undefined,
+    focalX: row.focal_x ?? undefined,
+    focalY: row.focal_y ?? undefined,
   };
 }

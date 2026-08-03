@@ -159,7 +159,15 @@ export function OpenerBlock({
     <div className="mx-banner mx-bleed" style={{ height: `${banner?.heightMm ?? 90}mm` }}>
       {banner ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img className="mx-banner__img" src={banner.src} alt={banner.alt} />
+        <img
+          className="mx-banner__img"
+          src={banner.src}
+          alt={banner.alt}
+          // The focal point steers the crop: a banner is the one place an
+          // article picture is cut to a fixed frame, and the default centre
+          // crop is what cuts the face out of a portrait shot.
+          style={{ objectPosition: `${banner.focalX ?? 50}% ${banner.focalY ?? 50}%` }}
+        />
       ) : null}
       <div className={overlayClass}>
         {opener.kicker ? <span className="mx-kicker">{opener.kicker}</span> : null}
@@ -271,7 +279,12 @@ function CoverPage({
     <div className="mx-page mx-cover">
       {cover ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img className="mx-cover__img" src={cover.src} alt={cover.alt} />
+        <img
+          className="mx-cover__img"
+          src={cover.src}
+          alt={cover.alt}
+          style={{ objectPosition: `${cover.focalX ?? 50}% ${cover.focalY ?? 50}%` }}
+        />
       ) : null}
       <div className="mx-cover__scrim" />
 

@@ -342,6 +342,8 @@ export async function saveAsset(
     width_pct: asset.widthPct ?? null,
     height_mm: asset.heightMm ?? null,
     overlay: asset.overlay ?? null,
+    focal_x: asset.focalX ?? null,
+    focal_y: asset.focalY ?? null,
   };
 
   if (asset.id) {
@@ -379,6 +381,17 @@ export async function updateAssetPlacement(assetId: string, changes: Record<stri
   if (typeof changes.wrap === "boolean") row.wrap = changes.wrap;
   if (typeof changes.finish === "string" && ["none","rule","shadow","framed","rounded"].includes(changes.finish)) {
     row.finish = changes.finish;
+  }
+  // The focal point, clamped so a stray value cannot push the crop off the
+  // picture entirely.
+  if (typeof changes.focalX === "number") row.focal_x = Math.min(100, Math.max(0, changes.focalX));
+  if (typeof changes.focalY === "number") row.focal_y = Math.min(100, Math.max(0, changes.focalY));
+  // The caption moved onto the figure block itself (image pass, 3 Aug 2026),
+  // so the editor patches it through here the same way it patches width.
+  // An empty string clears it. Still no path to alt or the storage path.
+  if (typeof changes.caption === "string") row.caption = changes.caption.trim() || null;
+  if (changes.captionStyle === "regular" || changes.captionStyle === "italic") {
+    row.caption_style = changes.captionStyle;
   }
 
   if (Object.keys(row).length === 0) return;

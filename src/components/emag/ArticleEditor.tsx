@@ -9,6 +9,7 @@ import { tidy } from "@/lib/emag/tidy";
 import { useOverflowCheck } from "./useOverflowCheck";
 import { describeTighten, suggestTighten } from "@/lib/emag/fit";
 import type { Asset, Block, Opener, RenderedPage } from "@/lib/emag/types";
+import { FocalPointPicker } from "@/components/emag/FocalPointPicker";
 import type { LayoutKey, PillarKey } from "@/lib/emag/publication";
 import { MarkedText } from "./MarkedText";
 import type { Imprint } from "./Page";
@@ -700,20 +701,32 @@ export function ArticleEditor(props: Props) {
                   no height had nothing to show, which read as the band being
                   removed and nothing arriving. */}
               {heroAsset ? (
-                <label style={label}>
-                  How tall, {heroAsset.heightMm ?? 90}mm of the 297mm page
-                  <input
-                    type="range"
-                    min={30}
-                    max={200}
-                    step={1}
-                    value={heroAsset.heightMm ?? 90}
-                    onChange={(e) =>
-                      patchAsset(heroAsset.id, { heightMm: Number(e.target.value) })
-                    }
-                    style={{ display: "block", width: "100%", marginTop: 6 }}
+                <>
+                  <label style={label}>
+                    How tall, {heroAsset.heightMm ?? 90}mm of the 297mm page
+                    <input
+                      type="range"
+                      min={30}
+                      max={200}
+                      step={1}
+                      value={heroAsset.heightMm ?? 90}
+                      onChange={(e) =>
+                        patchAsset(heroAsset.id, { heightMm: Number(e.target.value) })
+                      }
+                      style={{ display: "block", width: "100%", marginTop: 6 }}
+                    />
+                  </label>
+                  {/* The hero is the one picture in an article that is
+                      cropped to fill a frame, so it is the one that needs
+                      to know where its subject is. */}
+                  <FocalPointPicker
+                    src={heroAsset.src}
+                    alt={heroAsset.alt}
+                    focalX={heroAsset.focalX}
+                    focalY={heroAsset.focalY}
+                    onChange={(x, y) => patchAsset(heroAsset.id, { focalX: x, focalY: y })}
                   />
-                </label>
+                </>
               ) : null}
 
               <label style={label}>
@@ -1269,36 +1282,89 @@ function BlockFields({
       const asset = assets.find((a) => a.id === block.assetId);
       const width = asset?.widthPct ?? 100;
 
+      // Named placements, because "38 or 42 percent" is a designer's
+      // question and the publisher's question is "big or beside the text".
+      // Image pass, 3 August 2026: one tap sets the side, the wrap and the
+      // width together; the slider below stays for the last few percent.
+      const placements: { name: string; side: Asset["side"]; wrap: boolean; widthPct: number }[] = [
+        { name: "Full width", side: "full", wrap: false, widthPct: 100 },
+        { name: "Wide, centred", side: "full", wrap: false, widthPct: 70 },
+        { name: "Beside the text, left", side: "left", wrap: true, widthPct: 42 },
+        { name: "Beside the text, right", side: "right", wrap: true, widthPct: 42 },
+      ];
+      const activePlacement = asset
+        ? placements.find(
+            (p) => p.side === asset.side && p.wrap === asset.wrap && Math.abs(p.widthPct - width) <= 5
+          )
+        : undefined;
+
       return (
         <>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <label style={{ ...label, flex: "2 1 180px" }}>
-              Picture
-              <select
-                value={block.assetId}
-                onChange={(e) => onChange({ ...block, assetId: e.target.value })}
-                style={input}
-              >
-                <option value="">Choose one</option>
-                {assets.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.alt || a.caption || "Untitled image"}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {asset ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={asset.src}
-                alt=""
-                style={{ width: 56, height: 42, objectFit: "cover", marginTop: 20 }}
-              />
-            ) : null}
-          </div>
+          {/* The pictures themselves, not a dropdown of their filenames.
+              Choosing a photograph by its alt text was the "ID dropdown"
+              complaint, and fairly: nobody recognises a picture by its
+              description of itself. */}
+          <span style={{ ...label, display: "block" }}>Picture</span>
+          {assets.length === 0 ? (
+            <p style={{ fontSize: 12.5, color: "#7a5312", background: "#fdf5e6", padding: "8px 11px", margin: "4px 0 8px", lineHeight: 1.5 }}>
+              Nothing uploaded yet. Use <strong>Add images</strong> under Pictures at the top,
+              then pick it here.
+            </p>
+          ) : (
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "4px 0 10px" }}>
+              {assets.map((a) => {
+                const chosen = a.id === block.assetId;
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    title={a.alt || a.caption || "Untitled image"}
+                    onClick={() => onChange({ ...block, assetId: a.id })}
+                    style={{
+                      padding: 0,
+                      border: chosen ? "2.5px solid #e8590c" : "1px solid #d8d4cd",
+                      background: "none",
+                      cursor: "pointer",
+                      lineHeight: 0,
+                      opacity: chosen ? 1 : 0.85,
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={a.src} alt={a.alt} style={{ width: 76, height: 57, objectFit: "cover", display: "block" }} />
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {asset ? (
             <>
+              <span style={{ ...label, display: "block" }}>How it sits on the page</span>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "4px 0 10px" }}>
+                {placements.map((p) => {
+                  const active = p === activePlacement;
+                  return (
+                    <button
+                      key={p.name}
+                      type="button"
+                      onClick={() =>
+                        onAssetPatch(asset.id, { side: p.side, wrap: p.wrap, widthPct: p.widthPct })
+                      }
+                      style={{
+                        ...tinyButton,
+                        margin: 0,
+                        padding: "7px 11px",
+                        border: active ? "1.5px solid #e8590c" : "1px solid #d8d4cd",
+                        color: active ? "#a33a05" : "#3d3a36",
+                        fontWeight: active ? 700 : 500,
+                      }}
+                    >
+                      {p.name}
+                    </button>
+                  );
+                })}
+              </div>
+
               {/* The size control, on the picture rather than three panels
                   away from it. Continuous rather than a list of steps: the
                   right width for a photograph is the one that looks right
@@ -1317,34 +1383,33 @@ function BlockFields({
                 />
               </label>
 
+              {/* The caption, on the figure it belongs to. It used to live
+                  only under Pictures at the top, a separate screen from the
+                  article it appears in, which was most of what made images
+                  "a bit tricky". */}
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <label style={{ ...label, flex: "1 1 130px" }}>
-                  Sits
+                <label style={{ ...label, flex: "3 1 200px" }}>
+                  Caption
+                  <input
+                    defaultValue={asset.caption ?? ""}
+                    onBlur={(e) => onAssetPatch(asset.id, { caption: e.target.value })}
+                    placeholder="The line under the picture, giving it context"
+                    style={input}
+                  />
+                </label>
+                <label style={{ ...label, flex: "1 1 110px" }}>
+                  Set in
                   <select
-                    value={asset.side}
+                    value={asset.captionStyle ?? "regular"}
                     onChange={(e) =>
-                      onAssetPatch(asset.id, { side: e.target.value as Asset["side"] })
+                      onAssetPatch(asset.id, { captionStyle: e.target.value as Asset["captionStyle"] })
                     }
                     style={input}
                   >
-                    <option value="full">Across the column</option>
-                    <option value="left">On the left</option>
-                    <option value="right">On the right</option>
+                    <option value="italic">Italic</option>
+                    <option value="regular">Regular</option>
                   </select>
                 </label>
-
-                <label style={{ ...label, flex: "1 1 130px" }}>
-                  Text wraps around it
-                  <select
-                    value={asset.wrap ? "yes" : "no"}
-                    onChange={(e) => onAssetPatch(asset.id, { wrap: e.target.value === "yes" })}
-                    style={input}
-                  >
-                    <option value="no">No</option>
-                    <option value="yes">Yes</option>
-                  </select>
-                </label>
-
                 <label style={{ ...label, flex: "1 1 130px" }}>
                   Edge
                   <select
@@ -1362,10 +1427,6 @@ function BlockFields({
                   </select>
                 </label>
               </div>
-
-              <p style={{ fontSize: 12.5, color: "#6b6864", margin: "2px 0 0" }}>
-                The caption and any text over the picture are set under Pictures at the top.
-              </p>
             </>
           ) : null}
         </>
