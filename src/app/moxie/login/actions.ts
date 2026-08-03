@@ -133,6 +133,46 @@ export async function signUp(formData: FormData) {
   redirect(await moxiePath(next));
 }
 
+/**
+ * A signed-in person changes their own password.
+ *
+ * Dewald, 3 August: "admin users can't change their passwords". True of
+ * every reader, actually, since team accounts arrive with a password
+ * somebody else typed. Lives on the account page for exactly that reason.
+ *
+ * The current password is asked for and verified first. A session alone
+ * would technically satisfy Supabase, but a laptop left open should not be
+ * enough to quietly take over an account.
+ */
+export async function changePassword(formData: FormData) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) redirect(await moxiePath("/login?next=/account"));
+
+  const current = String(formData.get("current") ?? "");
+  const fresh = String(formData.get("fresh") ?? "");
+  const again = String(formData.get("again") ?? "");
+
+  if (fresh.length < 8) redirect(await moxiePath("/account?password=weak"));
+  if (fresh !== again) redirect(await moxiePath("/account?password=mismatch"));
+
+  const { error: wrongCurrent } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: current,
+  });
+  if (wrongCurrent) redirect(await moxiePath("/account?password=wrong"));
+
+  const { error } = await supabase.auth.updateUser({ password: fresh });
+  if (error) {
+    console.error("Password change failed", error);
+    redirect(await moxiePath("/account?password=failed"));
+  }
+
+  redirect(await moxiePath("/account?password=changed"));
+}
+
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
