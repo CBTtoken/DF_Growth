@@ -14,7 +14,7 @@ import {
 // entirely optional, distinct from ServicesList (a flat list of what they
 // do) since packages carry a price and a name a visitor can pick between.
 // Renders nothing if the client never filled this in.
-type PackageType = "package" | "special" | "discount";
+type PackageType = "package" | "special" | "discount" | "event";
 type Package = { name: string; price: string; description: string; type?: PackageType };
 
 // Combined spec Sec 5: the section header reflects what the client actually
@@ -28,6 +28,12 @@ function sectionTitle(packages: Package[]): string {
   const [only] = types;
   if (only === "special") return "Specials";
   if (only === "discount") return "Discounts";
+  // Added for the first done-for-you build, and general rather than
+  // specific to it: a member who runs events had nowhere to list them
+  // except a section headed "Packages", which is not what a wine tasting
+  // is. The "price" column carries the date for these, which is why the
+  // editor relabels that field when Event is picked.
+  if (only === "event") return "Upcoming events";
   return "Packages";
 }
 

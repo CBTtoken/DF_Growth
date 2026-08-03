@@ -14,7 +14,7 @@ import { Step7MetaConnect } from "./steps/Step7MetaConnect";
 import { StepPayment } from "./steps/StepPayment";
 import type { Tier, BillingInterval } from "@/lib/paystack/plans";
 
-type PackageInitial = { name: string; price: string; description: string; type?: "package" | "special" | "discount" };
+type PackageInitial = { name: string; price: string; description: string; type?: "package" | "special" | "discount" | "event" };
 type PhotoInitial = { id: string; storage_path: string };
 
 export function OnboardWizard({

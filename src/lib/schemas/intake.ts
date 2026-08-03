@@ -105,7 +105,7 @@ export const step5Schema = z.object({
 // existed) reads correctly with no migration needed — packages live in a
 // jsonb column, not a typed table column, so a genuinely new field like
 // this just starts appearing in new writes.
-export const packageTypeSchema = z.enum(["package", "special", "discount"]);
+export const packageTypeSchema = z.enum(["package", "special", "discount", "event"]);
 
 export const step6Schema = z.object({
   package1Type: packageTypeSchema.optional(),

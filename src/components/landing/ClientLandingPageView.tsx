@@ -126,7 +126,7 @@ export async function ClientLandingPageView({
   const accentColor = ensureContrast(primaryColor, "#ffffff");
 
   const packages =
-    (client.packages as { name: string; price: string; description: string; type?: "package" | "special" | "discount" }[] | null) ?? [];
+    (client.packages as { name: string; price: string; description: string; type?: "package" | "special" | "discount" | "event" }[] | null) ?? [];
 
   const logoUrl = client.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`

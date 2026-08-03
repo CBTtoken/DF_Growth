@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { saveStep6, type OnboardState } from "@/app/onboard/actions";
 
-type PackageType = "package" | "special" | "discount";
+type PackageType = "package" | "special" | "discount" | "event";
 type PackageInitial = { name: string; price: string; description: string; type?: PackageType };
 type FieldErrors = (Record<string, string[]> & { _form?: string[] }) | undefined;
 
@@ -14,6 +14,7 @@ const TYPE_OPTIONS: { value: PackageType; label: string }[] = [
   { value: "package", label: "Package" },
   { value: "special", label: "Special" },
   { value: "discount", label: "Discount" },
+  { value: "event", label: "Event" },
 ];
 
 // Combined spec Sec 5: not every business has a fixed price list. Segmented
@@ -30,7 +31,12 @@ function PackageFields({
   errors: FieldErrors;
 }) {
   const [type, setType] = useState<PackageType>(initial.type ?? "package");
-  const priceLabel = type === "discount" ? "Discount, e.g. 15% off" : "Price, e.g. R350/month or From R200";
+  const priceLabel =
+    type === "discount"
+      ? "Discount, e.g. 15% off"
+      : type === "event"
+        ? "When, e.g. 15 August or Every first Tuesday"
+        : "Price, e.g. R350/month or From R200";
 
   return (
     <fieldset className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-gray-50 p-4">
