@@ -170,12 +170,6 @@ const nextConfig: NextConfig = {
       // rather than 404s. Done here rather than as a page component so it
       // is a real 308 at the edge with no render involved.
       { source: "/agents/apply", destination: "/agents", permanent: true },
-      // RE:Biz Nomads became KatisoBiz Nomads on 29 July 2026 and the name
-      // is being removed entirely while the number of links pointing at it
-      // is still tiny. /rebiz was live and in the sitemap, so it redirects
-      // rather than 404s: anything already shared, indexed or sitting in
-      // somebody's WhatsApp history still arrives.
-      { source: "/rebiz", destination: "/katisobiz-nomads", permanent: true },
 
       // The WordPress site moxiemag.co.za replaces. These URLs are indexed
       // and have been shared, so they redirect rather than 404 when the DNS

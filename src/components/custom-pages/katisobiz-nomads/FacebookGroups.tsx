@@ -1,7 +1,23 @@
-const DEAL_ROOM_URL = "https://www.facebook.com/groups/rebiznomadsdealroom";
-const PUBLIC_GROUP_URL = "https://www.facebook.com/REBizNomads";
+// The Facebook links, empty until the new ones are supplied.
+//
+// These held the previous group URLs, from before the rename. Dewald, 3
+// August 2026: the groups were renamed and the old links cleared, "we can
+// refresh or add again if required".
+//
+// Emptied rather than deleted along with the section around them, because
+// the groups still exist. Filling these two lines in brings the section
+// straight back, which is a smaller job than rebuilding it later from
+// nothing.
+//
+// While both are empty the whole section renders nothing, which is the point:
+// a heading reading "Find Us on Facebook" above two cards that link nowhere
+// is worse on a live page than no section at all.
+const DEAL_ROOM_URL = "";
+const PUBLIC_GROUP_URL = "";
 
 export function FacebookGroups() {
+  if (!DEAL_ROOM_URL && !PUBLIC_GROUP_URL) return null;
+
   return (
     <section className="bg-brand px-6 py-20">
       <div className="mx-auto flex max-w-3xl flex-col gap-3 text-center">
@@ -14,6 +30,7 @@ export function FacebookGroups() {
       </div>
 
       <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-2">
+        {DEAL_ROOM_URL && (
         <a
           href={DEAL_ROOM_URL}
           target="_blank"
@@ -29,7 +46,9 @@ export function FacebookGroups() {
             Request to join →
           </span>
         </a>
+        )}
 
+        {PUBLIC_GROUP_URL && (
         <a
           href={PUBLIC_GROUP_URL}
           target="_blank"
@@ -45,6 +64,7 @@ export function FacebookGroups() {
             Join the group →
           </span>
         </a>
+        )}
       </div>
     </section>
   );

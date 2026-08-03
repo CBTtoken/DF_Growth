@@ -25,7 +25,11 @@
 // email/phone for cross-product matching is whatever Growth already
 // captured at onboarding (contact_email, call_phone, whatsapp_phone) —
 // nothing new to collect here, since this is just a link, not a form.
-const NOMADS_GROUP_URL = "https://www.facebook.com/groups/rebiznomadsdealroom";
+// Empty until the renamed group's new URL is supplied. Dewald, 3 August
+// 2026: the Facebook groups were renamed and the previous links are to be
+// cleared. The card below hides itself while this is blank rather than
+// offering a member a link that goes nowhere.
+const NOMADS_GROUP_URL = "";
 
 export function EcosystemAccess({
   marketplaceUrl,
@@ -81,14 +85,23 @@ export function EcosystemAccess({
           South African business owners for deals, support, and real conversations with people
           building the same thing you are.
         </p>
-        <a
-          href={NOMADS_GROUP_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
-        >
-          Join the group
-        </a>
+        {NOMADS_GROUP_URL ? (
+          <a
+            href={NOMADS_GROUP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex w-fit items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
+          >
+            Join the group
+          </a>
+        ) : (
+          // The group is real and members are entitled to it, so the card
+          // stays and says how to get in. A dead "Join the group" button
+          // would be worse than an honest sentence.
+          <p className="mt-2 text-sm text-gray-500">
+            Message us and we will send you the invite.
+          </p>
+        )}
       </div>
     </div>
   );
