@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { svcPath } from "@/lib/svc/host";
 import { getSvcAdmin } from "@/lib/svc/admin";
@@ -12,9 +13,20 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Sprint 2's minimal admin: the coupon import, the issue run, and the
-// member ledger lookup. The real admin (partners, package builder,
-// payouts, fraud view) is Sprint 3.
+// The admin hub: quick nav across every Sprint 3 section, plus the
+// original Sprint 2 tools (member lookup, coupon file, issue run) below.
+async function AdminNavLink({ path, label }: { path: string; label: string }) {
+  const { svcPath: toPath } = await import("@/lib/svc/host");
+  const href = await toPath(path);
+  return (
+    <Link
+      href={href}
+      className="inline-flex min-h-12 items-center justify-center border-2 border-svc-green bg-white/60 px-3 text-sm font-semibold text-svc-green hover:bg-svc-green hover:text-white"
+    >
+      {label}
+    </Link>
+  );
+}
 export default async function SvcAdminPage({
   searchParams,
 }: {
@@ -36,6 +48,19 @@ export default async function SvcAdminPage({
       <div className="mx-auto w-full max-w-2xl">
         <h1 className="font-svc-heading text-3xl font-bold">SVC admin</h1>
         <p className="mt-1 text-sm text-svc-ink/60">Signed in as {admin.email}</p>
+
+        <nav className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {[
+            ["/admin/members", "Members"],
+            ["/admin/partners", "Partners"],
+            ["/admin/packages", "Packages"],
+            ["/admin/payouts", "Payouts"],
+            ["/admin/referrals", "Referrals and fraud"],
+            ["/admin/demand", "Demand"],
+          ].map(([path, label]) => (
+            <AdminNavLink key={path} path={path} label={label} />
+          ))}
+        </nav>
 
         {(params.issued || params.uploaded || params.error) && (
           <p className="mt-4 border-2 border-svc-blue bg-white/60 p-4 text-sm leading-relaxed">

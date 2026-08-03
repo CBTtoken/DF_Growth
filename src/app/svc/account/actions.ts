@@ -66,6 +66,33 @@ export async function confirmBenefitUsed(formData: FormData) {
 }
 
 /**
+ * Demand capture (handoff 7.4): "which shop or product should we get
+ * coupons for next?" One insert, no fanfare; the aggregated view lives in
+ * admin.
+ */
+export async function submitDemandSignal(formData: FormData) {
+  const member = await requireMember();
+  const category = String(formData.get("category") ?? "").trim().slice(0, 50);
+  const message = String(formData.get("message") ?? "").trim().slice(0, 500);
+
+  if (!category || !message) {
+    redirect(`${await svcPath("/account")}?ask=missing`);
+  }
+
+  const db = createSvcClient();
+  const { error } = await db.from("demand_signal").insert({
+    member_id: member.id,
+    category,
+    message,
+  });
+  if (error) {
+    console.error("SVC demand signal insert failed", error);
+    redirect(`${await svcPath("/account")}?ask=failed`);
+  }
+  redirect(`${await svcPath("/account")}?ask=thanks`);
+}
+
+/**
  * Cancellation from the dashboard with the reason captured (handoff
  * Sprint 2). Benefits stay live to the end of the paid period: the status
  * flips to cancelled but current_period_end stands, and both the issue

@@ -10,8 +10,9 @@ import { formatRand } from "@/lib/svc/data";
 import { listMemberIssues, savingsTotalCents, periodFor } from "@/lib/svc/ledger";
 import { getOrCreateReferralCode, memberReferralStats } from "@/lib/svc/referrals";
 import { signOutSvc } from "../login/actions";
+import { submitDemandSignal } from "./actions";
 import { BenefitCard } from "@/components/svc/BenefitCard";
-import { svcBtnOutline } from "@/components/svc/ui";
+import { svcBtnOutline, svcInput, svcLabel } from "@/components/svc/ui";
 
 export const metadata: Metadata = {
   title: "My dashboard",
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cancelled?: string }>;
+  searchParams: Promise<{ cancelled?: string; ask?: string }>;
 }) {
   const params = await searchParams;
   const member = await getCurrentMember();
@@ -260,6 +261,49 @@ export default async function AccountPage({
             <p className="mt-2 text-sm text-svc-ink/75">
               Your share link appears here once your account is fully set up.
             </p>
+          )}
+        </section>
+
+        {/* Demand capture: the one question that steers the next deal. */}
+        <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
+          <h2 className="font-svc-heading text-lg font-bold">
+            Which shop or product should we get coupons for next?
+          </h2>
+          {params.ask === "thanks" ? (
+            <p className="mt-2 text-sm leading-relaxed text-svc-green">
+              Thank you. Every answer steers which deal we chase next.
+            </p>
+          ) : (
+            <>
+              {params.ask === "missing" && (
+                <p className="mt-2 text-sm text-svc-ink/70">Pick a category and tell us the shop or product.</p>
+              )}
+              <form action={submitDemandSignal} className="mt-3 space-y-3">
+                <div>
+                  <label htmlFor="ask-category" className={svcLabel}>Category</label>
+                  <select id="ask-category" name="category" required className={`mt-2 ${svcInput}`}>
+                    <option value="">Choose one</option>
+                    <option value="groceries">Groceries</option>
+                    <option value="pharmacy">Pharmacy and health</option>
+                    <option value="fuel">Fuel</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="restaurants">Restaurants and takeaways</option>
+                    <option value="airtime_data">Airtime and data</option>
+                    <option value="other">Something else</option>
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="ask-message" className={svcLabel}>The shop or product</label>
+                  <input id="ask-message" name="message" type="text" required className={`mt-2 ${svcInput}`} />
+                </div>
+                <button
+                  type="submit"
+                  className="inline-flex min-h-12 items-center justify-center border-2 border-svc-green px-5 text-sm font-semibold text-svc-green hover:bg-svc-green hover:text-white"
+                >
+                  Send it in
+                </button>
+              </form>
+            </>
           )}
         </section>
 
