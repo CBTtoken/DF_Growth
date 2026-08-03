@@ -127,7 +127,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "What is Shop?",
         answer:
-          "A product catalog and cart built into your page, available on Growth and above. Visitors browse, add to cart, and place an order directly, with real stock tracking behind it.",
+          "A proper shop, on Growth and above. Your own storefront at your own address, and every product gets its own page with its own pictures, description and price. That page is what Google indexes and what looks right when you send it in a WhatsApp message. Buyers order without making an account.",
       },
       {
         question: "Can two people book the same slot by accident?",
@@ -137,22 +137,47 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "Can I oversell a product if two people buy at once?",
         answer:
-          "No. Stock is decremented atomically at checkout, so two simultaneous orders for your last item can never both succeed.",
+          "Not if you are counting stock. Switch stock counting on for a product and two simultaneous orders for your last one can never both succeed. Most members leave it off, because if you make to order or restock as you go, a number nobody updates only ever turns away a sale.",
       },
       {
         question: "How do I get paid for a booking or order?",
         answer:
-          "Right now, a booking or order confirms immediately and you arrange payment directly with the customer. In-page payment collection is coming soon.",
+          "Two ways, and you choose. Connect your own Paystack account and buyers pay by card at checkout, with the money going straight to you. We never sit in the middle of it. If you have not got a gateway, the order still goes through: it is recorded, we email you the buyer's details, and you arrange payment with them directly. Plenty of members run exactly like that.",
       },
       {
         question: "How do I add products to my Shop?",
         answer:
-          "Add them one at a time from your dashboard, or upload many at once with a CSV file, with clear per-row errors if anything doesn't import.",
+          "Add them one at a time from your dashboard, or upload many at once with a CSV file, with clear per-row errors if anything doesn't import. A product needs a name and a price to start. Pictures, sizes and colours can follow after.",
+      },
+      {
+        question: "Do my buyers need an account to order?",
+        answer:
+          "No. A buyer gives their name, a contact number, and an address if they want it delivered, and that's it. No sign-up, no password. Every order gets its own tracking page, and if they gave an email we send them the link.",
+      },
+      {
+        question: "Can I list something before I know the price?",
+        answer:
+          "Yes. Leave the price out and the product still gets its page and still shows up in your shop, marked \"Price on request\" with the buy button replaced by a note to contact you. It becomes orderable the moment you set a real price. Useful when you're waiting on a supplier.",
+      },
+      {
+        question: "Can I sell sizes, colours or other options?",
+        answer:
+          "Yes. Add options to a product and each one can have its own price and its own stock. A buyer picks before adding it to their basket.",
+      },
+      {
+        question: "How do buyers check where their order is?",
+        answer:
+          "Every order has its own page showing whether it's paid and whether it's been sent. The link is on the confirmation and in the buyer's email, and there's a \"track an order\" page on your shop that emails the links back to whoever placed them.",
+      },
+      {
+        question: "Can I put my events on my page?",
+        answer:
+          "Yes. Add them the same way you'd add a package, choose Event as the type, and put the date where the price would go. Your page shows them as a proper diary rather than a price list. Keep them current, an old date reads worse than none.",
       },
       {
         question: "Do you handle courier shipping for Shop orders?",
         answer:
-          "Not yet, live courier rates and booking are coming soon. For now, you arrange delivery or collection directly with each customer.",
+          "You can. Connect your own Bob Go account from your dashboard and buyers see live courier prices for their own address at checkout. Shipments are booked on your account, in your name, so the parcel stays yours. If you would rather keep it simple, set one flat delivery charge, offer collection only, or quote delivery per order.",
       },
     ],
   },

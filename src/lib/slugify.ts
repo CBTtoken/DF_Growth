@@ -61,6 +61,7 @@ export const RESERVED_SLUGS = new Set([
   "events",
   "faq",
   "how-it-works",
+  "guide",
   "agents",
   "agent-link",
   "unsubscribe",

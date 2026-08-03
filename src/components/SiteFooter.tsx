@@ -47,6 +47,13 @@ export function SiteFooter({
         <Link href="/shop" className="underline-offset-2 hover:text-gray-600 hover:underline">
           Shop
         </Link>
+        <span aria-hidden> · </span>
+        {/* Members land here from their own page footer looking for how to
+            change something, so it sits with the public links rather than
+            behind a login. */}
+        <Link href="/guide" className="underline-offset-2 hover:text-gray-600 hover:underline">
+          Member Guide
+        </Link>
         {showAgentRecruitment && (
           <>
             <span aria-hidden> · </span>
