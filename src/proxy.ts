@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isMoxieHost, MOXIE_PREFIX } from "@/lib/moxie/host";
+import { isSvcHost, isSvcPrivatePath, SVC_PREFIX } from "@/lib/svc/host";
 
 // Agent Referral Programme, real agent feedback follow-up: personalized
 // referral links live on their own subdomain (agent.digitalflyersa.co.za/
@@ -179,6 +180,77 @@ export function proxy(request: NextRequest) {
       moxieUrl.pathname = pathname === "/" ? MOXIE_PREFIX : `${MOXIE_PREFIX}${pathname}`;
     }
     return NextResponse.rewrite(moxieUrl);
+  }
+
+  // Smart Value Club, the fourth product on this application.
+  // smartvalueclub.co.za is an additional domain on the same Vercel
+  // project, rewritten to /svc the same way moxiemag.co.za is rewritten to
+  // /moxie.
+  //
+  // Public pages carry no X-Robots-Tag on this hostname, and that is the
+  // point: the WordPress site this replaces returns noindex, follow on
+  // every page and is invisible to Google, which the handoff (section 3.3)
+  // names as a defect to fix, not a behaviour to preserve. The member area
+  // is the exception and answers noindex on every hostname.
+  if (isSvcHost(host)) {
+    const { pathname } = request.nextUrl;
+
+    // API routes are never rewritten under any hostname. SVC's own Paystack
+    // webhook posts to an absolute /api path and a rewrite here would
+    // silently break every subscription payment.
+    if (pathname.startsWith("/api/")) return NextResponse.next();
+
+    // Any file with an extension is served as-is from public/. A dot in
+    // the last segment is the tell: page routes never have one.
+    if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
+      return NextResponse.next();
+    }
+
+    // robots.txt and sitemap.xml are host-aware and answer for themselves.
+    if (SHARED_CRAWLER_PATHS.has(pathname)) return NextResponse.next();
+
+    // The company-wide legal pages are NOT shared here, unlike KatisoBiz
+    // and Moxie: those products are Digital Flyer's own, and SVC is a
+    // separate company whose terms and privacy text come from its own
+    // legal team. SVC serves its own /terms and /privacy pages inside the
+    // prefix below.
+
+    // smartvalueclub.co.za/          -> /svc
+    // smartvalueclub.co.za/packages  -> /svc/packages
+    //
+    // Already-prefixed paths pass through unchanged rather than becoming
+    // /svc/svc, so a redirect() inside the app that uses an absolute
+    // /svc/... path still lands in the right place on this hostname.
+    const svcUrl = request.nextUrl.clone();
+    const withinSvc =
+      pathname === SVC_PREFIX || pathname.startsWith(`${SVC_PREFIX}/`)
+        ? pathname.slice(SVC_PREFIX.length) || "/"
+        : pathname;
+    if (!(pathname === SVC_PREFIX || pathname.startsWith(`${SVC_PREFIX}/`))) {
+      svcUrl.pathname = pathname === "/" ? SVC_PREFIX : `${SVC_PREFIX}${pathname}`;
+    }
+
+    const response = NextResponse.rewrite(svcUrl);
+    // Member and admin routes stay noindex even on the real domain
+    // (handoff 3.3). Everything else is deliberately left indexable.
+    if (isSvcPrivatePath(withinSvc)) {
+      response.headers.set("X-Robots-Tag", NOINDEX);
+    }
+    return response;
+  }
+
+  // The same SVC pages reached on any other hostname: the Growth domain
+  // while the DNS is still being set up, and every Vercel preview URL.
+  // Noindex for the same reason the Moxie branch below does it: every
+  // other hostname is serving a duplicate, and only smartvalueclub.co.za
+  // should ever be indexed. People and payments are untouched.
+  if (
+    request.nextUrl.pathname === SVC_PREFIX ||
+    request.nextUrl.pathname.startsWith(`${SVC_PREFIX}/`)
+  ) {
+    const response = NextResponse.next();
+    response.headers.set("X-Robots-Tag", NOINDEX);
+    return response;
   }
 
   // The same Moxie pages reached on any other hostname: the Growth domain

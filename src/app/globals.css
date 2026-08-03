@@ -34,6 +34,21 @@
   --moxie-border: #e0d8d0;
   --moxie-mint: #a8d0d0;
   --moxie-caption: #888888;
+
+  /* Smart Value Club. A separate company on its own domain, served from
+     this app the same way Moxie is, with the same rule stated the other
+     way around: SVC's palette and Moxie's never share a view. Values are
+     from the SVC Platform Rebuild Handoff section 4 (the Brand Identity
+     Guide's colour table). #1A6B3C is the correct green; the #1D9E75 in
+     the Monthly Saver product document is wrong and ignored on purpose.
+     Amber is an accent only, never a background; near-black is body text;
+     cream is the light background because plain white page backgrounds are
+     banned; white exists for text on dark only. No red anywhere. */
+  --svc-green: #1a6b3c;
+  --svc-blue: #1b4f8a;
+  --svc-amber: #f5a623;
+  --svc-ink: #1a1a1a;
+  --svc-cream: #f4f1ec;
 }
 
 @theme inline {
@@ -62,6 +77,17 @@
   --font-moxie-display: var(--font-playfair-display);
   --font-moxie-body: var(--font-source-serif);
   --font-moxie-label: var(--font-barlow-condensed-moxie);
+
+  /* Smart Value Club. Montserrat and Poppins are declared in
+     src/app/svc/layout.tsx rather than the root layout, so no Growth or
+     Moxie page downloads a font only SVC renders. */
+  --color-svc-green: var(--svc-green);
+  --color-svc-blue: var(--svc-blue);
+  --color-svc-amber: var(--svc-amber);
+  --color-svc-ink: var(--svc-ink);
+  --color-svc-cream: var(--svc-cream);
+  --font-svc-heading: var(--font-montserrat);
+  --font-svc-body: var(--font-poppins);
 }
 
 body {

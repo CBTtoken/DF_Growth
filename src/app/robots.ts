@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { isKatisoBizHost } from "@/lib/bizup/product";
 import { isMoxieHost } from "@/lib/moxie/host";
+import { isSvcHost } from "@/lib/svc/host";
 
 // Next.js special file — serves this at /robots.txt automatically.
 //
@@ -42,6 +43,19 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   // are worth looking at, which is the same reasoning the note above records
   // for /admin and /dashboard.
   if (isMoxieHost(host)) {
+    return {
+      rules: { userAgent: "*", allow: "/" },
+      sitemap: `https://${bare}/sitemap.xml`,
+    };
+  }
+
+  // Smart Value Club. The WordPress site this replaces is noindex on every
+  // page, which the SVC handoff (section 3.3) names as the defect to fix:
+  // every public page must return normal robots directives. Nothing is
+  // disallowed here; the member area is kept out of an index by per-route
+  // X-Robots-Tag headers in the proxy, which is the mechanism that actually
+  // works, and listing those paths here would only advertise them.
+  if (isSvcHost(host)) {
     return {
       rules: { userAgent: "*", allow: "/" },
       sitemap: `https://${bare}/sitemap.xml`,

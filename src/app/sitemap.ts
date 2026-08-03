@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isKatisoBizHost } from "@/lib/bizup/product";
 import { isMoxieHost } from "@/lib/moxie/host";
+import { isSvcHost } from "@/lib/svc/host";
 import { listAreas, listPostSlugsForSitemap } from "@/lib/board/queries";
 import { BOARD_CATEGORIES } from "@/lib/board/categories";
 import { isBoardPublic } from "@/lib/board/visibility";
@@ -81,6 +82,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${moxieUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
       { url: `${moxieUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
       { url: `${moxieUrl}/paia`, changeFrequency: "yearly", priority: 0.2 },
+    ];
+  }
+
+  // Smart Value Club's own domain gets its own page list, same reasoning
+  // as the two branches above. The member area is deliberately absent: it
+  // is auth-gated and noindex, and a sitemap entry is an invitation to
+  // crawl something a crawler cannot read.
+  if (isSvcHost(host)) {
+    const svcUrl = `https://${bare}`;
+    return [
+      { url: svcUrl, changeFrequency: "weekly", priority: 1 },
+      { url: `${svcUrl}/how-it-works`, changeFrequency: "monthly", priority: 0.9 },
+      { url: `${svcUrl}/packages`, changeFrequency: "weekly", priority: 0.9 },
+      { url: `${svcUrl}/about`, changeFrequency: "monthly", priority: 0.6 },
+      { url: `${svcUrl}/faq`, changeFrequency: "monthly", priority: 0.7 },
+      { url: `${svcUrl}/contact`, changeFrequency: "monthly", priority: 0.5 },
+      { url: `${svcUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${svcUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${svcUrl}/popia-notice`, changeFrequency: "yearly", priority: 0.3 },
     ];
   }
 
