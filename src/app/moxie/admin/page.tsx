@@ -7,7 +7,7 @@ import {
   listMembers,
   listTeam,
   membershipSummary,
-  requirePublisher,
+  requireTeamAccess,
 } from "@/lib/moxie/admin";
 import { moxiePath } from "@/lib/moxie/host";
 import { addTeamMember, createCodeBatch, removeTeamMember } from "./actions";
@@ -46,8 +46,12 @@ export default async function MoxieAdminPage({
   }>;
 }) {
   const { created, error, filter: rawFilter, team_added, team_removed, team_error } = await searchParams;
-  const publisher = await requirePublisher();
-  if (!publisher) redirect(await moxiePath("/login?next=/admin"));
+  const access = await requireTeamAccess();
+  if (!access) redirect(await moxiePath("/login?next=/admin"));
+  // A writer sees the numbers, the members and the editions. The levers
+  // (codes, team changes) render for publishers only, and the actions
+  // behind them check again server-side either way.
+  const canOperate = access.role === "publisher";
 
   const [editions, members, memberList, team, csvBase, adminBase] = await Promise.all([
     listEditionsForAdmin(),
@@ -217,6 +221,7 @@ export default async function MoxieAdminPage({
                   </div>
                 </div>
 
+                {canOperate && (
                 <form
                   action={createCodeBatch}
                   className="mt-5 flex flex-wrap items-end gap-3 border-t border-moxie-border pt-5"
@@ -261,6 +266,7 @@ export default async function MoxieAdminPage({
                     </Link>
                   )}
                 </form>
+                )}
               </div>
             ))}
           </div>
@@ -274,6 +280,15 @@ export default async function MoxieAdminPage({
             captured, so this limits the damage rather than preventing sharing.
           </p>
 
+          {!canOperate && (
+            <p className="mt-8 max-w-2xl text-sm leading-relaxed text-moxie-charcoal/60">
+              You are seeing the writer&apos;s view: everything above is yours to read, and the
+              publisher tools (access codes, team changes, publishing) stay with the publisher.
+            </p>
+          )}
+
+          {canOperate && (
+          <>
           {/* The team. One row is both doors: a publisher gets this
               dashboard and the whole Kwaai Press builder, a writer gets the
               builder's writing side only. */}
@@ -400,6 +415,8 @@ export default async function MoxieAdminPage({
               Add to the team
             </button>
           </form>
+          </>
+          )}
         </div>
       </section>
 

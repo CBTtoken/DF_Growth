@@ -42,6 +42,41 @@ export async function isPublisher(): Promise<boolean> {
   return (await requirePublisher()) !== null;
 }
 
+/**
+ * Anyone on the team may look at the dashboard.
+ *
+ * Dewald, 3 August: "can writer also have access to admin panel, just not
+ * publish the edition". So the door opens for any emag_members row and the
+ * page decides what to show; the levers (codes, team changes) stay behind
+ * requirePublisher, enforced in the actions themselves rather than only by
+ * hidden buttons. Publishing an edition was never on this screen: that
+ * lives in Kwaai Press, where a writer already cannot approve.
+ */
+export async function requireTeamAccess(): Promise<
+  { id: string; email: string; role: "writer" | "publisher" } | null
+> {
+  const reader = await getReader();
+  if (!reader) return null;
+  if (OWNER_EMAILS.has(reader.email.toLowerCase())) return { ...reader, role: "publisher" };
+
+  const admin = createAdminClient();
+  const { data: publication } = await admin
+    .from("emag_publications")
+    .select("id")
+    .eq("slug", "moxie")
+    .maybeSingle();
+  if (!publication) return null;
+
+  const { data } = await admin
+    .from("emag_members")
+    .select("role")
+    .eq("user_id", reader.id)
+    .eq("publication_id", publication.id)
+    .maybeSingle();
+  if (!data) return null;
+  return { ...reader, role: data.role as "writer" | "publisher" };
+}
+
 export type EditionAdminRow = {
   id: string;
   slug: string;
