@@ -88,3 +88,47 @@ export async function initializeSvcCheckout({
   }
   return { authorizationUrl: data.data.authorization_url };
 }
+
+export type VerifiedTransaction = {
+  reference: string;
+  amountCents: number;
+  customerCode: string | null;
+  planCode: string | null;
+  metadata: {
+    kind?: string;
+    svc_member_id?: string;
+    svc_subscription_id?: string;
+    svc_package_id?: string;
+    svc_interval?: string;
+  };
+};
+
+/**
+ * Server-side verification of a transaction by reference, against
+ * Paystack's own API with SVC's key. This is what makes activation work
+ * with NO webhook at all: the callback page verifies the reference it was
+ * handed rather than trusting it. Required while SVC borrows the shared
+ * DF test account, whose webhook must never be repointed (handoff 3.1:
+ * repointing it has broken WhatsApp delivery before).
+ */
+export async function verifySvcTransaction(
+  reference: string
+): Promise<VerifiedTransaction | null> {
+  const key = svcPaystackSecretKey();
+  if (!key || !reference) return null;
+
+  const res = await fetch(
+    `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
+    { headers: { Authorization: `Bearer ${key}` }, cache: "no-store" }
+  );
+  const data = await res.json();
+  if (!data.status || data.data?.status !== "success") return null;
+
+  return {
+    reference: String(data.data.reference ?? reference),
+    amountCents: typeof data.data.amount === "number" ? data.data.amount : 0,
+    customerCode: data.data.customer?.customer_code ?? null,
+    planCode: data.data.plan?.plan_code ?? data.data.plan ?? null,
+    metadata: data.data.metadata ?? {},
+  };
+}

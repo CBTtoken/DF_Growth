@@ -1,0 +1,101 @@
+import { Document, Page, Text, View, StyleSheet, renderToBuffer } from "@react-pdf/renderer";
+import type { PartnerReportData } from "@/lib/svc/payouts";
+
+/**
+ * The partner report as a PDF (handoff 7.3): one page per partner per
+ * month, with the partner's name on it, built so Dewald can email it
+ * without editing it. SVC palette, sharp rectangles, no red anywhere.
+ */
+const GREEN = "#1a6b3c";
+const BLUE = "#1b4f8a";
+const INK = "#1a1a1a";
+const CREAM = "#f4f1ec";
+
+const styles = StyleSheet.create({
+  page: { padding: 40, fontSize: 10, color: INK, backgroundColor: "#ffffff" },
+  header: { backgroundColor: GREEN, padding: 16, marginBottom: 20 },
+  headerTitle: { color: "#ffffff", fontSize: 18, fontWeight: 700 },
+  headerSub: { color: "#ffffff", fontSize: 11, marginTop: 4 },
+  section: { marginBottom: 16 },
+  h2: { fontSize: 13, fontWeight: 700, marginBottom: 8, color: BLUE },
+  row: { flexDirection: "row", borderBottomWidth: 1, borderBottomColor: "#d8d4cc", paddingVertical: 5 },
+  headRow: { flexDirection: "row", backgroundColor: CREAM, paddingVertical: 6, borderBottomWidth: 2, borderBottomColor: INK },
+  cName: { flex: 3, paddingHorizontal: 4 },
+  cNum: { flex: 1, textAlign: "right", paddingHorizontal: 4 },
+  bold: { fontWeight: 700 },
+  totalRow: { flexDirection: "row", paddingVertical: 7, backgroundColor: CREAM, borderTopWidth: 2, borderTopColor: INK },
+  note: { fontSize: 9, color: "#555555", marginTop: 14, lineHeight: 1.5 },
+  footer: { position: "absolute", bottom: 28, left: 40, right: 40, fontSize: 8, color: "#777777", textAlign: "center" },
+});
+
+function rand(cents: number): string {
+  return `R${(cents / 100).toLocaleString("en-ZA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function monthName(period: string): string {
+  return new Date(`${period}T00:00:00Z`).toLocaleDateString("en-ZA", { month: "long", year: "numeric" });
+}
+
+export function PartnerReportDocument({ data }: { data: PartnerReportData }) {
+  return (
+    <Document title={`SVC partner report, ${data.partnerName}, ${monthName(data.period)}`}>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Smart Value Club</Text>
+          <Text style={styles.headerSub}>
+            Partner performance report for {data.partnerName}, {monthName(data.period)}
+          </Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.h2}>What happened to your benefits this month</Text>
+          <View style={styles.headRow}>
+            <Text style={[styles.cName, styles.bold]}>Benefit</Text>
+            <Text style={[styles.cNum, styles.bold]}>Received</Text>
+            <Text style={[styles.cNum, styles.bold]}>Opened</Text>
+            <Text style={[styles.cNum, styles.bold]}>Selected</Text>
+            <Text style={[styles.cNum, styles.bold]}>Used</Text>
+            <Text style={[styles.cNum, styles.bold]}>Use rate</Text>
+            <Text style={[styles.cNum, styles.bold]}>Value used</Text>
+          </View>
+          {data.benefits.map((b) => (
+            <View key={b.name} style={styles.row}>
+              <Text style={styles.cName}>{b.name}</Text>
+              <Text style={styles.cNum}>{b.received}</Text>
+              <Text style={styles.cNum}>{b.opened}</Text>
+              <Text style={styles.cNum}>{b.claimed}</Text>
+              <Text style={styles.cNum}>{b.redeemed}</Text>
+              <Text style={styles.cNum}>{b.redemptionRatePercent.toFixed(1)}%</Text>
+              <Text style={styles.cNum}>{rand(b.realisedCents)}</Text>
+            </View>
+          ))}
+          <View style={styles.totalRow}>
+            <Text style={[styles.cName, styles.bold]}>Total</Text>
+            <Text style={[styles.cNum, styles.bold]}>{data.totals.received}</Text>
+            <Text style={styles.cNum} />
+            <Text style={styles.cNum} />
+            <Text style={[styles.cNum, styles.bold]}>{data.totals.redeemed}</Text>
+            <Text style={[styles.cNum, styles.bold]}>{data.totals.redemptionRatePercent.toFixed(1)}%</Text>
+            <Text style={[styles.cNum, styles.bold]}>{rand(data.totals.realisedCents)}</Text>
+          </View>
+        </View>
+
+        <Text style={styles.note}>
+          Received counts members issued the benefit for the month. Opened, selected and used are
+          member actions recorded in the Smart Value Club ledger with a timestamp per step.
+          {data.selfReportedShare > 0
+            ? ` ${data.selfReportedShare.toFixed(0)}% of used benefits this month were confirmed by the member themselves rather than by a provider record; till-level verification is being added with the coupon provider integration and this report will state the split.`
+            : " Use figures this month carry no member-self-reported component."}
+        </Text>
+
+        <Text style={styles.footer}>
+          Generated by the Smart Value Club platform from its benefit ledger. smartvalueclub.co.za
+        </Text>
+      </Page>
+    </Document>
+  );
+}
+
+export async function renderPartnerReportPdf(data: PartnerReportData): Promise<Buffer> {
+  return renderToBuffer(<PartnerReportDocument data={data} />);
+}

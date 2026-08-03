@@ -80,6 +80,12 @@ export async function runMonthlyIssue(period: string = periodFor()): Promise<{
   }
   if (!subs || subs.length === 0) return { issued: 0, membersEmailed: 0, codeShortfalls: [] };
 
+  // A suspended member is issued nothing while suspended (Sprint 3 admin
+  // action); their subscription record is untouched so lifting the
+  // suspension lets the next daily run catch them up.
+  const { data: suspended } = await db.from("member").select("id").eq("status", "suspended");
+  const suspendedIds = new Set((suspended ?? []).map((m) => m.id));
+
   // The benefits each package carries, fetched once.
   const packageIds = [...new Set(subs.map((s) => s.package_id))];
   const { data: packageBenefits, error: pbError } = await db
@@ -109,16 +115,11 @@ export async function runMonthlyIssue(period: string = periodFor()): Promise<{
     .eq("period", period);
   const existingKeys = new Set((existing ?? []).map((e) => `${e.member_id}:${e.benefit_id}`));
 
-  const newRows: {
-    member_id: string;
-    benefit_id: string;
-    package_id: string;
-    period: string;
-    face_value_cents: number;
-  }[] = [];
+  const newRows: PendingIssueRow[] = [];
   const newlyIssuedMembers = new Set<string>();
 
   for (const sub of subs) {
+    if (suspendedIds.has(sub.member_id)) continue;
     for (const b of byPackage.get(sub.package_id) ?? []) {
       const key = `${sub.member_id}:${b.benefit_id}`;
       if (existingKeys.has(key)) continue;
@@ -133,6 +134,14 @@ export async function runMonthlyIssue(period: string = periodFor()): Promise<{
       newlyIssuedMembers.add(sub.member_id);
     }
   }
+
+  // Voucher batch stock control (handoff section 6): where a benefit draws
+  // on a finite supplied batch, issuing blocks at the batch's remaining
+  // stock. This is what stops five thousand vouchers going out when a
+  // chain supplied five hundred.
+  const capped = await capRowsToVoucherStock(newRows);
+  newRows.length = 0;
+  newRows.push(...capped.rows);
 
   if (newRows.length === 0) return { issued: 0, membersEmailed: 0, codeShortfalls: [] };
 
@@ -207,6 +216,121 @@ export async function runMonthlyIssue(period: string = periodFor()): Promise<{
   }
 
   return { issued: newRows.length, membersEmailed, codeShortfalls };
+}
+
+type PendingIssueRow = {
+  member_id: string;
+  benefit_id: string;
+  package_id: string | null;
+  period: string;
+  face_value_cents: number;
+};
+
+/**
+ * Caps a set of would-be issue rows to the remaining stock of any voucher
+ * batch backing their benefit, and increments the batches' issued
+ * counters for the rows that survive. A benefit with no batch passes
+ * through untouched. The database check constraint
+ * (quantity_issued <= quantity_supplied) is the last line of defence
+ * behind this.
+ */
+async function capRowsToVoucherStock(
+  rows: PendingIssueRow[]
+): Promise<{ rows: PendingIssueRow[]; blocked: { benefitId: string; blocked: number }[] }> {
+  const db = createSvcClient();
+  const benefitIds = [...new Set(rows.map((r) => r.benefit_id))];
+  if (benefitIds.length === 0) return { rows, blocked: [] };
+
+  const { data: batches } = await db
+    .from("voucher_batch")
+    .select("id, benefit_id, quantity_supplied, quantity_issued, expiry")
+    .in("benefit_id", benefitIds);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const live = (batches ?? []).filter((b) => !b.expiry || b.expiry >= today);
+  if (live.length === 0) return { rows, blocked: [] };
+
+  const kept: PendingIssueRow[] = [];
+  const blocked: { benefitId: string; blocked: number }[] = [];
+
+  for (const benefitId of benefitIds) {
+    const mine = rows.filter((r) => r.benefit_id === benefitId);
+    const batch = live.find((b) => b.benefit_id === benefitId);
+    if (!batch) {
+      kept.push(...mine);
+      continue;
+    }
+    const remaining = Math.max(0, batch.quantity_supplied - batch.quantity_issued);
+    const taking = mine.slice(0, remaining);
+    kept.push(...taking);
+    if (mine.length > remaining) {
+      blocked.push({ benefitId, blocked: mine.length - remaining });
+      console.warn(
+        `SVC voucher batch for benefit ${benefitId} exhausted: ${mine.length - remaining} issues blocked`
+      );
+    }
+    if (taking.length > 0) {
+      await db
+        .from("voucher_batch")
+        .update({ quantity_issued: batch.quantity_issued + taking.length })
+        .eq("id", batch.id);
+    }
+  }
+
+  return { rows: kept, blocked };
+}
+
+/**
+ * Admin's manual issue: one benefit to a list of members for a period,
+ * which is how giveaways run (handoff Sprint 3). Same idempotency (the
+ * unique key skips members already holding the benefit this period) and
+ * the same voucher batch stock cap as the monthly run.
+ */
+export async function issueManually({
+  benefitId,
+  memberIds,
+  period = periodFor(),
+  faceValueCents,
+}: {
+  benefitId: string;
+  memberIds: string[];
+  period?: string;
+  faceValueCents: number;
+}): Promise<{ issued: number; skipped: number; blocked: number }> {
+  const db = createSvcClient();
+
+  const { data: existing } = await db
+    .from("benefit_issue")
+    .select("member_id")
+    .eq("benefit_id", benefitId)
+    .eq("period", period)
+    .in("member_id", memberIds);
+  const already = new Set((existing ?? []).map((e) => e.member_id));
+
+  const candidates: PendingIssueRow[] = memberIds
+    .filter((id) => !already.has(id))
+    .map((member_id) => ({
+      member_id,
+      benefit_id: benefitId,
+      package_id: null,
+      period,
+      face_value_cents: faceValueCents,
+    }));
+
+  const { rows, blocked } = await capRowsToVoucherStock(candidates);
+  if (rows.length > 0) {
+    const { error } = await db.from("benefit_issue").insert(rows);
+    if (error) {
+      console.error("SVC manual issue failed", error);
+      return { issued: 0, skipped: already.size, blocked: candidates.length };
+    }
+  }
+
+  return {
+    issued: rows.length,
+    skipped: already.size,
+    blocked: blocked.reduce((s, b) => s + b.blocked, 0),
+  };
 }
 
 /** The member's issues for a period, benefit details included. */
