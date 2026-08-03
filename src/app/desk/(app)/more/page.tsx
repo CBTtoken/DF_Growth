@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   CalendarClock,
   HeartHandshake,
+  Activity,
   LineChart,
   ListTree,
   LogOut,
@@ -20,6 +21,12 @@ const LINKS = [
     icon: PackageOpen,
     title: "Sprints",
     blurb: "Bundle work up and hand it to CC with a brief",
+  },
+  {
+    href: "/desk/health",
+    icon: Activity,
+    title: "Health",
+    blurb: "Spend, space and anything that changed without you",
   },
   {
     href: "/desk/horizon",
