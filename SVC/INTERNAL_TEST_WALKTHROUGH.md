@@ -32,8 +32,15 @@ benefits. It is also on the admin list, so /svc/admin works from it.
 Notes on this account: system emails it triggers land in Dewald's inbox
 (the address is an alias), the cell number 082 000 0001 is deliberately
 fake, and the coupon-platform link step is intentionally not available
-on it. If several of you test at once you will see each other's clicks;
-for a clean solo run, sign up your own account instead (Part 2).
+on it. Because it is an admin account, its menu shows an Admin button;
+for the pure member experience (no Admin button), sign up your own
+account instead (Part 2). If several of you test on it at once you will
+see each other's clicks.
+
+**How the menu behaves (not a bug):** logged out, the menu shows Log in
+and Join now. Logged in, those disappear and you get My dashboard (and
+Admin, if your login is on the admin list) from every page. You are
+never logged out by navigating around.
 
 **One rule for everyone: do not use the "Unlock your coupons" step with
 your own real cell number for now.** That step writes to the coupon
@@ -179,12 +186,15 @@ Open /svc/admin on the test site. Seven sections plus the day-one tools:
 
 So nobody reports these as bugs:
 
-- **Real coupons from the supplier**: the supplier link is live for
-  registering members, but browsing and redeeming their actual coupons
-  inside SVC waits on two things from their side (with Adriaan): the
-  coupon API documentation, and a sandbox so we can test without
-  touching their live platform. Until then the coupon packs you see are
-  the manual path, which is the designed fallback and works end to end.
+- **Real coupons from the supplier**: registering members with the
+  supplier works and is live (paid members only, and for now Dewald
+  runs that step alone). The supplier has confirmed how their side
+  works: members redeem coupons on the supplier's own website with
+  their cell number, and no usage data comes back to us, which is
+  exactly why the "I used this" button exists and is what keeps the
+  savings counter honest. How much of the supplier's site we link into
+  the member dashboard is a decision in progress; the coupon packs you
+  see today are the manual path, which works end to end.
 - **SMS one-time codes**: email until an SMS provider is chosen.
 - **Real payments**: simulated in this environment on purpose; the real
   Paystack path exists and switches on with SVC's own account.
