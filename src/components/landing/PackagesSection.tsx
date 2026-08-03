@@ -55,6 +55,18 @@ function formatPrice(price: string): string {
   return `R${trimmed}`;
 }
 
+/**
+ * Splits "9 August" into a date chip.
+ *
+ * The events layout leads on the date rather than a price, so it wants the
+ * number and the month apart. Anything that is not a plain date, "Every
+ * first Tuesday" for instance, comes back whole and is printed as written.
+ */
+function splitDate(value: string): { lead: string; rest: string } | null {
+  const m = value.trim().match(/^(\d{1,2})\s+(.+)$/);
+  return m ? { lead: m[1], rest: m[2] } : null;
+}
+
 export function PackagesSection({
   packages,
   accentColor,
@@ -73,6 +85,20 @@ export function PackagesSection({
   // /pricing page, not something invented for this component alone.
   const highlightIndex = packages.length === 3 ? 1 : -1;
   const title = sectionTitle(packages);
+
+  // Events get their own rendering entirely, not a package card with the
+  // date squeezed into the price slot. That version shipped and it was
+  // wrong in two ways at once: the price formatter turned "9 August" into
+  // "R9 August", and the middle card picked up a "Most popular" badge,
+  // which on a list of three evenings is both meaningless and a claim
+  // nobody made. The house rule against invented social proof is absolute,
+  // and an automatic badge is exactly that.
+  const isEvents = packages.every((p) => p.type === "event");
+  if (isEvents) {
+    return (
+      <EventsSection packages={packages} accentColor={accentColor} eyebrowNumber={eyebrowNumber} anchor={anchor} />
+    );
+  }
 
   if (!anchor) {
     return (
@@ -306,6 +332,110 @@ export function PackagesSection({
         </h2>
 
         {body}
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A diary, not a price list.
+ *
+ * Dewald, 3 August, on the first version: the cards "does not look really
+ * great" and the section read like every other template. He was right, and
+ * the reason is that events were being poured into a layout built for
+ * packages, which leads on price, ranks options against each other and
+ * badges a winner. None of those apply to a wine tasting.
+ *
+ * So this leads on the date, in a chip you can read at a glance from a
+ * phone, with the evening's name beside it and one quiet way to ask about
+ * it. No prices, no ranking, no badges, and no "pick what fits you", because
+ * a visitor is not choosing between these, they are checking whether they
+ * are free on the night.
+ */
+function EventsSection({
+  packages,
+  accentColor,
+  eyebrowNumber,
+  anchor,
+}: {
+  packages: Package[];
+  accentColor: string;
+  eyebrowNumber: string;
+  anchor?: TemplateAnchor;
+}) {
+  const isDark = anchor?.sectionSurface === "dark";
+  const headingClass = anchor
+    ? `${SURFACE_HEADING_CLASS[anchor.sectionSurface]} ${HEADING_FONT_CLASS[anchor.headingFont]}`
+    : "text-gray-900";
+  const bodyClass = anchor ? SURFACE_BODY_CLASS[anchor.sectionSurface] : "text-gray-600";
+
+  return (
+    <section
+      id="packages"
+      className={`border-b ${anchor ? SURFACE_BORDER_CLASS[anchor.sectionSurface] : "border-gray-100"} ${
+        isDark ? SURFACE_SECTION_CLASS.dark : "bg-white"
+      }`}
+    >
+      <div className="mx-auto max-w-4xl px-4 py-12 sm:px-8 sm:py-16">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p
+              className={anchor ? EYEBROW_STYLE_CLASS[anchor.eyebrowStyle] : "font-mono text-sm font-semibold uppercase tracking-[0.2em]"}
+              style={{ color: accentColor }}
+            >
+              {eyebrowNumber} · Upcoming events
+            </p>
+            <h2 className={`mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${headingClass}`}>
+              Come and meet the group.
+            </h2>
+          </div>
+          <a
+            href="#lead-form"
+            className="rounded-full px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5"
+            style={{ backgroundColor: accentColor }}
+          >
+            Ask about an evening
+          </a>
+        </div>
+
+        <ul className="mt-8 flex flex-col">
+          {packages.map((event, i) => {
+            const date = splitDate(event.price ?? "");
+            return (
+              <li
+                key={`${event.name}-${i}`}
+                className={`flex items-start gap-4 py-5 sm:gap-6 ${
+                  i > 0 ? `border-t ${isDark ? "border-gray-800" : "border-gray-200"}` : ""
+                }`}
+              >
+                {/* The date as a chip, because a diary is scanned down the
+                    left edge rather than read line by line. */}
+                <span
+                  className="flex size-16 shrink-0 flex-col items-center justify-center rounded-2xl text-center leading-none sm:size-[4.5rem]"
+                  style={{ backgroundColor: `${accentColor}1f`, color: accentColor }}
+                >
+                  {date ? (
+                    <>
+                      <span className="text-xl font-extrabold sm:text-2xl">{date.lead}</span>
+                      <span className="mt-1 text-[10px] font-semibold uppercase tracking-wide">{date.rest}</span>
+                    </>
+                  ) : (
+                    <span className="px-1 text-[10px] font-semibold uppercase tracking-wide">
+                      {event.price || "Soon"}
+                    </span>
+                  )}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <p className={`text-base font-semibold sm:text-lg ${headingClass}`}>{event.name}</p>
+                  {event.description && (
+                    <p className={`mt-1 text-sm leading-relaxed ${bodyClass}`}>{event.description}</p>
+                  )}
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

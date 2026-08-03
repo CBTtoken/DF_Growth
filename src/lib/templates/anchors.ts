@@ -253,9 +253,9 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     headingFont: "serif-editorial",
     cardRecipe: "soft-shadow",
     eyebrowStyle: "pill-badge",
-    spacing: "airy",
+    spacing: "standard",
     sectionSurface: "light-default",
-    servicesLayout: "spotlight-tiles",
+    servicesLayout: "numbered-rows",
     packagesLayout: "ambient-stack",
   },
 };
