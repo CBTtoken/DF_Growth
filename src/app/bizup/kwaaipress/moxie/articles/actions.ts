@@ -218,26 +218,46 @@ async function ensureInFlatplan(editionId: string, articleId: string, pages: num
     .maybeSingle();
   if (already) return;
 
-  const { data: back } = await supabase
+  // Approving a second article used to fail here, every time, on any edition
+  // that had a back cover.
+  //
+  // The old sum was `back.position - 5`, which is not a gap, it is a fixed
+  // point. The first article took it. The second one computed the identical
+  // number, because the back cover had not moved, and collided with the first
+  // on the unique index over (edition_id, position). Sentry has been
+  // reporting it as "Approved, but could not add it to the flatplan", which
+  // is exactly what happened: the article was approved and then stranded
+  // outside the running order.
+  //
+  // Now the article goes after the last thing in the edition and the back
+  // cover is pushed along to stay last, which is the only place a back cover
+  // can be. Monotonic, so it cannot collide with itself however many are
+  // approved.
+  const { data: rows } = await supabase
     .from("emag_flatplan")
-    .select("id, position")
+    .select("id, position, kind")
     .eq("edition_id", editionId)
-    .eq("kind", "back_cover")
-    .maybeSingle();
+    .order("position", { ascending: true });
 
-  const { data: last } = await supabase
-    .from("emag_flatplan")
-    .select("position")
-    .eq("edition_id", editionId)
-    .order("position", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const all = (rows ?? []) as { id: string; position: number; kind: string }[];
+  const back = all.find((r) => r.kind === "back_cover");
+  const lastContent = all
+    .filter((r) => r.kind !== "back_cover")
+    .reduce((max, r) => Math.max(max, r.position), 0);
 
-  // Slotting in just before the back cover means the halfway point between
-  // it and whatever precedes it, which is what the sparse positions are for.
-  const position = back
-    ? (back.position as number) - 5
-    : ((last?.position as number) ?? 0) + 10;
+  const position = lastContent + 10;
+
+  // The back cover keeps the last slot. Moved first, so the insert below is
+  // never racing it for the same number.
+  if (back && back.position <= position) {
+    const { error: moveError } = await supabase
+      .from("emag_flatplan")
+      .update({ position: position + 10 })
+      .eq("id", back.id);
+    if (moveError) {
+      throw new Error(`Approved, but could not make room in the flatplan: ${moveError.message}`);
+    }
+  }
 
   const { error } = await supabase.from("emag_flatplan").insert({
     edition_id: editionId,
