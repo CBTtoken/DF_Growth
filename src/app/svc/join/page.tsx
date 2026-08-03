@@ -22,6 +22,12 @@ const ERRORS: Record<string, string> = {
   verify: "The security check did not pass. Please try again.",
   slow: "A few attempts in a row. Give it a couple of minutes and try again.",
   otp_failed: "We could not send your verification code. Please try again.",
+  otp_send_failed:
+    "Your account is saved, but the verification email could not be sent from this environment (the email service is not configured here). Nothing is wrong with your details.",
+  otp_store_failed:
+    "We could not prepare your verification code on our side. Please try again in a moment.",
+  otp_sms_not_implemented:
+    "This environment is set to send codes by SMS, but no SMS provider is connected yet.",
   failed: "Something went wrong on our side. Please try again.",
 };
 

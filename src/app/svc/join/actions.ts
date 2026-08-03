@@ -132,8 +132,11 @@ export async function startSignup(formData: FormData) {
 
   const sent = await createAndSendOtp({ cell: cell!, purpose: "signup", email });
   if (!sent.ok) {
+    // The specific failure travels to the screen. A generic "try again"
+    // cost a debugging round on 4 August when the real cause was a
+    // missing email API key in the Preview environment.
     console.error("SVC signup OTP send failed", sent.error);
-    await back("otp_failed");
+    await back(`otp_${sent.error ?? "failed"}`);
   }
 
   redirect(`${await svcPath("/join/verify")}?package=${encodeURIComponent(pkg)}${refQuery}`);
