@@ -11,6 +11,7 @@ import { listMemberIssues, savingsTotalCents, periodFor } from "@/lib/svc/ledger
 import { getOrCreateReferralCode, memberReferralStats } from "@/lib/svc/referrals";
 import { memberDrawSummary } from "@/lib/svc/draw";
 import { drawPurchaseEligibility } from "@/lib/svc/draw-purchase";
+import { svcMagazineAccessStart } from "@/lib/svc/moxie-bridge";
 import { signOutSvc } from "../login/actions";
 import { submitDemandSignal, buyDrawTickets } from "./actions";
 import { BenefitCard } from "@/components/svc/BenefitCard";
@@ -203,6 +204,14 @@ export default async function AccountPage({
     drawPurchaseEligibility(member!.id),
   ]);
 
+  // Moxie access rides the package, not the monthly issue run: a paid
+  // member whose package carries the magazine can always reach it, even
+  // before their first issue lands. Dewald, 5 August: "a paid member also
+  // gets the Moxie mag", and it was invisible until the run had happened.
+  const moxieAccessSince = member!.auth_user_id
+    ? await svcMagazineAccessStart(member!.auth_user_id)
+    : null;
+
   const pkg = subscription?.package as unknown as { name: string; monthly_price_cents: number } | null;
   const paidUp =
     subscription &&
@@ -309,6 +318,17 @@ export default async function AccountPage({
               {drawSummary ? `${drawSummary.total} ${drawSummary.total === 1 ? "entry" : "entries"} in` : "opens with the month's draw"}
             </span>
           </Link>
+          <Link
+            href="#referral"
+            className="col-span-2 flex min-h-14 flex-col items-center justify-center bg-svc-ink p-3 text-center text-white hover:bg-svc-green"
+          >
+            <span className="font-svc-heading text-base font-bold">Tell a friend, earn a thank-you</span>
+            <span className="text-xs text-white/70">
+              {referralStats.joinedByLevel.reduce((s, l) => s + l.count, 0) > 0
+                ? `${referralStats.joinedByLevel.reduce((s, l) => s + l.count, 0)} joined through you so far`
+                : "your share link lives here"}
+            </span>
+          </Link>
         </nav>
 
         {/* The one membership state that must interrupt: an unpaid one. */}
@@ -325,7 +345,7 @@ export default async function AccountPage({
 
         {/* This month's benefits. */}
         <section className="mt-6">
-          <div className="flex items-end justify-between">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
             <h2 className="font-svc-heading text-xl font-bold">Your benefits for {monthName}</h2>
             <Link href={couponsHref} className="text-sm font-semibold text-svc-blue underline">
               My coupons
@@ -346,8 +366,29 @@ export default async function AccountPage({
           )}
         </section>
 
+        {/* The magazine, always reachable for an entitled member. SVC
+            palette only; the Moxie brand is named in words, never in its
+            own colours here (Brand Identity Guide: the palettes never
+            share a view). */}
+        {moxieAccessSince && (
+          <section className="mt-6 border-2 border-svc-green bg-white/60 p-6">
+            <h2 className="font-svc-heading text-lg font-bold">Your magazine: Moxie</h2>
+            <p className="mt-2 text-sm leading-relaxed text-svc-ink/75">
+              South Africa&apos;s family discovery magazine is part of your
+              membership. Log in over there with this same email and password,
+              and every edition from the month you joined is yours to read.
+            </p>
+            <a
+              href={moxieHref}
+              className="mt-4 inline-flex min-h-12 w-full items-center justify-center bg-svc-green px-5 text-sm font-semibold text-white hover:bg-svc-ink sm:w-auto"
+            >
+              Read Moxie Magazine
+            </a>
+          </section>
+        )}
+
         {/* The referral view: three numbers, not a tree (handoff sec 8). */}
-        <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
+        <section id="referral" className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
           <h2 className="font-svc-heading text-lg font-bold">Tell a friend, earn a thank-you</h2>
           {referralLink ? (
             <>

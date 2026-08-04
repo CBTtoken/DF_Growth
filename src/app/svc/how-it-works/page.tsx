@@ -13,6 +13,15 @@ export const metadata: Metadata = {
 
 export default async function HowItWorksPage() {
   const joinHref = await svcPath("/join");
+  const helpBase = await svcPath("/help");
+
+  const guideLink = (slug: string, label: string) => (
+    <p className="mt-2 text-sm">
+      <Link href={`${helpBase}/${slug}`} className="font-semibold text-svc-blue underline">
+        Step-by-step with pictures: {label}
+      </Link>
+    </p>
+  );
 
   return (
     <div>
@@ -37,6 +46,7 @@ export default async function HowItWorksPage() {
               linked to you at the till. You also set an email and password so
               you can log in either way.
             </p>
+            {guideLink("join", "Becoming a member")}
           </div>
           <div>
             <h2 className="font-svc-heading text-xl font-bold sm:text-2xl">2. Your benefits arrive on the 1st</h2>
@@ -49,6 +59,7 @@ export default async function HowItWorksPage() {
               printing required, and they refresh with the next month&apos;s
               issue.
             </p>
+            {guideLink("coupons-use", "Using your coupons in the shop")}
           </div>
           <div>
             <h2 className="font-svc-heading text-xl font-bold sm:text-2xl">3. Your dashboard counts your real savings</h2>
@@ -59,6 +70,7 @@ export default async function HowItWorksPage() {
               used anything yet, it shows you what is available instead of a
               made-up total. It is our way of keeping ourselves honest.
             </p>
+            {guideLink("dashboard", "Your dashboard, explained")}
           </div>
           <div>
             <h2 className="font-svc-heading text-xl font-bold sm:text-2xl">4. The monthly draw runs on top</h2>
@@ -69,6 +81,7 @@ export default async function HowItWorksPage() {
               is picked by a seeded random draw, and the result is published
               with the total entry count so anyone can check how it was run.
             </p>
+            {guideLink("draw", "The monthly draw")}
           </div>
           <div>
             <h2 className="font-svc-heading text-xl font-bold sm:text-2xl">5. Cancel whenever you like</h2>
