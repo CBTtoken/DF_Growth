@@ -67,6 +67,10 @@ Dewald-only until the supplier confirms a test environment.
 4. Open The monthly draw page (linked from the home page draw section):
    the mechanics in plain language, and published results once a draw
    has run.
+4b. Open the Help Centre (Help in the menu): five step-by-step guides
+   (joining, coupons, the draw, referrals, account). Read the joining
+   guide as if you were a brand new member; if any step does not match
+   what the site actually does, that is a finding worth reporting.
 5. Send a message through Contact; it should confirm, and the message
    lands in the configured inbox.
 
