@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { openBenefit, claimBenefit, confirmBenefitUsed } from "@/app/svc/account/actions";
 import { formatRand } from "@/lib/svc/data";
@@ -18,6 +19,16 @@ const PARTNER_LINKS: Record<string, { href: string; label: string }> = {
   "E-book of your choice": { href: "https://venora.co.za", label: "Browse the Venora library" },
 };
 
+/** The retailer's mark on its own coupon card, matched by name. */
+function retailerLogo(benefitName: string): { src: string; alt: string } | null {
+  const name = benefitName.toLowerCase();
+  if (name.includes("dis-chem")) return { src: "/svc/brands/dischem.png", alt: "Dis-Chem Pharmacies" };
+  if (name.includes("checkers") || name.includes("shoprite"))
+    return { src: "/svc/brands/checkers.png", alt: "Shoprite and Checkers" };
+  if (name.includes("pick n pay")) return { src: "/svc/brands/pnp.png", alt: "Pick n Pay" };
+  return null;
+}
+
 export function BenefitCard({
   issue,
   back,
@@ -32,6 +43,7 @@ export function BenefitCard({
   const isCoupon = issue.benefit?.benefit_type === "coupon_pack";
   const isMagazine = issue.benefit?.benefit_type === "magazine_access";
   const partnerLink = issue.benefit ? PARTNER_LINKS[issue.benefit.name] : undefined;
+  const logo = isCoupon && issue.benefit ? retailerLogo(issue.benefit.name) : null;
 
   const statusLabel = {
     issued: "New this month",
@@ -45,6 +57,11 @@ export function BenefitCard({
     <article className="border-2 border-svc-ink/15 bg-white/60 p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
+          {logo && (
+            <span className="mb-2 inline-flex border-2 border-svc-ink/10 bg-white p-1.5">
+              <Image src={logo.src} alt={logo.alt} width={120} height={54} className="h-auto w-24" />
+            </span>
+          )}
           <h3 className="font-svc-heading text-base font-bold">{issue.benefit?.name}</h3>
           {issue.benefit?.description && (
             <p className="mt-1 text-sm leading-relaxed text-svc-ink/70">{issue.benefit.description}</p>
@@ -164,3 +181,4 @@ export function BenefitCard({
     </article>
   );
 }
+

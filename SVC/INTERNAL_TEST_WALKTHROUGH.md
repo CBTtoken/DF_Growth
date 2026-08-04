@@ -117,9 +117,22 @@ automatically every morning. Once issued:
    Show/Open it, then take it, then "I used this". Try this on one
    benefit and enter an amount (say 37.50): the savings counter moves by
    exactly that amount. That is the whole honesty machine working.
-3. **My coupons** (link above the benefits) is the coupon-specific view.
-   Note: codes shown are test data until the coupon supplier integration
-   goes live; the screens will not change when it does.
+3. **My coupons** (the green tile) is the coupon view: each retailer's
+   pack carries its shop logo, its value, and a blue button that opens
+   our coupon partner's real site in a new tab. The partner site asks
+   for one thing, a cell number. Our test numbers do not exist on their
+   live system, so to see that flow use the demo number Dewald shares
+   in the team chat (his own, already live there): log in with it, pick
+   a shop, pick a category, add coupons to the basket, check out, and
+   the coupon code arrives for the till. This off-site step is the
+   interim: we have asked the supplier for API endpoints so the whole
+   flow happens inside SVC with our branding, and the screens for that
+   are already built and waiting.
+3b. **What you saved, month by month** sits at the bottom of My coupons:
+   every used benefit with its Rand value, grouped per month with a
+   running total. Tap "I used this" on a benefit with an amount and
+   watch it appear here instantly. This is the screen a member shows a
+   friend.
 4. **The draw panel** (appears once the month's draw exists): your 5
    free entries, earned entries, and the live line telling you how much
    more redeemed value earns your next entry. Note the self-confirmed

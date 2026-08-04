@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { svcPath } from "@/lib/svc/host";
 import { getCurrentMember } from "@/lib/svc/member";
 import { createSvcClient } from "@/lib/svc/db";
-import { listMemberIssues, periodFor } from "@/lib/svc/ledger";
+import { listMemberIssues, periodFor, savingsByMonth } from "@/lib/svc/ledger";
+import { formatRand } from "@/lib/svc/data";
 import { couponPortalUrl } from "@/lib/svc/coupons";
 import { mifuelConfigured } from "@/lib/svc/mifuel";
 import { saveCouponIdentity } from "../actions";
@@ -33,6 +34,8 @@ export default async function CouponsPage({
   const coupons = issues.filter((i) => i.benefit?.benefit_type === "coupon_pack");
   const accountHref = await svcPath("/account");
   const portalUrl = await couponPortalUrl();
+  const history = await savingsByMonth(member!.id);
+  const historyTotal = history.reduce((s, m) => s + m.totalCents, 0);
 
   // The provider link state, shown only when MiFuel credentials exist in
   // this environment. Gated on a PAID membership per the provider's own
@@ -155,6 +158,51 @@ export default async function CouponsPage({
             ))}
           </div>
         )}
+
+        {/* The show-a-friend section: real savings, month by month, from
+            the same rows as the counter. This scroll is the referral
+            programme's best advert. */}
+        <section className="mt-10 border-4 border-svc-green bg-white/70 p-6">
+          <h2 className="font-svc-heading text-xl font-bold">What you saved, month by month</h2>
+          {history.length === 0 ? (
+            <p className="mt-2 text-base leading-relaxed text-svc-ink/75">
+              Your history starts the first time you tap I used this on a
+              benefit. Every month you save gets its own line here, real
+              numbers only.
+            </p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-svc-ink/70">
+                Counted only from benefits you actually used. Show a friend,
+                then send them your link from the dashboard.
+              </p>
+              <div className="mt-4 space-y-5">
+                {history.map((m) => (
+                  <div key={m.period}>
+                    <div className="flex items-baseline justify-between border-b-2 border-svc-ink/15 pb-1">
+                      <h3 className="font-svc-heading text-base font-bold">
+                        {new Date(`${m.period}T00:00:00Z`).toLocaleDateString("en-ZA", { month: "long", year: "numeric" })}
+                      </h3>
+                      <p className="font-svc-heading text-lg font-bold text-svc-green">{formatRand(m.totalCents)}</p>
+                    </div>
+                    <ul className="mt-2 space-y-1 text-sm text-svc-ink/80">
+                      {m.items.map((item, i) => (
+                        <li key={i} className="flex justify-between gap-3">
+                          <span>{item.name}</span>
+                          <span className="shrink-0 font-semibold">{formatRand(item.realisedCents)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-5 flex items-baseline justify-between border-t-4 border-svc-green pt-3">
+                <span className="font-svc-heading text-base font-bold">Saved with SVC so far</span>
+                <span className="font-svc-heading text-2xl font-bold text-svc-green">{formatRand(historyTotal)}</span>
+              </p>
+            </>
+          )}
+        </section>
       </div>
     </div>
   );

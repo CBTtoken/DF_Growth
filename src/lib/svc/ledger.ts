@@ -433,6 +433,44 @@ export async function markSelfRedeemed(
   return (data ?? []).length > 0;
 }
 
+export type MonthlySavings = {
+  period: string;
+  totalCents: number;
+  items: { name: string; realisedCents: number; redeemedAt: string }[];
+};
+
+/**
+ * The member's savings month by month: every redeemed benefit with its
+ * realised value, grouped by period, newest first. The show-a-friend
+ * view (Dewald, 5 August): a member scrolling their own real history is
+ * the referral programme's best advert, so it renders from the same
+ * honest rows as the counter.
+ */
+export async function savingsByMonth(memberId: string): Promise<MonthlySavings[]> {
+  const db = createSvcClient();
+  const { data } = await db
+    .from("benefit_issue")
+    .select("period, realised_value_cents, redeemed_at, benefit:benefit_id (name)")
+    .eq("member_id", memberId)
+    .eq("status", "redeemed")
+    .not("realised_value_cents", "is", null)
+    .order("period", { ascending: false })
+    .order("redeemed_at", { ascending: false });
+
+  const months = new Map<string, MonthlySavings>();
+  for (const row of data ?? []) {
+    const entry = months.get(row.period) ?? { period: row.period, totalCents: 0, items: [] };
+    entry.totalCents += row.realised_value_cents ?? 0;
+    entry.items.push({
+      name: (row.benefit as unknown as { name: string } | null)?.name ?? "Benefit",
+      realisedCents: row.realised_value_cents ?? 0,
+      redeemedAt: row.redeemed_at ?? "",
+    });
+    months.set(row.period, entry);
+  }
+  return [...months.values()];
+}
+
 /**
  * The personal savings number (handoff 7.1): the sum of realised Rand
  * value on redeemed rows, and nothing else. Zero for a member who has
