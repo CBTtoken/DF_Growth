@@ -5,7 +5,7 @@ import { saveItem } from "@/app/desk/(app)/actions";
 import { field, label, primaryButton } from "@/components/desk/Shell";
 import type { DeskItem } from "@/lib/desk/types";
 
-export function ItemForm({ item }: { item: DeskItem }) {
+export function ItemForm({ item, ventures }: { item: DeskItem; ventures: string[] }) {
   const [state, formAction, pending] = useActionState(saveItem, null);
 
   return (
@@ -32,7 +32,21 @@ export function ItemForm({ item }: { item: DeskItem }) {
       <div className="flex gap-2">
         <label className="flex flex-1 flex-col gap-1">
           <span className={label}>Venture</span>
-          <input name="venture" defaultValue={item.venture ?? ""} spellCheck={false} className={field} />
+          {/* A datalist rather than a select: the existing names one tap
+              away, without ever blocking a brand-new one. Free text stays
+              free, which the schema comment insists on. */}
+          <input
+            name="venture"
+            defaultValue={item.venture ?? ""}
+            spellCheck={false}
+            list="desk-venture-names"
+            className={field}
+          />
+          <datalist id="desk-venture-names">
+            {ventures.map((name) => (
+              <option key={name} value={name} />
+            ))}
+          </datalist>
         </label>
         <label className="flex flex-col gap-1">
           <span className={label}>Stream</span>

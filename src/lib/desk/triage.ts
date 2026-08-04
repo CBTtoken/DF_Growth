@@ -105,6 +105,95 @@ function verbatimSpan(original: string, proposed: unknown): string | null {
   return original.includes(span) ? span : null;
 }
 
+// Duplicate finding. The second job this file is allowed to do, under the
+// same contract as Sort: it proposes groups, the operator decides, nothing is
+// deleted here. Titles are never rewritten, only pointed at.
+export type DuplicateGroup = {
+  ids: string[];
+  reason: string;
+};
+
+const DUPLICATE_SYSTEM = [
+  "You are looking at a single operator's task list to find duplicates. Two items are duplicates",
+  "only when doing one of them would make the other pointless: the same piece of work captured",
+  "twice, possibly in different words on different days.",
+  "",
+  "Items about the same product or theme are NOT duplicates if they name different work.",
+  "'Test the booking module' and 'Fix the booking time slots' are different work. When in doubt,",
+  "do not pair them: a missed duplicate costs nothing, a wrong one deletes real work.",
+  "",
+  "Return a JSON array of groups. Each group: {\"ids\": [\"...\", \"...\"], \"reason\": \"one plain",
+  "sentence saying why these are the same work\"}. Two or more ids per group, each id used at most",
+  "once across all groups. Return [] if there are none. JSON only, no prose, no markdown fences.",
+].join("\n");
+
+export async function proposeDuplicates(
+  items: Pick<DeskItem, "id" | "title" | "venture">[]
+): Promise<{ groups: DuplicateGroup[]; error?: string }> {
+  if (items.length < 2) return { groups: [] };
+
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { groups: [], error: "No Anthropic key is set in this environment." };
+
+  const listing = items
+    .map((item) => `${item.id} [${item.venture ?? "unfiled"}]: ${item.title.replace(/\s+/g, " ")}`)
+    .join("\n");
+
+  try {
+    const anthropic = new Anthropic({ apiKey });
+    const message = await anthropic.messages
+      .stream({
+        model: MODEL,
+        max_tokens: 8000,
+        output_config: { effort: "low" },
+        system: DUPLICATE_SYSTEM,
+        messages: [
+          {
+            role: "user",
+            content: `Items, one per line, each prefixed with its id and venture:\n${listing}`,
+          },
+        ],
+      })
+      .finalMessage();
+
+    if (message.stop_reason === "refusal") {
+      return { groups: [], error: "The model declined to look at this list." };
+    }
+
+    const textBlock = message.content.find((block) => block.type === "text");
+    if (!textBlock || textBlock.type !== "text") {
+      return { groups: [], error: "The model returned nothing to read." };
+    }
+
+    const parsed: unknown = JSON.parse(stripFences(textBlock.text));
+    if (!Array.isArray(parsed)) return { groups: [], error: "The model did not return a list." };
+
+    // Every id must belong to the batch and appear once. A group that fails
+    // either check is dropped whole rather than repaired: a half-checked
+    // group is exactly the kind that deletes the wrong thing.
+    const valid = new Set(items.map((item) => item.id));
+    const used = new Set<string>();
+    const groups: DuplicateGroup[] = [];
+
+    for (const raw of parsed as { ids?: unknown; reason?: unknown }[]) {
+      const ids = Array.isArray(raw?.ids) ? raw.ids.filter((id): id is string => typeof id === "string") : [];
+      if (ids.length < 2) continue;
+      if (ids.some((id) => !valid.has(id) || used.has(id))) continue;
+
+      for (const id of ids) used.add(id);
+      groups.push({
+        ids,
+        reason: typeof raw.reason === "string" ? raw.reason : "Looks like the same work captured twice.",
+      });
+    }
+
+    return { groups };
+  } catch (error) {
+    console.error("desk: duplicate check failed", error);
+    return { groups: [], error: "The duplicate check failed. Try again." };
+  }
+}
+
 export async function proposeTriage(
   items: DeskItem[],
   knownVentures: string[]

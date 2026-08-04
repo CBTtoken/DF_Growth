@@ -149,6 +149,7 @@ export type VentureRollup = {
   status: DeskVenture["status"];
   open: number;
   waiting: number;
+  withCC: number;
   done: number;
   parked: number;
   deep: number;
@@ -174,6 +175,7 @@ export async function ventureRollups(): Promise<VentureRollup[]> {
         status: venture?.status ?? "active",
         open: 0,
         waiting: 0,
+        withCC: 0,
         done: 0,
         parked: 0,
         deep: 0,
@@ -192,8 +194,12 @@ export async function ventureRollups(): Promise<VentureRollup[]> {
 
     if (item.status === "done") row.done++;
     else if (item.status === "parked") row.parked++;
-    else if (item.status === "open" && item.blocked_by !== "me") row.waiting++;
-    else if (item.status === "open") {
+    else if (item.status === "open" && item.blocked_by !== "me") {
+      row.waiting++;
+      // Split out separately because "waiting on CC" answers a different
+      // question from "waiting on a person": it is work already handed over.
+      if (item.blocked_by.toLowerCase() === "cc") row.withCC++;
+    } else if (item.status === "open") {
       row.open++;
       if (item.effort === "deep") row.deep++;
       else row.shallow++;

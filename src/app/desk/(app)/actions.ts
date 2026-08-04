@@ -5,8 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireDeskUser } from "@/lib/desk/auth";
 import { splitCapture } from "@/lib/desk/capture";
 import { listItems, listVentures, untriagedItems } from "@/lib/desk/queries";
-import { proposeTriage, type TriageProposal } from "@/lib/desk/triage";
-import { nextDueDate, type DeskItem } from "@/lib/desk/types";
+import { proposeDuplicates, proposeTriage, type DuplicateGroup, type TriageProposal } from "@/lib/desk/triage";
+import { nextDueDate, type DeskChecklistStep, type DeskItem } from "@/lib/desk/types";
 
 // Server Actions are POST endpoints in their own right, so each one checks
 // the session itself rather than relying on the layout that rendered the
@@ -159,6 +159,9 @@ export async function markDone(id: string): Promise<void> {
       due_date: due,
       recurrence: item.recurrence,
       notes: item.notes,
+      // The next instance starts with the same steps, unticked. A monthly
+      // check with a written routine keeps its routine.
+      checklist: (item.checklist ?? []).map((step) => ({ text: step.text, done: false })),
     });
   }
 
@@ -579,4 +582,81 @@ export async function removeItem(id: string): Promise<void> {
   const supabase = createAdminClient();
   await supabase.from("desk_items").delete().eq("id", id);
   refresh();
+}
+
+// ---------------------------------------------------------------------------
+// v3, from his feedback note: steps inside one item, bulk actions on the full
+// list, and a duplicate check that proposes but never deletes.
+// ---------------------------------------------------------------------------
+
+// The whole checklist is written at once. Steps are lines under one thought,
+// not rows with identities, so there is nothing to merge and no order to
+// negotiate: what the screen shows is what is saved.
+export async function saveChecklist(id: string, steps: DeskChecklistStep[]): Promise<void> {
+  await requireDeskUser();
+
+  const clean = steps
+    .map((step) => ({ text: String(step.text ?? "").trim(), done: Boolean(step.done) }))
+    .filter((step) => step.text.length > 0);
+
+  const supabase = createAdminClient();
+  await supabase
+    .from("desk_items")
+    .update({ checklist: clean, updated_at: new Date().toISOString() })
+    .eq("id", id);
+  refresh();
+}
+
+// Bulk filing from the Everything screen. Only the two filing fields, on
+// purpose: status changes stay one item at a time, because the one rule
+// (done, parked with a trigger, killed with a date) is a per-item decision.
+export async function bulkFileItems(
+  ids: string[],
+  patch: { sprint_id?: string | null; venture?: string | null }
+): Promise<void> {
+  await requireDeskUser();
+  if (ids.length === 0) return;
+
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if ("sprint_id" in patch) update.sprint_id = patch.sprint_id;
+  if ("venture" in patch) update.venture = patch.venture?.trim() || null;
+
+  const supabase = createAdminClient();
+  await supabase.from("desk_items").update(update).in("id", ids);
+  refresh();
+}
+
+export async function bulkRemoveItems(ids: string[]): Promise<void> {
+  await requireDeskUser();
+  if (ids.length === 0) return;
+
+  const supabase = createAdminClient();
+  await supabase.from("desk_items").delete().in("id", ids);
+  refresh();
+}
+
+export type DuplicateState = {
+  groups?: (DuplicateGroup & { titles: string[] })[];
+  error?: string;
+  checked?: number;
+} | null;
+
+// The duplicate check reads the open list, asks once, and hands back groups
+// for the operator to act on. Nothing is deleted here.
+export async function findDuplicates(_prev: DuplicateState, _formData: FormData): Promise<DuplicateState> {
+  await requireDeskUser();
+
+  const items = await listItems({ status: "open" });
+  const { groups, error } = await proposeDuplicates(items);
+  if (error) return { error };
+  if (groups.length === 0) return { groups: [], checked: items.length };
+
+  const titleOf = new Map(items.map((item) => [item.id, item.title]));
+  return {
+    checked: items.length,
+    groups: groups.map((group) => ({
+      ...group,
+      titles: group.ids.map((id) => titleOf.get(id) ?? ""),
+    })),
+  };
 }

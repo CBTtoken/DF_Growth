@@ -5,6 +5,14 @@ export type DeskStream = "own" | "client" | "life";
 export type DeskSprintStatus = "draft" | "ready" | "handed" | "shipped";
 export type DeskRecurrence = "none" | "weekly" | "monthly" | "quarterly" | "annually";
 
+// One step inside an item. Deliberately nothing but the words and a tick:
+// a step with its own dates and owner would be an item, and then the list
+// grows again, which is the thing he asked this feature to stop.
+export type DeskChecklistStep = {
+  text: string;
+  done: boolean;
+};
+
 export type DeskItem = {
   id: string;
   title: string;
@@ -23,6 +31,7 @@ export type DeskItem = {
   sprint_id: string | null;
   skip_count: number;
   notes: string | null;
+  checklist: DeskChecklistStep[];
   done_at: string | null;
   created_at: string;
   updated_at: string;
@@ -145,6 +154,14 @@ export function untilLabel(date: string | null): string {
 // point of showing it per venture is to tell focus work from break work.
 export function effortLabel(effort: DeskEffort): string {
   return effort === "deep" ? "needs a clear head" : "can be done tired";
+}
+
+// "2 of 5 steps", said once, wherever an item with a checklist is shown as a
+// single line. Returns null for an item without steps so callers can skip it.
+export function checklistLabel(checklist: DeskChecklistStep[] | null | undefined): string | null {
+  if (!checklist || checklist.length === 0) return null;
+  const done = checklist.filter((step) => step.done).length;
+  return `${done} of ${checklist.length} steps`;
 }
 
 export function nextDueDate(from: string | null, recurrence: DeskRecurrence): string | null {

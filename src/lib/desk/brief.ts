@@ -66,6 +66,11 @@ export async function buildBrief(sprintId: string): Promise<string> {
       if (item.notes) lines.push(`- Notes: ${item.notes}`);
       lines.push(`- Effort: ${effortLabel(item.effort)}`);
       if (item.due_date) lines.push(`- Due: ${item.due_date}`);
+      // The steps he wrote on the item, ticks included, so one task carrying
+      // five questions arrives as one task carrying five questions.
+      for (const step of item.checklist ?? []) {
+        lines.push(`- [${step.done ? "x" : " "}] ${step.text}`);
+      }
     }
   }
 

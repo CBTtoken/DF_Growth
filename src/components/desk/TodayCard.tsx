@@ -71,6 +71,20 @@ export function TodayCard({ items, doneToday }: { items: DeskItem[]; doneToday: 
           <p className="mt-2 text-sm text-neutral-600">
             {item.next_action ?? "No next action written yet."}
           </p>
+          {/* The steps ride along read-only. Ticking happens on the edit
+              screen; this card stays about doing, not managing. */}
+          {(item.checklist ?? []).length > 0 ? (
+            <ul className="mt-2 flex flex-col gap-1">
+              {item.checklist.map((step, index) => (
+                <li
+                  key={index}
+                  className={`text-sm ${step.done ? "text-neutral-400 line-through" : "text-neutral-600"}`}
+                >
+                  {step.done ? "✓" : "•"} {step.text}
+                </li>
+              ))}
+            </ul>
+          ) : null}
           <p className="mt-3 text-xs text-neutral-400">
             {item.venture ?? "unfiled"} &middot; {effortLabel(item.effort)} &middot; open{" "}
             {daysLabel(item.created_at.slice(0, 10))}

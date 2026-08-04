@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Lightbulb } from "lucide-react";
+import { untriagedItems } from "@/lib/desk/queries";
 import { DumpForm } from "@/components/desk/DumpForm";
 import { SortPanel } from "@/components/desk/SortPanel";
 import { Screen } from "@/components/desk/Shell";
@@ -8,7 +9,11 @@ import { Screen } from "@/components/desk/Shell";
 // frictionless, so it is what opens.
 export const dynamic = "force-dynamic";
 
-export default function DeskDumpPage() {
+export default async function DeskDumpPage() {
+  // One quiet sentence, on this screen only, so the pile never grows in
+  // silence. Not a badge and not on the nav; that rule stands.
+  const untriaged = (await untriagedItems()).length;
+
   return (
     <Screen>
       <DumpForm />
@@ -23,6 +28,13 @@ export default function DeskDumpPage() {
         <Lightbulb size={16} />
         Not a task, just an idea? Put it in Think.
       </Link>
+
+      {untriaged > 0 ? (
+        <p className="text-sm text-neutral-500">
+          {untriaged} {untriaged === 1 ? "capture has" : "captures have"} no next step yet. Sort
+          fills them in below; you stay the one who accepts.
+        </p>
+      ) : null}
 
       <SortPanel />
     </Screen>

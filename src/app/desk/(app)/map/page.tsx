@@ -28,6 +28,8 @@ export default async function DeskMapPage() {
       ? "Nothing open on client work at all right now."
       : `For every one thing open on a client, you have ${(own / client).toFixed(1)} of your own.`;
 
+  const withCC = rollups.reduce((n, r) => n + r.withCC, 0);
+
   return (
     <Screen title="Map" subtitle="Every venture, where it is going, and how much of it is open.">
       {soon.length > 0 ? (
@@ -55,6 +57,11 @@ export default async function DeskMapPage() {
           ))}
         </div>
         <p className="mt-3 text-sm text-neutral-500">{ratio}</p>
+        {withCC > 0 ? (
+          <p className="mt-1 text-sm text-neutral-500">
+            {withCC} {withCC === 1 ? "thing is" : "things are"} with CC right now, off your plate.
+          </p>
+        ) : null}
       </div>
 
       {STREAMS.map((stream) => {
@@ -68,38 +75,62 @@ export default async function DeskMapPage() {
               <p className="text-xs text-neutral-400">{stream.blurb}</p>
             </div>
 
-            {rows.map((row) => (
-              <Link
-                key={row.name}
-                href={`/desk/venture/${encodeURIComponent(row.name)}`}
-                prefetch={false}
-                className={`${card} flex flex-col gap-2`}
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <p className="font-semibold text-neutral-900">{row.name}</p>
-                  <p className="shrink-0 text-sm text-neutral-500">
-                    {row.open} open
-                    {row.waiting > 0 ? `, ${row.waiting} waiting` : ""}
-                  </p>
-                </div>
+            {rows.map((row) => {
+              // How far the venture is: done against everything that is
+              // current work. Parked stays out of the fraction because a
+              // parked item is waiting on its trigger, not on him.
+              const total = row.open + row.waiting + row.done;
+              const percent = total > 0 ? Math.round((row.done / total) * 100) : 0;
 
-                {row.endState ? (
-                  <p className="text-sm leading-snug text-neutral-600">{row.endState}</p>
-                ) : (
-                  <p className="text-sm italic text-neutral-400">
-                    No end state written yet. Tap to write one.
-                  </p>
-                )}
+              return (
+                <Link
+                  key={row.name}
+                  href={`/desk/venture/${encodeURIComponent(row.name)}`}
+                  prefetch={false}
+                  className={`${card} flex flex-col gap-2`}
+                >
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="font-semibold text-neutral-900">{row.name}</p>
+                    <p className="shrink-0 text-sm text-neutral-500">
+                      {row.open} open
+                      {row.withCC > 0 ? `, ${row.withCC} with CC` : ""}
+                      {row.waiting - row.withCC > 0 ? `, ${row.waiting - row.withCC} waiting` : ""}
+                    </p>
+                  </div>
 
-                {/* Effort, so you can tell focus work from break work before
-                    you open anything. */}
-                <p className="text-xs text-neutral-400">
-                  {row.deep} need a clear head &middot; {row.shallow} can be done tired
-                  {row.parked > 0 ? ` · ${row.parked} parked` : ""}
-                  {row.done > 0 ? ` · ${row.done} done` : ""}
-                </p>
-              </Link>
-            ))}
+                  {row.endState ? (
+                    <p className="text-sm leading-snug text-neutral-600">{row.endState}</p>
+                  ) : (
+                    <p className="text-sm italic text-neutral-400">
+                      No end state written yet. Tap to write one.
+                    </p>
+                  )}
+
+                  {/* The measure he asked for: how far this is, in one thin
+                      line and one sentence. Not a chart, a fraction. */}
+                  {total > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-neutral-100">
+                        <div
+                          className="h-full rounded-full bg-neutral-900"
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                      <p className="shrink-0 text-xs text-neutral-400">
+                        {row.done} of {total} done
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {/* Effort, so you can tell focus work from break work before
+                      you open anything. */}
+                  <p className="text-xs text-neutral-400">
+                    {row.deep} need a clear head &middot; {row.shallow} can be done tired
+                    {row.parked > 0 ? ` · ${row.parked} parked` : ""}
+                  </p>
+                </Link>
+              );
+            })}
           </section>
         );
       })}
