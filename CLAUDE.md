@@ -78,6 +78,16 @@ The check goes in the server action, verified against Cloudflare, never
 trusted for being present. A token nobody checks is a hidden field anyone can
 type into.
 
+**Every new page or section ships clean, linked and crawled. Dewald, 4
+August 2026: "we must be a super SEO powerhouse — a member should pop on
+Google wherever it is relevant."** Before any new public surface is called
+done: it is in the sitemap (or deliberately excluded, in writing), it has
+its own title, description, canonical and og image, something already
+indexed links to it, and nothing noindexes it by accident. The shop taught
+this twice: product pages — the handoff's own "what gets indexed" — and the
+marketplace hub were both missing from the sitemap until a Search Console
+review caught it.
+
 **Leave no old traces. Dewald, 4 August 2026: the site must stay super
 clean.** When your work creates test rows, test accounts, temp scripts or
 storage objects, delete them before you report done. When something is
