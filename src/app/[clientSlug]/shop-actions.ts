@@ -493,6 +493,34 @@ async function priceCart(owner: ShopOwner, cart: CartLine[]): Promise<PricedCart
   return { lineItems, subtotalCents, trackedLines, courierItems };
 }
 
+/**
+ * Shop audit fix, 4 Aug 2026: the discount code used to travel silently
+ * with the form, so a buyer never saw their saving until after they had
+ * committed. This lets the checkout show "code applied, R off" the moment
+ * they tap Apply. Preview only: it reads the same rules as the real
+ * application below but increments nothing, and the order action remains
+ * the authority on what is actually charged.
+ */
+export async function previewCoupon(
+  clientSlug: string,
+  code: string,
+  subtotalCents: number
+): Promise<{ valid: true; code: string; discountCents: number } | { valid: false; error: string }> {
+  const trimmed = code.trim();
+  if (!trimmed) return { valid: false, error: "Enter a code first." };
+  if (!Number.isFinite(subtotalCents) || subtotalCents <= 0) {
+    return { valid: false, error: "Your basket is empty." };
+  }
+
+  const owner = await getShopOwner(clientSlug);
+  if (!owner) return { valid: false, error: "This shop is not available at the moment." };
+
+  const result = await applyCoupon(owner.id, trimmed, Math.floor(subtotalCents));
+  if ("error" in result) return { valid: false, error: result.error };
+  if (!result.code) return { valid: false, error: "That code is not valid." };
+  return { valid: true, code: result.code, discountCents: result.discountCents };
+}
+
 async function applyCoupon(
   growthClientId: string,
   code: string | undefined,

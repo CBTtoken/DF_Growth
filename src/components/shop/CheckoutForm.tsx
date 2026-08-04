@@ -6,7 +6,7 @@ import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/shop/CartProvider";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
-import { placeShopOrder, type CheckoutState } from "@/app/[clientSlug]/shop-actions";
+import { placeShopOrder, previewCoupon, type CheckoutState } from "@/app/[clientSlug]/shop-actions";
 import { deliveryChargeCents, deliveryChargeLabel, type ShopDeliverySettings } from "@/lib/shop/delivery";
 import { shopImageUrl } from "@/lib/shop/queries";
 import { readableTextOn } from "@/lib/color";
@@ -45,6 +45,35 @@ export function CheckoutForm({
   const canDeliver = delivery.mode !== "collection_only";
   const [method, setMethod] = useState<"delivery" | "collection">(canDeliver ? "delivery" : "collection");
   const [showCoupon, setShowCoupon] = useState(false);
+  // Shop audit fix, 4 Aug 2026: the applied code and its saving are shown
+  // before the buyer commits. This is a preview; the server reapplies the
+  // code from scratch when the order is placed.
+  const [couponInput, setCouponInput] = useState("");
+  const [couponApplied, setCouponApplied] = useState<{ code: string; discountCents: number } | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponBusy, setCouponBusy] = useState(false);
+
+  async function handleApplyCoupon(codeOverride?: string, subtotal?: number) {
+    const code = (codeOverride ?? couponInput).trim();
+    if (!code || couponBusy) return;
+    setCouponBusy(true);
+    setCouponError(null);
+    try {
+      const result = await previewCoupon(clientSlug, code, subtotal ?? goodsCents);
+      if (result.valid) {
+        setCouponApplied({ code: result.code, discountCents: result.discountCents });
+      } else {
+        setCouponApplied(null);
+        setCouponError(result.error);
+      }
+    } catch {
+      // A failed preview never blocks buying: the code still travels with
+      // the form and the server applies it for real.
+      setCouponError("Could not check the code just now. It will still be applied when you order.");
+    } finally {
+      setCouponBusy(false);
+    }
+  }
 
   const cartLines = lines.map((l) => ({
     productId: l.productId,
@@ -68,9 +97,22 @@ export function CheckoutForm({
     }
   }, [state, clear, router]);
 
-  const shippingCents = deliveryChargeCents(delivery, goodsCents, method);
-  const totalCents = goodsCents + (shippingCents ?? 0);
+  // Mirrors the server's own order: the discount comes off the goods first
+  // and delivery (including any free-over threshold) is worked out on what
+  // is actually payable.
+  const discountCents = couponApplied ? Math.min(couponApplied.discountCents, goodsCents) : 0;
+  const payableGoodsCents = goodsCents - discountCents;
+  const shippingCents = deliveryChargeCents(delivery, payableGoodsCents, method);
+  const totalCents = payableGoodsCents + (shippingCents ?? 0);
   const buttonText = readableTextOn(primaryColor);
+
+  // A percentage code's Rand value moves with the basket, so an applied
+  // code is quietly re-checked when the basket total changes.
+  useEffect(() => {
+    if (!couponApplied) return;
+    void handleApplyCoupon(couponApplied.code, goodsCents);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-run only on basket total changes
+  }, [goodsCents]);
 
   if (!ready) {
     return <p className="py-16 text-center text-sm text-gray-400">Loading your basket...</p>;
@@ -198,11 +240,33 @@ export function CheckoutForm({
 
         {showCoupon ? (
           <Field label="Discount code" error={state?.error?.couponCode}>
-            <input
-              name="couponCode"
-              autoCapitalize="characters"
-              className="h-12 w-full rounded-xl border border-gray-300 px-4 uppercase text-gray-900"
-            />
+            <div className="flex gap-2">
+              <input
+                name="couponCode"
+                autoCapitalize="characters"
+                value={couponInput}
+                onChange={(e) => {
+                  setCouponInput(e.target.value);
+                  setCouponApplied(null);
+                  setCouponError(null);
+                }}
+                className="h-12 w-full rounded-xl border border-gray-300 px-4 uppercase text-gray-900"
+              />
+              <button
+                type="button"
+                onClick={() => void handleApplyCoupon()}
+                disabled={couponBusy || !couponInput.trim()}
+                className="h-12 shrink-0 rounded-xl border border-gray-300 px-5 text-sm font-semibold text-gray-700 transition hover:border-gray-400 disabled:opacity-50"
+              >
+                {couponBusy ? "Checking..." : "Apply"}
+              </button>
+            </div>
+            {couponApplied && (
+              <p className="mt-1.5 text-sm font-medium text-green-700">
+                {couponApplied.code} applied, R{(discountCents / 100).toFixed(2)} off.
+              </p>
+            )}
+            {couponError && <p className="mt-1.5 text-sm text-red-600">{couponError}</p>}
           </Field>
         ) : (
           <button
@@ -324,6 +388,12 @@ export function CheckoutForm({
             <dt>Items</dt>
             <dd>R{(goodsCents / 100).toFixed(2)}</dd>
           </div>
+          {discountCents > 0 && couponApplied && (
+            <div className="flex justify-between text-green-700">
+              <dt>Discount ({couponApplied.code})</dt>
+              <dd>-R{(discountCents / 100).toFixed(2)}</dd>
+            </div>
+          )}
           <div className="flex justify-between text-gray-600">
             <dt>{method === "collection" ? "Collection" : "Delivery"}</dt>
             <dd>{method === "collection" ? "Free" : deliveryChargeLabel(shippingCents)}</dd>

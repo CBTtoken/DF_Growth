@@ -174,6 +174,7 @@ export function ShopSection({
             mode={deliveryMode}
             flatDeliveryCents={flatDeliveryCents}
             freeOverCents={freeDeliveryOverCents}
+            hasCollectionAddress={Boolean(collectionAddress?.line1)}
           />
 
           <div className="flex flex-col gap-3">
@@ -306,10 +307,12 @@ function DeliveryForm({
   mode,
   flatDeliveryCents,
   freeOverCents,
+  hasCollectionAddress,
 }: {
   mode: string;
   flatDeliveryCents: number;
   freeOverCents: number | null;
+  hasCollectionAddress: boolean;
 }) {
   const [state, formAction, pending] = useActionState(saveShopDelivery, null);
   const [chosen, setChosen] = useState(mode);
@@ -339,6 +342,17 @@ function DeliveryForm({
         How buyers get their order. Whatever you pick is shown on your shop and again at checkout,
         before anybody pays.
       </p>
+
+      {/* Shop audit fix, 4 Aug 2026: buyers can choose to collect at
+          checkout, but only once a collection address exists — and no live
+          shop had one, so the option never appeared for anybody. Say so
+          where the member is already thinking about delivery. */}
+      {!hasCollectionAddress && chosen !== "collection_only" && (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          Add your collection address above and buyers also get a &quot;collect from you, free&quot;
+          choice at checkout. Many prefer fetching it themselves to paying for delivery.
+        </p>
+      )}
 
       <div className="flex flex-col gap-2">
         {options.map(([value, label, help]) => (

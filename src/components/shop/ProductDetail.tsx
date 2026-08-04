@@ -139,6 +139,17 @@ export function ProductDetail({
           <p className="whitespace-pre-wrap text-sm leading-relaxed text-gray-600">{product.description}</p>
         )}
 
+        {/* Shop audit fix, 4 Aug 2026: with exactly one named option the
+            picker collapsed entirely and the buyer first learned they had
+            ordered "Large" on the confirmation page. One real option is
+            still information; it is just not a choice. */}
+        {options.length === 1 && labelOf(options[0]) && (
+          <p className="text-sm text-gray-600">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Option:</span>{" "}
+            {labelOf(options[0])}
+          </p>
+        )}
+
         {options.length > 1 && (
           <fieldset className="flex flex-col gap-2">
             <legend className="text-xs font-semibold uppercase tracking-wide text-gray-500">Choose an option</legend>

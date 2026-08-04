@@ -37,7 +37,7 @@ export default async function OrderConfirmationPage({
   const { data: order } = await admin
     .from("shop_orders")
     .select(
-      "id, line_items, subtotal_cents, discount_cents, shipping_cents, total_cents, customer_name, customer_email, customer_phone, delivery_address, delivery_method, payment_status, paystack_reference, created_at"
+      "id, line_items, subtotal_cents, discount_cents, shipping_cents, total_cents, customer_name, customer_email, customer_phone, delivery_address, delivery_method, payment_status, fulfilment_status, paystack_reference, created_at"
     )
     .eq("id", orderId)
     .eq("growth_client_id", owner.id)
@@ -45,9 +45,29 @@ export default async function OrderConfirmationPage({
 
   if (!order) return notFound();
 
-  const paid = await settlePayment(owner, order, clientSlug);
+  // Shop audit fix, 4 Aug 2026: this page told every buyer "we will contact
+  // you within one working day" forever, even after the member cancelled or
+  // sent the order, because the query never fetched fulfilment_status. The
+  // page that tells a buyer to bookmark it has to tell the truth when they
+  // come back.
+  const cancelled = order.fulfilment_status === "cancelled";
+  const sent = order.fulfilment_status === "shipped" || order.fulfilment_status === "delivered";
+  const paid = cancelled ? order.payment_status === "paid" : await settlePayment(owner, order, clientSlug);
   const lines = (order.line_items ?? []) as OrderLine[];
   const primaryColor = owner.brand_primary_color ?? "#1081b8";
+
+  const headline = cancelled ? "Order cancelled" : sent ? "Order sent" : paid ? "Payment received" : "Order received";
+  const statusLine = cancelled
+    ? `This order was cancelled by ${owner.business_name}. If that is not what you expected, contact them${owner.call_phone || owner.whatsapp_phone ? ` on ${owner.call_phone ?? owner.whatsapp_phone}` : ""}.`
+    : sent
+      ? `Thank you, ${firstName(order.customer_name)}. ${
+          order.delivery_method === "collection"
+            ? "Your order has been handed over."
+            : "Your order is on its way."
+        }`
+      : paid
+        ? `Thank you, ${firstName(order.customer_name)}. ${owner.business_name} has your payment and will be in touch about ${order.delivery_method === "collection" ? "collection" : "delivery"}.`
+        : `Thank you, ${firstName(order.customer_name)}. ${owner.business_name} will contact you on ${order.customer_phone ?? "the number you gave"} within one working day to arrange payment and ${order.delivery_method === "collection" ? "a collection time" : "delivery"}.`;
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
@@ -59,19 +79,17 @@ export default async function OrderConfirmationPage({
       <div className="flex flex-col items-center gap-3 text-center">
         <span
           className="grid size-14 place-items-center rounded-full text-2xl"
-          style={{ backgroundColor: primaryColor, color: readableTextOn(primaryColor) }}
+          style={
+            cancelled
+              ? { backgroundColor: "#e5e7eb", color: "#4b5563" }
+              : { backgroundColor: primaryColor, color: readableTextOn(primaryColor) }
+          }
           aria-hidden
         >
-          ✓
+          {cancelled ? "✕" : "✓"}
         </span>
-        <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-          {paid ? "Payment received" : "Order received"}
-        </h1>
-        <p className="max-w-md text-gray-600">
-          {paid
-            ? `Thank you, ${firstName(order.customer_name)}. ${owner.business_name} has your payment and will be in touch about ${order.delivery_method === "collection" ? "collection" : "delivery"}.`
-            : `Thank you, ${firstName(order.customer_name)}. ${owner.business_name} will contact you on ${order.customer_phone ?? "the number you gave"} within one working day to arrange payment and ${order.delivery_method === "collection" ? "a collection time" : "delivery"}.`}
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight text-gray-900">{headline}</h1>
+        <p className="max-w-md text-gray-600">{statusLine}</p>
         <p className="text-xs uppercase tracking-wide text-gray-400">
           Order {shortReference(order.id)}
         </p>
@@ -83,6 +101,7 @@ export default async function OrderConfirmationPage({
           also has it in their inbox and can ask for it again; a buyer who
           gave only a phone number has this page and nothing else, so they
           are told plainly to keep it. */}
+      {!cancelled && !sent && (
       <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
         <p className="font-medium text-gray-800">Keep this page to check on your order</p>
         <p className="mt-1 text-gray-600">
@@ -100,12 +119,13 @@ export default async function OrderConfirmationPage({
           </Link>
         )}
       </div>
+      )}
 
       {/* Said plainly, because the most common way somebody loses money on a
           sale like this is a stranger messaging them account details and
           claiming to be the seller. Handoff Sec 1.3 is why no banking
           detail appears anywhere on this page or in the buyer's email. */}
-      {!paid && (
+      {!paid && !cancelled && !sent && (
         <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {owner.business_name} will confirm how to pay when they speak to you. Nobody will send you
           banking details by email or message before then, so treat anything that does as suspicious.
