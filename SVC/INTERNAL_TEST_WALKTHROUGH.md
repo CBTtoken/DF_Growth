@@ -67,10 +67,13 @@ Dewald-only until the supplier confirms a test environment.
 4. Open The monthly draw page (linked from the home page draw section):
    the mechanics in plain language, and published results once a draw
    has run.
-4b. Open the Help Centre (Help in the menu): five step-by-step guides
-   (joining, coupons, the draw, referrals, account). Read the joining
-   guide as if you were a brand new member; if any step does not match
-   what the site actually does, that is a finding worth reporting.
+4b. Open the Help Centre (Help in the menu): seven step-by-step guides
+   with real phone screenshots (becoming a member, the dashboard
+   explained, getting coupons, using coupons, the draw, referrals, and
+   account matters). Read the joining guide as if you were a brand new
+   member; if any step does not match what the site actually does, that
+   is a finding worth reporting. The FAQ is grouped into the same five
+   sections and links each guide.
 5. Send a message through Contact; it should confirm, and the message
    lands in the configured inbox.
 
@@ -102,6 +105,13 @@ automatically every morning. Once issued:
 1. **The savings counter** at the top starts by showing the face value
    waiting in your account, and the words are honest: your real savings
    are counted only from what you actually use.
+1b. **Three tiles under the counter**: My coupons (green), The draw
+   (blue) and Tell a friend (black). They are the fast way to the three
+   things members open the app for; the draw and referral tiles jump
+   straight to their sections.
+1c. **Your magazine: Moxie**: a permanent card for every paid member,
+   there even before the month's benefits are issued. It opens the Moxie
+   site; log in there with the same email and password.
 2. **Your benefits for the month**: the three retailer coupon packs, the
    e-course, the e-book, and Moxie Magazine. Each card walks a state:
    Show/Open it, then take it, then "I used this". Try this on one
