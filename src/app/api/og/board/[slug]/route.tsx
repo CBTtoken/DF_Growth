@@ -16,8 +16,10 @@ import { truncateOnWord } from "@/lib/text";
 // flexbox only, every element that contains text needs display flex, no
 // `inset` shorthand (it is silently dropped, producing a byte-identical
 // image with no error), and no CSS filters.
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+// Local constants, not exports: the size/contentType export convention
+// belongs to metadata image files, and Next's webpack build rejects them as
+// invalid route fields. ImageResponse sets the content type itself.
+const size = { width: 1200, height: 630 };
 
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

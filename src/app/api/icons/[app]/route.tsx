@@ -14,7 +14,9 @@ import { loadAssetFonts } from "@/lib/assets/fonts";
 // and a wordmark is unmistakable in a way an initial never is.
 //
 // Cached hard: an icon changes when this file changes, never per request.
-export const contentType = "image/png";
+// (No contentType export here: that convention belongs to metadata image
+// files, ImageResponse sets the header itself, and Next's webpack build
+// rejects the stray export as an invalid route field.)
 
 const APPS: Record<string, { word: string; background: string; accent: string; top: string }> = {
   // Near black rather than brand blue. The blue is the app's colour and it

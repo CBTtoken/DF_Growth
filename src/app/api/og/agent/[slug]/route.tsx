@@ -17,8 +17,10 @@ import { loadAssetFonts } from "@/lib/assets/fonts";
 // crop, same rounded frame, same accent field around it) and left in its
 // own colour. The framing is what carries the recognition; the duotone is
 // what the page itself adds on arrival.
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+// Local constants, not exports: the size/contentType export convention
+// belongs to metadata image files, and Next's webpack build rejects them as
+// invalid route fields. ImageResponse sets the content type itself.
+const size = { width: 1200, height: 630 };
 
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
