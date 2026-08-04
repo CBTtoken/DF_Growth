@@ -89,7 +89,7 @@ export async function generateMetadata({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, tagline, business_description, logo_path, google_site_verification, facebook_domain_verification, industry, city, landing_pages!inner(page_type, custom_page_key)"
+      "id, business_name, tagline, business_description, logo_path, fallback_photo_url, google_site_verification, facebook_domain_verification, industry, city, landing_pages!inner(page_type, custom_page_key)"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -151,9 +151,13 @@ export async function generateMetadata({
     client.tagline || client.business_description || `${client.business_name} on DigitalFlyer.`,
     160
   );
+  // Share-image preference: the member's own logo, else their curated
+  // trade image (media library fallback), else the platform logo. A link
+  // preview showing the member's trade beats a generic platform mark
+  // (platform queue item 1's image-SEO ride-along).
   const image = client.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
-    : "/brand/logo-blue.png";
+    : (client.fallback_photo_url ?? "/brand/logo-blue.png");
   const url = `/${clientSlug}`;
 
   return {
