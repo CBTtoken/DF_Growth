@@ -78,6 +78,15 @@ The check goes in the server action, verified against Cloudflare, never
 trusted for being present. A token nobody checks is a hidden field anyone can
 type into.
 
+**Leave no old traces. Dewald, 4 August 2026: the site must stay super
+clean.** When your work creates test rows, test accounts, temp scripts or
+storage objects, delete them before you report done. When something is
+renamed or retired, the permanent redirect goes in and the old version dies;
+never leave both alive. The cautionary tale: the old suffixed member slugs
+lingered in Google's index and filled Search Console's report with 35 ghost
+URLs. The existing rule still applies on top of this one: ask before
+deleting anything shared, and never touch another session's files.
+
 ### Which code is safe to change, and which is load-bearing
 
 Each product owns three spaces and should stay inside them: a route prefix
