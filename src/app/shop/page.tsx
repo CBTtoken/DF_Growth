@@ -68,6 +68,7 @@ export default async function ShopPage({
     .eq("status", "active")
     .eq("growth_clients.shop_enabled", true)
     .eq("growth_clients.status", "active")
+    .eq("growth_clients.unlisted", false)
     .eq("growth_clients.landing_pages.page_type", "template")
     .order("created_at", { ascending: false })
     .limit(60);

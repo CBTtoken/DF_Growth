@@ -57,6 +57,7 @@ export default async function MarketplacePage({
       "id, slug, business_name, tagline, business_description, industry, city, logo_path, hero_photo_id, screenshot_path, brand_primary_color, whatsapp_phone, facebook_url, instagram_url, landing_pages!inner(published)"
     )
     .eq("status", "active")
+    .eq("unlisted", false)
     .eq("landing_pages.published", true)
     .not("slug", "in", notListedFilter)
     .order("created_at", { ascending: false })
@@ -89,6 +90,7 @@ export default async function MarketplacePage({
     .from("growth_clients")
     .select("id, landing_pages!inner(published)", { count: "exact", head: true })
     .eq("status", "active")
+    .eq("unlisted", false)
     .eq("landing_pages.published", true)
     .not("slug", "in", notListedFilter);
 

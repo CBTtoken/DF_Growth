@@ -96,6 +96,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from("growth_clients")
     .select("slug, created_at")
     .eq("status", "active")
+    .eq("unlisted", false)
     .not("slug", "is", null);
 
   const clientEntries: MetadataRoute.Sitemap = (clients ?? []).map((c) => ({
@@ -116,6 +117,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from("growth_clients")
     .select("slug, landing_pages!inner(page_type), shop_products(slug, status, created_at)")
     .eq("status", "active")
+    .eq("unlisted", false)
     .eq("shop_enabled", true)
     .not("slug", "is", null);
 

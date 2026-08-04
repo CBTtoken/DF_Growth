@@ -89,7 +89,7 @@ export async function generateMetadata({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, tagline, business_description, logo_path, fallback_photo_url, google_site_verification, facebook_domain_verification, industry, city, landing_pages!inner(page_type, custom_page_key)"
+      "id, business_name, tagline, business_description, logo_path, fallback_photo_url, google_site_verification, facebook_domain_verification, industry, city, unlisted, landing_pages!inner(page_type, custom_page_key)"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -118,6 +118,11 @@ export async function generateMetadata({
   // landing_pages.growth_client_id alone — see init_schema.sql), so this
   // comes back as an array even filtered down to one row by the query
   // above; `!inner` + the dot-filter already guarantees at least one match.
+  // An unlisted member (Old Good demo pattern): the page works for anyone
+  // holding the URL, but no crawler is invited. Applied before the custom/
+  // template branch so it covers both shapes of page.
+  const unlistedRobots = client.unlisted ? { robots: { index: false, follow: false } } : {};
+
   const landingPages = client.landing_pages as unknown as { page_type: string; custom_page_key: string | null }[];
   const customCheck = pickLandingPage(landingPages);
   if (customCheck?.page_type === "custom") {
@@ -130,6 +135,7 @@ export async function generateMetadata({
       alternates: { canonical: url },
       openGraph: { title: meta.title, description: meta.description, url },
       twitter: { card: "summary_large_image", title: meta.title, description: meta.description },
+      ...unlistedRobots,
     };
   }
 
@@ -177,6 +183,7 @@ export async function generateMetadata({
         ? { "facebook-domain-verification": client.facebook_domain_verification }
         : undefined,
     },
+    ...unlistedRobots,
   };
 }
 

@@ -3,6 +3,7 @@ import { Standing365Page } from "@/components/custom-pages/standing365/Standing3
 import { KatisoBizNomadsPage } from "@/components/custom-pages/katisobiz-nomads/KatisoBizNomadsPage";
 import { BuffelskopPage } from "@/components/custom-pages/buffelskop/BuffelskopPage";
 import { HelpliftPage } from "@/components/custom-pages/helplift/HelpliftPage";
+import { OldGoodPage } from "@/components/custom-pages/old-good/OldGoodPage";
 import type { PublicBookableUnit } from "@/components/landing/BookingSection";
 
 // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2 and 4: a hand-coded page
@@ -54,6 +55,7 @@ export const customPages: Record<string, ComponentType<CustomPageProps>> = {
   "katisobiz-nomads": KatisoBizNomadsPage,
   buffelskop: BuffelskopPage,
   helplift: HelpliftPage,
+  "old-good": OldGoodPage,
 };
 
 // Own SEO metadata per custom page rather than the generic business-listing
@@ -83,6 +85,13 @@ export const customPageMeta: Record<string, CustomPageMeta> = {
     title: "Helplift Network Vaal Triangle | Inspire and Enable people to help people",
     description:
       "Helplift Network Vaal Triangle (NPO 152-090) connects donors and volunteers with real community needs, through a voucher giving programme, affordable charity stores, skills development, and emotional support in Vanderbijlpark, South Africa.",
+  },
+  // Jordan's surprise demo (Jordan/HANDOFF_old_good_demo.md). Titled as
+  // what it is: a demo. It carries noindex via the unlisted flag anyway.
+  "old-good": {
+    title: "Old Good, one-of-one thrift. Demo shop",
+    description:
+      "A demo thrift rail: one-of-one pieces, measured in centimetres and graded honestly. Sample stock only, nothing is really for sale yet.",
   },
 };
 
