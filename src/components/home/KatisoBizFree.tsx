@@ -1,18 +1,22 @@
 import Image from "next/image";
-import { HOME_IMAGES } from "@/lib/home/media";
+import { HeroDocument } from "@/components/bizup/landing/HeroDocument";
 
 // The KatisoBiz block on the home page, per the split handoff, carrying the
 // real KatisoBiz brand at Dewald's ask: the logo front and centre on a
 // branded panel (the logo's own blue and orange are the app's brand-blue
-// and accent, so the panel borrows both), with a real quote screenshot.
+// and accent, so the panel borrows both).
+//
+// The quote is the KatisoBiz landing page's own HeroDocument, reused rather
+// than screenshotted: the first attempt used a raster screenshot and its
+// square canvas corners looked wrong inside the rounded panel. This is the
+// same document the KatisoBiz page renders, drawn in HTML, so it stays
+// sharp at any size and can never drift out of step with that page.
 //
 // The wording rule from the handoff's corrections is load-bearing: nothing
 // in the system connects a Growth account to a KatisoBiz account by
 // itself, so this copy promises the tool and what a plan includes, and
 // never says or implies the two accounts connect themselves.
 export function KatisoBizFree() {
-  const quote = HOME_IMAGES.katisoQuote;
-
   return (
     <section className="bg-white py-10 lg:py-14 border-b border-neutral-border">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,16 +58,11 @@ export function KatisoBizFree() {
               </a>
             </div>
 
-            {/* A real quote, built in the real product. */}
+            {/* The same real document the KatisoBiz page itself renders. */}
             <div className="flex justify-center lg:justify-end">
-              <Image
-                src={quote.src}
-                alt={quote.alt}
-                width={quote.width}
-                height={quote.height}
-                sizes="(max-width: 1024px) 90vw, 420px"
-                className="w-full max-w-[420px] rounded-2xl shadow-card-hover"
-              />
+              <div className="w-full max-w-[320px]">
+                <HeroDocument />
+              </div>
             </div>
           </div>
         </div>
