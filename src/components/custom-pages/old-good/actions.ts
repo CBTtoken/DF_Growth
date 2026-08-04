@@ -96,7 +96,12 @@ export async function placeOldGoodOrder(
       customer_phone: buyerPhone,
       customer_email: null,
       delivery_method: option.id === "market" ? "collection" : "delivery",
-      delivery_address: option.id === "market" ? null : { line1: `Demo reservation, ${option.label}`, city: "", postalCode: "" },
+      // The column is NOT NULL; a collection order records where it is
+      // collected rather than a street address.
+      delivery_address:
+        option.id === "market"
+          ? { line1: `Collect at: ${market}`, city: "", postalCode: "" }
+          : { line1: `Demo reservation, ${option.label}`, city: "", postalCode: "" },
       payment_status: "unpaid",
       member_note: market ? `DEMO. ${option.label}. Collect at: ${market}` : `DEMO. ${option.label}`,
       marketing_consent: false,
