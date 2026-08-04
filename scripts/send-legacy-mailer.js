@@ -122,6 +122,19 @@ function escapeHtml(s) {
 }
 
 async function main() {
+  // --preview writes the exact email a real contact would receive to a
+  // file, for copy approval. It needs no database and sends nothing.
+  if (args.includes("--preview")) {
+    if (!APP_ENCRYPTION_KEY) throw new Error("--preview needs APP_ENCRYPTION_KEY for the unsubscribe token.");
+    const sample = { id: "preview", email: "preview@example.invalid", contact_name: "Adri", business_name: "Kids in Action" };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { writeFileSync } = require("fs");
+    const out = args.find((a) => a.startsWith("--out="))?.split("=")[1] ?? "legacy-mailer-preview.html";
+    writeFileSync(out, `<p style="background:#fdf5e6;padding:10px 14px;font-family:Arial;font-size:13px;">Subject: ${SUBJECT}<br/>From: ${MARKETING_FROM_EMAIL ?? "(MARKETING_FROM_EMAIL not set yet)"}</p>` + emailHtml(sample));
+    console.log("Preview written to", out, "- nothing sent.");
+    return;
+  }
+
   if (!SUPABASE_URL || !SERVICE_KEY || !APP_ENCRYPTION_KEY) {
     throw new Error("Missing Supabase or encryption environment. Run from the project root with .env.local loaded.");
   }
