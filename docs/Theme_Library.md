@@ -130,3 +130,29 @@ temperature.
 plumbers, builders, tilers, painters, welders, mechanics, hairdressers,
 caterers. Any member whose photos are phone photos of real jobs and whose
 customers arrive by referral.
+
+### Old Good (`old-good`, custom page — not yet in the picker)
+
+- **Added:** 5 August 2026, built as the demo thrift shop for Jordan Rosema
+  (Jordan/HANDOFF_old_good_demo.md), live at /old-good and oldgood.co.za
+- **Register:** indigo and fluoro-orange, condensed display caps over mono
+  labels, cardboard swing tickets hanging off a rail on strings
+
+**What it does that none of the others do.** This is the library's first
+one-of-one page: built for a seller whose every item is a single unit that
+never restocks. Products hang as swing tickets on a rail; a sold piece
+stays up with a SOLD stamp instead of disappearing, because "what went" is
+social proof a thrift buyer trusts. Condition is graded A/B/C with the
+flaw written out on the ticket, measurements are in centimetres because
+vintage sizing lies, and the bag holds a piece for fifteen minutes with a
+visible countdown. Checkout can end at a market stall: the buyer picks
+which market and collects for free. Thrift metadata rides in ordinary
+product descriptions as plain "Key: value" lines, so the standard
+dashboard drives the whole rail with no new UI.
+
+**Status, honestly:** a custom page (like Standing 365), not a picker
+theme. Generalising it needs the real server-side stock holds (deferred by
+Dewald's own call until a real one-of-one seller needs them) and a Build
+Kit pass to make the register member-colour aware. When that happens it
+becomes the platform's theme for every one-of-one seller: thrift, vintage,
+art, once-off furniture, plants, collectables.
