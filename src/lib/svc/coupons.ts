@@ -92,6 +92,25 @@ export function couponProvider(): CouponProvider {
 }
 
 /**
+ * The coupon partner's own redemption portal, where members browse and
+ * check out their actual coupons until the partner exposes API endpoints
+ * for doing it inside SVC. Sending members off-site is the handoff's
+ * route 3 and shipped only on Dewald's explicit decision, 5 August, with
+ * the URL he supplied. A database setting rather than an env var, so the
+ * day the URL changes it is one update, no deploy.
+ */
+export async function couponPortalUrl(): Promise<string | null> {
+  const db = createSvcClient();
+  const { data } = await db
+    .from("setting")
+    .select("value")
+    .eq("key", "coupon_portal_url")
+    .maybeSingle();
+  const url = typeof data?.value === "string" ? data.value : null;
+  return url && /^https:\/\//.test(url) ? url : null;
+}
+
+/**
  * Admin's manual import: registers the month's coupon file for a benefit
  * and loads its codes (one per line; blank lines and duplicates dropped).
  * Codes are handed to members by the issue run. A file may also carry zero

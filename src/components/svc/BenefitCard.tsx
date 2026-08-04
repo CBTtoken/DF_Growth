@@ -22,10 +22,12 @@ export function BenefitCard({
   issue,
   back,
   moxiePathPrefix,
+  couponPortalUrl,
 }: {
   issue: BenefitIssue;
   back: "/account" | "/account/coupons";
   moxiePathPrefix?: string;
+  couponPortalUrl?: string | null;
 }) {
   const isCoupon = issue.benefit?.benefit_type === "coupon_pack";
   const isMagazine = issue.benefit?.benefit_type === "magazine_access";
@@ -101,6 +103,24 @@ export function BenefitCard({
             >
               Read Moxie with this account
             </Link>
+          )}
+
+          {isCoupon && couponPortalUrl && (
+            <a
+              href={couponPortalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-12 w-full items-center justify-center border-2 border-svc-blue px-5 text-center text-sm font-semibold text-svc-blue hover:bg-svc-blue hover:text-white"
+            >
+              Browse and redeem on our coupon partner&apos;s site
+            </a>
+          )}
+          {isCoupon && couponPortalUrl && (
+            <p className="text-xs text-svc-ink/60">
+              Opens in a new tab. Log in there with this cell number; your
+              coupons follow your number. Come back and tap I used this so
+              your savings count.
+            </p>
           )}
 
           {partnerLink && issue.status !== "issued" && (

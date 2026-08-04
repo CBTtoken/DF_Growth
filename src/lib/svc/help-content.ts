@@ -130,6 +130,10 @@ export const HELP_GUIDES: HelpGuide[] = [
         body: "On My coupons, tap the green button on a coupon pack. It opens and shows you the details, and its code where one exists. Then tap Add to my coupons for this trip so it is ready.",
       },
       {
+        title: "Browse and pick coupons on our partner's site",
+        body: "Each coupon pack also has a blue button that opens our coupon partner's site in a new tab. It asks for one thing only: your cell number, the same one you joined with. Pick your shop, pick a category, add coupons to your basket and check out; the coupon code arrives for scanning at the till.",
+      },
+      {
         title: "The one till trick: two payments",
         body: "A coupon discount and your store loyalty card discount cannot both count on the same product. So at the till, do this: pay for your coupon products as one purchase, and everything else with your loyalty card as a second purchase. Same trolley, same queue, both savings.",
       },

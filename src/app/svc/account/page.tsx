@@ -8,6 +8,7 @@ import { getCurrentMember } from "@/lib/svc/member";
 import { createSvcClient } from "@/lib/svc/db";
 import { formatRand } from "@/lib/svc/data";
 import { listMemberIssues, savingsTotalCents, periodFor } from "@/lib/svc/ledger";
+import { couponPortalUrl } from "@/lib/svc/coupons";
 import { getOrCreateReferralCode, memberReferralStats } from "@/lib/svc/referrals";
 import { memberDrawSummary } from "@/lib/svc/draw";
 import { drawPurchaseEligibility } from "@/lib/svc/draw-purchase";
@@ -211,6 +212,7 @@ export default async function AccountPage({
   const moxieAccessSince = member!.auth_user_id
     ? await svcMagazineAccessStart(member!.auth_user_id)
     : null;
+  const portalUrl = await couponPortalUrl();
 
   const pkg = subscription?.package as unknown as { name: string; monthly_price_cents: number } | null;
   const paidUp =
@@ -360,7 +362,7 @@ export default async function AccountPage({
           ) : (
             <div className="mt-3 space-y-4">
               {issues.map((issue) => (
-                <BenefitCard key={issue.id} issue={issue} back="/account" moxiePathPrefix={moxieHref} />
+                <BenefitCard key={issue.id} issue={issue} back="/account" moxiePathPrefix={moxieHref} couponPortalUrl={portalUrl} />
               ))}
             </div>
           )}

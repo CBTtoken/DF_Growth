@@ -5,6 +5,7 @@ import { svcPath } from "@/lib/svc/host";
 import { getCurrentMember } from "@/lib/svc/member";
 import { createSvcClient } from "@/lib/svc/db";
 import { listMemberIssues, periodFor } from "@/lib/svc/ledger";
+import { couponPortalUrl } from "@/lib/svc/coupons";
 import { mifuelConfigured } from "@/lib/svc/mifuel";
 import { saveCouponIdentity } from "../actions";
 import { BenefitCard } from "@/components/svc/BenefitCard";
@@ -31,6 +32,7 @@ export default async function CouponsPage({
   const issues = await listMemberIssues(member!.id);
   const coupons = issues.filter((i) => i.benefit?.benefit_type === "coupon_pack");
   const accountHref = await svcPath("/account");
+  const portalUrl = await couponPortalUrl();
 
   // The provider link state, shown only when MiFuel credentials exist in
   // this environment. Gated on a PAID membership per the provider's own
@@ -149,7 +151,7 @@ export default async function CouponsPage({
         ) : (
           <div className="mt-6 space-y-4">
             {coupons.map((issue) => (
-              <BenefitCard key={issue.id} issue={issue} back="/account/coupons" />
+              <BenefitCard key={issue.id} issue={issue} back="/account/coupons" couponPortalUrl={portalUrl} />
             ))}
           </div>
         )}
