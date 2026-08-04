@@ -459,7 +459,8 @@ export async function savingsByMonth(memberId: string): Promise<MonthlySavings[]
 
   const months = new Map<string, MonthlySavings>();
   for (const row of data ?? []) {
-    const entry = months.get(row.period) ?? { period: row.period, totalCents: 0, items: [] };
+    const entry: MonthlySavings =
+      months.get(row.period) ?? { period: String(row.period), totalCents: 0, items: [] };
     entry.totalCents += row.realised_value_cents ?? 0;
     entry.items.push({
       name: (row.benefit as unknown as { name: string } | null)?.name ?? "Benefit",
