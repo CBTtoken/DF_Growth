@@ -33,29 +33,33 @@ export function HomePricing() {
           ))}
         </div>
 
-        {/* The R450 done-for-you offer, 4 August 2026. Sits directly under
-            the packages because the moment somebody compares tiers is the
-            moment they think "this looks like effort". Same words as the
-            legacy mailer, so a mailer click lands on a page that repeats
-            the offer it made. */}
-        <div className="mt-5 rounded-2xl border border-brand/25 bg-brand/5 px-5 py-5 sm:px-7">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+        {/* The R450 done-for-you offer, 4 August 2026, made unmissable the
+            same day at Dewald's ask: a full brand band with a real button,
+            not a strip that scrolls past. Sits directly under the packages
+            because the moment somebody compares tiers is the moment they
+            think "this looks like effort". Same words as the legacy
+            mailer, so a mailer click lands on a page repeating the offer.
+            The button leads to the packages because the R450 only exists
+            attached to a membership; the tick itself lives inside signup. */}
+        <div className="mt-6 rounded-2xl bg-brand px-6 py-7 text-white shadow-lg sm:px-9">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
             <div>
-              <p className="text-base font-bold text-ink">
+              <p className="text-xl font-extrabold tracking-tight sm:text-2xl">
                 No time, or want an extra creative touch? We build it for you.
               </p>
-              <p className="mt-1 text-sm leading-relaxed text-neutral-mid">
-                Once-off <strong className="text-ink">R450</strong>: pick your package, tick{" "}
-                <em>Build it for me</em> when you sign up, and send us your information. We set up
-                the whole page and hand it over with a step-by-step guide, so running it yourself
-                afterwards is easy. Nothing extra is charged at signup.
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85">
+                Once-off <strong className="text-white">R450</strong> with any package. Pick your
+                package, tick <em>Build it for me</em> at signup, send us your information, and we
+                set up the whole page for you, with a step-by-step guide so running it yourself
+                afterwards is easy. Nothing extra is charged at signup; we arrange the R450 when
+                we make contact, within a day.
               </p>
             </div>
             <a
               href="#pricing"
-              className="inline-flex shrink-0 items-center justify-center rounded-full border border-brand px-5 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white"
+              className="inline-flex shrink-0 items-center justify-center rounded-full bg-white px-7 py-3.5 text-base font-bold text-brand shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
             >
-              Pick a package to start
+              Get started, we build it →
             </a>
           </div>
         </div>
