@@ -43,4 +43,33 @@ export const HOME_IMAGES = {
     width: 1000,
     height: 563,
   },
+  // The three "what you get" cards and the KatisoBiz quote, added 4 Aug
+  // 2026 for the home page split. All real: Buffelskop's live page and the
+  // live marketplace captured via ScreenshotOne, the dashboard and the
+  // quote from Dewald's own screenshots (docs/GrowthDashboard.png,
+  // docs/KatisoQuote.png). No invented numbers anywhere, per the handoff.
+  whatYouGetPage: {
+    src: "/home/what-you-get-page.jpg",
+    alt: "The Buffelskop member page open at phone size",
+    width: 1600,
+    height: 1000,
+  },
+  whatYouGetDashboard: {
+    src: "/home/what-you-get-dashboard.jpg",
+    alt: "A member dashboard showing real page views for the week",
+    width: 1600,
+    height: 1000,
+  },
+  whatYouGetMarketplace: {
+    src: "/home/what-you-get-marketplace.jpg",
+    alt: "The DigitalFlyer marketplace with member businesses listed",
+    width: 1600,
+    height: 1000,
+  },
+  katisoQuote: {
+    src: "/home/katisobiz-quote.png",
+    alt: "A quotation built in KatisoBiz on a phone, with line items and a total",
+    width: 772,
+    height: 1020,
+  },
 } satisfies Record<string, HomeImage>;

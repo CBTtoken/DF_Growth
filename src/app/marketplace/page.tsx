@@ -41,6 +41,13 @@ export default async function MarketplacePage({
   const { q = "", industry = "", city = "", sort = "near", lat = "", lng = "" } = await searchParams;
   const admin = createAdminClient();
 
+  // Our own internal pages, kept off the marketplace at Dewald's ask
+  // (4 Aug 2026): the marketplace is members' businesses, and DigitalFlyer's
+  // own agent-recruitment page listed among them reads as a member that
+  // isn't one. The page itself stays live at its URL; it just isn't listed.
+  const NOT_LISTED = ["digitalflyer-agents"];
+  const notListedFilter = `(${NOT_LISTED.join(",")})`;
+
   // published landing_pages rows only, and only active (paid/converted)
   // accounts — exactly the same gate [clientSlug]/page.tsx itself uses, so
   // nothing shows up here that wouldn't actually resolve if clicked.
@@ -51,6 +58,7 @@ export default async function MarketplacePage({
     )
     .eq("status", "active")
     .eq("landing_pages.published", true)
+    .not("slug", "in", notListedFilter)
     .order("created_at", { ascending: false })
     .limit(60);
 
@@ -81,7 +89,8 @@ export default async function MarketplacePage({
     .from("growth_clients")
     .select("id, landing_pages!inner(published)", { count: "exact", head: true })
     .eq("status", "active")
-    .eq("landing_pages.published", true);
+    .eq("landing_pages.published", true)
+    .not("slug", "in", notListedFilter);
 
   // One batched query for every client's photos rather than one per card.
   const clientIds = (clients ?? []).map((c) => c.id);

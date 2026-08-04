@@ -1,31 +1,31 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ImageIcon } from "lucide-react";
+import { HOME_IMAGES } from "@/lib/home/media";
 
 // "What you get", per the split handoff: three plain items, each with a
 // real screenshot, describing what the member ends up holding, not feature
-// names. The screenshots are Dewald's to take on his phone (a member page,
-// a dashboard, a KatisoBiz quote); until they exist the frames below are
-// visibly placeholders, never a mockup with invented numbers in it.
+// names. Every image is real: Buffelskop's live page and the live
+// marketplace (captured 4 Aug 2026, after the custom-page fix restored the
+// right Buffelskop render), and Dewald's own dashboard screenshot with the
+// week's genuine numbers. Sources live in HOME_IMAGES so they can be
+// swapped without touching this component.
 const items = [
   {
+    image: HOME_IMAGES.whatYouGetPage,
     title: "A page customers actually find",
     body: "Your services, prices, photos and contact details on one professional page, at your own link, ready for Google and WhatsApp.",
-    shot: null as string | null,
-    shotAlt: "A real member page open on a phone",
     link: null as { href: string; label: string } | null,
   },
   {
+    image: HOME_IMAGES.whatYouGetDashboard,
     title: "Enquiries that come to you",
     body: "When a customer fills in your contact form, it lands in your dashboard and your inbox. You reply, you win the job.",
-    shot: null,
-    shotAlt: "The member dashboard showing visitors and enquiries",
     link: null,
   },
   {
+    image: HOME_IMAGES.whatYouGetMarketplace,
     title: "A spot on the marketplace",
     body: "Your business listed on the DigitalFlyer marketplace, where customers browse and compare local businesses.",
-    shot: null,
-    shotAlt: "The DigitalFlyer marketplace",
     link: { href: "/marketplace", label: "Browse the marketplace" },
   },
 ];
@@ -45,15 +45,14 @@ export function WhatYouGetHome() {
               key={item.title}
               className="bg-white border border-neutral-border rounded-2xl overflow-hidden shadow-card flex flex-col"
             >
-              {item.shot ? (
-                // eslint-disable-next-line @next/next/no-img-element -- phone screenshots vary in aspect ratio
-                <img src={item.shot} alt={item.shotAlt} className="w-full" />
-              ) : (
-                <div className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-1.5 bg-neutral-light border-b border-neutral-border px-6 text-center">
-                  <ImageIcon size={22} className="text-neutral-muted" aria-hidden />
-                  <p className="text-xs font-medium text-neutral-muted">Real screenshot coming soon</p>
-                </div>
-              )}
+              <Image
+                src={item.image.src}
+                alt={item.image.alt}
+                width={item.image.width}
+                height={item.image.height}
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="w-full border-b border-neutral-border"
+              />
               <div className="p-5">
                 <h3 className="text-sm font-bold text-neutral-ink mb-1.5">{item.title}</h3>
                 <p className="text-sm text-neutral-mid leading-relaxed">{item.body}</p>
