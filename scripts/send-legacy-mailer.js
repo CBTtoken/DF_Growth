@@ -122,6 +122,13 @@ function emailHtml(contact) {
     "Card payments through Paystack straight into your own account, courier through your own Bob Go",
     "Both accounts are yours, not ours, and we help you set them up and connect them",
   ])}
+  ${h("No time, or want an extra creative touch?")}
+  ${ul([
+    "We build the whole thing for you, a <strong>once-off R450</strong>",
+    "Register on the package you want, send us your information, and we do it all for you",
+    "You get a step-by-step guide with it, so managing it yourself afterwards is easy",
+    "Reply to this email once you have registered and we take it from there",
+  ])}
   ${p("And The Board, opening shortly. Our community notice board, your specials and your finished work in front of people who are looking. Costs nothing.")}
   ${p("<strong>Seven days free. No card, no catch.</strong> Five minutes on your phone and you are going.")}
   <p style="margin:28px 0;">
