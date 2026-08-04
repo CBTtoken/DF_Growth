@@ -44,6 +44,7 @@ export function JobCardHero({
   contactEmail,
   city,
   photoUrl,
+  photoIsOwn = false,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -62,6 +63,10 @@ export function JobCardHero({
   contactEmail?: string | null;
   city?: string | null;
   photoUrl?: string | null;
+  /** True only when the photo is the member's own upload (hero_photo_id),
+      never for a library/fallback ambient image — the "On the job" caption
+      implies the member's own work and may only appear on real photos. */
+  photoIsOwn?: boolean;
 }) {
   const field = secondaryColor;
   const onField = readableTextOn(field);
@@ -200,12 +205,14 @@ export function JobCardHero({
               >
                 <Image src={photoUrl} alt="" fill sizes="(max-width: 1024px) 0px, 42vw" priority className="object-cover" />
               </div>
-              <span
-                className="absolute -bottom-3 left-4 inline-block px-3 py-1 font-mono text-[0.65rem] font-bold uppercase tracking-[0.25em]"
-                style={{ backgroundColor: accent, color: readableTextOn(accent) }}
-              >
-                On the job
-              </span>
+              {photoIsOwn && (
+                <span
+                  className="absolute -bottom-3 left-4 inline-block px-3 py-1 font-mono text-[0.65rem] font-bold uppercase tracking-[0.25em]"
+                  style={{ backgroundColor: accent, color: readableTextOn(accent) }}
+                >
+                  On the job
+                </span>
+              )}
             </div>
           )}
         </div>

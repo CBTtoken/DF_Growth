@@ -44,6 +44,7 @@ export function PipelineHero({
   contactEmail,
   city,
   photoUrl,
+  photoIsOwn = false,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -62,6 +63,11 @@ export function PipelineHero({
   contactEmail?: string | null;
   city?: string | null;
   photoUrl?: string | null;
+  /** True only when the photo is the member's own upload (hero_photo_id),
+      never for a library/fallback ambient image — the "A real job, our
+      photo" caption is a credibility claim and may only appear on real
+      member photos (house rule: ambient imagery never poses as their work). */
+  photoIsOwn?: boolean;
 }) {
   const field = secondaryColor;
   const onField = readableTextOn(field);
@@ -181,12 +187,14 @@ export function PipelineHero({
               <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl border-t-4 shadow-2xl" style={{ borderColor: COPPER }}>
                 <Image src={photoUrl} alt="" fill sizes="(max-width: 1024px) 0px, 42vw" priority className="object-cover" />
               </div>
-              <span
-                className="absolute -bottom-3 left-4 inline-block rounded-full px-4 py-1 text-[0.7rem] font-bold uppercase tracking-[0.2em] text-white"
-                style={{ backgroundColor: COPPER }}
-              >
-                A real job, our photo
-              </span>
+              {photoIsOwn && (
+                <span
+                  className="absolute -bottom-3 left-4 inline-block rounded-full px-4 py-1 text-[0.7rem] font-bold uppercase tracking-[0.2em] text-white"
+                  style={{ backgroundColor: COPPER }}
+                >
+                  A real job, our photo
+                </span>
+              )}
             </div>
           )}
         </div>

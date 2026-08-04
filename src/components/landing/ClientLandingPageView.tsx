@@ -338,6 +338,10 @@ export async function ClientLandingPageView({
   }
 
   let photoUrl: string | null = null;
+  // Whether the hero photo is the member's own upload rather than a library/
+  // fallback ambient image — the trade heroes' credibility captions ("A real
+  // job, our photo" / "On the job") render only when this is true.
+  let photoIsOwn = false;
   if (template.hero === "split" || template.hero === "dark" || template.hero === "duo" || template.hero === "jobcard" || template.hero === "pipeline") {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
@@ -350,6 +354,7 @@ export async function ClientLandingPageView({
     // this section always had on a Pexels failure.
     const heroPhoto = client.hero_photo_id ? photos.find((p) => p.id === client.hero_photo_id) : undefined;
     photoUrl = heroPhoto ? `${photosStorageBase}/${heroPhoto.storage_path}` : (client.fallback_photo_url ?? null);
+    photoIsOwn = Boolean(heroPhoto);
   }
 
   const checklistItems = (landingPage.services_text ?? "")
@@ -515,6 +520,7 @@ export async function ClientLandingPageView({
           contactEmail={client.contact_email}
           city={client.city}
           photoUrl={photoUrl}
+          photoIsOwn={photoIsOwn}
         />
       )}
       {template.hero === "pipeline" && (
@@ -525,6 +531,7 @@ export async function ClientLandingPageView({
           contactEmail={client.contact_email}
           city={client.city}
           photoUrl={photoUrl}
+          photoIsOwn={photoIsOwn}
         />
       )}
       {template.hero === "showcase" && (
