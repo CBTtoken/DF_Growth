@@ -177,7 +177,9 @@ export const HELP_GUIDES: HelpGuide[] = [
     steps: [
       {
         title: "Find your link on the dashboard",
-        body: "In the Tell a friend block is your personal link and a green Share on WhatsApp button. Send it to anyone you like.",
+        body: "Tap the black Tell a friend tile at the top of your dashboard, or scroll to the Tell a friend block. Your personal link is there with a green Share on WhatsApp button. Send it to anyone you like.",
+        image: "/svc/help/referral.png",
+        imageAlt: "The Tell a friend block with the share link and WhatsApp button",
       },
       {
         title: "What happens when they join",
