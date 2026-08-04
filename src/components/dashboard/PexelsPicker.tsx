@@ -5,10 +5,12 @@ import { addPhotoFromPexels } from "@/app/dashboard/actions";
 
 type Result = { id: number; thumbnailUrl: string; fullUrl: string; photographer: string | null };
 
-// Combined spec Sec 24: real search + browse, not just the existing
-// automatic best-effort fallback (getIndustryPhoto) — a client picks the
-// exact photo they want rather than getting whatever Pexels returns
-// first. Shared by the dashboard's PhotoGallery and onboarding's
+// Combined spec Sec 24: real search + browse — a client picks the exact
+// photo they want rather than getting whatever a search returns first.
+// (The automatic industry fallback is the curated media library these
+// days, src/lib/images/library.ts; this picker is the member's own
+// deliberate choice, so raw Pexels search remains appropriate here.)
+// Shared by the dashboard's PhotoGallery and onboarding's
 // Step4PhotoUpload, since both just need "let the client add a photo,"
 // upload and Pexels search are just two ways into the same gallery.
 export function PexelsPicker({ industryHint, disabled }: { industryHint?: string; disabled?: boolean }) {

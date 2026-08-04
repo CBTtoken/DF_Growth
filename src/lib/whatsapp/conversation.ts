@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
-import { getIndustryPhoto } from "@/lib/images/pexels";
+import { getLibraryPhoto } from "@/lib/images/library";
 import { geocodeAddress, toGeographyPoint } from "@/lib/geo/geocode";
 import { initializePaystackCheckout } from "@/lib/paystack/checkout";
 import { fetchWhatsAppMedia } from "@/lib/whatsapp/graph-api";
@@ -460,7 +460,7 @@ export async function advanceConversation(
       // including the same Quick Sprint Sec 2 fallback-photo fetch (see
       // that file's own comment for why this moved out of the render path).
       if (conversation.growth_client_id) {
-        const fallbackPhotoUrl = await getIndustryPhoto(String(stepData.industry || "business"));
+        const fallbackPhotoUrl = await getLibraryPhoto(String(stepData.industry || ""));
         // Quick Sprint: Payments/Geo Sec 3.3 — same geocode-once-at-write-
         // time as saveStep2's web equivalent (src/app/onboard/actions.ts).
         // No separate "city" field in this flow, business_address alone

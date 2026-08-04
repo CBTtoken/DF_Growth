@@ -13,7 +13,7 @@ import {
   step7Schema,
 } from "@/lib/schemas/intake";
 import { generateLandingCopy } from "@/lib/ai/draft-copy";
-import { getIndustryPhoto } from "@/lib/images/pexels";
+import { getLibraryPhoto } from "@/lib/images/library";
 import { geocodeAddress, toGeographyPoint } from "@/lib/geo/geocode";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
 import { sendEmail } from "@/lib/email/resend";
@@ -144,12 +144,10 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
   }
 
   // Quick Sprint: Payments/Geo Sec 2 — fetched here, once, rather than live
-  // inside the render path (ClientLandingPageView.tsx used to call Pexels
-  // on every cache-miss regeneration for a client with no uploaded hero
-  // photo). Best-effort like every other Pexels call in this codebase:
-  // null on any failure, the affected template section just renders
-  // without its showcase image, same graceful degradation as before.
-  const fallbackPhotoUrl = await getIndustryPhoto(parsed.data.industry || "business");
+  // inside the render path. Platform queue item 1 (Aug 2026): now drawn from
+  // the curated media library instead of a raw Pexels keyword search — a
+  // library miss means null and no showcase image, never a wrong image.
+  const fallbackPhotoUrl = await getLibraryPhoto(parsed.data.industry);
 
   // Quick Sprint: Payments/Geo Sec 3.3 — geocoded once here, same
   // write-time-not-render-time pattern as fallbackPhotoUrl just above.
