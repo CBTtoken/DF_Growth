@@ -201,6 +201,20 @@ export default async function SvcHomePage() {
             <h2 className="font-svc-heading text-2xl font-bold sm:text-3xl">
               Made for the shops your household already uses
             </h2>
+            {/* The retailer brands, cropped from SVC's own marketing set.
+                White sharp-cornered tiles per the brand rules; the logos
+                identify where coupons redeem, no claims attached. */}
+            <div className="mt-5 grid grid-cols-3 gap-3">
+              {[
+                ["/svc/brands/checkers.png", "Shoprite and Checkers"],
+                ["/svc/brands/pnp.png", "Pick n Pay"],
+                ["/svc/brands/dischem.png", "Dis-Chem Pharmacies"],
+              ].map(([src, alt]) => (
+                <div key={src} className="flex items-center justify-center border-2 border-svc-ink/10 bg-white p-3">
+                  <Image src={src} alt={alt} width={200} height={90} className="h-auto w-full" />
+                </div>
+              ))}
+            </div>
             <p className="mt-3 max-w-xl text-base leading-relaxed">
               Vitamins, baby care and skincare at Dis-Chem. Braai cuts, bakery
               and pantry staples at Checkers and Shoprite. Groceries, deli and

@@ -43,6 +43,7 @@ export function SvcFooter({ prefix }: { prefix: string }) {
             <Link href={p("/packages")} className="min-h-6 text-white/80 hover:text-svc-amber">Packages</Link>
             <Link href={p("/about")} className="min-h-6 text-white/80 hover:text-svc-amber">About</Link>
             <Link href={p("/faq")} className="min-h-6 text-white/80 hover:text-svc-amber">FAQ</Link>
+            <Link href={p("/help")} className="min-h-6 text-white/80 hover:text-svc-amber">Help Centre</Link>
             <Link href={p("/contact")} className="min-h-6 text-white/80 hover:text-svc-amber">Contact</Link>
             <Link href={p("/join")} className="min-h-6 text-white/80 hover:text-svc-amber">Join now</Link>
             <Link href={p("/terms")} className="min-h-6 text-white/80 hover:text-svc-amber">Terms and conditions</Link>

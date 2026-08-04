@@ -26,16 +26,20 @@ export const metadata: Metadata = {
 // when the flag is on AND every server-side gate passes, the purchase
 // form (handoff 10.1: no purchase control renders anywhere outside this
 // logged-in dashboard).
-async function SvcDrawPanel({ memberId, ticketsParam }: { memberId: string; ticketsParam?: string }) {
-  const [summary, eligibility] = await Promise.all([
-    memberDrawSummary(memberId),
-    drawPurchaseEligibility(memberId),
-  ]);
+async function SvcDrawPanel({
+  summary,
+  eligibility,
+  ticketsParam,
+}: {
+  summary: Awaited<ReturnType<typeof memberDrawSummary>>;
+  eligibility: Awaited<ReturnType<typeof drawPurchaseEligibility>>;
+  ticketsParam?: string;
+}) {
   if (!summary) return null;
   const { draw, free, earned, purchased, total, frozen } = summary;
 
   return (
-    <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
+    <section id="draw" className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
       <h2 className="font-svc-heading text-lg font-bold">This month&apos;s draw</h2>
       <p className="mt-1 text-sm text-svc-ink/75">
         {draw.prize_description}
@@ -182,7 +186,7 @@ export default async function AccountPage({
   }
 
   const db = createSvcClient();
-  const [{ data: subscription }, issues, savings, referralStats, referralCode] = await Promise.all([
+  const [{ data: subscription }, issues, savings, referralStats, referralCode, drawSummary, drawEligibility] = await Promise.all([
     db
       .from("subscription")
       .select("status, current_period_end, cancelled_at, package:package_id (name, monthly_price_cents)")
@@ -195,6 +199,8 @@ export default async function AccountPage({
     savingsTotalCents(member!.id),
     memberReferralStats(member!.id),
     getOrCreateReferralCode(member!.id),
+    memberDrawSummary(member!.id),
+    drawPurchaseEligibility(member!.id),
   ]);
 
   const pkg = subscription?.package as unknown as { name: string; monthly_price_cents: number } | null;
@@ -280,49 +286,42 @@ export default async function AccountPage({
           )}
         </section>
 
-        {/* Membership state. */}
-        <section className="mt-6 border-2 border-svc-ink/15 bg-white/60 p-6">
-          <h2 className="font-svc-heading text-lg font-bold">Your membership</h2>
-          {subscription && pkg ? (
-            <div className="mt-2 space-y-1 text-base">
-              <p>
-                {pkg.name}, {formatRand(pkg.monthly_price_cents)} a month.{" "}
-                <span className="font-semibold">
-                  {subscription.status === "active" && "Active."}
-                  {subscription.status === "pending_payment" && "Waiting for payment."}
-                  {subscription.status === "past_due" && "Payment overdue."}
-                  {subscription.status === "cancelled" && (paidUp ? "Cancelled, paid up." : "Cancelled.")}
-                </span>
-              </p>
-              {subscription.current_period_end && (
-                <p className="text-sm text-svc-ink/70">
-                  Paid to{" "}
-                  {new Date(subscription.current_period_end).toLocaleDateString("en-ZA", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  .
-                </p>
-              )}
-              {subscription.status === "pending_payment" && (
-                <p className="pt-1">
-                  <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
-                    Complete your payment
-                  </Link>
-                </p>
-              )}
-            </div>
-          ) : (
-            <p className="mt-2 text-base leading-relaxed">
-              No membership yet.{" "}
-              <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
-                Complete your joining
-              </Link>
-              .
-            </p>
-          )}
-        </section>
+        {/* Quick navigation: the two things a member opens the app for,
+            reachable without scrolling (handoff section 5: the primary
+            action lives in the first screen). */}
+        <nav className="mt-4 grid grid-cols-2 gap-3">
+          <Link
+            href={couponsHref}
+            className="flex min-h-20 flex-col items-center justify-center bg-svc-green p-3 text-center text-white hover:bg-svc-ink"
+          >
+            <span className="font-svc-heading text-lg font-bold">My coupons</span>
+            <span className="text-xs text-white/80">
+              {issues.filter((i) => i.benefit?.benefit_type === "coupon_pack" && i.status !== "redeemed" && i.status !== "expired").length}{" "}
+              waiting this month
+            </span>
+          </Link>
+          <Link
+            href="#draw"
+            className="flex min-h-20 flex-col items-center justify-center bg-svc-blue p-3 text-center text-white hover:bg-svc-ink"
+          >
+            <span className="font-svc-heading text-lg font-bold">The draw</span>
+            <span className="text-xs text-white/80">
+              {drawSummary ? `${drawSummary.total} ${drawSummary.total === 1 ? "entry" : "entries"} in` : "opens with the month's draw"}
+            </span>
+          </Link>
+        </nav>
+
+        {/* The one membership state that must interrupt: an unpaid one. */}
+        {(!subscription || subscription.status === "pending_payment") && (
+          <p className="mt-4 border-2 border-svc-amber bg-white/70 p-4 text-sm leading-relaxed">
+            Your membership is not paid yet, so benefits cannot be issued to
+            you.{" "}
+            <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
+              Complete your payment
+            </Link>{" "}
+            and everything below comes alive.
+          </p>
+        )}
 
         {/* This month's benefits. */}
         <section className="mt-6">
@@ -402,8 +401,13 @@ export default async function AccountPage({
               </dl>
               <p className="mt-3 text-xs text-svc-ink/60">
                 Referrals are optional and your benefits never depend on them.
-                The full rules, with a worked example, are on the how it works
-                page; the same words apply here.
+                Earnings are calculated once a month, so this month&apos;s
+                number appears after the monthly run rather than the moment
+                someone joins.{" "}
+                <Link href={`${await svcPath("/how-it-works")}`} className="font-semibold text-svc-blue underline">
+                  The full rules, with a worked example
+                </Link>
+                .
               </p>
             </>
           ) : (
@@ -413,7 +417,7 @@ export default async function AccountPage({
           )}
         </section>
 
-        <SvcDrawPanel memberId={member!.id} ticketsParam={params.tickets} />
+        <SvcDrawPanel summary={drawSummary} eligibility={drawEligibility} ticketsParam={params.tickets} />
 
         {/* Demand capture: the one question that steers the next deal. */}
         <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
@@ -458,6 +462,44 @@ export default async function AccountPage({
           )}
         </section>
 
+        {/* Membership detail, housekeeping territory: glanced at monthly,
+            not daily, so it lives below the daily-use sections. */}
+        <section className="mt-8 border-2 border-svc-ink/15 bg-white/60 p-6">
+          <h2 className="font-svc-heading text-lg font-bold">Your membership</h2>
+          {subscription && pkg ? (
+            <div className="mt-2 space-y-1 text-base">
+              <p>
+                {pkg.name}, {formatRand(pkg.monthly_price_cents)} a month.{" "}
+                <span className="font-semibold">
+                  {subscription.status === "active" && "Active."}
+                  {subscription.status === "pending_payment" && "Waiting for payment."}
+                  {subscription.status === "past_due" && "Payment overdue."}
+                  {subscription.status === "cancelled" && (paidUp ? "Cancelled, paid up." : "Cancelled.")}
+                </span>
+              </p>
+              {subscription.current_period_end && (
+                <p className="text-sm text-svc-ink/70">
+                  Paid to{" "}
+                  {new Date(subscription.current_period_end).toLocaleDateString("en-ZA", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                  .
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="mt-2 text-base leading-relaxed">
+              No membership yet.{" "}
+              <Link href={checkoutHref} className="font-semibold text-svc-blue underline">
+                Complete your joining
+              </Link>
+              .
+            </p>
+          )}
+        </section>
+
         {/* Account housekeeping. */}
         <section className="mt-8 space-y-3">
           <form action={signOutSvc}>
@@ -465,6 +507,13 @@ export default async function AccountPage({
               Log out
             </button>
           </form>
+          <p className="text-sm text-svc-ink/60">
+            Stuck on anything? The{" "}
+            <Link href={await svcPath("/help")} className="font-semibold text-svc-blue underline">
+              Help Centre
+            </Link>{" "}
+            walks every step with pictures.
+          </p>
           {subscription?.status === "active" && (
             <p className="text-sm text-svc-ink/60">
               Need to leave?{" "}

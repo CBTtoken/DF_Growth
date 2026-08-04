@@ -113,6 +113,14 @@ export default async function FaqPage() {
               <p className="mt-2 text-base leading-relaxed text-svc-ink/80">{f.a}</p>
             </div>
           ))}
+          <p className="text-center text-sm text-svc-ink/70">
+            Need more than quick answers? The{" "}
+            <Link href={await svcPath("/help")} className="font-semibold text-svc-blue underline">
+              Help Centre
+            </Link>{" "}
+            has step-by-step guides for joining, coupons, the draw and your
+            account.
+          </p>
           <div className="pt-4 text-center">
             <Link href={joinHref} className={svcBtnPrimary}>
               Join Smart Value Club
