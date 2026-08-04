@@ -87,26 +87,42 @@ function emailHtml(contact) {
   const unsubscribeUrl = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(contact.email)}&token=${token}`;
   const cta = `${SITE_URL}/pricing?utm_source=legacy-mailer&utm_medium=email&utm_campaign=legacy-2026-08`;
 
+  const katiso = `https://katisobiz.co.za/?utm_source=legacy-mailer&utm_medium=email&utm_campaign=legacy-2026-08`;
+
   const p = (text) => `<p style="font-size:15px;line-height:1.65;color:#1f2937;margin:0 0 16px;">${text}</p>`;
   const h = (text) => `<p style="font-size:16px;line-height:1.5;color:#111827;font-weight:700;margin:24px 0 8px;">${text}</p>`;
+  const ul = (items) =>
+    `<ul style="margin:0 0 16px;padding-left:20px;">${items
+      .map((i) => `<li style="font-size:15px;line-height:1.6;color:#1f2937;margin:0 0 8px;">${i}</li>`)
+      .join("")}</ul>`;
 
+  // Streamlined per Dewald, 4 August: bullets over paragraphs, and
+  // KatisoBiz linked by name. Batch one carried the long form; this is
+  // the format from batch two onwards.
   return `
 <div style="max-width:600px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;">
   <span style="display:none;max-height:0;overflow:hidden;">${PREHEADER}</span>
   ${p(greeting(contact))}
-  ${p("You registered with DigitalFlyer SA at some point, and then life got busy. Happens to all of us.")}
-  ${p("Here is why it is worth two minutes of your time now: we took the whole thing apart and rebuilt it. Not a new coat of paint. New everything, and every single decision came down to one question. Does it get you found, or does it get you paid?")}
+  ${p("You registered with DigitalFlyer SA at some point, and then life got busy. Two minutes, here is what changed: we took the whole thing apart and rebuilt it, and every decision came down to one question. Does it get you found, or does it get you paid?")}
   ${h("1. A page built to be found")}
-  ${p("Your own page, on your own address. Fast, clean, and built properly for Google, so when somebody types “plumber in Edenvale” at nine on a Sunday night there is something of yours to find. It carries the Meta tracking too, so if you ever run a Facebook campaign you can see exactly which ads brought people in.")}
-  ${p("Ten designs to choose from. Your colours, your logo, your photos, your own work on show. WhatsApp and Call buttons right at the top where the thumb already is.")}
-  ${p("An agency charges thousands and then charges you again to change a phone number. This is <strong>R100 a month</strong>, and you change it yourself from your phone in a minute.")}
-  ${h("2. Quote before you pull out of the driveway")}
-  ${p("KatisoBiz is your quote and invoice book, on your phone.")}
-  ${p("Build a quote in under a minute off your saved prices. Send it on WhatsApp from your own number with your own business name on it. Job done, one tap, it becomes an invoice. See exactly who owes you and send them a proper statement instead of an awkward message on a Friday.")}
-  ${p("<strong>Ten documents a month, free, forever, no card.</strong> R49 adds your logo, your customer list, reports and statements.")}
+  ${ul([
+    "Your own page on your own address, built properly for Google, with Meta tracking ready if you ever run ads",
+    "Ten designs, your colours, your logo, your photos, WhatsApp and Call buttons right at the top",
+    "<strong>R100 a month</strong>, and you change it yourself from your phone in a minute",
+  ])}
+  ${h(`2. <a href="${katiso}" style="color:#111827;">KatisoBiz</a>, your quote and invoice book`)}
+  ${ul([
+    "Build a quote in under a minute off your saved prices, send it on WhatsApp from your own number",
+    "One tap turns it into an invoice, and statements show exactly who owes you",
+    "<strong>Ten documents a month, free, forever, no card.</strong> R49 adds your logo, customer list, reports and statements",
+  ])}
   ${h("Selling as well as servicing?")}
-  ${p("The <strong>R180 plan</strong> adds bookings and a full shop. Customers pay you by card through Paystack, straight into your own account, and Bob Go handles the courier on your own account too. Both are yours, not ours, and we will help you set them up and connect them.")}
-  ${p("And The Board, opening shortly. Our community notice board. Your specials and your finished work in front of people who are looking. Costs nothing.")}
+  ${ul([
+    "The <strong>R180 plan</strong> adds bookings and a full shop",
+    "Card payments through Paystack straight into your own account, courier through your own Bob Go",
+    "Both accounts are yours, not ours, and we help you set them up and connect them",
+  ])}
+  ${p("And The Board, opening shortly. Our community notice board, your specials and your finished work in front of people who are looking. Costs nothing.")}
   ${p("<strong>Seven days free. No card, no catch.</strong> Five minutes on your phone and you are going.")}
   <p style="margin:28px 0;">
     <a href="${cta}" style="display:inline-block;background:#1081b8;color:#ffffff;font-size:15px;font-weight:700;padding:14px 28px;text-decoration:none;border-radius:8px;">Start your seven days</a>
