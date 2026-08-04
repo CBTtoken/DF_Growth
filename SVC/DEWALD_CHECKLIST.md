@@ -7,7 +7,16 @@ nothing today.**
 
 ---
 
-## STEP 1: The database (10 minutes, do first)
+## STEP 1: The database (DONE, nothing left to run here)
+
+**Status 5 August: complete.** Block A was run by Dewald on 4 August;
+blocks B through F turned out not to have landed and were applied by
+Claude on 5 August through the Supabase management API, then verified
+column by column. There is nothing left to run. The one standing rule
+remains: NEVER run Block A again, it seeds the packages and a re-run
+duplicates them. The blocks stay below for the record.
+
+## The original Step 1 instructions (for the record only)
 
 1. Go to supabase.com, log in, open the DF-Growth project.
 2. Left sidebar: SQL Editor, then New query.
