@@ -63,6 +63,43 @@ export function LocationMap({
 
   const isDark = anchor.sectionSurface === "dark";
 
+  if (anchor.locationLayout === "home-base") {
+    // Copperline anchor: a warm home-base panel rather than a dark dispatch
+    // board or a find-our-office split. The address is said the way a
+    // neighbour would say it, big and plain, on the theme's warm paper
+    // tone; the map rides along in a rounded frame with a copper seam,
+    // matching the card recipe's fixed copper.
+    return (
+      <section className="border-b border-gray-200 bg-[#faf7f2]">
+        <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
+          <div className="grid gap-8 md:grid-cols-[1.1fr_1fr] md:items-center md:gap-14">
+            <div>
+              <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
+                {eyebrowNumber} · Where to find us
+              </p>
+              <h2 className={`mt-3 text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl ${HEADING_FONT_CLASS[anchor.headingFont]}`}>
+                Our home base.
+              </h2>
+              <p className="mt-5 text-lg font-semibold leading-snug text-gray-800 sm:text-xl">{businessAddress}</p>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-gray-200 border-t-4 border-t-[#b87333] shadow-sm">
+              <iframe
+                title="Business location"
+                src={src}
+                width="100%"
+                height="288"
+                className="grayscale-[0.2]"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   if (anchor.locationLayout === "coverage-panel") {
     // Fieldwork anchor: the one deliberately dark band on an otherwise light
     // page — a dispatch-board moment near the foot, where "where we work"

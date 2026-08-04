@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench } from "lucide-react";
+import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench, Droplets } from "lucide-react";
 
 // Every "section" a template can arrange, beyond the hero (always first)
 // and the lead form (always last, since #lead-form is the CTA anchor every
@@ -31,7 +31,8 @@ export type TemplateId =
   | "multi-product"
   | "app-dashboard"
   | "dual-offer"
-  | "fieldwork";
+  | "fieldwork"
+  | "copperline";
 
 export type HeroVariant =
   | "default"
@@ -46,7 +47,8 @@ export type HeroVariant =
   | "timeline"
   | "showcase"
   | "duo"
-  | "jobcard";
+  | "jobcard"
+  | "pipeline";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -201,6 +203,28 @@ export const templates: TemplateMeta[] = [
     icon: Wrench,
     hero: "jobcard",
     sections: ["services", "howItWorks", "about", "gallery", "story", "packages", "trust", "location", "reviews"],
+  },
+  // Built for the third done-for-you client build (Molotsi Plumbers,
+  // Ficksburg) and the informal-market thesis behind it: the visitor is a
+  // neighbour on a phone, WhatsApp is how business actually starts, and the
+  // proof that matters is the member's own photos of real jobs. Where
+  // Fieldwork reads like an urgent contractor's job sheet, Copperline is
+  // the warmer neighbourhood-trades page: the copper line motif (the
+  // trade's own material) threads the hero, the services render as
+  // junctions along a pipe run, and the gallery is a wall of printed
+  // photos rather than an evidence file.
+  //
+  // Section order is proof-led on purpose: what we do, then the photo wall
+  // (this market's strongest trust signal), then who we are.
+  {
+    id: "copperline",
+    name: "Copperline",
+    archetype: "Warm trade · copper and navy",
+    description:
+      "For neighbourhood trades. WhatsApp-first, the member's own job photos as the proof wall, and a copper line running the page.",
+    icon: Droplets,
+    hero: "pipeline",
+    sections: ["services", "gallery", "about", "howItWorks", "story", "packages", "trust", "location", "reviews"],
   },
 ];
 

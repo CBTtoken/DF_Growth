@@ -93,6 +93,75 @@ export function PhotoGallerySection({
 
   const isDark = anchor.sectionSurface === "dark";
 
+  if (anchor.galleryLayout === "job-wall") {
+    // Copperline anchor: the member's own job photos as printed pictures on
+    // a wall — thick white borders, a slight alternating tilt that
+    // straightens on touch, no crops into squares. For the informal-market
+    // customer these photos ARE the business's credibility, so they get
+    // room and warmth rather than a filing-system treatment.
+    return (
+      <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} bg-[#faf7f2]`}>
+        <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
+          <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
+            {eyebrowNumber} · Our work
+          </p>
+          <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl">
+            Real jobs, photographed by us.
+          </h2>
+          <div className="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 sm:gap-7">
+            {photos.map((photo, i) => (
+              <button
+                key={photo.id}
+                type="button"
+                onClick={() => setOpenIndex(i)}
+                className={`group bg-white p-2 pb-3 shadow-md transition-transform duration-200 hover:rotate-0 hover:shadow-xl sm:p-2.5 sm:pb-4 ${
+                  i % 3 === 0 ? "-rotate-[1.25deg]" : i % 3 === 1 ? "rotate-[1.25deg]" : "-rotate-[0.5deg]"
+                }`}
+              >
+                <span className="relative block aspect-[4/3] overflow-hidden bg-gray-100">
+                  <Image
+                    src={`${storageBase}/${photo.storage_path}`}
+                    alt="A real job, photographed by the business"
+                    fill
+                    sizes="(min-width: 768px) 300px, 45vw"
+                    className="object-cover"
+                  />
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {openIndex !== null && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setOpenIndex(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenIndex(null)}
+              aria-label="Close"
+              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+            >
+              &times;
+            </button>
+            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
+              <Image
+                src={`${storageBase}/${photos[openIndex].storage_path}`}
+                alt="Work photo, enlarged"
+                fill
+                sizes="90vw"
+                className="object-contain"
+              />
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
+
   if (anchor.galleryLayout === "evidence-board") {
     // Fieldwork anchor: photos as job evidence, not a mood board. The first
     // photo runs wide at documentary scale, the rest tile beside it; every

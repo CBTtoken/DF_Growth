@@ -57,7 +57,7 @@ export const HEADING_FONT_CLASS: Record<HeadingFontKey, string> = {
   "mono-technical": "font-[family-name:var(--font-anchor-mono)]",
 };
 
-export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate";
+export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate" | "copper-seam";
 
 // "soft-shadow" is today's existing default card look, unchanged — every
 // other recipe is a genuinely different container treatment. "dark-panel"
@@ -81,9 +81,14 @@ export const CARD_RECIPE_CLASS: Record<CardRecipeId, string> = {
   // surfaces this recipe is used on; nothing about it depends on the
   // member's own colours.
   "steel-plate": "rounded-md border border-gray-300 bg-white shadow-[4px_4px_0_0_#e2e8f0]",
+  // Copperline build: a warm card with a soldered top seam. The seam is the
+  // theme's fixed copper, not the member's colour, the same way steel-plate
+  // fixes its steel: it is the theme's own material signature, and it reads
+  // correct whatever brand colours the member chose.
+  "copper-seam": "rounded-xl border border-gray-200 border-t-4 border-t-[#b87333] bg-white shadow-sm",
 };
 
-export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps" | "stencil-tag";
+export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps" | "stencil-tag" | "junction-tag";
 
 // "mono-numbered" is the exact byte-for-byte class every section component
 // uses today (font-mono text-sm font-semibold uppercase tracking-[0.2em]
@@ -99,6 +104,11 @@ export const EYEBROW_STYLE_CLASS: Record<EyebrowStyle, string> = {
   // Sized up after Dewald's live review (3 Aug): at text-xs with 0.28em
   // tracking the section labels were genuinely hard to read.
   "stencil-tag": "inline-flex items-center border-l-4 border-current pl-3 font-mono text-sm font-bold uppercase tracking-[0.18em] sm:text-base",
+  // Copperline build: a pipe-junction dot ahead of the label — a small
+  // ring in the eyebrow's own colour, like a fitting on a line. Reads
+  // hand-made rather than stencilled, which is the whole difference in
+  // register between this theme and Fieldwork.
+  "junction-tag": "inline-flex items-center gap-2.5 text-sm font-bold uppercase tracking-[0.18em] before:size-3 before:rounded-full before:border-[3px] before:border-current before:content-[''] sm:text-base",
 };
 
 export type SpacingDensity = "airy" | "standard" | "tight";
@@ -149,7 +159,7 @@ export interface TemplateAnchor {
   // default JSX shape."
   packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack";
   reviewsLayout?: "list-detail" | "hero-stat";
-  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index";
+  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index" | "junction-line";
   // Dark Mode pilot rebuild: TrustBadges previously had no layout axis at
   // all (a deliberate earlier decision to keep the axis count bounded) —
   // reversed here because direct client feedback named structural sameness
@@ -163,8 +173,8 @@ export interface TemplateAnchor {
   // As with every other axis, undefined means "existing default JSX".
   aboutLayout?: "split-grid" | "statement";
   howItWorksLayout?: "cards" | "jobline";
-  locationLayout?: "map-split" | "coverage-panel";
-  galleryLayout?: "square-grid" | "evidence-board";
+  locationLayout?: "map-split" | "coverage-panel" | "home-base";
+  galleryLayout?: "square-grid" | "evidence-board" | "job-wall";
 }
 
 export const anchors: Record<TemplateId, TemplateAnchor> = {
@@ -297,6 +307,24 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     howItWorksLayout: "jobline",
     locationLayout: "coverage-panel",
     galleryLayout: "evidence-board",
+  },
+  // Copperline: the warm neighbourhood-trades anchor. Shares Fieldwork's
+  // condensed display face (both are trades) but nothing else: rounded
+  // copper-seam cards against steel-plate's hard offset stamps, a
+  // hand-made junction-dot eyebrow against the stencil, and its own three
+  // structural signatures — services as junctions on a pipe run, the
+  // gallery as a wall of printed photos, and location as a warm home-base
+  // panel instead of the dark dispatch board.
+  copperline: {
+    id: "copperline",
+    headingFont: "display-condensed",
+    cardRecipe: "copper-seam",
+    eyebrowStyle: "junction-tag",
+    spacing: "standard",
+    sectionSurface: "light-default",
+    servicesLayout: "junction-line",
+    galleryLayout: "job-wall",
+    locationLayout: "home-base",
   },
 };
 

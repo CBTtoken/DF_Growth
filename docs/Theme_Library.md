@@ -92,3 +92,41 @@ for done-for-you builds; nothing changes for members on other templates.
 urgent, physical problem. Plumbing, pest control, electrical, rubble removal,
 paving, roofing, tree felling. The visitor has the problem right now and is
 holding a phone; the page behaves accordingly.
+
+### Copperline (`copperline`)
+
+- **Added:** 4 August 2026, third build through the Growth Build Kit
+- **Built for:** Molotsi Plumbers, plumbing, tiling, ceilings and building
+  maintenance in Zone 6, Ficksburg, working across the Free State. The first
+  build from the KatisoBiz three-months-free cohort and the reference case
+  for the informal-market thesis
+  (`DigitalFlyer/Clients/DigitalFlyer_Market_Thesis.md`).
+- **Hero:** `pipeline`
+- **Anchor:** display-condensed headings (shared with Fieldwork, both are
+  trades) but nothing else shared: rounded `copper-seam` cards (a fixed
+  copper top seam, the theme's own material), a hand-made `junction-tag`
+  eyebrow (ring dot ahead of the label), standard spacing, light surface
+  with a warm paper tone on the photo and location sections.
+
+**What it does that none of the others do.** This is the first hero where
+**WhatsApp is the primary action, in WhatsApp's own green** — for the
+informal-market visitor that colour reads "message them now" faster than any
+brand button, and the number IS the business. Calling is second, the quote
+form third. The copper line is the structural signature: it enters the hero
+from the page edge carrying the business name like a tag on a pipe, and the
+services render as junctions along a vertical pipe run (`junction-line`).
+The gallery is a `job-wall`: the member's own photos as tilted prints with
+thick white borders, because for this market the owner's watermarked job
+photos are the credibility, and they get warmth rather than a filing-system
+treatment. Location is a `home-base` panel: the address said the way a
+neighbour would say it, no dark dispatch board.
+
+**Register, versus Fieldwork:** Fieldwork is the urgent contractor
+dispatched to a problem; Copperline is the neighbourhood trade you WhatsApp
+because someone gave you the number. Same customer holding a phone, opposite
+temperature.
+
+**Reuse it for:** township and small-town trades of the informal market:
+plumbers, builders, tilers, painters, welders, mechanics, hairdressers,
+caterers. Any member whose photos are phone photos of real jobs and whose
+customers arrive by referral.

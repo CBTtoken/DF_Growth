@@ -143,6 +143,27 @@ export function ServicesList({
         ))}
       </ol>
     );
+  } else if (layout === "junction-line") {
+    // Copperline anchor: the services are junctions on a pipe run — one
+    // vertical line in the member's own colour with a ring fitting at each
+    // service. The line is the theme's structural signature and it costs
+    // nothing on a slow connection: two borders and a set of dots.
+    body = (
+      <ol className="relative mt-10 ml-1.5 max-w-2xl border-l-[3px] pb-1" style={{ borderColor: `${accentColor}66` }}>
+        {services.map((service, i) => (
+          <li key={i} className="relative pl-8 pb-6 last:pb-0">
+            <span
+              aria-hidden
+              className="absolute -left-[10.5px] top-1 size-[18px] rounded-full border-[4px] bg-white"
+              style={{ borderColor: accentColor }}
+            />
+            <span className={`text-base font-semibold leading-snug sm:text-lg ${isDark ? "text-gray-200" : "text-gray-800"}`}>
+              {service}
+            </span>
+          </li>
+        ))}
+      </ol>
+    );
   } else if (layout === "checklist-compact") {
     // feature-grid / app-dashboard anchors: a dense single-column list
     // rather than a grid of cards — more services readable at a glance,
@@ -185,10 +206,14 @@ export function ServicesList({
     <section id="services" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-gray-50"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · {layout === "work-index" ? "Scope of work" : "What we offer"}
+          {eyebrowNumber} · {layout === "work-index" ? "Scope of work" : layout === "junction-line" ? "What we do" : "What we offer"}
         </p>
         <h2 className={`mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${headingClass}`}>
-          {layout === "work-index" ? "The work we take on." : "Everything you need, in one place."}
+          {layout === "work-index"
+            ? "The work we take on."
+            : layout === "junction-line"
+              ? "Call us for any of this."
+              : "Everything you need, in one place."}
         </h2>
 
         {body}
