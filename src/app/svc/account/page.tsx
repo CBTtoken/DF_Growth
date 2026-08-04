@@ -345,28 +345,36 @@ export default async function AccountPage({
           </p>
         )}
 
-        {/* This month's benefits. */}
-        <section className="mt-6">
-          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-            <h2 className="font-svc-heading text-xl font-bold">Your benefits for {monthName}</h2>
-            <Link href={couponsHref} className="text-sm font-semibold text-svc-blue underline">
-              My coupons
-            </Link>
-          </div>
-          {issues.length === 0 ? (
-            <p className="mt-3 border-2 border-svc-ink/15 bg-white/60 p-5 text-base leading-relaxed text-svc-ink/75">
-              {paidUp
-                ? "Your benefits for this month are on their way and land with the next daily issue. We will email you the moment they are ready."
-                : "Benefits are issued to paid-up members on the 1st of every month. Complete your membership and yours arrive with the next issue."}
-            </p>
-          ) : (
-            <div className="mt-3 space-y-4">
-              {issues.map((issue) => (
-                <BenefitCard key={issue.id} issue={issue} back="/account" moxiePathPrefix={moxieHref} couponPortalUrl={portalUrl} />
-              ))}
-            </div>
-          )}
-        </section>
+        {/* This month's OTHER benefits: coupons live behind their tile
+            and the magazine has its own card, so listing them here again
+            just made the dashboard long (Dewald's cleanup ask, 5 August).
+            What remains is the education set and anything new a package
+            adds later. */}
+        {(() => {
+          const other = issues.filter(
+            (i) => i.benefit?.benefit_type !== "coupon_pack" && i.benefit?.benefit_type !== "magazine_access"
+          );
+          return (
+            <section className="mt-6">
+              <h2 className="font-svc-heading text-xl font-bold">
+                Your education benefits for {monthName}
+              </h2>
+              {other.length === 0 ? (
+                <p className="mt-3 border-2 border-svc-ink/15 bg-white/60 p-5 text-base leading-relaxed text-svc-ink/75">
+                  {paidUp
+                    ? "This month's benefits are on their way and land with the next daily issue. We will email you the moment they are ready."
+                    : "Benefits are issued to paid-up members on the 1st of every month. Complete your membership and yours arrive with the next issue."}
+                </p>
+              ) : (
+                <div className="mt-3 space-y-4">
+                  {other.map((issue) => (
+                    <BenefitCard key={issue.id} issue={issue} back="/account" moxiePathPrefix={moxieHref} couponPortalUrl={portalUrl} />
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* The magazine, always reachable for an entitled member. SVC
             palette only; the Moxie brand is named in words, never in its
