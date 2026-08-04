@@ -16,6 +16,7 @@ import { generateLandingCopy } from "@/lib/ai/draft-copy";
 import { getIndustryPhoto } from "@/lib/images/pexels";
 import { geocodeAddress, toGeographyPoint } from "@/lib/geo/geocode";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
+import { sendEmail } from "@/lib/email/resend";
 import { isRateLimited } from "@/lib/rate-limit";
 import { trackBetaEvent } from "@/lib/metrics/track";
 
@@ -54,7 +55,23 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
     return { error: { _form: ["Too many attempts, please wait a minute and try again."] } };
   }
 
+  // The R450 done-for-you tick (4 August 2026). Only touched when the form
+  // actually offered it (the wizard does, the dashboard's reuse of this
+  // form does not), so a dashboard save can never silently clear a
+  // request. The timestamp is when they first asked; re-saving with the
+  // box still ticked never rewrites it, unticking withdraws it, and
+  // Dewald gets one email per genuine new request, never one per save.
+  const offerShown = formData.get("setupServiceOffered") === "1";
+  const wantsSetupService = formData.get("setupService") === "on";
+
   const admin = createAdminClient();
+  const { data: before } = await admin
+    .from("growth_clients")
+    .select("setup_service_requested_at")
+    .eq("id", client.id)
+    .single();
+  const alreadyRequested = Boolean(before?.setup_service_requested_at);
+
   const { data: growthClient, error } = await admin
     .from("growth_clients")
     .update({
@@ -62,12 +79,32 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
       contact_email: parsed.data.contactEmail,
       call_phone: parsed.data.callPhone || null,
       whatsapp_phone: parsed.data.whatsappPhone || null,
+      ...(offerShown
+        ? {
+            setup_service_requested_at: wantsSetupService
+              ? (before?.setup_service_requested_at ?? new Date().toISOString())
+              : null,
+          }
+        : {}),
     })
     .eq("id", client.id)
     .select("slug")
     .single();
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  if (wantsSetupService && !alreadyRequested) {
+    // Best effort: a lost notification must never fail the signup step.
+    // The admin flag is the durable record either way.
+    const { ok, error: mailError } = await sendEmail({
+      to: "info@digitalflyer.co.za",
+      subject: `Done-for-you request: ${parsed.data.businessName}`,
+      html: `<p style="font-size:15px;line-height:1.6;">Good day Dewald,</p>
+<p style="font-size:15px;line-height:1.6;"><strong>${parsed.data.businessName}</strong> (${parsed.data.contactEmail}) ticked the R450 build-it-for-me option during signup just now.</p>
+<p style="font-size:15px;line-height:1.6;">Next step is yours: make contact, send the R450 payment link, and run the Growth Build Kit. The request also shows on their client page in admin.</p>`,
+    });
+    if (!ok) console.error("Setup service notification failed", mailError);
+  }
 
   revalidatePath("/onboard");
   if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);

@@ -8,6 +8,8 @@ export function Step1BusinessInfo({
   initialContactEmail,
   initialCallPhone,
   initialWhatsappPhone,
+  initialSetupServiceRequested = false,
+  showSetupServiceOffer = false,
   onSuccess,
   submitLabel = "Continue",
 }: {
@@ -15,6 +17,14 @@ export function Step1BusinessInfo({
   initialContactEmail: string;
   initialCallPhone: string;
   initialWhatsappPhone: string;
+  initialSetupServiceRequested?: boolean;
+  /**
+   * The R450 offer renders only where it is passed true (the signup
+   * wizard). The dashboard reuses this form without it, and the save
+   * action only touches the request when the form actually offered it,
+   * so a dashboard save can never silently clear a request.
+   */
+  showSetupServiceOffer?: boolean;
   onSuccess: () => void;
   submitLabel?: string;
 }) {
@@ -93,6 +103,31 @@ export function Step1BusinessInfo({
         <p className="text-xs text-red-600">{state.error.whatsappPhone[0]}</p>
       )}
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
+
+      {/* The R450 done-for-you offer, 4 August 2026. An offer card rather
+          than a bare checkbox, because it is a product, not a preference.
+          Ticking it only records the request; nothing is charged here, and
+          the copy says exactly what happens next. */}
+      {showSetupServiceOffer && (
+      <>
+      <input type="hidden" name="setupServiceOffered" value="1" />
+      <label className="mt-2 flex cursor-pointer items-start gap-3 rounded-2xl border border-brand/30 bg-brand/5 p-4 transition hover:border-brand/50">
+        <input
+          type="checkbox"
+          name="setupService"
+          defaultChecked={initialSetupServiceRequested}
+          className="mt-1 size-4 accent-[#1081b8]"
+        />
+        <span className="text-sm text-gray-700">
+          <span className="font-semibold text-ink">No time, or want an extra creative touch? We build it for you.</span>{" "}
+          Once-off R450: finish signing up, send us your information, and we set up the whole
+          page for you, with a step-by-step guide so managing it yourself afterwards is easy.
+          Tick this and we will be in touch within a day to get going and arrange the once-off
+          payment. Nothing is charged now.
+        </span>
+      </label>
+      </>
+      )}
 
       <button
         type="submit"

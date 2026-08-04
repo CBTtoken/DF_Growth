@@ -32,6 +32,33 @@ export function HomePricing() {
             />
           ))}
         </div>
+
+        {/* The R450 done-for-you offer, 4 August 2026. Sits directly under
+            the packages because the moment somebody compares tiers is the
+            moment they think "this looks like effort". Same words as the
+            legacy mailer, so a mailer click lands on a page that repeats
+            the offer it made. */}
+        <div className="mt-5 rounded-2xl border border-brand/25 bg-brand/5 px-5 py-5 sm:px-7">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div>
+              <p className="text-base font-bold text-ink">
+                No time, or want an extra creative touch? We build it for you.
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-neutral-mid">
+                Once-off <strong className="text-ink">R450</strong>: pick your package, tick{" "}
+                <em>Build it for me</em> when you sign up, and send us your information. We set up
+                the whole page and hand it over with a step-by-step guide, so running it yourself
+                afterwards is easy. Nothing extra is charged at signup.
+              </p>
+            </div>
+            <a
+              href="#pricing"
+              className="inline-flex shrink-0 items-center justify-center rounded-full border border-brand px-5 py-2.5 text-sm font-semibold text-brand transition hover:bg-brand hover:text-white"
+            >
+              Pick a package to start
+            </a>
+          </div>
+        </div>
       </div>
     </section>
   );

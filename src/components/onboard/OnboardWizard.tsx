@@ -37,6 +37,7 @@ export function OnboardWizard({
     contactEmail: string;
     callPhone: string;
     whatsappPhone: string;
+    setupServiceRequested: boolean;
     province: string;
     industry: string;
     businessAddress: string;
@@ -139,6 +140,8 @@ export function OnboardWizard({
           initialContactEmail={initialData.contactEmail}
           initialCallPhone={initialData.callPhone}
           initialWhatsappPhone={initialData.whatsappPhone}
+          initialSetupServiceRequested={initialData.setupServiceRequested}
+          showSetupServiceOffer
           onSuccess={() => setStep(2)}
         />
       )}

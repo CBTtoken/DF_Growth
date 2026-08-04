@@ -99,6 +99,26 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
           </a>
         )}
 
+        {/* The R450 done-for-you request, loudly, because it is money on
+            the table and a person waiting to hear from us. */}
+        {client.setup_service_requested_at && (
+          <div className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4">
+            <p className="text-sm font-bold text-amber-900">
+              Wants us to build it: R450 once-off, requested{" "}
+              {new Date(client.setup_service_requested_at).toLocaleString("en-ZA", {
+                day: "numeric",
+                month: "long",
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+            <p className="mt-1 text-sm text-amber-800">
+              Make contact, arrange the R450, and run the Growth Build Kit. The signup promise is
+              contact within a day.
+            </p>
+          </div>
+        )}
+
         <Card className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Field label="Plan" value={client.plan} />
           <Field label="Billing cycle" value={client.billing_cycle} />
