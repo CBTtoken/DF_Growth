@@ -24,6 +24,16 @@ type LandingPageRow = {
   page_type: string;
   custom_page_key: string | null;
 };
+// A member can have more than one published landing_pages row: Buffelskop
+// carried a custom row and a template row side by side, and taking [0] from
+// an UNORDERED Postgrest embed let the generic template silently replace
+// his hand-built page. Found live, 4 August 2026, when the wrong hero
+// showed up in a home page screenshot. A custom row always wins; embed
+// order must never decide what a visitor sees.
+function pickLandingPage<T extends { page_type: string }>(rows: T[]): T {
+  return rows.find((row) => row.page_type === "custom") ?? rows[0];
+}
+
 type TestimonialRow = { id: string; author_name: string; quote: string; rating: number | null };
 type PhotoRow = { id: string; storage_path: string };
 type BookableUnitRow = PublicBookableUnit;
@@ -109,7 +119,7 @@ export async function generateMetadata({
   // comes back as an array even filtered down to one row by the query
   // above; `!inner` + the dot-filter already guarantees at least one match.
   const landingPages = client.landing_pages as unknown as { page_type: string; custom_page_key: string | null }[];
-  const customCheck = landingPages[0];
+  const customCheck = pickLandingPage(landingPages);
   if (customCheck?.page_type === "custom") {
     const meta = getCustomPageMeta(customCheck.custom_page_key);
     if (!meta) return {};
@@ -254,7 +264,7 @@ export default async function ClientLandingPage({
   // `landing_pages` is guaranteed non-empty by `!inner` + the dot-filter
   // above; everything else defaults to `[]` the same way the old
   // `?? []` fallbacks did.
-  const landingPage = (client.landing_pages as unknown as LandingPageRow[])[0];
+  const landingPage = pickLandingPage(client.landing_pages as unknown as LandingPageRow[]);
   const testimonials = client.testimonials as unknown as TestimonialRow[];
   const photos = client.client_photos as unknown as PhotoRow[];
   const bookableUnits = client.bookable_units as unknown as BookableUnitRow[];
