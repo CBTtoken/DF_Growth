@@ -77,7 +77,10 @@ function greeting(contact) {
   return "Good day,";
 }
 
-const SUBJECT = "You signed up with DigitalFlyer once. We rebuilt the whole thing.";
+// Dewald's revised copy, 4 August 2026, verbatim. The subject correction
+// ("DigitalFlyer SA", not "DigitalFlyer") came in the same message.
+const SUBJECT = "We rebuilt DigitalFlyer SA from the ground up";
+const PREHEADER = "A page built to be found, and a quote book in your pocket. Seven days free, no card.";
 
 function emailHtml(contact) {
   const token = unsubscribeToken(contact.email);
@@ -89,20 +92,22 @@ function emailHtml(contact) {
 
   return `
 <div style="max-width:600px;margin:0 auto;padding:24px;font-family:Arial,Helvetica,sans-serif;">
+  <span style="display:none;max-height:0;overflow:hidden;">${PREHEADER}</span>
   ${p(greeting(contact))}
-  ${p("You signed up with DigitalFlyer SA once and then life happened. Fair enough.")}
-  ${p("On our side, we took the whole thing apart and built it again. Not a new coat of paint. New everything, and every decision came down to one question: does it get you found, or does it get you paid?")}
-  ${h("A page that goes looking for work")}
-  ${p("Your own page on your own address, built so Google can read it properly and put you in front of somebody typing “plumber in Boksburg” at nine on a Sunday night. Ten designs, your colours, your photos, your own work on show. WhatsApp and Call buttons right at the top where the customer’s thumb already is.")}
-  ${p("An agency will build you a website for thousands and then charge you again every time you want to change a phone number. This is <strong>R100 a month</strong> and you change it yourself, from your phone, in a minute.")}
-  ${p("Ready to sell off the page as well? <strong>R180 a month</strong> adds bookings and a shop, with delivery through Bob Go.")}
-  ${h("KatisoBiz: quote before you leave the driveway")}
-  ${p("Build a quote on your phone in under a minute. Send it on WhatsApp from your own number with your own name on it. Job done, one tap, it is an invoice.")}
-  ${p("<strong>Ten documents a month, free, forever. No card.</strong> For R49 you get your own logo on them, your saved price list, your customer list, and statements so you can chase what you are owed properly instead of an awkward WhatsApp on a Friday afternoon.")}
-  ${p("If you are on a DigitalFlyer plan, that R49 is already included. You do not pay twice.")}
-  ${h("The Board")}
-  ${p("Our community notice board, opening shortly. Your specials, your finished work, your business in front of people who are actually looking. Costs nothing.")}
-  ${p("<strong>Seven days free. No card, no catch.</strong> Five minutes on your phone and you are up.")}
+  ${p("You registered with DigitalFlyer SA at some point, and then life got busy. Happens to all of us.")}
+  ${p("Here is why it is worth two minutes of your time now: we took the whole thing apart and rebuilt it. Not a new coat of paint. New everything, and every single decision came down to one question. Does it get you found, or does it get you paid?")}
+  ${h("1. A page built to be found")}
+  ${p("Your own page, on your own address. Fast, clean, and built properly for Google, so when somebody types “plumber in Edenvale” at nine on a Sunday night there is something of yours to find. It carries the Meta tracking too, so if you ever run a Facebook campaign you can see exactly which ads brought people in.")}
+  ${p("Ten designs to choose from. Your colours, your logo, your photos, your own work on show. WhatsApp and Call buttons right at the top where the thumb already is.")}
+  ${p("An agency charges thousands and then charges you again to change a phone number. This is <strong>R100 a month</strong>, and you change it yourself from your phone in a minute.")}
+  ${h("2. Quote before you pull out of the driveway")}
+  ${p("KatisoBiz is your quote and invoice book, on your phone.")}
+  ${p("Build a quote in under a minute off your saved prices. Send it on WhatsApp from your own number with your own business name on it. Job done, one tap, it becomes an invoice. See exactly who owes you and send them a proper statement instead of an awkward message on a Friday.")}
+  ${p("<strong>Ten documents a month, free, forever, no card.</strong> R49 adds your logo, your customer list, reports and statements.")}
+  ${h("Selling as well as servicing?")}
+  ${p("The <strong>R180 plan</strong> adds bookings and a full shop. Customers pay you by card through Paystack, straight into your own account, and Bob Go handles the courier on your own account too. Both are yours, not ours, and we will help you set them up and connect them.")}
+  ${p("And The Board, opening shortly. Our community notice board. Your specials and your finished work in front of people who are looking. Costs nothing.")}
+  ${p("<strong>Seven days free. No card, no catch.</strong> Five minutes on your phone and you are going.")}
   <p style="margin:28px 0;">
     <a href="${cta}" style="display:inline-block;background:#1081b8;color:#ffffff;font-size:15px;font-weight:700;padding:14px 28px;text-decoration:none;border-radius:8px;">Start your seven days</a>
   </p>
