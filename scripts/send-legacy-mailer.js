@@ -31,7 +31,16 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SERVICE_KEY = process.env.SUPABASE_SECRET_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const APP_ENCRYPTION_KEY = process.env.APP_ENCRYPTION_KEY;
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://growth.digitalflyersa.co.za";
+// Learned the hard way on 4 August 2026: this used to inherit
+// NEXT_PUBLIC_SITE_URL from the local environment, which is
+// http://localhost:3002 on the dev machine, and 1,886 emails went out with
+// unsubscribe and call-to-action links nobody on earth could open. An
+// email is a public artefact; its links must never depend on where the
+// script happened to run. Hardcoded, and localhost is refused outright.
+const SITE_URL = "https://growth.digitalflyersa.co.za";
+if (/localhost|127\.0\.0\.1/.test(SITE_URL)) {
+  throw new Error("SITE_URL points at localhost; refusing to build emails with unreachable links.");
+}
 // The dedicated marketing identity, e.g. "Dewald from DigitalFlyer SA
 // <dewald@mail.digitalflyersa.co.za>". Deliberately has no fallback: the
 // whole point of the separate domain is that a marketing campaign can never
