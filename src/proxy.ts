@@ -133,6 +133,37 @@ export function proxy(request: NextRequest) {
     return response;
   }
 
+  // Old Good, Jordan's demo thrift shop (Jordan/HANDOFF_old_good_demo.md)
+  // on its own domain. The whole experience is one page, so the root serves
+  // the member page and any other path goes home. Noindexed at the header
+  // for the same reason the member record is unlisted: the stock is sample
+  // data, and a search engine should meet this shop the day it is real,
+  // not before. Drop the header when Jordan says yes and the shop goes live
+  // for real.
+  if (firstLabel === "oldgood" || host === "www.oldgood.co.za") {
+    const { pathname } = request.nextUrl;
+
+    // API routes and files with an extension are never rewritten, same
+    // rule as every other host branch in this file.
+    if (pathname.startsWith("/api/")) return NextResponse.next();
+    if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
+      return NextResponse.next();
+    }
+    if (SHARED_LEGAL_PATHS.has(pathname)) return NextResponse.next();
+
+    if (pathname === "/" || pathname === "/old-good") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/old-good";
+      const response = NextResponse.rewrite(url);
+      response.headers.set("X-Robots-Tag", NOINDEX);
+      return response;
+    }
+
+    const response = NextResponse.redirect(new URL("/", request.url));
+    response.headers.set("X-Robots-Tag", NOINDEX);
+    return response;
+  }
+
   // Moxie Magazine, the third product on this application. moxiemag.co.za is
   // an additional domain on the same Vercel project, rewritten to /moxie the
   // same way katisobiz.co.za is rewritten to /bizup.
