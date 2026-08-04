@@ -4,15 +4,19 @@
 
 ---
 
-## STANDING DECISIONS (apply to every item below)
+## HARD RULES (unchanged house law, apply to everything)
 
-- **The market thesis governs.** The customer is the informal-market operator; we think for them. The test: could Henry Molotsi use it without anyone explaining it?
-- **Light-first design.** Dewald, 4 Aug: dark sites read difficult and need exceptional imagery this market does not have. Dark is allowed as an accent (a hero field, a band), never the page.
-- **No invented facts, no invented numbers, no fake social proof.** House rule, absolute. The reference sites' broken "0 projects" counters are the cautionary tale.
+- **No invented facts, no invented numbers, no fake social proof.** Absolute. The reference sites' broken "0 projects" counters are the cautionary tale.
 - **AI or stock images must never pose as the member's own work.** Ambient and decorative only; credibility photos are always the member's real ones.
 - **URL permanence.** Member URLs never change or break. New pages may be added; existing ones never move. `previous_slugs` handles any renames.
+- **Member payments never route through DigitalFlyer's own account.**
 - **Every done-for-you build follows the Growth Build Kit** and adds or reuses a Theme Library entry with its "what no other theme does" sentence.
-- **Anti-sameness rule:** no two members in the same industry and area on the same theme.
+
+## DEWALD'S DESIGN CONSIDERATIONS (weigh these, do not enforce them blindly — his words, 4 Aug: "don't let this become a standard strict rule, just something we should consider")
+
+- **The market thesis** is the lens: the customer is the informal-market operator; we think for them. The test: could Henry Molotsi use it without anyone explaining it?
+- **Lean light.** Dark sites read difficult and need exceptional imagery this market rarely has. A dark hero or band is fine; a dark page needs a reason.
+- **Avoid sameness deliberately.** A useful heuristic, not a law: two members in the same industry and area should not look like clones; reach for a different theme or grow the library when they would.
 
 ## 1. THE TEN REDOS + THE MEDIA LIBRARY (one sprint, they feed each other)
 
