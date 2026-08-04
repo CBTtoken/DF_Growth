@@ -105,6 +105,44 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.8,
   }));
 
+  // Shop audit, 4 Aug 2026: the product page is the indexable unit the shop
+  // handoff was built around ("what gets indexed, what gets sent in a
+  // WhatsApp message"), and neither storefronts nor product pages were
+  // listed here. Custom-page members are excluded the same way the live
+  // route excludes them: their /shop 404s (Standing 365's personalised
+  // order form is its own page), so listing it would invite a crawler to a
+  // dead URL.
+  const { data: shopClients } = await admin
+    .from("growth_clients")
+    .select("slug, landing_pages!inner(page_type), shop_products(slug, status, created_at)")
+    .eq("status", "active")
+    .eq("shop_enabled", true)
+    .not("slug", "is", null);
+
+  const shopEntries: MetadataRoute.Sitemap = (shopClients ?? [])
+    .filter((c) => {
+      const pages = c.landing_pages as unknown as { page_type: string }[];
+      return !pages.some((p) => p.page_type === "custom");
+    })
+    .flatMap((c) => {
+      const products = (c.shop_products as unknown as { slug: string; status: string; created_at: string }[]) ?? [];
+      const active = products.filter((p) => p.status === "active");
+      if (active.length === 0) return [];
+      return [
+        {
+          url: `${siteUrl}/${c.slug}/shop`,
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        },
+        ...active.map((p) => ({
+          url: `${siteUrl}/${c.slug}/shop/${p.slug}`,
+          lastModified: p.created_at ?? undefined,
+          changeFrequency: "weekly" as const,
+          priority: 0.7,
+        })),
+      ];
+    });
+
   // List Your Event Sec 5: "built to be found on Google the same way every
   // other part of Growth is" — every published, still-upcoming event gets
   // listed the same way an active client page does, since an individual
@@ -188,6 +226,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${siteUrl}/pricing`,
       changeFrequency: "weekly",
       priority: 0.9,
+    },
+    // Search Console review, 4 Aug 2026: the two hub pages that link every
+    // member page were never listed here, which undersells the pages this
+    // sitemap exists to promote — a crawler weighs a URL partly by who
+    // links to it, and these are the internal linkers.
+    {
+      url: `${siteUrl}/marketplace`,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/shop`,
+      changeFrequency: "daily",
+      priority: 0.8,
     },
     {
       url: `${siteUrl}/how-it-works`,
