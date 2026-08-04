@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { RealOnlinePower } from "@/components/home/RealOnlinePower";
 
 const PAGE_TITLE = "How It Works";
 const PAGE_DESCRIPTION =
@@ -234,6 +235,34 @@ export default function HowItWorksPage() {
               See the full FAQ →
             </Link>
           </p>
+        </div>
+      </section>
+
+      {/* Home page split handoff, 4 Aug 2026: "This Isn't Just A Webpage"
+          (the technical and SEO groundwork) moved here from the front page,
+          which now keeps to one job. Same section, same words; the mock
+          dashboard it used to carry is gone per the same handoff's
+          no-invented-numbers rule. */}
+      <RealOnlinePower />
+
+      {/* KatisoBiz Nomads, moved here from the front page's "what you also
+          get" section per the same handoff. */}
+      <section className="border-t border-gray-100 bg-white px-4 py-12 sm:px-6">
+        <div className="mx-auto max-w-4xl text-center">
+          <span className="font-badge text-xs uppercase tracking-widest text-brand">Also Included</span>
+          <h2 className="mt-2 font-display text-2xl uppercase tracking-wide text-ink">
+            KatisoBiz Nomads
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-base text-gray-600">
+            Every membership includes the KatisoBiz Nomads community: a private network of South
+            African business owners, with deals, support and real conversations.
+          </p>
+          <Link
+            href="/katisobiz-nomads"
+            className="mt-3 inline-block text-sm font-semibold text-brand underline-offset-2 hover:underline"
+          >
+            See what the community is about →
+          </Link>
         </div>
       </section>
 

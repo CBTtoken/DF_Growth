@@ -176,10 +176,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }
 
   return [
+    // Home page split, 4 Aug 2026: "/" is a real page now (it used to
+    // permanent-redirect to /pricing) and takes over as the top entry;
+    // /pricing stays listed at its existing URL with the full plan detail.
+    {
+      url: siteUrl,
+      changeFrequency: "weekly",
+      priority: 1,
+    },
     {
       url: `${siteUrl}/pricing`,
       changeFrequency: "weekly",
-      priority: 1,
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/how-it-works`,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${siteUrl}/booking-and-shop`,
+      changeFrequency: "monthly",
+      priority: 0.6,
     },
     {
       url: `${siteUrl}/events`,

@@ -1,46 +1,27 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { MarketingHeader } from "@/components/brand/MarketingHeader";
 import { SiteFooter } from "@/components/SiteFooter";
-import { GetInTouchSection } from "@/components/marketing/GetInTouchSection";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { Hero } from "@/components/home/Hero";
-import { WhyChoose } from "@/components/home/WhyChoose";
-import { HowItWorks } from "@/components/home/HowItWorks";
-import { RealOnlinePower } from "@/components/home/RealOnlinePower";
-import { SoundFamiliar } from "@/components/home/SoundFamiliar";
-import { MostVisitedPages, SHOWCASE_SLUGS } from "@/components/home/MostVisitedPages";
 import { HomePricing } from "@/components/home/HomePricing";
-import { DoMore } from "@/components/home/DoMore";
-import { WhatYouGet } from "@/components/home/WhatYouGet";
-import { FinalCTA } from "@/components/home/FinalCTA";
+import { WhyChoose } from "@/components/home/WhyChoose";
 
-// DigitalFlyer Growth's own home page. "/" permanent-redirects here, so this
-// is the site's landing page. Redesigned 2026-07-24 from a Bolt design,
-// ported into src/components/home/*. The real functional pieces (the header
-// with its Meta-Pixel consent gate, the footer, the TierCard signup forms
-// inside HomePricing, and the GetInTouch contact form) are reused, not
-// rebuilt. Every home-page photo is centralised in src/lib/home/media.ts so
-// images can be swapped without touching a component.
-//
-// Deliberately NOT rendered here yet (but kept in the codebase): the real
-// featured-testimonials credibility block (HomepageCredibilitySection). The
-// Bolt design has no social-proof section; adding one back is the most
-// likely first tweak.
+// The pricing page, and only the pricing page. Home page split handoff,
+// 4 August 2026: this URL used to be the site's entire front page doing
+// five jobs at once; the home page now lives at "/" and this page keeps
+// the existing URL (so nothing already shared breaks) and receives the
+// full detail: both plans with every inclusion, the monthly and annual
+// toggle inside the cards, the build-it-for-me offer, the Enterprise line,
+// the terms checkboxes and marketing opt-in inside the signup forms, and a
+// link to the FAQ.
 
-const PAGE_TITLE = "Build Your Presence. Grow Your Business.";
+const PAGE_TITLE = "Pricing";
 const PAGE_DESCRIPTION =
-  "DigitalFlyer helps South African businesses build a professional online presence, connect with customers, generate leads and grow, all from one place.";
+  "DigitalFlyer Growth plans in plain language: Foundation from R100 a month, Growth from R180 a month, both starting with a free 7-day trial, no card required.";
 
 export const metadata: Metadata = {
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
   alternates: { canonical: "/pricing" },
-  // Site audit, 28 July 2026: this page is Growth's home page, and every
-  // share of it appeared as a bare link. Overriding openGraph and twitter
-  // replaces the root layout's blocks wholesale, images and card type
-  // included, so naming the title and description here silently dropped
-  // both. Restated rather than inherited, because a partial override is
-  // what caused it.
   openGraph: {
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
@@ -57,35 +38,40 @@ export const metadata: Metadata = {
 
 export const revalidate = 60;
 
-export default async function PricingPage() {
-  // Load the real captured screenshots for exactly the three curated
-  // showcase pages (by their real slugs), so a card always shows the actual
-  // page rather than depending on those pages topping the page-view ranking.
-  const admin = createAdminClient();
-  const { data: showcaseClients } = await admin
-    .from("growth_clients")
-    .select("slug, screenshot_path")
-    .in("slug", SHOWCASE_SLUGS);
-  const screenshotsBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-screenshots`;
-  const screenshots: Record<string, string> = {};
-  for (const c of showcaseClients ?? []) {
-    if (c.screenshot_path) screenshots[c.slug] = `${screenshotsBase}/${c.screenshot_path}`;
-  }
-
+export default function PricingPage() {
   return (
     <main className="flex flex-1 flex-col">
       <MarketingHeader />
-      <Hero />
-      <WhyChoose />
-      <HowItWorks />
-      <RealOnlinePower />
-      <SoundFamiliar />
-      <MostVisitedPages screenshots={screenshots} />
+
+      <section className="bg-gradient-to-br from-brand-blue-light via-white to-white pt-12 pb-2 lg:pt-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-neutral-ink tracking-tight">
+            Pricing
+          </h1>
+          <p className="mt-2 max-w-xl text-base text-neutral-mid leading-relaxed">
+            Two plans, every inclusion spelled out, and a free 7-day trial to start, no card
+            required.{" "}
+            <Link href="/" className="font-bold text-brand-blue hover:text-brand-blue-dark transition-colors">
+              New here? Start on the home page →
+            </Link>
+          </p>
+        </div>
+      </section>
+
       <HomePricing />
-      <DoMore />
-      <WhatYouGet />
-      <FinalCTA />
-      <GetInTouchSection />
+      <WhyChoose />
+
+      <section className="bg-neutral-light py-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-sm text-neutral-mid">
+            Questions about trials, billing, cancelling, booking or the shop?{" "}
+            <Link href="/faq" className="font-bold text-brand-blue hover:text-brand-blue-dark transition-colors">
+              Read the FAQ →
+            </Link>
+          </p>
+        </div>
+      </section>
+
       <SiteFooter />
     </main>
   );

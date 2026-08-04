@@ -5,8 +5,6 @@ import {
   Gauge,
   Crosshair,
   ArrowRight,
-  TrendingUp,
-  Eye,
   CheckCircle2,
 } from "lucide-react";
 
@@ -37,71 +35,23 @@ export function RealOnlinePower() {
   return (
     <section className="bg-neutral-ink text-white py-10 lg:py-14">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 mb-8 lg:mb-10">
-          <div className="lg:col-span-5">
-            <p className="text-brand-blue-mid text-xs font-black uppercase tracking-[0.15em] mb-2">
-              Real Online Power
-            </p>
-            <h2 className="text-white font-extrabold text-2xl lg:text-3xl leading-tight">
-              This Isn&apos;t Just A Webpage
-            </h2>
-            <p className="mt-3 text-sm text-white/80 leading-relaxed">
-              Every DigitalFlyer page comes with the real technical groundwork most small businesses
-              never get around to, built in from day one, not an upsell.
-            </p>
-          </div>
-
-          {/* Dashboard mockup */}
-          <div className="lg:col-span-7">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-white/20" />
-                </div>
-                <div className="flex-1 bg-white/10 rounded-md px-3 py-1 text-xs text-white/50 ml-2">
-                  growth.digitalflyersa.co.za/yourbusiness
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-2.5">
-                <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Eye size={14} className="text-brand-blue-mid" />
-                    <span className="text-[11px] text-white/60 font-medium">Page views</span>
-                  </div>
-                  <div className="text-xl font-bold text-white">1,247</div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <TrendingUp size={11} className="text-green-400" />
-                    <span className="text-[11px] text-green-400 font-medium">+18%</span>
-                  </div>
-                </div>
-                <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Star size={14} className="text-brand-blue-mid" />
-                    <span className="text-[11px] text-white/60 font-medium">Google rating</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xl font-bold text-white">4.8</span>
-                    <div className="flex">
-                      {[1, 2, 3, 4].map((i) => (
-                        <Star key={i} size={11} className="text-accent fill-accent" />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="text-[11px] text-white/50 mt-0.5">42 reviews</div>
-                </div>
-                <div className="bg-white/5 border border-white/10 rounded-xl p-3">
-                  <div className="flex items-center gap-1.5 mb-1.5">
-                    <Crosshair size={14} className="text-brand-blue-mid" />
-                    <span className="text-[11px] text-white/60 font-medium">Ad tracking</span>
-                  </div>
-                  <div className="text-xl font-bold text-white">Active</div>
-                  <div className="text-[11px] text-white/50 mt-0.5">Meta pixel OK</div>
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* Home page split handoff, 4 Aug 2026: the mock dashboard that used
+            to sit here showed 1,247 page views, +18%, a 4.8 Google rating
+            and 42 reviews, none of which exist. The handoff's rule is no
+            invented numbers anywhere, so the panel is gone until a real
+            dashboard screenshot exists to replace it. The four items below
+            are the section's real content and they stand on their own. */}
+        <div className="mb-8 lg:mb-10 max-w-2xl">
+          <p className="text-brand-blue-mid text-xs font-black uppercase tracking-[0.15em] mb-2">
+            Real Online Power
+          </p>
+          <h2 className="text-white font-extrabold text-2xl lg:text-3xl leading-tight">
+            This Isn&apos;t Just A Webpage
+          </h2>
+          <p className="mt-3 text-sm text-white/80 leading-relaxed">
+            Every DigitalFlyer page comes with the real technical groundwork most small businesses
+            never get around to, built in from day one, not an upsell.
+          </p>
         </div>
 
         {/* Four items */}
@@ -132,7 +82,7 @@ export function RealOnlinePower() {
               <p className="text-xs text-white/80">Start your 7-day free trial, no card required.</p>
             </div>
           </div>
-          <Link href="#pricing" className="btn-accent shrink-0 w-full sm:w-auto">
+          <Link href="/pricing#pricing" className="btn-accent shrink-0 w-full sm:w-auto">
             Start Your Free Trial
             <ArrowRight size={18} />
           </Link>

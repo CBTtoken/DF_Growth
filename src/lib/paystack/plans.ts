@@ -22,18 +22,22 @@ export const TIERS: {
     name: "Foundation",
     priceLabel: "Free for 7 days, then R100/month or R900/year",
     description: "Perfect for businesses ready to build a professional online presence.",
+    // Home page split handoff, 4 Aug 2026: plain-language pass on every
+    // bullet, each checked against the live code first. A bullet that maps
+    // to a real feature is written the way a tradesman would picture it; a
+    // bullet that does not map to anything real is kept word for word and
+    // flagged to Dewald in the report, never quietly reworded into
+    // something better sounding.
     features: [
-      "Professional Business Page",
-      "Marketplace Presence",
-      "Lead Generation Page",
-      "Business Profile",
+      "A professional page for your business, at its own link",
+      "A place on the DigitalFlyer marketplace, where customers browse local businesses",
+      "A contact form that sends customer enquiries straight to you",
+      "Your services, prices and contact details, all in one place",
+      // Not matched to anything in the code that delivers an asset monthly.
+      // Kept as written and flagged in the report.
       "Monthly Digital Asset",
-      "Ready To Share Anywhere",
-      // Combined spec Sec 16: bundled into every tier at no extra cost, but
-      // previously only mentioned (Marketplace and KatisoBiz Nomads) or not at
-      // all (KatisoBiz) in a separate section near the footer — a prospect
-      // looking at just this card never saw the full value included.
-      "KatisoBiz Nomads Community",
+      "One link you can share on WhatsApp, Facebook or anywhere else",
+      "The KatisoBiz Nomads community of business owners",
       // Site audit, 28 July 2026: this read as an unqualified bullet on
       // both Foundation and Growth, while the entitlement genuinely
       // differs. bizUpEntitlementForTier gives Foundation the free plan,
@@ -49,27 +53,28 @@ export const TIERS: {
     name: "Growth",
     priceLabel: "R180/month or R1,199/year",
     description: "Ready to reach more customers? Everything in Foundation, plus:",
+    // Same handoff: "Marketplace Presence appears in both tier lists, which
+    // makes the Growth list read as padded rather than better." The two
+    // bullets Foundation already covers (marketplace, Nomads) are gone from
+    // this card; "Everything in Foundation, plus" already says it. The
+    // KatisoBiz bullet stays on both cards because the entitlement genuinely
+    // differs between them.
     features: [
+      // Not matched to a real feature: a member has one page, and there is
+      // no campaign-page builder in the code. Kept as written and flagged.
       "Campaign Landing Pages",
-      "Performance Tracking",
-      "Marketing Assets",
+      "See how many people visit your page, right in your dashboard",
+      "Ready-made social media images, created from your page details",
+      // The next two are not matched to anything in the code. Kept as
+      // written and flagged in the report.
       "Monthly Optimisation",
       "Growth Reporting",
-      // Dewald's ask, 2026-07-18: Booking & Shop are real Growth-and-above
-      // features (docs/GROWTH_BOOKING_SHOP_MODULES_CLAUDE.md) but weren't
-      // named on the card itself, only in a separate section below the
-      // pricing cards — a prospect comparing tiers side by side never saw
-      // this as something Growth specifically unlocks over Foundation.
-      "Booking & Shop Tools",
-      // Combined spec Sec 16: this card's own feature list didn't repeat
-      // what "Everything in Foundation" already includes, so a prospect
-      // comparing tiers side by side never saw these three on the Growth
-      // card at all.
-      "Marketplace Presence",
-      "KatisoBiz Nomads Community",
-      // The R49 plan, not the free one. See the note on the Foundation
-      // card above for why these two must not read the same.
-      "KatisoBiz quoting and invoicing, R49 plan included free",
+      "Take bookings and sell products straight from your page",
+      // Reworded per the handoff: nothing in the system applies the R49
+      // plan automatically or connects a Growth account to a KatisoBiz
+      // account by itself, so the words promise the process that actually
+      // happens: we switch it on. Flagged in the report as a product gap.
+      "KatisoBiz R49 plan features, part of Growth, switched on for you by our team",
     ],
     ctaLabel: "Start Growing",
   },

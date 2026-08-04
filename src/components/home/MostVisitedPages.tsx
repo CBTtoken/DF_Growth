@@ -21,7 +21,15 @@ const clients = [
 // component can never drift apart on which pages are curated here.
 export const SHOWCASE_SLUGS = clients.map((c) => c.slug);
 
-export function MostVisitedPages({ screenshots = {} }: { screenshots?: Record<string, string> }) {
+// ctaHref: "#pricing" when the plan cards share the page, "/pricing#pricing"
+// on the home page, where they do not.
+export function MostVisitedPages({
+  screenshots = {},
+  ctaHref = "/pricing#pricing",
+}: {
+  screenshots?: Record<string, string>;
+  ctaHref?: string;
+}) {
   return (
     <section className="bg-neutral-light py-10 lg:py-14">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -97,7 +105,10 @@ export function MostVisitedPages({ screenshots = {} }: { screenshots?: Record<st
         </div>
 
         <p className="mt-4 text-xs text-neutral-muted">
-          10 styles available. Choose yours during signup, change any time.
+          10 styles available. Choose yours during signup, change any time.{" "}
+          <Link href="/marketplace" className="font-bold text-brand-blue hover:text-brand-blue-dark transition-colors">
+            See every member on the marketplace →
+          </Link>
         </p>
 
         {/* CTA bar */}
@@ -108,7 +119,7 @@ export function MostVisitedPages({ screenshots = {} }: { screenshots?: Record<st
             </p>
             <p className="text-xs text-neutral-mid mt-0.5">Takes less than 5 minutes.</p>
           </div>
-          <Link href="#pricing" className="btn-accent shrink-0 w-full sm:w-auto">
+          <Link href={ctaHref} className="btn-accent shrink-0 w-full sm:w-auto">
             See Pricing &amp; Join
             <ArrowRight size={18} />
           </Link>

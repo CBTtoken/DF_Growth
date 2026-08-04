@@ -42,7 +42,9 @@ export function MarketingHeader() {
             second guard against the same wrap even if space ever gets tight
             again. Tighter gaps/padding on mobile (sm: restores the original
             spacing) free up the width that was missing in the first place. */}
-        <Link href="/pricing" className="flex shrink-0 items-center gap-2 sm:gap-3">
+        {/* Home page split handoff, 4 Aug 2026: the logo goes to "/", the
+            real home page, not to /pricing. */}
+        <Link href="/" className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Image
             src="/brand/logo-blue.png"
             alt="DigitalFlyer"
@@ -125,13 +127,17 @@ export function MarketingHeader() {
           <span className="hidden sm:inline">
             <MarketingHeaderAuthLink />
           </span>
-          <a
-            href="#pricing"
+          {/* A real route, not an in-page anchor: this header renders on
+              every marketing page, and "#pricing" only meant something on
+              the one page that had the cards. /pricing#pricing lands on the
+              cards from anywhere, including the new home page. */}
+          <Link
+            href="/pricing#pricing"
             className="whitespace-nowrap rounded-full bg-brand px-3 py-2 text-xs font-semibold text-white transition hover:bg-brand-dark sm:px-5 sm:text-sm"
           >
             <span className="sm:hidden">Pricing</span>
             <span className="hidden sm:inline">See pricing</span>
-          </a>
+          </Link>
           <MobileNavMenu />
         </div>
       </header>
