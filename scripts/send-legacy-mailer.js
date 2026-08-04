@@ -140,6 +140,37 @@ async function main() {
     return;
   }
 
+  // --test=<address> sends exactly one real email through the exact live
+  // path (same payload, same headers, same from) to the address given,
+  // touching no contact records. The truthful smoke test before a batch,
+  // and the cheapest proof the sending domain is actually verified: Resend
+  // refuses an unverified from-domain outright.
+  const testTo = args.find((a) => a.startsWith("--test="))?.split("=")[1];
+  if (testTo) {
+    if (!RESEND_API_KEY || !MARKETING_FROM_EMAIL || !APP_ENCRYPTION_KEY) {
+      throw new Error("--test needs RESEND_API_KEY, MARKETING_FROM_EMAIL and APP_ENCRYPTION_KEY.");
+    }
+    const sample = { id: "test", email: testTo, contact_name: "Test", business_name: "Smoke Test" };
+    const unsubscribeUrl = `${SITE_URL}/unsubscribe?email=${encodeURIComponent(testTo)}&token=${unsubscribeToken(testTo)}`;
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: MARKETING_FROM_EMAIL,
+        to: testTo,
+        subject: `[TEST] ${SUBJECT}`,
+        html: emailHtml(sample),
+        reply_to: "info@digitalflyer.co.za",
+        headers: {
+          "List-Unsubscribe": `<${unsubscribeUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
+      }),
+    });
+    console.log(res.ok ? `Test sent to ${testTo} from ${MARKETING_FROM_EMAIL}.` : `Test FAILED: ${res.status} ${await res.text()}`);
+    return;
+  }
+
   if (!SUPABASE_URL || !SERVICE_KEY || !APP_ENCRYPTION_KEY) {
     throw new Error("Missing Supabase or encryption environment. Run from the project root with .env.local loaded.");
   }
@@ -181,6 +212,9 @@ async function main() {
           to: contact.email,
           subject: SUBJECT,
           html: emailHtml(contact),
+          // Replies land in the inbox Dewald actually reads, not on the
+          // machine domain.
+          reply_to: "info@digitalflyer.co.za",
           headers: {
             "List-Unsubscribe": `<${unsubscribeUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
