@@ -57,7 +57,7 @@ export const HEADING_FONT_CLASS: Record<HeadingFontKey, string> = {
   "mono-technical": "font-[family-name:var(--font-anchor-mono)]",
 };
 
-export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate" | "copper-seam";
+export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate" | "copper-seam" | "invitation";
 
 // "soft-shadow" is today's existing default card look, unchanged — every
 // other recipe is a genuinely different container treatment. "dark-panel"
@@ -86,6 +86,12 @@ export const CARD_RECIPE_CLASS: Record<CardRecipeId, string> = {
   // fixes its steel: it is the theme's own material signature, and it reads
   // correct whatever brand colours the member chose.
   "copper-seam": "rounded-xl border border-gray-200 border-t-4 border-t-[#b87333] bg-white shadow-sm",
+  // Marquee build: a double-ruled frame, the way a printed invitation is
+  // bordered. Square corners on purpose — every soft recipe rounds them,
+  // and the crisp corner is half of what makes this read stationery rather
+  // than SaaS. Neutral greys like steel-plate's steel: it is the theme's
+  // material, not the member's palette.
+  invitation: "rounded-none border-[3px] border-double border-gray-300 bg-white shadow-sm",
 };
 
 export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps" | "stencil-tag" | "junction-tag";
@@ -174,7 +180,7 @@ export interface TemplateAnchor {
   aboutLayout?: "split-grid" | "statement";
   howItWorksLayout?: "cards" | "jobline";
   locationLayout?: "map-split" | "coverage-panel" | "home-base";
-  galleryLayout?: "square-grid" | "evidence-board" | "job-wall";
+  galleryLayout?: "square-grid" | "evidence-board" | "job-wall" | "lookbook";
 }
 
 export const anchors: Record<TemplateId, TemplateAnchor> = {
@@ -325,6 +331,23 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     servicesLayout: "junction-line",
     galleryLayout: "job-wall",
     locationLayout: "home-base",
+  },
+  // Marquee: the considered-purchase events anchor. The serif is shared
+  // with Storyteller and dual-offer but the frame is not: invitation-ruled
+  // square cards against their soft shadows and editorial rules, airy
+  // spacing so the photography breathes, and the gallery as a lookbook
+  // mosaic — the one structural override this archetype genuinely needs,
+  // because for an events buyer the photos are the product. Everything
+  // urgent about the trade anchors is deliberately absent: no dispatch
+  // board, no job sheet, no stencils.
+  marquee: {
+    id: "marquee",
+    headingFont: "serif-editorial",
+    cardRecipe: "invitation",
+    eyebrowStyle: "rule-line",
+    spacing: "airy",
+    sectionSurface: "light-default",
+    galleryLayout: "lookbook",
   },
 };
 

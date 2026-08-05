@@ -31,6 +31,7 @@ import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
 import { DuoHero } from "@/components/landing/heroes/DuoHero";
 import { JobCardHero } from "@/components/landing/heroes/JobCardHero";
 import { PipelineHero } from "@/components/landing/heroes/PipelineHero";
+import { ShowreelHero } from "@/components/landing/heroes/ShowreelHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -342,7 +343,7 @@ export async function ClientLandingPageView({
   // fallback ambient image — the trade heroes' credibility captions ("A real
   // job, our photo" / "On the job") render only when this is true.
   let photoIsOwn = false;
-  if (template.hero === "split" || template.hero === "dark" || template.hero === "duo" || template.hero === "jobcard" || template.hero === "pipeline") {
+  if (template.hero === "split" || template.hero === "dark" || template.hero === "duo" || template.hero === "jobcard" || template.hero === "pipeline" || template.hero === "showreel") {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
     // does that. No selection falls back to the client's stored fallback
@@ -532,6 +533,36 @@ export async function ClientLandingPageView({
           city={client.city}
           photoUrl={photoUrl}
           photoIsOwn={photoIsOwn}
+        />
+      )}
+      {template.hero === "showreel" && (
+        <ShowreelHero
+          {...heroProps}
+          callPhone={client.call_phone}
+          whatsappPhone={client.whatsapp_phone || client.call_phone}
+          contactEmail={client.contact_email}
+          // Plain words for the hero strip: the address field carries the
+          // service area for a travelling business, the city stands in
+          // when only that exists. "Online" is the wizard's no-premises
+          // sentinel and is not an area a bar can drive to.
+          areasServed={
+            client.business_address && client.business_address !== "Online"
+              ? client.business_address
+              : client.city
+          }
+          // The showreel pair: the chosen hero photo leads, the next
+          // gallery photo tucks behind it, never the same photo twice.
+          // Own uploads only, never fallback_photo_url: this hero's alt
+          // text presents the picture as the member's own event, so an
+          // ambient library image may not stand in (house rule: ambient
+          // imagery never poses as their work). No photos, no collage.
+          photoUrls={(() => {
+            const heroFirst = [
+              ...photos.filter((p) => p.id === client.hero_photo_id),
+              ...photos.filter((p) => p.id !== client.hero_photo_id),
+            ];
+            return heroFirst.slice(0, 2).map((p) => `${photosStorageBase}/${p.storage_path}`);
+          })()}
         />
       )}
       {template.hero === "showcase" && (

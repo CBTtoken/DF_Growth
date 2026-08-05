@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench, Droplets } from "lucide-react";
+import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench, Droplets, PartyPopper } from "lucide-react";
 
 // Every "section" a template can arrange, beyond the hero (always first)
 // and the lead form (always last, since #lead-form is the CTA anchor every
@@ -32,7 +32,8 @@ export type TemplateId =
   | "app-dashboard"
   | "dual-offer"
   | "fieldwork"
-  | "copperline";
+  | "copperline"
+  | "marquee";
 
 export type HeroVariant =
   | "default"
@@ -48,7 +49,8 @@ export type HeroVariant =
   | "showcase"
   | "duo"
   | "jobcard"
-  | "pipeline";
+  | "pipeline"
+  | "showreel";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -225,6 +227,30 @@ export const templates: TemplateMeta[] = [
     icon: Droplets,
     hero: "pipeline",
     sections: ["services", "gallery", "about", "howItWorks", "story", "packages", "trust", "location", "reviews"],
+  },
+  // Built for the fourth done-for-you client build (SIP Happens Bespoke
+  // Mobile Bar) and the platform's first considered-purchase archetype.
+  // Fieldwork and Copperline serve a visitor with a problem right now who
+  // wants a number in four seconds; an events customer is the opposite
+  // temperature — they browse, compare and look at pictures for days
+  // before they enquire. So the page is gallery-led with room to look:
+  // photos first, then the offer as comparable concept cards (packages),
+  // then what is included, and only then the people. The primary action is
+  // an enquiry, never an emergency call, though tappable WhatsApp and
+  // phone still sit quietly in the hero per the Build Kit rule for
+  // done-for-you builds.
+  {
+    id: "marquee",
+    name: "Marquee",
+    archetype: "Events · gallery-led · considered purchase",
+    description:
+      "For events and occasion businesses. Photos lead, packages invite comparison, and the page asks for an enquiry rather than a call-out.",
+    icon: PartyPopper,
+    hero: "showreel",
+    // No location section: an events business works at the customer's
+    // venue, so a map to nowhere would only pad the page. Areas served
+    // render in the hero's own strip in plain words instead.
+    sections: ["gallery", "packages", "services", "about", "story", "howItWorks", "trust", "reviews"],
   },
 ];
 

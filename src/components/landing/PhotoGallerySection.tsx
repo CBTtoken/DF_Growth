@@ -162,6 +162,77 @@ export function PhotoGallerySection({
     );
   }
 
+  if (anchor.galleryLayout === "lookbook") {
+    // Marquee anchor: for an events business the photos ARE the product,
+    // so this is a browsing mosaic rather than a filing grid. The first
+    // photo runs tall at portrait scale the way a lookbook opens, the rest
+    // alternate landscape and square, and everything gets generous gaps
+    // and no border clutter — the photography carries it.
+    return (
+      <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} bg-white`}>
+        <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
+          <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
+            {eyebrowNumber} · Gallery
+          </p>
+          <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 font-[family-name:var(--font-anchor-serif)] sm:text-3xl">
+            Moments from past events.
+          </h2>
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
+            {photos.map((photo, i) => (
+              <button
+                key={photo.id}
+                type="button"
+                onClick={() => setOpenIndex(i)}
+                className={`group relative overflow-hidden ${
+                  i === 0
+                    ? "col-span-2 row-span-2 aspect-[4/5] sm:col-span-2 sm:aspect-[4/5]"
+                    : i % 4 === 1
+                      ? "aspect-square"
+                      : "aspect-[4/3]"
+                }`}
+              >
+                <Image
+                  src={`${storageBase}/${photo.storage_path}`}
+                  alt="A past event"
+                  fill
+                  sizes={i === 0 ? "(min-width: 768px) 640px, 90vw" : "(min-width: 768px) 300px, 45vw"}
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {openIndex !== null && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setOpenIndex(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenIndex(null)}
+              aria-label="Close"
+              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+            >
+              &times;
+            </button>
+            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
+              <Image
+                src={`${storageBase}/${photos[openIndex].storage_path}`}
+                alt="Event photo, enlarged"
+                fill
+                sizes="90vw"
+                className="object-contain"
+              />
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
+
   if (anchor.galleryLayout === "evidence-board") {
     // Fieldwork anchor: photos as job evidence, not a mood board. The first
     // photo runs wide at documentary scale, the rest tile beside it; every

@@ -34,7 +34,7 @@ export function OnlinePaymentsSection({ gateway }: { gateway: GatewayStatus }) {
       <p className="text-xs text-gray-500">
         Connect your own payment account and buyers pay by card, instant EFT, PayShap or Capitec Pay
         at checkout, straight into your account. Without one, your shop still takes orders and you
-        arrange payment with each buyer yourself — that works, this is just faster.
+        arrange payment with each buyer yourself. That works, this is just faster.
       </p>
       <p className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
         Your money never touches DigitalFlyer. Payments go from your buyer to your own account at
