@@ -240,11 +240,17 @@ export async function generatePagePosterQueue(daysAhead = 14): Promise<GenerateR
   const spotlightQueue = [...neverFeatured, ...everFeatured];
 
   // --- Feature-CTA pool for the 08:15/13:30 slots ---
+  // Never-used first, then oldest-used first, and never-used ties broken
+  // by paste order (created_at). No shuffle here, unlike member spotlight
+  // rotation — a batch is a deliberate sequence someone chose (Dewald,
+  // 5 August 2026: "based on how the batch consumes, in the order
+  // pasted"), not a pool where fairness among equals matters.
   const { data: featurePosts } = await admin
     .from("page_poster_evergreen")
     .select("id, slot, body, link_url, feature_key, used_at")
-    .order("used_at", { ascending: true, nullsFirst: true });
-  const featureQueue = shuffle(featurePosts ?? []);
+    .order("used_at", { ascending: true, nullsFirst: true })
+    .order("created_at", { ascending: true });
+  const featureQueue = [...(featurePosts ?? [])];
   const { data: featureImages } = await admin.from("page_poster_feature_images").select("feature_key, photo_url");
   const imageByFeature = new Map((featureImages ?? []).map((f) => [f.feature_key, f.photo_url]));
 
