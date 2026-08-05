@@ -3,6 +3,20 @@
 Written by the session of 5 August 2026 per the handoff's session-continuity
 rule. Branch: `sprint-2026-08-05` (PR #1 open against main).
 
+## CLOSED OUT, later session: everything in this file now merged to main
+
+`page-poster-2026-08-05` and `tracking-audit-2026-08-05` both merged to
+main and pushed (main now at `08e5d59`), approved by Dewald in chat. The
+page poster is live pending the Facebook connection env vars (Dewald has
+set these and redeployed). SIP Happens report and handover email drafted
+in `docs/Report_SIPHappens.md`. Tracking audit Part 1 written up in
+`docs/Report_TrackingAudit.md`, one fix applied (GA4 cross-domain linking),
+one still open pending Dewald's specific go-ahead (the Growth Subscribe
+Meta CAPI gap, touches the Paystack webhook). Both branches still exist,
+merged, not deleted, ask before removing per the repo's own rule on
+deleting anything shared. Full remaining action list is
+`DEWALD-STEPS-2026-08-05.md`, kept updated rather than duplicated here.
+
 ## Item 1: house style workflow — COMPLETE
 
 - The failing line was ONE em dash (CI's "two annotations" = the one failure
