@@ -5,6 +5,8 @@ import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, type DocType } from "@/lib/bizup/vat";
 import { accountTypeLabel, bankNoticeText, type BankNoticeStyle } from "@/lib/bizup/bank";
 import { notifyDocumentOpened } from "@/lib/bizup/notifications";
+import { outstandingCents, settleInvoicePayment } from "@/lib/bizup/pay-online";
+import { PayOnlineCard } from "@/components/bizup/PayOnlineCard";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 9, the public document link.
 //
@@ -21,10 +23,23 @@ export const metadata: Metadata = {
 // unguessable, and from it being revocable by the member.
 export default async function PublicDocumentPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ token: string }>;
+  searchParams: Promise<{ reference?: string; trxref?: string }>;
 }) {
   const { token } = await params;
+  const { reference, trxref } = await searchParams;
+
+  // The way back from Paystack. Verified against Paystack's own API and
+  // recorded once per reference before anything below renders, so the page
+  // the customer lands on already shows the invoice as paid.
+  let justPaid = false;
+  const returnedReference = reference ?? trxref;
+  if (returnedReference) {
+    const settle = await settleInvoicePayment(token, returnedReference);
+    justPaid = settle.settled;
+  }
 
   const admin = createAdminClient();
   const { data: doc } = await admin
@@ -35,6 +50,21 @@ export default async function PublicDocumentPage({
 
   // A revoked link (public_token cleared) or a wrong token both land here.
   if (!doc) notFound();
+
+  // Pay now renders only when there is genuinely something to pay: an
+  // issued invoice with a balance, from an account that connected its own
+  // Paystack. Quotes and credit notes never show it.
+  const { data: payAccount } =
+    doc.doc_type === "invoice"
+      ? await admin
+          .from("bizup_accounts")
+          .select("paystack_key_last4, paystack_connected_at")
+          .eq("id", doc.account_id)
+          .maybeSingle()
+      : { data: null };
+  const gatewayConnected = Boolean(payAccount?.paystack_key_last4 && payAccount?.paystack_connected_at);
+  const owedCents =
+    doc.doc_type === "invoice" && gatewayConnected ? await outstandingCents(doc.id, doc.total_incl_cents) : 0;
 
   const issuer = doc.issuer_snapshot as {
     business_name: string;
@@ -91,6 +121,16 @@ export default async function PublicDocumentPage({
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 p-6">
+        {justPaid && (
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+            <p className="font-semibold">Payment received, thank you.</p>
+            <p className="mt-0.5">
+              Your payment has been confirmed with Paystack and recorded on this invoice.
+              {issuer?.business_name ? ` ${issuer.business_name} has been notified.` : ""} Your
+              receipt arrives by email from Paystack.
+            </p>
+          </div>
+        )}
         <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
@@ -179,6 +219,14 @@ export default async function PublicDocumentPage({
               </p>
             )}
           </div>
+        )}
+
+        {gatewayConnected && owedCents > 0 && (
+          <PayOnlineCard
+            token={token}
+            outstandingCents={owedCents}
+            businessName={issuer?.business_name ?? "the seller"}
+          />
         )}
 
         {/* Relative on purpose. This page is reached at /d/TOKEN on KatisoBiz's

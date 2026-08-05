@@ -226,12 +226,25 @@ export async function emailQuote(_prevState: SendState, formData: FormData): Pro
   const title = documentTitle(docType, vendor);
   const amount = `${formatZar(doc.total_incl_cents)}${vendor ? " including VAT" : ""}`;
 
+  // Pay Now (5 Aug 2026): when the account has its own Paystack connected,
+  // the invoice email says the link takes payment directly — the button
+  // itself lives on the public page the email already points at, so there
+  // is exactly one payment surface to keep honest.
+  const { data: payReady } = await admin
+    .from("bizup_accounts")
+    .select("paystack_key_last4, paystack_connected_at")
+    .eq("id", account.id)
+    .maybeSingle();
+  const canPayOnline =
+    docType === "invoice" && Boolean(payReady?.paystack_key_last4 && payReady?.paystack_connected_at);
+
   const body =
     docType === "invoice"
       ? `
       <p>Good day ${name},</p>
       <p>Please find ${title.toLowerCase()} <strong>${doc.number}</strong> from ${account.business_name}, for ${amount}.</p>
       <p><a href="${url}">View and download ${title.toLowerCase()} ${doc.number}</a></p>
+      ${canPayOnline ? `<p><strong>You can pay online from that same link</strong>, by card, instant EFT, PayShap or Capitec Pay, and the invoice will mark itself paid.</p>` : ""}
       ${doc.due_date ? `<p>Payment is due by <strong>${doc.due_date}</strong>.</p>` : ""}
       <p>When you pay, please use <strong>${doc.number}</strong> as your payment reference so we can match it to your account.</p>
       <p>Reply to this email if you have any questions.</p>

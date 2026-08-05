@@ -367,3 +367,89 @@ export async function getBankSummary(): Promise<{
     pendingBankName: pending?.bank_name ?? null,
   };
 }
+
+// ============================================================
+// Pay Now (Dewald, 5 Aug 2026): the member's own Paystack account,
+// so their invoices' public links can take payment directly. Same
+// credential law as everywhere else in the estate: tested against
+// Paystack before saving, encrypted at rest, last4 for display,
+// revocable, and never returned to a browser.
+// ============================================================
+
+export type PaystackSummary = { connected: boolean; last4: string | null; connectedAt: string | null };
+
+export async function getBizupPaystackSummary(): Promise<PaystackSummary | null> {
+  const ctx = await currentAccount();
+  if (!ctx) return null;
+  const { account, admin } = ctx;
+  const { data } = await admin
+    .from("bizup_accounts")
+    .select("paystack_key_last4, paystack_connected_at")
+    .eq("id", account.id)
+    .maybeSingle();
+  return {
+    connected: Boolean(data?.paystack_key_last4 && data?.paystack_connected_at),
+    last4: data?.paystack_key_last4 ?? null,
+    connectedAt: data?.paystack_connected_at ?? null,
+  };
+}
+
+export async function connectBizupPaystack(
+  _prev: { error?: string; success?: boolean } | null,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean } | null> {
+  const ctx = await currentAccount();
+  if (!ctx) return { error: "Please log in again." };
+  const { account, admin } = ctx;
+
+  const secretKey = String(formData.get("secretKey") ?? "").trim();
+  if (!/^sk_(test|live)_[A-Za-z0-9]{10,}$/.test(secretKey)) {
+    return { error: "A Paystack secret key starts with sk_live_ or sk_test_. Copy it from Paystack under Settings, API Keys." };
+  }
+
+  try {
+    const res = await fetch("https://api.paystack.co/transaction?perPage=1", {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    });
+    if (res.status === 401) return { error: "Paystack did not accept that key. Check it was copied whole." };
+    if (!res.ok) return { error: `Paystack answered with an error (${res.status}). Try again in a minute.` };
+  } catch {
+    return { error: "Could not reach Paystack. Check your connection and try again." };
+  }
+
+  const { error } = await admin
+    .from("bizup_accounts")
+    .update({
+      paystack_secret_encrypted: encrypt(secretKey),
+      paystack_key_last4: secretKey.slice(-4),
+      paystack_connected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", account.id);
+  if (error) {
+    console.error("Could not save BizUp Paystack key", account.id, error.code);
+    return { error: "Could not save the connection. Try again." };
+  }
+
+  revalidatePath("/bizup/settings/banking");
+  return { success: true };
+}
+
+export async function disconnectBizupPaystack(): Promise<{ error?: string; success?: boolean }> {
+  const ctx = await currentAccount();
+  if (!ctx) return { error: "Please log in again." };
+  const { account, admin } = ctx;
+
+  await admin
+    .from("bizup_accounts")
+    .update({
+      paystack_secret_encrypted: null,
+      paystack_key_last4: null,
+      paystack_connected_at: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", account.id);
+
+  revalidatePath("/bizup/settings/banking");
+  return { success: true };
+}

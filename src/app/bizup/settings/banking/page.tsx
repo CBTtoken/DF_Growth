@@ -4,8 +4,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { getBankSummary } from "@/app/bizup/bank-actions";
+import { getBankSummary, getBizupPaystackSummary } from "@/app/bizup/bank-actions";
 import { BankDetailsSection, BankNoticeSection } from "@/components/bizup/BankDetailsForm";
+import { BizupPaystackSection } from "@/components/bizup/BizupPaystackSection";
 import type { BankNoticeStyle } from "@/lib/bizup/bank";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -31,6 +32,7 @@ export default async function BizUpBankingPage() {
 
   const summary = await getBankSummary();
   if (!summary) redirect(await bizupLoginPath());
+  const paystackSummary = await getBizupPaystackSummary();
 
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
@@ -51,6 +53,15 @@ export default async function BizUpBankingPage() {
             <BankDetailsSection summary={summary} />
           </div>
         </section>
+
+        {paystackSummary && (
+          <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-bold tracking-tight text-ink">Get paid online</h2>
+            <div className="mt-4">
+              <BizupPaystackSection summary={paystackSummary} />
+            </div>
+          </section>
+        )}
 
         <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-bold tracking-tight text-ink">Protect against fake invoices</h2>
