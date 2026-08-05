@@ -142,7 +142,7 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "How do I get paid for a booking or order?",
         answer:
-          "Two ways, and you choose. If you have your own Paystack account, send us the key and we connect it: buyers then pay by card at checkout, with the money going straight to you. We never sit in the middle of it. If you have not got a gateway, the order still goes through: it is recorded, we email you the buyer's details, and you arrange payment with them directly. Plenty of members run exactly like that.",
+          "Connect a payment gateway from your dashboard, or don't, both work. We recommend Bob Pay first: a sole proprietor can apply with just an ID, proof of address and a bank statement, no CIPC registration needed. Already have a Paystack account? Connect that instead. Either way, buyers pay by card at checkout and the money goes straight to you, we never sit in the middle of it. With neither connected, the order still goes through: it is recorded, we email you the buyer's details, and you arrange payment with them directly. Plenty of members run exactly like that.",
       },
       {
         question: "How do I add products to my Shop?",

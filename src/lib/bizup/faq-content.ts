@@ -163,6 +163,36 @@ export const FAQ_GROUPS = [
       },
     ],
   },
+  // Added 5 August 2026: the Paystack "Pay now" connection already shipped
+  // and had no FAQ entry anywhere, found and fixed against the house rule
+  // that a feature affecting a user always ends in an FAQ/help update.
+  // Checked against src/components/bizup/BizupPaystackSection.tsx and
+  // src/app/bizup/bank-actions.ts, not remembered.
+  {
+    heading: "Getting paid online",
+    items: [
+      {
+        q: "What does connecting Paystack do?",
+        a: "Every invoice link grows a Pay now button. Your customer pays by card, instant EFT, PayShap or Capitec Pay, right there on the invoice, and it marks itself paid automatically. Without it, your invoices still work exactly as before: your customer pays into your bank account the way they always have.",
+      },
+      {
+        q: "How do I connect it?",
+        a: "Settings, then Banking. Press Connect Paystack and paste in your Paystack secret key, found in your own Paystack dashboard under Settings, API Keys & Webhooks. It starts with sk_live_ or sk_test_. KatisoBiz checks the key with Paystack before saving it, so a mistyped key is caught immediately rather than failing on your customer.",
+      },
+      {
+        q: "Does the money pass through DigitalFlyer?",
+        a: "No. This is your own Paystack account, so payments go straight into it, the same as if you were using Paystack on your own. DigitalFlyer never holds or touches the money, and your key is stored encrypted, never shown back to you in full, only its last four characters.",
+      },
+      {
+        q: "Does this cost extra on top of my KatisoBiz plan?",
+        a: "Not from us, connecting it is included whichever plan you're on. Paystack has its own transaction fees for payments processed through your account, the same fees you would pay using Paystack directly, nothing added by KatisoBiz.",
+      },
+      {
+        q: "Can I disconnect it later?",
+        a: "Yes, any time, from the same Banking settings screen. Your invoices go back to showing your banking details only, nothing about invoices already sent changes.",
+      },
+    ],
+  },
   // Added 5 August 2026 with the slip management feature. Same rule as
   // everything else in this file: each answer describes what the code
   // actually does, checked, not remembered.
