@@ -7,6 +7,15 @@
 -- dropped, since nothing reads it going forward and dropping a column
 -- carries more risk than leaving an unused one.
 
+-- The very first generation run (earlier tonight, before this redesign)
+-- wrote 12 rows under the old morning/evening slot values, all still
+-- pending_approval, none approved or published. Clearing them, and the
+-- new_member_posted_at markers they set, is safe precisely because
+-- nothing was ever actually announced yet — the new fixed-anchor run
+-- regenerates the same new-member posts correctly at the new 20:15 time.
+delete from public.page_poster_queue where status = 'pending_approval';
+update public.page_poster_client_state set new_member_posted_at = null;
+
 alter table public.page_poster_queue
   drop constraint page_poster_queue_slot_check;
 alter table public.page_poster_queue
