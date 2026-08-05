@@ -30,7 +30,9 @@ Last verified 3 August 2026.
 | Document | Where | About |
 |---|---|---|
 | Growth Build Kit | `../DigitalFlyer/Clients/Growth_Build_Kit_v1.md` | The reusable process for a done-for-you member build. Not in this repo. |
-| `Handoff_Growth_Shop_and_Payments.md` | `docs/` | Shop and payments. Sprint 1 done, **Sprint 2 outstanding**. |
+| `HANDOFF-slip-management.md` | `BizUp/docs/` | **Next KatisoBiz mission**: expense slip photos, OCR, review, accountant export, purge-after-export. Agreed 5 Aug 2026. |
+| `Handoff_Growth_Shop_and_Payments.md` | `docs/` | Shop and payments. Sprint 1 done; Sprint 2 payments core **shipped 5 Aug** (Bob Pay + connect flow + refunds); remaining: Bob Go waybills/tracking, Bob Pay sandbox e2e pending Dewald's credentials. |
+| `HANDOFF_old_good_demo.md` | `Jordan/` | Jordan's demo thrift shop. **Built and live** at /old-good and oldgood.co.za; pending: Jordan's account link, stall view, unlisted flip. |
 | `Report_Sprint1_Shop.md` | `docs/` | What Sprint 1 delivered, every criterion, what was assumed. |
 | `Handoff_Desk_HealthCheck.md` | `TheDesk/` | Estate health and cost monitoring. **Not started**, unblocked. |
 | `Handoff_WhatsApp_Lead_Switchboard_v1.md` | `WhatsApp/` | Lead switchboard. |
