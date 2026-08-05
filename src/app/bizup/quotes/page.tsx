@@ -19,6 +19,23 @@ const STATUS_LABEL: Record<string, string> = {
   converted: "Invoiced",
 };
 
+/**
+ * Walkthrough finding, 5 Aug 2026 (Dewald's "housekeeping on old open
+ * ones" journey): the list said Sent but never how long ago, so an open
+ * quote from three weeks back looked identical to one from this morning.
+ * Age is what tells a member which ones need the follow-up call.
+ */
+function quoteAge(createdAt: string, validUntil: string | null): { text: string; urgent: boolean } {
+  const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / 86_400_000);
+  const age = days <= 0 ? "sent today" : days === 1 ? "sent yesterday" : `sent ${days} days ago`;
+  if (validUntil) {
+    const left = Math.ceil((new Date(validUntil).getTime() - Date.now()) / 86_400_000);
+    if (left < 0) return { text: `${age} • past its valid-until date`, urgent: true };
+    if (left <= 7) return { text: `${age} • expires in ${left <= 1 ? "a day" : `${left} days`}`, urgent: true };
+  }
+  return { text: age, urgent: days >= 14 };
+}
+
 export default async function BizUpQuotesPage() {
   const account = await currentAccount();
   if (!account) redirect(await bizupLoginPath());
@@ -82,6 +99,15 @@ export default async function BizUpQuotesPage() {
                             customer actually opened the quote. */}
                         {q.first_viewed_at ? " • Opened by customer" : ""}
                       </span>
+                      {q.status === "sent" &&
+                        (() => {
+                          const age = quoteAge(q.created_at, q.valid_until);
+                          return (
+                            <span className={`text-xs ${age.urgent ? "font-medium text-amber-700" : "text-gray-400"}`}>
+                              {age.text}
+                            </span>
+                          );
+                        })()}
                     </span>
                     <span className="shrink-0 font-semibold text-ink">
                       {formatZar(q.total_incl_cents)}
