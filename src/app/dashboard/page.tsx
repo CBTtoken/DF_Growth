@@ -23,6 +23,7 @@ import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 import { SocialAssetGenerator } from "@/components/dashboard/SocialAssetGenerator";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
 import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
+import { SpotlightBanner } from "@/components/dashboard/SpotlightBanner";
 import { OrdersSection, type SellerOrder } from "@/components/dashboard/OrdersSection";
 import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
 import { ReviewsManagement, type DashboardReview } from "@/components/dashboard/ReviewsManagement";
@@ -119,6 +120,7 @@ export default async function DashboardPage() {
     { data: shopProducts },
     { data: shopCoupons },
     { data: shopOrders },
+    { data: spotlightRow },
   ] = await Promise.all([
     admin
       .from("growth_clients")
@@ -241,6 +243,21 @@ export default async function DashboardPage() {
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false })
       .limit(50),
+    // Page poster (Facebook/HANDOFF-digitalflyer-page-poster.md), Sec 6: the
+    // one not-yet-dismissed published spotlight or welcome post, for the
+    // share banner above. member_notified_at not null means the publish
+    // cron already got this far; member_dismissed_at is the member's own
+    // "seen it" action (page-poster-actions.ts).
+    admin
+      .from("page_poster_queue")
+      .select("id, post_type, meta_post_id")
+      .eq("growth_client_id", client.id)
+      .eq("status", "published")
+      .not("member_notified_at", "is", null)
+      .is("member_dismissed_at", null)
+      .order("published_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
   // Sprint 2: what the Online payments card shows. Booleans and last-four
@@ -323,6 +340,14 @@ export default async function DashboardPage() {
       label: "Overview",
       content: (
         <>
+          {spotlightRow && (
+            <SpotlightBanner
+              queueId={spotlightRow.id}
+              postLabel={spotlightRow.post_type === "new_member" ? "welcome post" : "spotlight"}
+              postLink={spotlightRow.meta_post_id ? `https://www.facebook.com/${spotlightRow.meta_post_id}` : null}
+            />
+          )}
+
           <ProfileCompletenessBanner
             hasBusinessDescription={Boolean(growthClient?.business_description)}
             hasBusinessAddress={Boolean(growthClient?.business_address)}

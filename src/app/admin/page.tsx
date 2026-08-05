@@ -92,6 +92,14 @@ export default async function AdminPage() {
     .select("id", { count: "exact", head: true })
     .eq("status", "pending");
 
+  // Page poster (Facebook/HANDOFF-digitalflyer-page-poster.md): count only,
+  // same reasoning as the other queue badges above — /admin/page-poster
+  // owns the actual list.
+  const { count: pagePosterQueueCount } = await admin
+    .from("page_poster_queue")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending_approval");
+
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
@@ -159,6 +167,14 @@ export default async function AdminPage() {
               {!!pendingAgentsCount && (
                 <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {pendingAgentsCount}
+                </span>
+              )}
+            </LinkButton>
+            <LinkButton href="/admin/page-poster" variant="secondary" lift>
+              Page Poster
+              {!!pagePosterQueueCount && (
+                <span className="rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {pagePosterQueueCount}
                 </span>
               )}
             </LinkButton>
