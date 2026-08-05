@@ -80,7 +80,7 @@ export async function requestBankChange(
   if (!isPlausibleAccountNumber(accountNumberRaw))
     error.accountNumber = ["A South African account number is between 6 and 13 digits"];
   if (!isValidBranchCode(branchCode)) error.branchCode = ["A branch code is 6 digits"];
-  if (!ACCOUNT_TYPES.includes(accountType)) error.accountType = ["Choose cheque or savings"];
+  if (!ACCOUNT_TYPES.includes(accountType)) error.accountType = ["Choose cheque/current or savings"];
   if (Object.keys(error).length > 0) return { error };
 
   const accountNumber = normaliseAccountNumber(accountNumberRaw);

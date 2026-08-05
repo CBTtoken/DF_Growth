@@ -17,6 +17,21 @@ export const ACCOUNT_TYPES = ["cheque", "savings"] as const;
 export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 /**
+ * What a human reads wherever an account type is shown or printed.
+ *
+ * Dewald, 5 August 2026: "Current" had to appear as an option. In South
+ * African banking, cheque and current are two names for the same account
+ * type — FNB and Standard Bank say cheque, Capitec Business and others say
+ * current — so this stays ONE stored value with both names on the label,
+ * rather than two values meaning the same thing that documents and
+ * exports would then disagree over. A member whose banking app says
+ * "Current account" finds it; a member whose app says "Cheque" does too.
+ */
+export function accountTypeLabel(type: string): string {
+  return type === "cheque" ? "Cheque / Current" : type.charAt(0).toUpperCase() + type.slice(1);
+}
+
+/**
  * South African universal branch codes, offered as a convenience so a
  * member on a phone does not have to find one. A wrong branch code means a
  * failed payment, which is why these are checked rather than remembered.
@@ -37,6 +52,14 @@ export const SA_BANKS: { name: string; branchCode: string }[] = [
   { name: "African Bank", branchCode: "430000" },
   { name: "Bidvest Bank", branchCode: "462005" },
   { name: "Capitec", branchCode: "470010" },
+  // Dewald's catch, 5 August 2026: Capitec Business is a DIFFERENT bank
+  // from Capitec, not a different account type at the same bank. It runs
+  // on the old Mercantile Bank licence Capitec acquired in 2019, with its
+  // own universal branch code. A business-account member who picks
+  // "Capitec" gets branch 470010 and their customers' EFTs fail to
+  // arrive. Verified against Peach Payments' list and two branch code
+  // directories, all agreeing on 450105.
+  { name: "Capitec Business", branchCode: "450105" },
   { name: "Discovery Bank", branchCode: "679000" },
   { name: "First National Bank", branchCode: "250655" },
   // TymeBank formally became GoTyme Bank on 13 April 2026, confirmed by the

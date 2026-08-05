@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, type DocType } from "@/lib/bizup/vat";
-import { bankNoticeText, type BankNoticeStyle } from "@/lib/bizup/bank";
+import { accountTypeLabel, bankNoticeText, type BankNoticeStyle } from "@/lib/bizup/bank";
 import { notifyDocumentOpened } from "@/lib/bizup/notifications";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 9, the public document link.
@@ -165,7 +165,7 @@ export default async function PublicDocumentPage({
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm text-sm">
             <p className="font-semibold text-ink">Banking details</p>
             <p className="mt-2 text-gray-600">
-              {bank.account_holder}, {bank.bank_name}, {bank.account_type}
+              {bank.account_holder}, {bank.bank_name}, {accountTypeLabel(bank.account_type)}
             </p>
             <p className="text-gray-600">
               Account {bank.account_number_masked}, branch {bank.branch_code}

@@ -12,6 +12,7 @@ import {
   SA_BANKS,
   CODE_TTL_MINUTES,
   BANK_NOTICE_OFF_WARNING,
+  accountTypeLabel,
   bankNoticeText,
   type BankNoticeStyle,
 } from "@/lib/bizup/bank";
@@ -99,7 +100,7 @@ export function BankDetailsSection({ summary }: { summary: BankSummary }) {
           <p className="font-semibold text-ink">These details print on your invoices</p>
           <p className="mt-2 text-gray-700">{summary.accountHolder}</p>
           <p className="text-gray-700">
-            {summary.bankName}, {summary.accountType}
+            {summary.bankName}, {summary.accountType ? accountTypeLabel(summary.accountType) : ""}
           </p>
           {/* Only ever the last four digits. The full number is decrypted in
               one place, when a document is generated, and nowhere else. */}
@@ -206,7 +207,7 @@ export function BankDetailsSection({ summary }: { summary: BankSummary }) {
         <label className={labelClass}>
           <span>Account type</span>
           <select name="accountType" defaultValue={summary.accountType ?? "cheque"} className={inputClass}>
-            <option value="cheque">Cheque</option>
+            <option value="cheque">Cheque / Current</option>
             <option value="savings">Savings</option>
           </select>
         </label>

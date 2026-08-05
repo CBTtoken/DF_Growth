@@ -2,7 +2,7 @@ import React from "react";
 import { Document, Page, Text, View, Image, StyleSheet } from "@react-pdf/renderer";
 import { formatZar } from "@/lib/bizup/money";
 import { documentTitle, nonVendorFooterLine, type DocType } from "@/lib/bizup/vat";
-import { bankNoticeText, type BankNoticeStyle } from "@/lib/bizup/bank";
+import { accountTypeLabel, bankNoticeText, type BankNoticeStyle } from "@/lib/bizup/bank";
 
 // BizUp/docs/bizup-phase1-spec.md Sec 10, all five templates.
 //
@@ -307,7 +307,7 @@ function BankBlock({ data, serif = false }: { data: PdfDocumentData; serif?: boo
     <View style={{ marginTop: 18 }}>
       <Text style={[serif ? base.boldSerif : base.bold, base.th]}>BANKING DETAILS</Text>
       <Text style={{ marginTop: 3 }}>
-        {data.bank.account_holder}, {data.bank.bank_name}, {data.bank.account_type}
+        {data.bank.account_holder}, {data.bank.bank_name}, {accountTypeLabel(data.bank.account_type)}
       </Text>
       {/* The full account number. It was printed masked, which meant a
           customer holding the invoice had no way to pay it. Masking is
