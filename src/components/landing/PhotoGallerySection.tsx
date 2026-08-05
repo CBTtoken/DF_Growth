@@ -2,6 +2,13 @@
 
 import { useState } from "react";
 import Image from "next/image";
+
+// The lookbook shows this many before folding the rest behind one tap.
+// Dewald's live review of the first Marquee build: eleven photos in an
+// editorial mosaic made the page "scroll forever". Seven keeps the
+// browsing feel (one feature plus six tiles) and the button says exactly
+// how many more there are.
+const LOOKBOOK_PREVIEW_COUNT = 7;
 import type { TemplateAnchor } from "@/lib/templates/anchors";
 import { EYEBROW_STYLE_CLASS, SPACING_CLASS, SURFACE_SECTION_CLASS, SURFACE_BORDER_CLASS } from "@/lib/templates/anchors";
 
@@ -29,6 +36,7 @@ export function PhotoGallerySection({
   anchor?: TemplateAnchor;
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   // Spec: renders only with 2+ photos — a single photo isn't a "gallery",
   // and it would just be an awkward, empty-feeling half-section otherwise.
@@ -167,7 +175,11 @@ export function PhotoGallerySection({
     // so this is a browsing mosaic rather than a filing grid. The first
     // photo runs tall at portrait scale the way a lookbook opens, the rest
     // alternate landscape and square, and everything gets generous gaps
-    // and no border clutter — the photography carries it.
+    // and no border clutter — the photography carries it. Past the
+    // preview count the rest fold behind one tap, so a big gallery makes
+    // the page richer instead of longer.
+    const visiblePhotos = showAll ? photos : photos.slice(0, LOOKBOOK_PREVIEW_COUNT);
+    const hiddenCount = photos.length - visiblePhotos.length;
     return (
       <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} bg-white`}>
         <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
@@ -178,7 +190,7 @@ export function PhotoGallerySection({
             Moments from past events.
           </h2>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
-            {photos.map((photo, i) => (
+            {visiblePhotos.map((photo, i) => (
               <button
                 key={photo.id}
                 type="button"
@@ -201,6 +213,16 @@ export function PhotoGallerySection({
               </button>
             ))}
           </div>
+
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="mx-auto mt-8 block rounded-full border border-gray-300 px-7 py-3.5 text-base font-semibold text-gray-700 transition hover:border-gray-500"
+            >
+              See {hiddenCount} more {hiddenCount === 1 ? "photo" : "photos"}
+            </button>
+          )}
         </div>
 
         {openIndex !== null && (

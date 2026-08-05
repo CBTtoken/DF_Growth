@@ -44,11 +44,30 @@ export async function captureLead(
     return { error: { _form: ["We could not confirm you are a person. Please reload the page and try again."] } };
   }
 
+  // The event-enquiry form variant (Marquee template) asks the questions
+  // an events business actually needs: event type, date, guest count,
+  // venue. They ride inside the lead's message as labelled lines rather
+  // than new columns, so the leads table, the dashboard and the owner
+  // email all carry them with no schema change, and the standard form
+  // (which never sends these fields) is completely unaffected.
+  const eventDetailLines = [
+    ["Event type", formData.get("eventType")],
+    ["Event date", formData.get("eventDate")],
+    ["Number of guests", formData.get("guests")],
+    ["Venue or area", formData.get("eventLocation")],
+  ]
+    .map(([label, value]) => [label, String(value ?? "").trim()])
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${label}: ${value}`);
+  const typedMessage = String(formData.get("message") ?? "").trim();
+  const combinedMessage =
+    [eventDetailLines.join("\n"), typedMessage].filter(Boolean).join("\n\n") || undefined;
+
   const parsed = leadSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
     phone: formData.get("phone") || undefined,
-    message: formData.get("message") || undefined,
+    message: combinedMessage,
   });
 
   if (!parsed.success) {

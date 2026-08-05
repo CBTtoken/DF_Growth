@@ -599,6 +599,7 @@ export async function ClientLandingPageView({
           whatsappPhone={client.whatsapp_phone}
           websiteUrl={client.website_url}
           businessName={client.business_name}
+          variant={anchor.leadFormVariant ?? "standard"}
         />
       </ScrollReveal>
       {footer}

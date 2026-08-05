@@ -26,6 +26,7 @@ export function LeadForm({
   whatsappPhone,
   websiteUrl,
   businessName,
+  variant = "standard",
 }: {
   growthClientId: string;
   landingPageId: string;
@@ -46,6 +47,14 @@ export function LeadForm({
   // visitor at all.
   websiteUrl: string | null;
   businessName: string;
+  /**
+   * "event-enquiry" (the Marquee template) adds the questions an events
+   * business needs answered before it can quote: event type, date, guest
+   * count and venue. All optional, grouped under their own heading, and
+   * composed into the lead's message server-side. Every other template
+   * keeps the standard four fields.
+   */
+  variant?: "standard" | "event-enquiry";
 }) {
   const effectiveWhatsapp = whatsappPhone || callPhone;
   const boundAction = captureLead.bind(null, growthClientId, landingPageId, pageUrl, businessName, contactEmail);
@@ -123,8 +132,14 @@ export function LeadForm({
             </div>
           ) : (
             <>
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">Get in touch</h2>
-              <p className="mt-2 text-gray-500">We&apos;ll respond within one business day.</p>
+              <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+                {variant === "event-enquiry" ? "Request a quote" : "Get in touch"}
+              </h2>
+              <p className="mt-2 text-gray-500">
+                {variant === "event-enquiry"
+                  ? "Tell us about your event and we will come back with a quote to suit it. Only your name and email are needed; the rest helps us quote accurately."
+                  : "We'll respond within one business day."}
+              </p>
 
               <form action={formAction} className="mt-8 flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
@@ -170,19 +185,90 @@ export function LeadForm({
                   />
                 </div>
 
+                {variant === "event-enquiry" && (
+                  <fieldset className="mt-2 flex flex-col gap-4 border-t border-gray-100 pt-4">
+                    <legend className="sr-only">About your event</legend>
+                    <p className="text-sm font-semibold text-gray-700">About your event</p>
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="eventType" className="text-sm font-medium text-gray-700">
+                          Type of event <span className="font-normal text-gray-400">(optional)</span>
+                        </label>
+                        <select
+                          id="eventType"
+                          name="eventType"
+                          defaultValue=""
+                          className="h-12 rounded-xl border border-gray-300 bg-white px-3 text-gray-900 outline-none transition-colors"
+                        >
+                          <option value="">Choose one</option>
+                          <option>Wedding</option>
+                          <option>Corporate event</option>
+                          <option>Festival</option>
+                          <option>Golf day</option>
+                          <option>Private party</option>
+                          <option>Family or school event</option>
+                          <option>Something else</option>
+                        </select>
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="eventDate" className="text-sm font-medium text-gray-700">
+                          Event date <span className="font-normal text-gray-400">(optional)</span>
+                        </label>
+                        <input
+                          id="eventDate"
+                          type="date"
+                          name="eventDate"
+                          className="h-12 rounded-xl border border-gray-300 bg-white px-4 text-gray-900 outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="guests" className="text-sm font-medium text-gray-700">
+                          Number of guests <span className="font-normal text-gray-400">(optional)</span>
+                        </label>
+                        <input
+                          id="guests"
+                          type="number"
+                          inputMode="numeric"
+                          min="1"
+                          name="guests"
+                          placeholder="How many people"
+                          className="h-12 rounded-xl border border-gray-300 bg-white px-4 text-gray-900 outline-none transition-colors placeholder:text-gray-400"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="eventLocation" className="text-sm font-medium text-gray-700">
+                          Venue or area <span className="font-normal text-gray-400">(optional)</span>
+                        </label>
+                        <input
+                          id="eventLocation"
+                          type="text"
+                          name="eventLocation"
+                          placeholder="Where it happens"
+                          className="h-12 rounded-xl border border-gray-300 bg-white px-4 text-gray-900 outline-none transition-colors placeholder:text-gray-400"
+                        />
+                      </div>
+                    </div>
+                  </fieldset>
+                )}
+
                 {/* Public Beta Polish Sprint Sec 5: extends this same form
                     with a message field rather than deploying a second,
                     near-identical "Get in Touch" block on top of it — this
                     form is already titled "Get in touch". */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="message" className="text-sm font-medium text-gray-700">
-                    Message <span className="font-normal text-gray-400">(optional)</span>
+                    {variant === "event-enquiry" ? "Tell us about your event" : "Message"}{" "}
+                    <span className="font-normal text-gray-400">(optional)</span>
                   </label>
                   <textarea
                     id="message"
                     name="message"
                     rows={3}
-                    placeholder="Anything you'd like them to know"
+                    placeholder={
+                      variant === "event-enquiry"
+                        ? "The occasion, the style you have in mind, anything that matters"
+                        : "Anything you'd like them to know"
+                    }
                     className="rounded-xl border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none transition-colors placeholder:text-gray-400"
                   />
                 </div>
@@ -198,7 +284,7 @@ export function LeadForm({
                   className="mt-2 inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-base font-semibold shadow-lg transition hover:-translate-y-0.5 disabled:opacity-50"
                   style={{ backgroundColor: primaryColor, color: buttonTextColor }}
                 >
-                  {pending ? "Sending..." : "Send"}
+                  {pending ? "Sending..." : variant === "event-enquiry" ? "Request my quote" : "Send"}
                 </button>
               </form>
             </>

@@ -17,6 +17,21 @@ rule. Branch: `sprint-2026-08-05` (PR #1 open against main).
   emails. The fix is on the sprint branch where CI passes (verified,
   conclusion success); main goes green when the branch merges.
 
+## UPDATE, later same session: both gates approved and executed
+
+Dewald approved the seed and the merge in chat. PR #1 is merged (main
+94c58c8), the page is LIVE and verified at
+https://growth.digitalflyersa.co.za/sip-happens: renders "No bar? No
+problem.", 11 photos, logo, marquee template, in the sitemap, title
+"SIP Happens Bespoke Mobile Bar | Mobile bar hire in Pretoria",
+description carries trade + areas (via the enriched tagline; a global
+description-priority swap was considered and rejected: 37 of 41 active
+members would have changed), LocalBusiness schema and tappable
+WhatsApp confirmed live. House style emails stop from the next push.
+Seed script deleted after use. Remaining on item 2: Dewald's personal
+steps only (free month grant in admin, final look, handover email to
+Solette). Item 3's build remains the open work.
+
 ## Item 2: SIP Happens — CODE COMPLETE, AWAITING DEWALD'S GATES
 
 Done:

@@ -249,8 +249,13 @@ export const templates: TemplateMeta[] = [
     hero: "showreel",
     // No location section: an events business works at the customer's
     // venue, so a map to nowhere would only pad the page. Areas served
-    // render in the hero's own strip in plain words instead.
-    sections: ["gallery", "packages", "services", "about", "story", "howItWorks", "trust", "reviews"],
+    // render in the hero's own strip in plain words instead. No
+    // howItWorks either, after Dewald's live review of the first build
+    // ("it scrolls forever"): the generic three-step filler added a
+    // screen of scroll without saying anything the enquiry form's own
+    // questions do not, and on a browsing page every screen has to earn
+    // its place.
+    sections: ["gallery", "packages", "services", "about", "story", "trust", "reviews"],
   },
 ];
 

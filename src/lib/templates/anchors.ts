@@ -181,6 +181,12 @@ export interface TemplateAnchor {
   howItWorksLayout?: "cards" | "jobline";
   locationLayout?: "map-split" | "coverage-panel" | "home-base";
   galleryLayout?: "square-grid" | "evidence-board" | "job-wall" | "lookbook";
+  // Marquee build, after Dewald's live review: an events enquiry needs the
+  // questions an events business actually asks (event type, date, guests,
+  // venue), which the standard four-field form does not carry. All extra
+  // fields stay optional and ride into the lead's message, so no schema or
+  // dashboard change is involved and every other template is untouched.
+  leadFormVariant?: "event-enquiry";
 }
 
 export const anchors: Record<TemplateId, TemplateAnchor> = {
@@ -348,6 +354,7 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     spacing: "airy",
     sectionSurface: "light-default",
     galleryLayout: "lookbook",
+    leadFormVariant: "event-enquiry",
   },
 };
 
