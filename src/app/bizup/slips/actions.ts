@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { capabilitiesFor, type BizUpPlan } from "@/lib/bizup/entitlements";
-import { captureSlip, SLIPS_BUCKET } from "@/lib/bizup/slips";
+import { captureSlip, SLIPS_BUCKET, slipsTrialActive } from "@/lib/bizup/slips";
 
 // Slip management server actions (BizUp/docs/HANDOFF-slip-management.md).
 //
@@ -14,7 +14,11 @@ import { captureSlip, SLIPS_BUCKET } from "@/lib/bizup/slips";
 
 export type SlipActionState = { error?: string } | null;
 
-async function currentAccount(): Promise<{ id: string; plan: BizUpPlan } | null> {
+async function currentAccount(): Promise<{
+  id: string;
+  plan: BizUpPlan;
+  slipsTrialUntil: string | null;
+} | null> {
   const supabase = await createServerClient();
   const {
     data: { user },
@@ -24,17 +28,24 @@ async function currentAccount(): Promise<{ id: string; plan: BizUpPlan } | null>
   const admin = createAdminClient();
   const { data } = await admin
     .from("bizup_accounts")
-    .select("id, plan")
+    .select("id, plan, slips_trial_until")
     .eq("owner_user_id", user.id)
     .maybeSingle();
   if (!data) return null;
-  return { id: data.id, plan: data.plan as BizUpPlan };
+  return {
+    id: data.id,
+    plan: data.plan as BizUpPlan,
+    slipsTrialUntil: data.slips_trial_until,
+  };
 }
 
 export async function uploadSlip(formData: FormData): Promise<SlipActionState> {
   const account = await currentAccount();
   if (!account) return { error: "Please log in again." };
-  if (!capabilitiesFor(account.plan).expenseSlips) {
+  if (
+    !capabilitiesFor(account.plan).expenseSlips &&
+    !slipsTrialActive(account.slipsTrialUntil)
+  ) {
     return { error: "Slips come with the R49 plan." };
   }
 

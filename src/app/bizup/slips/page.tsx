@@ -5,7 +5,7 @@ import { bizupLoginPath } from "@/lib/bizup/product";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { capabilitiesFor, type BizUpPlan } from "@/lib/bizup/entitlements";
-import { listSlips, signedSlipUrl } from "@/lib/bizup/slips";
+import { listSlips, signedSlipUrl, slipsTrialActive } from "@/lib/bizup/slips";
 import { SlipCapture } from "@/components/bizup/SlipCapture";
 import { SlipCard, type SlipCardData } from "@/components/bizup/SlipCard";
 import { uploadSlip, saveSlipDetails, setSlipAllocation, deleteSlip } from "./actions";
@@ -35,14 +35,21 @@ export default async function SlipsPage() {
   const admin = createAdminClient();
   const { data: account } = await admin
     .from("bizup_accounts")
-    .select("id, plan")
+    .select("id, plan, slips_trial_until")
     .eq("owner_user_id", user.id)
     .maybeSingle();
   if (!account) redirect("/bizup/start");
 
+  // The launch trial: a member carrying an unexpired slips_trial_until
+  // gets the surface regardless of plan (one-off grant, see the
+  // 20260805190000 migration).
+  const onTrial =
+    !capabilitiesFor(account.plan as BizUpPlan).expenseSlips &&
+    slipsTrialActive(account.slips_trial_until);
+
   // An R49 feature, shown as a locked screen rather than hidden, same as
   // reports, so the upgrade has something concrete attached to it.
-  if (!capabilitiesFor(account.plan as BizUpPlan).expenseSlips) {
+  if (!capabilitiesFor(account.plan as BizUpPlan).expenseSlips && !onTrial) {
     return (
       <main className="flex flex-1 flex-col bg-gray-50">
         <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 p-6">
@@ -107,6 +114,19 @@ export default async function SlipsPage() {
             your accountant export.
           </p>
         </div>
+
+        {onTrial && (
+          <p className="rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-900">
+            Slips is unlocked for you, free, until{" "}
+            {new Date(account.slips_trial_until as string).toLocaleDateString("en-ZA", {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+            . Try it on your real slips and tell us what it gets wrong. After that it comes with
+            the R49 plan.
+          </p>
+        )}
 
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <SlipCapture action={uploadSlip} />

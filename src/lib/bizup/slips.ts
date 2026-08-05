@@ -11,6 +11,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export const SLIPS_BUCKET = "bizup-slips";
 
+/**
+ * The one-off launch trial, Dewald, 5 August 2026: members who were on the
+ * free plan when slips shipped got `slips_trial_until` stamped on their
+ * account, unlocking the Slips surface for a month regardless of plan.
+ * Inclusive of the end date; null (every other account, and all future
+ * signups) means no trial.
+ */
+export function slipsTrialActive(trialUntil: string | null | undefined): boolean {
+  if (!trialUntil) return false;
+  return trialUntil >= new Date().toISOString().slice(0, 10);
+}
+
 // The bucket caps uploads at 5MB; the client compresses to well under 1MB
 // first, so hitting this means compression failed on an enormous original.
 const MAX_SLIP_BYTES = 5 * 1024 * 1024;
