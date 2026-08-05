@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { buildAccountantExport } from "@/lib/bizup/accountant-export";
+import { purgeExportedSlips } from "@/lib/bizup/slips";
 import type { Period } from "@/lib/bizup/period";
 
 // The accountant's download. Deliberately unauthenticated.
@@ -48,6 +49,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tok
 
   const result = await buildAccountantExport(link.account_id, period);
   if (!result) return gone();
+
+  // HANDOFF-slip-management.md step 5: the slips in this pack have now
+  // gone out, so their images are deleted from storage to conserve space.
+  // The zip bytes above already contain the photos, the rows stay forever
+  // with status purged, and the member was told at capture and again at
+  // export that this would happen. Runs before the response goes back, so
+  // a purge that fails is retried by the next download rather than lost.
+  await purgeExportedSlips(result.exportedSlips);
 
   // Recorded after the pack is successfully built, so a failed render does
   // not show up as a download the member has to explain.

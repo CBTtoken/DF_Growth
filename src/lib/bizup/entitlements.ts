@@ -47,6 +47,13 @@ export interface BizUpCapabilities {
    */
   clientStatements: boolean;
   /**
+   * Slip management (BizUp/docs/HANDOFF-slip-management.md). Placed in the
+   * R49 tier as the default because the export it feeds is R49; the
+   * handoff leaves the final tier decision to Dewald, and moving it is a
+   * two-line change here.
+   */
+  expenseSlips: boolean;
+  /**
    * Sec 12, the accountant export package.
    *
    * Sec 12 does not name a tier for this one. Grouped with reports (paid
@@ -84,6 +91,7 @@ export const CAPABILITIES: Record<BizUpPlan, BizUpCapabilities> = {
     customerDatabase: false,
     reports: false,
     clientStatements: false,
+    expenseSlips: false,
     accountantExport: false,
   },
   paid: {
@@ -95,6 +103,7 @@ export const CAPABILITIES: Record<BizUpPlan, BizUpCapabilities> = {
     customerDatabase: true,
     reports: true,
     clientStatements: true,
+    expenseSlips: true,
     accountantExport: true,
   },
   unlimited: {
@@ -110,6 +119,7 @@ export const CAPABILITIES: Record<BizUpPlan, BizUpCapabilities> = {
     customerDatabase: true,
     reports: true,
     clientStatements: true,
+    expenseSlips: true,
     accountantExport: true,
   },
 };

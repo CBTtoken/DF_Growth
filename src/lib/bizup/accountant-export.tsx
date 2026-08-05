@@ -5,6 +5,7 @@ import { BizUpDocument, type PdfDocumentData } from "@/lib/bizup/pdf/document";
 import { toCsv, csvAmount } from "@/lib/bizup/csv";
 import { formatZar } from "@/lib/bizup/money";
 import type { Period } from "@/lib/bizup/period";
+import { businessSlipsForPeriod, SLIPS_BUCKET, type SlipRow } from "@/lib/bizup/slips";
 
 // Spec Sec 12, the accountant export package.
 //
@@ -45,8 +46,23 @@ function CoverSheet({
   businessName: string;
   vatNumber: string | null;
   period: Period;
-  totals: { invoicedIncl: number; invoicedExcl: number; vat: number; credited: number; paid: number };
-  counts: { invoices: number; creditNotes: number; payments: number; pdfs: number; pdfsTruncated: boolean };
+  totals: {
+    invoicedIncl: number;
+    invoicedExcl: number;
+    vat: number;
+    credited: number;
+    paid: number;
+    expenses: number;
+  };
+  counts: {
+    invoices: number;
+    creditNotes: number;
+    payments: number;
+    pdfs: number;
+    pdfsTruncated: boolean;
+    slips: number;
+    slipPhotos: number;
+  };
 }) {
   return (
     <Document>
@@ -83,6 +99,12 @@ function CoverSheet({
           <Text>Payments received</Text>
           <Text>{formatZar(totals.paid)}</Text>
         </View>
+        {counts.slips > 0 ? (
+          <View style={cover.row}>
+            <Text>Business expenses captured from slips</Text>
+            <Text>{formatZar(totals.expenses)}</Text>
+          </View>
+        ) : null}
 
         <Text style={cover.h2}>What is in this pack</Text>
         <View style={cover.row}>
@@ -107,6 +129,26 @@ function CoverSheet({
           <Text>documents/</Text>
           <Text>{counts.pdfs} PDFs</Text>
         </View>
+        {counts.slips > 0 ? (
+          <View style={cover.row}>
+            <Text>expenses.csv</Text>
+            <Text>{counts.slips} business expense slips</Text>
+          </View>
+        ) : null}
+        {counts.slipPhotos > 0 ? (
+          <View style={cover.row}>
+            <Text>slips/</Text>
+            <Text>{counts.slipPhotos} slip photos</Text>
+          </View>
+        ) : null}
+
+        {counts.slips > 0 ? (
+          <Text style={[cover.muted, { marginTop: 10 }]}>
+            Expense figures were read from photographed slips and confirmed by the business
+            owner. The owner keeps the original slips as SARS requires; photos not included
+            here were removed after an earlier export.
+          </Text>
+        ) : null}
 
         {counts.pdfsTruncated ? (
           <Text style={[cover.muted, { marginTop: 10 }]}>
@@ -134,6 +176,13 @@ function CoverSheet({
 export interface ExportResult {
   zip: Uint8Array;
   filename: string;
+  /**
+   * The business slips whose data went into this pack, handed back so the
+   * download route can purge their images once the pack has actually been
+   * served (HANDOFF-slip-management.md step 5). The purge lives with the
+   * download, not in here, because this function only builds bytes.
+   */
+  exportedSlips: { id: string; storage_path: string | null }[];
 }
 
 export async function buildAccountantExport(
@@ -264,6 +313,61 @@ export async function buildAccountantExport(
     );
   }
 
+  // Business expense slips for the period (HANDOFF-slip-management.md
+  // step 4): the figures as CSV rows, plus the photos bundled alongside.
+  // Personal slips never reach this function at all; businessSlipsForPeriod
+  // only returns what the member tapped Business on.
+  const slips = await businessSlipsForPeriod(accountId, period.from, period.to);
+  const slipPhotoNames = new Map<string, string>();
+
+  if (slips.length > 0) {
+    let photoIndex = 0;
+    for (const s of slips) {
+      if (!s.storage_path) continue;
+      photoIndex += 1;
+      const supplierPart = (s.supplier ?? "slip")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40);
+      const extension = s.storage_path.split(".").pop() ?? "jpg";
+      const name = `slips/${s.slip_date ?? "undated"}-${supplierPart || "slip"}-${photoIndex}.${extension}`;
+
+      const { data: blob, error: downloadError } = await admin.storage
+        .from(SLIPS_BUCKET)
+        .download(s.storage_path);
+      if (downloadError || !blob) {
+        // The CSV row still goes out with every figure; only the photo is
+        // missing, and the photo column says so rather than staying silent.
+        console.error("Slip photo missing from storage during export", s.id, downloadError);
+        continue;
+      }
+      files[name] = new Uint8Array(await blob.arrayBuffer());
+      slipPhotoNames.set(s.id, name);
+    }
+
+    const photoColumn = (s: SlipRow): string => {
+      const bundled = slipPhotoNames.get(s.id);
+      if (bundled) return bundled;
+      return s.status === "purged"
+        ? "Photo removed after an earlier export"
+        : "Photo not available";
+    };
+
+    files["expenses.csv"] = strToU8(
+      toCsv(
+        ["Date", "Supplier", "Description", "Amount", "VAT shown", "Photo"],
+        slips.map((s) => [
+          s.slip_date ?? "",
+          s.supplier ?? "",
+          s.description ?? "",
+          csvAmount(s.amount_cents),
+          s.vat_amount_cents === null ? "" : csvAmount(s.vat_amount_cents),
+          photoColumn(s),
+        ]),
+      ),
+    );
+  }
+
   // The PDFs. Rendered from each document's own snapshots, so the pack
   // contains exactly what the customer was sent.
   const toRender = rows.slice(0, MAX_PDFS);
@@ -327,6 +431,7 @@ export async function buildAccountantExport(
     invoicedIncl: invoices.reduce((s, d) => s + d.total_incl_cents, 0),
     credited: creditNotes.reduce((s, d) => s + d.total_incl_cents, 0),
     paid: (payments ?? []).reduce((s, p) => s + p.amount_cents, 0),
+    expenses: slips.reduce((s, x) => s + x.amount_cents, 0),
   };
 
   const coverBuffer = await renderToBuffer(
@@ -341,6 +446,8 @@ export async function buildAccountantExport(
         payments: (payments ?? []).length,
         pdfs: toRender.length,
         pdfsTruncated: rows.length > MAX_PDFS,
+        slips: slips.length,
+        slipPhotos: slipPhotoNames.size,
       }}
     />,
   );
@@ -350,5 +457,6 @@ export async function buildAccountantExport(
   return {
     zip: zipSync(files, { level: 6 }),
     filename: `${safeName}-accounting-${period.from}-to-${period.to}.zip`,
+    exportedSlips: slips.map((s) => ({ id: s.id, storage_path: s.storage_path })),
   };
 }

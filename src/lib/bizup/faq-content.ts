@@ -163,12 +163,52 @@ export const FAQ_GROUPS = [
       },
     ],
   },
+  // Added 5 August 2026 with the slip management feature. Same rule as
+  // everything else in this file: each answer describes what the code
+  // actually does, checked, not remembered.
+  {
+    heading: "Expense slips",
+    items: [
+      {
+        q: "What does Slips do?",
+        a: "You photograph an expense slip on your phone, KatisoBiz reads the date, the supplier and the amounts off it for you, you check the numbers and tap Business or Personal, and the business ones go into your accountant export with the photos included. No more shoebox of faded slips to type up at year end. It comes with the R49 plan.",
+      },
+      {
+        q: "How do I capture a slip, step by step?",
+        a: "Step 1: press Slips in the menu. Step 2: press Photograph a slip. Your camera opens; take the photo. Step 3: wait a few seconds while KatisoBiz reads it. The slip appears in your list with the date, supplier and amount already filled in. Step 4: press Check and fix the details, make sure every number matches the paper, and press Save. Step 5: tap Business or Personal. That is the whole job, and you can do it at the till while the slip is still in your hand.",
+      },
+      {
+        q: "What if it reads the slip wrong?",
+        a: "Then you fix it before it counts. What KatisoBiz reads off the photo is a suggestion, nothing more, and it is never treated as fact until you have looked at it. Every field stays editable until the slip goes to your accountant, so a faded total or a strange shop name is a ten second correction, not a problem.",
+      },
+      {
+        q: "What is the difference between Business and Personal?",
+        a: "Business slips travel with your accountant export. Personal slips never leave your own view, so you can photograph everything in your pocket without worrying about your groceries ending up in your books. KatisoBiz never decides this for you: the tap is yours, and you can change it any time until the slip has been exported.",
+      },
+      {
+        q: "How do my slips reach my accountant?",
+        a: "Through the same export you already use: Reports, then Export for my accountant. The pack now includes an expenses spreadsheet with every business slip for the period, plus the photos themselves, alongside your invoices and payments. Personal slips are never in it.",
+      },
+      {
+        q: "Why did the photo disappear after my export?",
+        a: "That is deliberate, and you are told before it happens. Once a slip has gone out in an accountant export, its photo went with the pack, so KatisoBiz deletes its copy to save space. The numbers stay in your slips list permanently, marked as sent to your accountant.",
+      },
+      {
+        q: "Is the photo in KatisoBiz my tax record?",
+        a: "No, and this matters. SARS requires you to keep the original slip, on paper or your own scan, for five years. The photo in KatisoBiz is a working copy that saves you typing; it is not a substitute for keeping the original, and DigitalFlyer does not take responsibility for storing it. Treat the paper slip the way you always have.",
+      },
+      {
+        q: "Can I delete a slip I photographed by mistake?",
+        a: "Yes, while it is still yours: open its details and press Delete this slip, and both the row and the photo go. Once a slip has been exported for your accountant it stays on record, because your books should not have figures quietly vanishing from them.",
+      },
+    ],
+  },
   {
     heading: "Your accountant, and your records",
     items: [
       {
         q: "How do I give everything to my accountant?",
-        a: "Reports, then Export for my accountant. Pick the period and it makes a link. Send that link to your accountant on WhatsApp or email. They get one file with every invoice, credit note and payment as spreadsheets they can open in Excel, all the PDFs, and a cover page with the totals.",
+        a: "Reports, then Export for my accountant. Pick the period and it makes a link. Send that link to your accountant on WhatsApp or email. They get one file with every invoice, credit note, payment and business expense slip as spreadsheets they can open in Excel, all the PDFs, your slip photos, and a cover page with the totals.",
       },
       {
         q: "Why a link and not just a file?",

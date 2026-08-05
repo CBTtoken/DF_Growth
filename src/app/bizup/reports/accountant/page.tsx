@@ -12,6 +12,7 @@ import {
   exportLinkUrl,
 } from "@/app/bizup/reports/accountant/actions";
 import { CopyLink } from "@/components/bizup/CopyLink";
+import { businessSlipsForPeriod } from "@/lib/bizup/slips";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -51,6 +52,12 @@ export default async function AccountantExportPage({
 
   const createdUrl = params.created ? await exportLinkUrl(params.created) : null;
 
+  // HANDOFF-slip-management.md: the export screen repeats the purge
+  // consequence at the moment it applies. Counted here so the warning only
+  // appears when there genuinely are slips about to travel.
+  const periodSlips = await businessSlipsForPeriod(account.id, period.from, period.to);
+  const slipsWithPhotos = periodSlips.filter((s) => s.storage_path).length;
+
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 p-6">
@@ -64,8 +71,9 @@ export default async function AccountantExportPage({
         <div>
           <h1 className="text-xl font-bold tracking-tight text-ink">Export for your accountant</h1>
           <p className="mt-1 text-sm text-gray-500">
-            One file with every invoice, credit note and payment for the period, as spreadsheets
-            they can open in Excel, with all the PDFs alongside.
+            One file with every invoice, credit note, payment and business expense slip for the
+            period, as spreadsheets they can open in Excel, with all the PDFs and slip photos
+            alongside.
           </p>
         </div>
 
@@ -107,6 +115,16 @@ export default async function AccountantExportPage({
             We give you a link rather than a file, because the pack contains your customers&rsquo;
             names and addresses and should not sit in an inbox forever.
           </p>
+          {periodSlips.length > 0 && (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+              This period includes {periodSlips.length === 1 ? "1 business expense slip" : `${periodSlips.length} business expense slips`}
+              {slipsWithPhotos > 0 &&
+                `, with ${slipsWithPhotos === 1 ? "its photo" : `${slipsWithPhotos} photos`} bundled into the pack`}
+              . Once the pack is downloaded, those photos are deleted from KatisoBiz to save
+              space. The numbers stay in your slips list, and the original slips remain your
+              own SARS record to keep.
+            </p>
+          )}
         </form>
 
         {(links ?? []).length > 0 && (
