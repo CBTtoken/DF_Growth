@@ -37,6 +37,7 @@ export default async function ShopCheckoutPage({
         delivery={owner.delivery}
         // Only whether they can take a card, never the key that lets them.
         hasGateway={owner.hasGateway}
+        gatewayProvider={owner.gatewayProvider}
         collectionAddressLine={collectionAddressLine}
       />
     </div>

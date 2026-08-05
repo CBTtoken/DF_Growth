@@ -24,6 +24,7 @@ import {
   type CsvRowError,
 } from "@/app/dashboard/shop-actions";
 import { SHOP_CSV_COLUMNS } from "@/lib/schemas/shop";
+import { OnlinePaymentsSection, type GatewayStatus } from "@/components/dashboard/OnlinePaymentsSection";
 import { shopImageUrl } from "@/lib/shop/queries";
 import { Card } from "@/components/ui/Card";
 
@@ -103,6 +104,7 @@ export function ShopSection({
   bobgoConnectedAt,
   bobgoSandbox,
   bobgoLastError,
+  gateway,
 }: {
   shopEnabled: boolean;
   /** The member's own slug, so every product links to its real live page. */
@@ -117,6 +119,7 @@ export function ShopSection({
   bobgoConnectedAt: string | null;
   bobgoSandbox: boolean;
   bobgoLastError: string | null;
+  gateway: GatewayStatus;
 }) {
   const [enabled, setEnabled] = useState(shopEnabled);
   const [isPending, startTransition] = useTransition();
@@ -169,6 +172,7 @@ export function ShopSection({
             lastError={bobgoLastError}
             hasDimensions={products.length === 0 || products.some((p) => p.weight_kg > 0 && p.length_cm > 0)}
           />
+          <OnlinePaymentsSection gateway={gateway} />
           <CollectionAddressForm address={collectionAddress} />
           <DeliveryForm
             mode={deliveryMode}

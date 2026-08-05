@@ -55,6 +55,8 @@ export type ShopOwner = {
   delivery: ShopDeliverySettings;
   /** Whether this member can take payment online. Never the key itself. */
   hasGateway: boolean;
+  /** Which gateway the checkout runs on. Bob Pay wins when both connect. */
+  gatewayProvider: "bobpay" | "paystack" | null;
 };
 
 const PRODUCT_COLUMNS =
@@ -101,7 +103,7 @@ export const getShopOwner = cache(async function getShopOwner(
   const { data } = await admin
     .from("growth_clients")
     .select(
-      "id, slug, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, logo_path, template, city, shop_enabled, shop_delivery_mode, shop_flat_delivery_cents, shop_free_delivery_over_cents, shop_collection_address, growth_client_secrets(paystack_secret_encrypted), landing_pages(page_type)"
+      "id, slug, business_name, contact_email, call_phone, whatsapp_phone, brand_primary_color, brand_secondary_color, logo_path, template, city, shop_enabled, shop_delivery_mode, shop_flat_delivery_cents, shop_free_delivery_over_cents, shop_collection_address, growth_client_secrets(paystack_secret_encrypted, bobpay_api_key_encrypted, bobpay_account_code), landing_pages(page_type)"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -130,7 +132,12 @@ export const getShopOwner = cache(async function getShopOwner(
   // can reach a browser.
   const secrets = data.growth_client_secrets as unknown as {
     paystack_secret_encrypted: string | null;
+    bobpay_api_key_encrypted: string | null;
+    bobpay_account_code: string | null;
   } | null;
+
+  const hasBobPay = Boolean(secrets?.bobpay_api_key_encrypted && secrets?.bobpay_account_code);
+  const hasPaystack = Boolean(secrets?.paystack_secret_encrypted);
 
   return {
     id: data.id,
@@ -151,7 +158,8 @@ export const getShopOwner = cache(async function getShopOwner(
       freeOverCents: data.shop_free_delivery_over_cents ?? null,
       collectionAddress: (data.shop_collection_address as ShopDeliverySettings["collectionAddress"]) ?? null,
     },
-    hasGateway: Boolean(secrets?.paystack_secret_encrypted),
+    hasGateway: hasBobPay || hasPaystack,
+    gatewayProvider: hasBobPay ? "bobpay" : hasPaystack ? "paystack" : null,
   };
 });
 

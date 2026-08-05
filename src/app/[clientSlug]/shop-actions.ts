@@ -11,7 +11,7 @@ import { addressLineOf, notifyOrderPlaced } from "@/lib/shop/notify";
 import { sendOrderLookupEmail } from "@/lib/email/shop-order";
 import { getShopOwner, type ShopOwner } from "@/lib/shop/queries";
 import { deliveryChargeCents, needsDeliveryAddress } from "@/lib/shop/delivery";
-import { startMemberPayment } from "@/lib/shop/gateway";
+import { startGatewayPayment } from "@/lib/shop/gateway";
 import type { OrderLine } from "@/lib/orders/line-items";
 import {
   getBobGoCredentials,
@@ -109,10 +109,10 @@ export async function placeShopOrder(
   const buyerEmail = parsed.data.customerEmail?.trim() || null;
 
   // Paystack will not open a transaction without an email address, and the
-  // receipt it sends goes there. So the one case where email stops being
-  // optional is the one where the buyer is about to pay online, and they
-  // are told why rather than just being refused.
-  if (owner.hasGateway && !buyerEmail) {
+  // receipt it sends goes there. Bob Pay takes a phone number alone, so on
+  // that provider the email stays as optional as it is everywhere else —
+  // Sprint 2's whole reason for recommending it to this market.
+  if (owner.gatewayProvider === "paystack" && !buyerEmail) {
     return {
       error: {
         customerEmail: ["We need an email address to send your payment receipt to."],
@@ -234,22 +234,28 @@ export async function placeShopOrder(
 
   const orderPath = `/${clientSlug}/shop/order/${order.id}`;
 
-  // The paying path. If Paystack will not open a transaction, the order is
-  // already recorded and the buyer is not sent into a dead end: it falls
-  // through to the unpaid path below, the member is emailed, and the buyer
-  // is told the seller will be in touch. A sale that completes awkwardly
-  // beats a sale that vanishes.
-  if (owner.hasGateway && buyerEmail) {
-    const payment = await startMemberPayment({
+  // The paying path, on whichever gateway the member connected. If the
+  // gateway will not open a transaction, the order is already recorded and
+  // the buyer is not sent into a dead end: it falls through to the unpaid
+  // path below, the member is emailed, and the buyer is told the seller
+  // will be in touch. A sale that completes awkwardly beats a sale that
+  // vanishes.
+  if (owner.hasGateway) {
+    const payment = await startGatewayPayment({
       growthClientId: owner.id,
       email: buyerEmail,
+      phone: parsed.data.customerPhone,
       amountCents: totalCents,
       reference,
-      callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}${orderPath}`,
-      metadata: { order_id: order.id, growth_client_id: owner.id },
+      itemName: `Order at ${owner.business_name}`,
+      returnUrl: `${process.env.NEXT_PUBLIC_SITE_URL}${orderPath}`,
+      notifyUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/api/webhooks/bobpay`,
     });
 
     if ("authorizationUrl" in payment) {
+      // Which provider this order ran on, so the return page and the
+      // webhook ask the right gateway and nobody else.
+      await admin.from("shop_orders").update({ gateway: payment.provider }).eq("id", order.id);
       return { redirectTo: payment.authorizationUrl, external: true };
     }
   }

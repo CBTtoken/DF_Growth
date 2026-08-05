@@ -772,3 +772,186 @@ export async function deleteCoupon(couponId: string): Promise<ActionResult> {
 // "shipped" and only one of which tells the customer is a trap: whichever
 // one you press second appears to do nothing, and the buyer either hears
 // twice or never. Shipping now goes through orders-actions.ts alone.
+
+// ============================================================
+// Online payments (Sprint 2, Handoff Sec 2.2-2.3)
+//
+// The one place in the estate where a member's gateway credentials are
+// written. The rules, from the handoff: encrypted at rest, never written
+// to logs, never returned to the browser after saving, revocable and
+// replaceable by the member, and only the last few characters ever shown.
+// Every save is preceded by a real call against the provider, so a broken
+// key is caught while the member is looking at the screen rather than at
+// their first sale.
+// ============================================================
+
+export async function connectBobPay(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined) return { error: { _form: [client.error] } };
+
+  const apiKey = String(formData.get("apiKey") ?? "").trim();
+  const accountCode = String(formData.get("accountCode") ?? "").trim().toUpperCase();
+  const sandbox = formData.get("sandbox") === "on";
+
+  if (apiKey.length < 16) return { error: { apiKey: ["That does not look like a whole key. Copy it again from Bob Pay's settings."] } };
+  if (!/^[A-Z0-9]{3,12}$/.test(accountCode)) {
+    return { error: { accountCode: ["Your account code is the short code on your Bob Pay account, like SAN001."] } };
+  }
+
+  const { testBobPayConnection } = await import("@/lib/shop/bobpay");
+  const test = await testBobPayConnection({ apiKey, accountCode, sandbox });
+  if (!test.ok) return { error: { _form: [test.message] } };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("growth_client_secrets").upsert(
+    {
+      growth_client_id: client.id,
+      bobpay_api_key_encrypted: encrypt(apiKey),
+      bobpay_account_code: accountCode,
+      bobpay_key_last4: apiKey.slice(-4),
+      bobpay_sandbox: sandbox,
+      bobpay_connected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "growth_client_id" }
+  );
+  if (error) {
+    console.error("Could not save Bob Pay credentials", client.id, error.code);
+    return { error: { _form: ["Could not save the connection. Try again."] } };
+  }
+
+  await revalidateOwnPage(client.id);
+  return { success: true };
+}
+
+export async function connectPaystack(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined) return { error: { _form: [client.error] } };
+
+  const secretKey = String(formData.get("secretKey") ?? "").trim();
+  if (!/^sk_(test|live)_[A-Za-z0-9]{10,}$/.test(secretKey)) {
+    return { error: { secretKey: ["A Paystack secret key starts with sk_live_ or sk_test_. Copy it from Paystack under Settings, API Keys."] } };
+  }
+
+  // A real authenticated call before anything is stored. The cheapest read
+  // Paystack offers that requires a valid secret.
+  try {
+    const res = await fetch("https://api.paystack.co/transaction?perPage=1", {
+      headers: { Authorization: `Bearer ${secretKey}` },
+    });
+    if (res.status === 401) return { error: { _form: ["Paystack did not accept that key. Check it was copied whole."] } };
+    if (!res.ok) return { error: { _form: [`Paystack answered with an error (${res.status}). Try again in a minute.`] } };
+  } catch {
+    return { error: { _form: ["Could not reach Paystack. Check your connection and try again."] } };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("growth_client_secrets").upsert(
+    {
+      growth_client_id: client.id,
+      paystack_secret_encrypted: encrypt(secretKey),
+      paystack_key_last4: secretKey.slice(-4),
+      paystack_connected_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "growth_client_id" }
+  );
+  if (error) {
+    console.error("Could not save Paystack credentials", client.id, error.code);
+    return { error: { _form: ["Could not save the connection. Try again."] } };
+  }
+
+  await revalidateOwnPage(client.id);
+  return { success: true };
+}
+
+/** The member's own revoke. Nulls the credential; nothing else is touched. */
+export async function disconnectGateway(provider: "bobpay" | "paystack"): Promise<ActionResult> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined) return { error: client.error };
+
+  const admin = createAdminClient();
+  const fields =
+    provider === "bobpay"
+      ? { bobpay_api_key_encrypted: null, bobpay_account_code: null, bobpay_key_last4: null, bobpay_connected_at: null }
+      : { paystack_secret_encrypted: null, paystack_key_last4: null, paystack_connected_at: null };
+
+  await admin
+    .from("growth_client_secrets")
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq("growth_client_id", client.id);
+
+  await revalidateOwnPage(client.id);
+  return { success: true };
+}
+
+/** "Test connection" on an already-saved key. The key never leaves the server. */
+export async function testSavedGateway(provider: "bobpay" | "paystack"): Promise<{ ok: boolean; message: string }> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined) return { ok: false, message: client.error };
+
+  if (provider === "bobpay") {
+    const { memberBobPayCreds, testBobPayConnection } = await import("@/lib/shop/bobpay");
+    const creds = await memberBobPayCreds(client.id);
+    if (!creds) return { ok: false, message: "No Bob Pay connection saved." };
+    return testBobPayConnection(creds);
+  }
+
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("growth_client_secrets")
+    .select("paystack_secret_encrypted")
+    .eq("growth_client_id", client.id)
+    .maybeSingle();
+  if (!data?.paystack_secret_encrypted) return { ok: false, message: "No Paystack connection saved." };
+  try {
+    const { decrypt } = await import("@/lib/crypto");
+    const res = await fetch("https://api.paystack.co/transaction?perPage=1", {
+      headers: { Authorization: `Bearer ${decrypt(data.paystack_secret_encrypted)}` },
+    });
+    return res.ok
+      ? { ok: true, message: "Connected. Paystack accepted the key." }
+      : { ok: false, message: `Paystack rejected the saved key (${res.status}). Replace it below.` };
+  } catch {
+    return { ok: false, message: "Could not reach Paystack. Try again." };
+  }
+}
+
+/**
+ * Refund a paid Bob Pay order from the dashboard (Handoff Sec 2.5.2).
+ * Member-scoped: only this member's own order, only one that Bob Pay's own
+ * records say was paid, and the money moves on the member's account.
+ */
+export async function refundBobPayOrder(orderId: string): Promise<ActionResult> {
+  const client = await requireGrowthClientId();
+  if (client.error !== undefined) return { error: client.error };
+
+  const admin = createAdminClient();
+  const { data: order } = await admin
+    .from("shop_orders")
+    .select("id, gateway, payment_status, bobpay_payment_id")
+    .eq("id", orderId)
+    .eq("growth_client_id", client.id)
+    .maybeSingle();
+
+  if (!order) return { error: "Order not found." };
+  if (order.gateway !== "bobpay") return { error: "This order was not paid through Bob Pay." };
+  if (order.payment_status !== "paid") return { error: "Only a paid order can be refunded." };
+  if (order.bobpay_payment_id == null) return { error: "Bob Pay's payment record is missing on this order. Refund it from your Bob Pay dashboard." };
+
+  const { memberBobPayCreds, refundBobPayPayment } = await import("@/lib/shop/bobpay");
+  const creds = await memberBobPayCreds(client.id);
+  if (!creds) return { error: "No Bob Pay connection saved." };
+
+  const result = await refundBobPayPayment(creds, Number(order.bobpay_payment_id));
+  if (!result.ok) return { error: result.message };
+
+  await admin
+    .from("shop_orders")
+    .update({ payment_status: "refunded", updated_at: new Date().toISOString() })
+    .eq("id", order.id)
+    .eq("payment_status", "paid");
+
+  await revalidateOwnPage(client.id);
+  return { success: true };
+}

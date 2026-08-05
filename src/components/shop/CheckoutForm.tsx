@@ -29,6 +29,7 @@ export function CheckoutForm({
   primaryColor,
   delivery,
   hasGateway,
+  gatewayProvider = null,
   collectionAddressLine,
 }: {
   clientSlug: string;
@@ -36,8 +37,11 @@ export function CheckoutForm({
   primaryColor: string;
   delivery: ShopDeliverySettings;
   hasGateway: boolean;
+  /** Bob Pay pays with a phone number alone; only Paystack insists on email. */
+  gatewayProvider?: "bobpay" | "paystack" | null;
   collectionAddressLine: string | null;
 }) {
+  const emailRequired = gatewayProvider === "paystack";
   const { lines, ready, itemCount, goodsCents, setQuantity, remove, clear } = useCart();
   const router = useRouter();
 
@@ -166,14 +170,14 @@ export function CheckoutForm({
             />
           </Field>
           <Field
-            label={hasGateway ? "Email" : "Email (optional)"}
-            hint={hasGateway ? "Your payment receipt goes here." : "Only if you would like a receipt by email."}
+            label={emailRequired ? "Email" : "Email (optional)"}
+            hint={emailRequired ? "Your payment receipt goes here." : "Only if you would like a receipt by email."}
             error={state?.error?.customerEmail}
           >
             <input
               name="customerEmail"
               type="email"
-              required={hasGateway}
+              required={emailRequired}
               autoComplete="email"
               inputMode="email"
               className="h-12 w-full rounded-xl border border-gray-300 px-4 text-gray-900"

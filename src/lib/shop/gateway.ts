@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { decrypt } from "@/lib/crypto";
+import { memberBobPayCreds, startBobPayPayment, verifyBobPayPayment } from "@/lib/shop/bobpay";
 
 /**
  * Taking a payment on the member's own gateway.
@@ -45,8 +46,97 @@ async function memberSecretKey(growthClientId: string): Promise<string | null> {
   }
 }
 
+export type GatewayProvider = "bobpay" | "paystack";
+
+/**
+ * Which gateway this member's checkout runs on. Bob Pay wins when both are
+ * connected, matching the dashboard's own recommendation (Handoff Sec 2.2:
+ * one recommendation, not a menu).
+ */
+export async function memberGatewayProvider(growthClientId: string): Promise<GatewayProvider | null> {
+  if (await memberBobPayCreds(growthClientId)) return "bobpay";
+  if (await memberSecretKey(growthClientId)) return "paystack";
+  return null;
+}
+
 export async function memberHasGateway(growthClientId: string): Promise<boolean> {
-  return (await memberSecretKey(growthClientId)) !== null;
+  return (await memberGatewayProvider(growthClientId)) !== null;
+}
+
+/**
+ * Starts a payment on whichever gateway the member has, Bob Pay first.
+ * `reference` is our order id on both providers (Paystack calls it
+ * reference, Bob Pay calls it custom_payment_id), so the way back is the
+ * same regardless of who processed the money.
+ */
+export async function startGatewayPayment({
+  growthClientId,
+  email,
+  phone,
+  amountCents,
+  reference,
+  itemName,
+  returnUrl,
+  notifyUrl,
+}: {
+  growthClientId: string;
+  email: string | null;
+  phone: string | null;
+  amountCents: number;
+  reference: string;
+  itemName: string;
+  returnUrl: string;
+  notifyUrl: string;
+}): Promise<{ provider: GatewayProvider; authorizationUrl: string } | { error: string }> {
+  const bobpay = await memberBobPayCreds(growthClientId);
+  if (bobpay) {
+    const result = await startBobPayPayment({
+      creds: bobpay,
+      customPaymentId: reference,
+      amountCents,
+      itemName,
+      email,
+      phoneNumber: phone,
+      notifyUrl,
+      successUrl: returnUrl,
+      pendingUrl: returnUrl,
+      cancelUrl: returnUrl,
+    });
+    if ("error" in result) return result;
+    return { provider: "bobpay", authorizationUrl: result.url };
+  }
+
+  if (!email) return { error: "email_required" };
+  const paystack = await startMemberPayment({
+    growthClientId,
+    email,
+    amountCents,
+    reference,
+    callbackUrl: returnUrl,
+    metadata: { order_id: reference },
+  });
+  if ("error" in paystack) return paystack;
+  return { provider: "paystack", authorizationUrl: paystack.authorizationUrl };
+}
+
+/**
+ * Asks the order's own gateway whether it was paid. The provider the order
+ * ran on is recorded on the order row; an order from before Bob Pay existed
+ * has none recorded and is treated as Paystack, which is all there was.
+ */
+export async function verifyGatewayPayment(
+  growthClientId: string,
+  reference: string,
+  provider: GatewayProvider | null
+): Promise<{ paid: boolean; amountCents: number | null; bobpayPaymentId: number | null }> {
+  if (provider === "bobpay") {
+    const creds = await memberBobPayCreds(growthClientId);
+    if (!creds) return { paid: false, amountCents: null, bobpayPaymentId: null };
+    const result = await verifyBobPayPayment(creds, reference);
+    return { paid: result.paid, amountCents: result.amountCents, bobpayPaymentId: result.paymentId };
+  }
+  const result = await verifyMemberPayment(growthClientId, reference);
+  return { paid: result.paid, amountCents: result.amountCents, bobpayPaymentId: null };
 }
 
 /**

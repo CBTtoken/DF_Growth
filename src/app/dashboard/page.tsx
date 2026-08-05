@@ -139,7 +139,13 @@ export default async function DashboardPage() {
       .order("created_at", { ascending: false }),
     admin
       .from("growth_client_secrets")
-      .select("growth_client_id")
+      // Presence flags and display fragments only — no encrypted value is
+      // ever selected here, so nothing secret can reach the page tree. A
+      // connection is "present" when its last4 and connected_at exist,
+      // which the connect actions always write together.
+      .select(
+        "growth_client_id, bobpay_key_last4, bobpay_account_code, bobpay_sandbox, bobpay_connected_at, paystack_key_last4, paystack_connected_at"
+      )
       .eq("growth_client_id", client.id)
       .maybeSingle(),
     admin
@@ -230,12 +236,29 @@ export default async function DashboardPage() {
     admin
       .from("shop_orders")
       .select(
-        "id, created_at, line_items, total_cents, customer_name, customer_email, customer_phone, delivery_address, delivery_method, member_note, payment_status, fulfilment_status, batch_number"
+        "id, created_at, line_items, total_cents, customer_name, customer_email, customer_phone, delivery_address, delivery_method, member_note, payment_status, fulfilment_status, batch_number, gateway, bobpay_payment_id"
       )
       .eq("growth_client_id", client.id)
       .order("created_at", { ascending: false })
       .limit(50),
   ]);
+
+  // Sprint 2: what the Online payments card shows. Booleans and last-four
+  // fragments only; the keys themselves never leave the server actions.
+  const gatewayStatus = {
+    bobpay: {
+      connected: Boolean(secret?.bobpay_key_last4 && secret?.bobpay_connected_at),
+      last4: secret?.bobpay_key_last4 ?? null,
+      accountCode: secret?.bobpay_account_code ?? null,
+      sandbox: secret?.bobpay_sandbox !== false,
+      connectedAt: secret?.bobpay_connected_at ?? null,
+    },
+    paystack: {
+      connected: Boolean(secret?.paystack_key_last4 && secret?.paystack_connected_at),
+      last4: secret?.paystack_key_last4 ?? null,
+      connectedAt: secret?.paystack_connected_at ?? null,
+    },
+  };
 
   const shopProductsFlat = (shopProducts ?? []).map((p) => {
     const variants = (p.shop_product_variants ?? []) as unknown as {
@@ -677,6 +700,7 @@ export default async function DashboardPage() {
                 reservations={reservations ?? []}
               />
               <ShopSection
+                gateway={gatewayStatus}
                 shopEnabled={growthClient?.shop_enabled ?? false}
                 shopSlug={growthClient?.slug ?? null}
                 products={shopProductsFlat}

@@ -10,6 +10,7 @@ import {
   markBatchSentForPrinting,
   markBatchReadyForCollection,
 } from "@/app/dashboard/orders-actions";
+import { refundBobPayOrder } from "@/app/dashboard/shop-actions";
 import { Card } from "@/components/ui/Card";
 import {
   describeLine,
@@ -49,6 +50,9 @@ export type SellerOrder = {
   payment_status: string;
   fulfilment_status: string;
   batch_number: number | null;
+  /** Which gateway the money moved on, when it moved online at all. */
+  gateway?: string | null;
+  bobpay_payment_id?: number | null;
 };
 
 /**
@@ -69,6 +73,9 @@ function orderState(order: SellerOrder): { label: string; className: string } {
   }
   if (order.payment_status === "oversold") {
     return { label: "Oversold", className: "bg-red-100 text-red-700" };
+  }
+  if (order.payment_status === "refunded") {
+    return { label: "Refunded", className: "bg-gray-200 text-gray-600" };
   }
   if (order.payment_status === "paid") {
     return { label: "Paid", className: "bg-green-100 text-green-700" };
@@ -544,6 +551,23 @@ function OrderRow({ order }: { order: SellerOrder }) {
             className="rounded-full bg-brand px-3 py-1 font-semibold text-white disabled:opacity-50"
           >
             {collecting ? "Mark as collected" : "Mark as sent"}
+          </button>
+        )}
+
+        {/* Sprint 2: money back the way it came, from the member's own Bob
+            Pay account. Only offered where Bob Pay's own payment record is
+            on file, because that id is what their refund endpoint wants. */}
+        {order.payment_status === "paid" && order.gateway === "bobpay" && order.bobpay_payment_id != null && (
+          <button
+            type="button"
+            onClick={() => {
+              if (!window.confirm(`Refund R${(order.total_cents / 100).toFixed(2)} to ${order.customer_name} through Bob Pay? This cannot be undone here.`)) return;
+              run(() => refundBobPayOrder(order.id));
+            }}
+            disabled={isPending}
+            className="rounded-full border border-red-300 px-3 py-1 font-semibold text-red-700 hover:border-red-400 disabled:opacity-50"
+          >
+            Refund via Bob Pay
           </button>
         )}
 

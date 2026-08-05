@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ClearCart } from "@/components/shop/ClearCart";
 import { addressLineOf, notifyOrderPlaced } from "@/lib/shop/notify";
-import { verifyMemberPayment } from "@/lib/shop/gateway";
+import { verifyGatewayPayment, type GatewayProvider } from "@/lib/shop/gateway";
 import { getShopOwner } from "@/lib/shop/queries";
 import { addressParts, describeLine, type DeliveryAddress, type OrderLine } from "@/lib/orders/line-items";
 import { readableTextOn } from "@/lib/color";
@@ -37,7 +37,7 @@ export default async function OrderConfirmationPage({
   const { data: order } = await admin
     .from("shop_orders")
     .select(
-      "id, line_items, subtotal_cents, discount_cents, shipping_cents, total_cents, customer_name, customer_email, customer_phone, delivery_address, delivery_method, payment_status, fulfilment_status, paystack_reference, created_at"
+      "id, line_items, subtotal_cents, discount_cents, shipping_cents, total_cents, customer_name, customer_email, customer_phone, delivery_address, delivery_method, payment_status, fulfilment_status, paystack_reference, gateway, created_at"
     )
     .eq("id", orderId)
     .eq("growth_client_id", owner.id)
@@ -51,13 +51,25 @@ export default async function OrderConfirmationPage({
   // page that tells a buyer to bookmark it has to tell the truth when they
   // come back.
   const cancelled = order.fulfilment_status === "cancelled";
+  const refunded = order.payment_status === "refunded";
   const sent = order.fulfilment_status === "shipped" || order.fulfilment_status === "delivered";
-  const paid = cancelled ? order.payment_status === "paid" : await settlePayment(owner, order, clientSlug);
+  const paid =
+    cancelled || refunded ? order.payment_status === "paid" : await settlePayment(owner, order, clientSlug);
   const lines = (order.line_items ?? []) as OrderLine[];
   const primaryColor = owner.brand_primary_color ?? "#1081b8";
 
-  const headline = cancelled ? "Order cancelled" : sent ? "Order sent" : paid ? "Payment received" : "Order received";
-  const statusLine = cancelled
+  const headline = refunded
+    ? "Order refunded"
+    : cancelled
+      ? "Order cancelled"
+      : sent
+        ? "Order sent"
+        : paid
+          ? "Payment received"
+          : "Order received";
+  const statusLine = refunded
+    ? `Thank you, ${firstName(order.customer_name)}. ${owner.business_name} has refunded this order. The money goes back the way it was paid, and your bank may take a few days to show it.`
+    : cancelled
     ? `This order was cancelled by ${owner.business_name}. If that is not what you expected, contact them${owner.call_phone || owner.whatsapp_phone ? ` on ${owner.call_phone ?? owner.whatsapp_phone}` : ""}.`
     : sent
       ? `Thank you, ${firstName(order.customer_name)}. ${
@@ -101,7 +113,7 @@ export default async function OrderConfirmationPage({
           also has it in their inbox and can ask for it again; a buyer who
           gave only a phone number has this page and nothing else, so they
           are told plainly to keep it. */}
-      {!cancelled && !sent && (
+      {!cancelled && !sent && !refunded && (
       <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
         <p className="font-medium text-gray-800">Keep this page to check on your order</p>
         <p className="mt-1 text-gray-600">
@@ -125,7 +137,7 @@ export default async function OrderConfirmationPage({
           sale like this is a stranger messaging them account details and
           claiming to be the seller. Handoff Sec 1.3 is why no banking
           detail appears anywhere on this page or in the buyer's email. */}
-      {!paid && !cancelled && !sent && (
+      {!paid && !cancelled && !sent && !refunded && (
         <p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           {owner.business_name} will confirm how to pay when they speak to you. Nobody will send you
           banking details by email or message before then, so treat anything that does as suspicious.
@@ -214,19 +226,30 @@ async function settlePayment(
     customer_phone: string | null;
     delivery_address: unknown;
     delivery_method: string;
+    gateway?: string | null;
   },
   clientSlug: string
 ): Promise<boolean> {
   if (order.payment_status === "paid") return true;
   if (!order.paystack_reference || !owner.hasGateway) return false;
 
-  const result = await verifyMemberPayment(owner.id, order.paystack_reference);
+  // The order remembers which gateway it ran on; the question goes to that
+  // gateway and no other. An order from before the column existed can only
+  // have been Paystack.
+  const provider = (order.gateway ?? "paystack") as GatewayProvider;
+  const result = await verifyGatewayPayment(owner.id, order.paystack_reference, provider);
   if (!result.paid) return false;
 
   const admin = createAdminClient();
   const { data: transitioned } = await admin
     .from("shop_orders")
-    .update({ payment_status: "paid", updated_at: new Date().toISOString() })
+    .update({
+      payment_status: "paid",
+      updated_at: new Date().toISOString(),
+      // Bob Pay refunds want their own payment record id, captured here at
+      // the one moment it is known.
+      ...(result.bobpayPaymentId != null ? { bobpay_payment_id: result.bobpayPaymentId } : {}),
+    })
     .eq("id", order.id)
     .eq("payment_status", "unpaid")
     .select("id");
