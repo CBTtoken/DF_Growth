@@ -9,6 +9,7 @@ import { SortSelect } from "@/components/marketplace/SortSelect";
 import { MarketplaceCard, type MarketplaceCardData } from "@/components/marketplace/MarketplaceCard";
 import { INDUSTRY_TAXONOMY } from "@/lib/industries";
 import { CITIES } from "@/lib/cities";
+import { truncateOnWord } from "@/lib/text";
 
 function formatDistance(meters: number): string {
   if (meters < 1000) return `${Math.round(meters)} m away`;
@@ -38,7 +39,15 @@ export default async function MarketplacePage({
 }: {
   searchParams: Promise<{ q?: string; industry?: string; city?: string; sort?: string; lat?: string; lng?: string }>;
 }) {
-  const { q = "", industry = "", city = "", sort = "near", lat = "", lng = "" } = await searchParams;
+  // "near" must never be the default — SortSelect's own comment says so
+  // ("opt-in only, never the default sort") and its own dropdown never
+  // requests browser GPS on a plain page load, only on an explicit change.
+  // Defaulting here silently ran every first visit through the IP-geo
+  // fallback instead, which is not always accurate (VPNs, some ISPs), and
+  // is exactly what produced a ~7200km "away" reading for a Pretoria
+  // business. "recent" matches the base query's own created_at ordering,
+  // so no other branch below needs to change.
+  const { q = "", industry = "", city = "", sort = "recent", lat = "", lng = "" } = await searchParams;
   const admin = createAdminClient();
 
   // Our own internal pages, kept off the marketplace at Dewald's ask
@@ -204,12 +213,20 @@ export default async function MarketplacePage({
       : client.screenshot_path
         ? `${screenshotsStorageBase}/${client.screenshot_path}`
         : null;
+    const rawTagline = client.tagline || client.business_description;
     return {
       slug: client.slug,
       businessName: client.business_name,
       industry: client.industry,
       city: client.city,
-      tagline: client.tagline || client.business_description,
+      // Found live, 5 August 2026: the card's CSS line-clamp cuts wherever
+      // the two-line box boundary falls, mid-word if that's where it lands
+      // ("...organizations that thi") — line-clamp has no word-boundary
+      // awareness of its own, unlike truncateOnWord (lib/text.ts), which
+      // already exists in this codebase for exactly this reason but this
+      // card never used it. 140 chars comfortably fills two lines of this
+      // card's text-xs body at its usual width without overflowing it.
+      tagline: rawTagline ? truncateOnWord(rawTagline, 140) : null,
       thumbnailUrl,
       logoUrl: client.logo_path ? `${logosStorageBase}/${client.logo_path}` : null,
       brandColor: client.brand_primary_color || "#1081b8",
