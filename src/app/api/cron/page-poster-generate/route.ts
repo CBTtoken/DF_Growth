@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { generatePagePosterQueue } from "@/lib/meta/page-poster-queue";
 
 // Runs once a day (via the shared daily cron, see cron/daily/route.ts) to
-// keep the page poster queue topped up a week ahead. Never publishes
+// keep the page poster queue topped up two weeks ahead. Never publishes
 // anything itself, only ever writes pending_approval rows.
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await generatePagePosterQueue(7);
+    const result = await generatePagePosterQueue(14);
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
     console.error("page-poster-generate cron threw", err);
