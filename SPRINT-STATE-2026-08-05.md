@@ -69,6 +69,29 @@ on the page: "in partnership with a professional décor company" (kept, her
 own published claim), her "20 years" experience figure (left OUT of the
 story, add back only if confirmed), "reply within 24 hours" (left out).
 
+## UPDATE, later session: item 3 built, code complete, awaiting connection
+
+Full scheduler built on branch `page-poster-2026-08-05` (PR not yet opened,
+`gh` unavailable in this environment: compare at
+https://github.com/CBTtoken/DF_Growth/pull/new/page-poster-2026-08-05).
+`npx tsc --noEmit`, `npx eslint`, `node scripts/check-house-style.mjs` and
+`npm run build` all clean. Migration `20260805200000_page_poster.sql` is
+committed but NOT applied to production, same reasoning as item 2's seed:
+it only auto-applies on push to main, and this branch has not been merged.
+
+What exists: queue tables, the Meta Graph API connection
+(`src/lib/meta/page-poster.ts`), queue generation with fair rotation and
+jitter (`src/lib/meta/page-poster-queue.ts`), two cron jobs (daily generate,
+folded into the existing consolidated cron; a new 15-minute publish cron in
+`vercel.json`), the admin approval screen at `/admin/page-poster`, and the
+member-facing email plus dashboard banner. Full detail in the session
+report.
+
+Blocked on Dewald: merging the branch, and the numbered steps to connect
+the Facebook page (Page ID + Page access token env vars) before anything
+can actually publish. The queue will generate and sit waiting for approval
+even before that connection exists; only the final publish step needs it.
+
 ## Item 3: page poster — TWO QUESTIONS ANSWERED, BUILD NOT STARTED
 
 Per the sprint's own fallback ("two honest answers beat a half-built
@@ -104,7 +127,7 @@ answers in hand.
 ## Resume prompt for a fresh session
 
 Paste: "Read SPRINT-STATE-2026-08-05.md at the repo root and continue the
-sprint from where it stopped. Items 1 is done, item 2 is code-complete
-awaiting my approvals (I approve the seed and the merge), item 3 needs the
-scheduler built per Facebook/HANDOFF-digitalflyer-page-poster.md with the
-two Meta answers already in the state file."
+sprint from where it stopped. Item 1 is done. Item 2 is code-complete
+awaiting my approvals (seed and merge). Item 3 (the page poster) is also
+code-complete on branch page-poster-2026-08-05, awaiting my approval to
+merge and the Facebook connection steps from the session report."
