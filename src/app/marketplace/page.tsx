@@ -63,7 +63,7 @@ export default async function MarketplacePage({
   let query = admin
     .from("growth_clients")
     .select(
-      "id, slug, business_name, tagline, business_description, industry, city, logo_path, hero_photo_id, screenshot_path, brand_primary_color, whatsapp_phone, facebook_url, instagram_url, landing_pages!inner(published)"
+      "id, slug, business_name, tagline, business_description, industry, city, logo_path, hero_photo_id, screenshot_path, fallback_photo_url, brand_primary_color, whatsapp_phone, facebook_url, instagram_url, landing_pages!inner(published)"
     )
     .eq("status", "active")
     .eq("unlisted", false)
@@ -204,15 +204,22 @@ export default async function MarketplacePage({
       ? clientPhotos.find((p) => p.id === client.hero_photo_id)
       : clientPhotos[0];
     const distanceMeters = distancesByClient.get(client.id);
-    // Cover resolution: an uploaded hero photo wins; otherwise the real
-    // captured screenshot of the page's hero (the "snipping tool" pipeline),
-    // which reads far better than a flat colour block; the block is only the
-    // last resort for a page with neither yet.
+    // Cover resolution, reordered 5 August 2026 (Dewald noticed the
+    // Facebook link preview for the same page always looks clean, this
+    // didn't): the page's own og:image ([clientSlug]/page.tsx) prefers a
+    // curated, industry-matched library photo over the raw auto-captured
+    // screenshot, and never uses the screenshot at all. This card now
+    // matches that: an uploaded hero photo still wins outright, then the
+    // curated fallback photo, and only then the raw screenshot, which is
+    // demoted to last resort rather than the default for anyone without
+    // their own photos yet.
     const thumbnailUrl = heroPhoto
       ? `${photosStorageBase}/${heroPhoto.storage_path}`
-      : client.screenshot_path
-        ? `${screenshotsStorageBase}/${client.screenshot_path}`
-        : null;
+      : client.fallback_photo_url
+        ? client.fallback_photo_url
+        : client.screenshot_path
+          ? `${screenshotsStorageBase}/${client.screenshot_path}`
+          : null;
     const rawTagline = client.tagline || client.business_description;
     return {
       slug: client.slug,
