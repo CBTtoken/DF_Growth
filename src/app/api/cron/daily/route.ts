@@ -8,6 +8,7 @@ import { GET as bizupNotifications } from "../bizup-notifications/route";
 import { GET as bizupCheckins } from "../bizup-checkins/route";
 import { GET as retentionReport } from "../retention/route";
 import { GET as boardCleanup } from "../board-cleanup/route";
+import { GET as pagePosterGenerate } from "../page-poster-generate/route";
 import { runHealthChecks } from "@/lib/desk/health/run";
 
 // Every scheduled job shares one invocation instead of the separate
@@ -62,6 +63,9 @@ export async function GET(request: Request) {
     // decision, because a want-ad and a finished chat were both told up
     // front that they last ten days. Never touches a business post.
     ["boardCleanup", boardCleanup],
+    // Tops the page poster queue up a week ahead. Never publishes, only
+    // ever writes pending_approval rows for Dewald to act on.
+    ["pagePosterGenerate", pagePosterGenerate],
   ];
   // Screenshot refresh only needs to run weekly — real pages don't change
   // often enough to justify a daily capture, and running it daily would
