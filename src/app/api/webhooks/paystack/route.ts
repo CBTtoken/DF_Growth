@@ -515,6 +515,29 @@ export async function POST(request: Request) {
       // first payment here is the same "onboarding just completed" moment
       // Foundation gets for free at the end of its own wizard.
       void trackBetaEvent(existingClient.plan === "foundation" ? "trial_converted" : "onboarding_completed");
+
+      // Tracking audit, 5 August 2026: DigitalFlyer's own Meta ad conversion
+      // for a paid Growth/Enterprise subscription had no server-side CAPI
+      // call at all, unlike every other paid conversion in this file
+      // (KatisoBiz's Subscribe above, Standing 365's Purchase) — meaning it
+      // relied solely on the browser pixel, exactly what CAPI exists to back
+      // up. Foundation never reaches this branch with pending_intake status
+      // (see the comment on isFirstPaymentForPendingSignup above), so this
+      // only ever fires for a real Growth/Enterprise first payment.
+      // event_id is the Paystack reference, which /pricing/success reads
+      // back out of its own callback URL and gives the browser pixel too,
+      // so Meta dedupes the two into one sale rather than counting it twice.
+      if (existingClient.plan !== "foundation") {
+        await sendDigitalFlyerCapiEvent({
+          eventName: "Subscribe",
+          email: existingClient.contact_email,
+          eventId: reference,
+          eventSourceUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/pricing`,
+          value: (amount ?? 0) / 100,
+          currency: "ZAR",
+          contentName: `growth_${existingClient.plan}`,
+        });
+      }
     }
 
     // Agent Referral Programme Sec 6: no-ops internally unless this client
