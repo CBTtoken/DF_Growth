@@ -131,6 +131,45 @@ plumbers, builders, tilers, painters, welders, mechanics, hairdressers,
 caterers. Any member whose photos are phone photos of real jobs and whose
 customers arrive by referral.
 
+### Marquee (`marquee`)
+
+- **Added:** 5 August 2026, fourth build through the Growth Build Kit
+- **Built for:** SIP Happens Bespoke Mobile Bar, Pretoria, Centurion and
+  select areas of Johannesburg. The platform's first considered-purchase
+  archetype.
+- **Hero:** `showreel`
+- **Anchor:** editorial serif (shared with Storyteller and dual-offer, but
+  neither pairs it with this frame), new `invitation` cards (a double-ruled
+  square-cornered frame, the way printed stationery is bordered), rule-line
+  eyebrows, airy spacing, light surface, and a new `lookbook` gallery
+  layout.
+
+**What it does that none of the others do.** Every earlier done-for-you
+theme serves a visitor with a problem right now; Fieldwork and Copperline
+are built for the four-second phone reach. Marquee is the opposite
+temperature: an events customer browses, compares and looks at pictures
+before deciding, so the photography shares the hero with the headline
+(every other hero hides its photo below lg), the gallery is a browsing
+mosaic that opens like a lookbook rather than a grid, and the section
+order runs look first, compare second (packages as concept cards), what
+is included third, people last. The one primary action is an enquiry;
+WhatsApp and phone sit as quiet pills per the Build Kit contact rule,
+deliberately subordinate. There is no location section at all: an events
+business works at the customer's venue, so areas served live in the hero
+strip in plain words instead of a map.
+
+**What the events archetype needed that the call-out shape does not
+provide** (the beginning of the section library): hero-level photography
+on the phone, a gallery whose job is browsing rather than proof, packages
+that read as comparable concepts without prices ("Quote on request" as an
+honest price line), and imagery attached to a package concept, which the
+packages record cannot carry today. That last one is the gap a future
+section library should close.
+
+**Reuse it for:** mobile bars, caterers, event planners, photographers,
+florists, venues, décor hire, wedding services. Anywhere the customer
+books an occasion rather than fixes an emergency.
+
 ### Old Good (`old-good`, custom page — not yet in the picker)
 
 - **Added:** 5 August 2026, built as the demo thrift shop for Jordan Rosema

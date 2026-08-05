@@ -22,6 +22,7 @@ import { TimelineHero } from "@/components/landing/heroes/TimelineHero";
 import { ShowcaseHero } from "@/components/landing/heroes/ShowcaseHero";
 import { DuoHero } from "@/components/landing/heroes/DuoHero";
 import { JobCardHero } from "@/components/landing/heroes/JobCardHero";
+import { ShowreelHero } from "@/components/landing/heroes/ShowreelHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -225,6 +226,19 @@ export default async function TemplatePreviewPage({
           contactEmail={SAMPLE_DATA.contactEmail}
           city={SAMPLE_DATA.city}
           photoUrl={SAMPLE_DATA.photoUrl}
+        />
+      )}
+      {template.hero === "showreel" && (
+        <ShowreelHero
+          {...heroProps}
+          callPhone={SAMPLE_DATA.callPhone}
+          whatsappPhone={SAMPLE_DATA.callPhone}
+          contactEmail={SAMPLE_DATA.contactEmail}
+          areasServed={SAMPLE_DATA.city}
+          photoUrls={[
+            SAMPLE_DATA.photoUrl,
+            `${galleryStorageBase}/${SAMPLE_DATA.photos[0].storage_path}`,
+          ].filter((u): u is string => Boolean(u))}
         />
       )}
       {template.hero === "default" && (
