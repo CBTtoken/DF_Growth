@@ -298,13 +298,22 @@ export default async function BizUpQuoteBuilderPage({ params }: { params: Promis
               <input name="description" placeholder="What you are charging for" className={input} />
               <div className="grid grid-cols-3 gap-2">
                 <input name="quantity" defaultValue="1" inputMode="decimal" placeholder="Qty" className={input} />
-                <select name="unit" defaultValue="each" className={input}>
+                {/* A text input with the usual units as suggestions, not a
+                    closed dropdown — a tiler needs "m²", a fencer needs
+                    "lin.m", and neither should need us to add their trade
+                    by name first. Free text stays free either way. */}
+                <input
+                  name="unit"
+                  defaultValue="each"
+                  list="quote-line-units"
+                  placeholder="Unit"
+                  className={input}
+                />
+                <datalist id="quote-line-units">
                   {CATALOGUE_UNITS.map((u) => (
-                    <option key={u.value} value={u.value}>
-                      {u.label}
-                    </option>
+                    <option key={u.value} value={u.value} />
                   ))}
-                </select>
+                </datalist>
                 <input name="unitPrice" inputMode="decimal" placeholder="Price" className={input} />
               </div>
               <button type="submit" className="self-start rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark">

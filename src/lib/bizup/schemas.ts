@@ -144,7 +144,15 @@ export const CATALOGUE_TYPES = [
 
 /**
  * The unit is what makes a stored price mean anything: R450 is a very
- * different number per hour than per job.
+ * different number per hour than per job. A member sign flagged this
+ * directly (5 August 2026): tiling prices per square metre, trenching
+ * per linear metre, and the same is true for a painter's wall area or a
+ * fencer's run, none of which fit this list. Rather than adding two more
+ * fixed options for two specific trades, this list is now suggestions,
+ * not a closed set — see the unit field in PriceListItemForm.tsx and
+ * quotes/[id]/page.tsx, both a text input with these as a datalist. The
+ * database column was already free text and the calculation was already
+ * generic (quantity × price), so nothing else needed to change.
  */
 export const CATALOGUE_UNITS = [
   { value: "hour", label: "per hour" },
@@ -153,13 +161,16 @@ export const CATALOGUE_UNITS = [
   { value: "km", label: "per km" },
   { value: "callout", label: "per callout" },
   { value: "job", label: "per job" },
+  { value: "m²", label: "per square metre" },
+  { value: "lin.m", label: "per linear metre" },
 ] as const;
 
 export const catalogueItemSchema = z.object({
   name: z.string().trim().min(2, "Give this a name you will recognise"),
   description: optionalText,
   type: z.enum(["labour", "part", "product", "travel", "callout", "other"]).default("labour"),
-  unit: z.enum(["hour", "day", "each", "km", "callout", "job"]).default("each"),
+  // Free text, not a closed enum, per the comment on CATALOGUE_UNITS above.
+  unit: z.string().trim().min(1, "Say what this is charged per").max(20, "Keep it short").default("each"),
 
   // Typed by a member on a phone, so it arrives as text and can look like
   // "450", "R450,00" or "1 234.50". parseAmountToCents handles all of

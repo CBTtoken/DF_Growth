@@ -258,13 +258,18 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
               <input name="description" placeholder="Add another line" className={input} />
               <div className="grid grid-cols-3 gap-2">
                 <input name="quantity" defaultValue="1" inputMode="decimal" className={input} />
-                <select name="unit" defaultValue="each" className={input}>
+                <input
+                  name="unit"
+                  defaultValue="each"
+                  list="invoice-line-units"
+                  placeholder="Unit"
+                  className={input}
+                />
+                <datalist id="invoice-line-units">
                   {CATALOGUE_UNITS.map((u) => (
-                    <option key={u.value} value={u.value}>
-                      {u.label}
-                    </option>
+                    <option key={u.value} value={u.value} />
                   ))}
-                </select>
+                </datalist>
                 <input name="unitPrice" inputMode="decimal" placeholder="Price" className={input} />
               </div>
               <button type="submit" className="self-start rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark">

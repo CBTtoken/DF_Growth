@@ -47,7 +47,7 @@ export default async function BizUpPriceListPage({
   if (error) console.error("KatisoBiz price list query failed", error);
 
   const rows = items ?? [];
-  const unitLabel = (u: string) => CATALOGUE_UNITS.find((x) => x.value === u)?.label ?? "";
+  const unitLabel = (u: string) => CATALOGUE_UNITS.find((x) => x.value === u)?.label ?? u;
   const typeLabel = (t: string) => CATALOGUE_TYPES.find((x) => x.value === t)?.label ?? t;
 
   return (

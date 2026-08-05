@@ -79,7 +79,7 @@ export function PriceListItemForm({
         : markupPct !== null && Number.isFinite(markupPct) && markupPct > 0
           ? Math.round(cents * (1 + markupPct / 100))
           : null;
-  const unitLabel = CATALOGUE_UNITS.find((u) => u.value === unit)?.label ?? "";
+  const unitLabel = CATALOGUE_UNITS.find((u) => u.value === unit)?.label ?? unit;
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
@@ -123,18 +123,23 @@ export function PriceListItemForm({
 
         <label className={labelClass}>
           <span>Charged</span>
-          <select
+          {/* Free text with the usual units suggested, not a closed list —
+              a member sign flagged that tiling (per m²) and trenching (per
+              linear metre) had nowhere to go here, and the same is true
+              for any trade that prices by area or length. */}
+          <input
             name="unit"
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
+            list="price-list-units"
             className={inputClass}
-          >
+            placeholder="each"
+          />
+          <datalist id="price-list-units">
             {CATALOGUE_UNITS.map((u) => (
-              <option key={u.value} value={u.value}>
-                {u.label}
-              </option>
+              <option key={u.value} value={u.value} />
             ))}
-          </select>
+          </datalist>
         </label>
       </div>
 
