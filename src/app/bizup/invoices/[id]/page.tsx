@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { currentAccount, loadSettings } from "@/lib/bizup/documents";
 import { addLine, updateLine, removeLine, setRateType, saveLineToPriceList } from "@/app/bizup/quotes/actions";
+import { deleteDraftInvoice } from "@/app/bizup/invoices/actions";
 import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { updateInvoiceCustomer, addCustomerToInvoice } from "@/app/bizup/invoices/actions";
 import { remindAboutInvoice } from "@/app/bizup/invoices/reminder-actions";
@@ -306,6 +307,20 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
             came here to press. scroll-mt keeps it clear of the sticky nav. */}
         <div id="next-step" className="scroll-mt-24" />
         {editable && <IssueInvoiceButton documentId={doc.id} ready={rows.length > 0} />}
+
+        {/* Dewald, 5 Aug 2026: a mistaken or abandoned draft had no way
+            out — quotes could be discarded, invoices could not. Same rule
+            as the quote version: the action itself refuses anything with a
+            number, and a draft carrying a recorded deposit is refused too
+            (the payment must be dealt with first, not silently lost). */}
+        {editable && !doc.number && (
+          <form action={deleteDraftInvoice}>
+            <input type="hidden" name="documentId" value={doc.id} />
+            <button type="submit" className="text-sm font-semibold text-red-600 underline-offset-2 hover:underline">
+              Discard this draft
+            </button>
+          </form>
+        )}
 
         {/* Sec 7: one button, on any issued invoice, and it is the only way
             in. There is deliberately no inline edit anywhere on this page

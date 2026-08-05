@@ -464,3 +464,56 @@ export async function addCustomerToInvoice(formData: FormData): Promise<void> {
   revalidatePath(`/bizup/invoices/${documentId}`);
   revalidatePath("/bizup/customers");
 }
+
+/**
+ * Dewald, using it himself, 5 Aug 2026: "Draft docs, I can't cancel it or
+ * get rid of them, sometimes just a mistake or started and then not needed
+ * anymore." Quotes had Discard this draft; invoices never did.
+ *
+ * Same rule as the quote version: only a numberless draft can go, enforced
+ * here rather than by hiding a button. One guard quotes do not need: an
+ * invoice draft can already carry a recorded deposit, and deleting it
+ * would silently lose the record of real money. That draft keeps living
+ * until the payment is removed first.
+ */
+export async function deleteDraftInvoice(formData: FormData): Promise<void> {
+  const documentId = String(formData.get("documentId") ?? "");
+  const account = await currentAccount();
+  if (!account) return;
+
+  const admin = createAdminClient();
+  const { data: doc } = await admin
+    .from("bizup_documents")
+    .select("id, number, status")
+    .eq("id", documentId)
+    .eq("account_id", account.id)
+    .eq("doc_type", "invoice")
+    .maybeSingle();
+
+  if (!doc || doc.number !== null || doc.status !== "draft") {
+    redirect(`/bizup/invoices/${documentId}`);
+  }
+
+  const { count: paymentCount } = await admin
+    .from("bizup_payments")
+    .select("id", { count: "exact", head: true })
+    .eq("document_id", documentId);
+
+  if ((paymentCount ?? 0) > 0) {
+    // The page shows the payments beneath the draft; sending the member
+    // back there is the explanation.
+    redirect(`/bizup/invoices/${documentId}`);
+  }
+
+  await admin.from("bizup_document_lines").delete().eq("document_id", documentId);
+  await admin.from("bizup_documents").delete().eq("id", documentId).is("number", null);
+
+  await admin.from("bizup_audit_log").insert({
+    account_id: account.id,
+    action: "draft_deleted",
+    reason: `Draft invoice ${documentId} discarded before issue`,
+  });
+
+  revalidatePath("/bizup/invoices");
+  redirect("/bizup/invoices");
+}
