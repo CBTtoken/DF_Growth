@@ -96,6 +96,6 @@ export async function revokeAccountantExportLink(formData: FormData): Promise<vo
 export async function exportLinkUrl(token: string): Promise<string> {
   const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const protocol = host.startsWith("localhost") ? "http" : "https";
-  const prefix = isKatisoBizHost(host) ? "" : "/bizup";
+  const prefix = isKatisoBizHost(host) ? "" : "/katisobiz";
   return `${protocol}://${host}${prefix}/x/${token}`;
 }

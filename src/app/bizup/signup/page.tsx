@@ -23,7 +23,7 @@ const SIGNUP_DESCRIPTION =
 // Relative, so it resolves against the metadataBase set below rather than
 // against Growth's domain.
 const SHARE_IMAGE = {
-  url: "/bizup/opengraph-image",
+  url: "https://katisobiz.co.za/opengraph-image",
   width: 1200,
   height: 630,
   alt: "KatisoBiz",

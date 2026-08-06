@@ -33,7 +33,7 @@ async function accountForBilling() {
 async function callbackUrl(): Promise<string> {
   const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const protocol = host.startsWith("localhost") ? "http" : "https";
-  const prefix = isKatisoBizHost(host) ? "" : "/bizup";
+  const prefix = isKatisoBizHost(host) ? "" : "/katisobiz";
   return `${protocol}://${host}${prefix}/upgrade/done`;
 }
 

@@ -46,13 +46,13 @@ export const metadata: Metadata = {
     description: PAGE_DESCRIPTION,
     url: "https://katisobiz.co.za/how-it-works",
     locale: "en_ZA",
-    images: [{ url: "/bizup/opengraph-image", width: 1200, height: 630, alt: "KatisoBiz" }],
+    images: [{ url: "https://katisobiz.co.za/opengraph-image", width: 1200, height: 630, alt: "KatisoBiz" }],
   },
   twitter: {
     card: "summary_large_image",
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
-    images: ["/bizup/opengraph-image"],
+    images: ["https://katisobiz.co.za/opengraph-image"],
   },
 };
 

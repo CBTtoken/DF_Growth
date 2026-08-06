@@ -12,6 +12,10 @@ import { getHomeSummary } from "@/lib/bizup/home";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BizUpLanding } from "@/components/bizup/landing/BizUpLanding";
 import { BizUpFooter } from "@/components/bizup/landing/BizUpFooter";
+import { WebsiteQuestion } from "@/components/bizup/WebsiteQuestion";
+import { ReviewWedge } from "@/components/bizup/ReviewWedge";
+import { QuoteNudge } from "@/components/bizup/QuoteNudge";
+import { isDismissed, getPublishedReviewCount, getQuoteStats, QUOTE_NUDGE_THRESHOLD } from "@/lib/bizup/nudges";
 
 // Private, signed-in-only — same reasoning as onboard/page.tsx.
 // The signed-out view of this route is the public landing page, so it must
@@ -101,6 +105,40 @@ export default async function BizUpHomePage() {
     planRow?.topup_balance ?? 0,
   );
 
+  // Jobs 4, 5, 6 (scripts/handoff-activation-nudges-and-emails.md): all
+  // three prompts are exclusive to a member with no linked Growth account
+  // — showing them to someone who already pays for Growth would be noise
+  // on their own dashboard, same reasoning GrowthFromBizUp already uses.
+  // Skipped entirely for a linked account rather than queried and then
+  // hidden, since none of this data means anything once they're linked.
+  let showWebsiteQuestion = false;
+  let reviewCount = 0;
+  let quoteStats = { sentCount: 0, wonCount: 0 };
+  let showReviewWedge = false;
+  let showQuoteNudge = false;
+
+  if (!account.growthClientId) {
+    // eslint-disable-next-line react-hooks/purity -- async Server Component, re-executes fully per request, no stale-render risk (same reasoning as dashboard/page.tsx's own use of Date.now() here)
+    const now = Date.now();
+    const [{ data: nudgeState }, reviews, quotes] = await Promise.all([
+      admin
+        .from("bizup_accounts")
+        .select("website_status, website_status_dismissed_at, review_wedge_dismissed_at, quote_nudge_dismissed_at")
+        .eq("id", account.id)
+        .single(),
+      getPublishedReviewCount(account.id),
+      getQuoteStats(account.id),
+    ]);
+
+    showWebsiteQuestion = !nudgeState?.website_status && !nudgeState?.website_status_dismissed_at;
+    reviewCount = reviews;
+    quoteStats = quotes;
+    showReviewWedge = reviewCount >= 1 && !isDismissed(nudgeState?.review_wedge_dismissed_at ?? null, now);
+    showQuoteNudge =
+      quoteStats.sentCount >= QUOTE_NUDGE_THRESHOLD &&
+      !isDismissed(nudgeState?.quote_nudge_dismissed_at ?? null, now);
+  }
+
   return (
     <main className="flex flex-1 flex-col bg-gray-50">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-5 p-5">
@@ -139,6 +177,13 @@ export default async function BizUpHomePage() {
             Go to DigitalFlyer Growth
           </Link>
         )}
+
+        {/* Jobs 5 and 6 first, since they're the two with a real, member-
+            specific reason to act right now. The static website question
+            (Job 4) and the general cross-sell come after. */}
+        {showReviewWedge && <ReviewWedge reviewCount={reviewCount} />}
+        {showQuoteNudge && <QuoteNudge sentCount={quoteStats.sentCount} wonCount={quoteStats.wonCount} />}
+        {showWebsiteQuestion && <WebsiteQuestion />}
 
         {/* Cross-sell, and only to someone who does not already pay for
             Growth. Advertising it to an existing Growth member would be
