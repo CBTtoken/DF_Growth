@@ -195,3 +195,94 @@ Dewald's own call until a real one-of-one seller needs them) and a Build
 Kit pass to make the register member-colour aware. When that happens it
 becomes the platform's theme for every one-of-one seller: thrift, vintage,
 art, once-off furniture, plants, collectables.
+
+### Retreat (`retreat`)
+
+- **Added:** 6 August 2026, fifth build through the Growth Build Kit
+- **Built for:** The Falling Feather Inn, guest house in Val-de-Grace,
+  Pretoria East
+- **Hero:** `retreat`
+- **Anchor:** sans-default headings, outlined-accent cards, plain-caps
+  eyebrows, airy spacing — no anchor before it combines those three.
+
+**What it does that none of the others do.** The property itself fills the
+hero (a real photo with a warm scrim derived from the member's own colour),
+because a stay-and-relax visitor isn't fixing an urgent problem or
+comparing a considered purchase, they're deciding whether this looks like a
+nice place to be. Facilities render as a loose wrap of quiet pills
+(`amenity-pills`, a new services layout) rather than a checklist or a job
+sheet — "WiFi, pool, braai area" is a glance, not a pitch.
+
+**Reuse it for:** guest houses, B&Bs, lodges, self-catering — any
+stay-and-relax business where the place itself is the product.
+
+### Programme (`programme`)
+
+- **Added:** 6 August 2026, sixth build through the Growth Build Kit
+- **Built for:** Cape Town Butler (SA Butlers), hospitality skills
+  training
+- **Hero:** `programme`
+- **Anchor:** sans-default headings, flat-border cards, pill-badge
+  eyebrows, standard spacing. Packages render as `list-rows` — the first
+  real use of that layout for actual named, priced courses rather than
+  pricing tiers.
+
+**What it does that none of the others do.** No testimonial, review or
+rating can ever appear anywhere on Growth — a house rule, absolute — so a
+credentialed training business has to earn trust a different way. The
+member's tagline reads as a stated credential line in the hero (not
+invented by the template, an ordinary editable field), and real courses
+with real prices do the rest of the convincing in Packages.
+
+**Reuse it for:** any training, coaching or credentialed skills-based
+service — the trust problem this solves recurs anywhere testimonials would
+normally carry the page.
+
+### Atelier (`atelier`)
+
+- **Added:** 6 August 2026, seventh build through the Growth Build Kit
+- **Built for:** Greeff Kitchens, custom kitchens and cabinetry in
+  Klerksdorp, trading since 1991
+- **Hero:** `atelier`
+- **Anchor:** serif-editorial headings (shared with Storyteller and
+  Marquee, but paired with flat-border cards and standard spacing —
+  neither of those two combinations) at a solid warm panel in the member's
+  own colour rather than a pale paper tone. About reuses Fieldwork's
+  `statement` layout — the founder's own pitch beside a real work photo —
+  and the gallery reuses Marquee's `lookbook` mosaic, with its own copy
+  ("A look at finished work" rather than "Moments from past events") since
+  a kitchen portfolio is not an events gallery.
+
+**What it does that none of the others do.** A kitchen is a considered
+purchase like Marquee's events archetype, but the trust signal is heritage
+(a founding year, a founder's own words) rather than photography-as-
+product. The tagline carries the founding line as a plaque-style tag in
+the hero — an ordinary editable field, not a hardcoded claim.
+
+**Reuse it for:** bespoke manufacturers and workshops with real years
+behind them — cabinetmakers, upholsterers, furniture makers, custom
+fabricators.
+
+### Workroom (`workroom`)
+
+- **Added:** 6 August 2026, eighth build through the Growth Build Kit
+- **Built for:** Cottonball, sewing/embroidery/quilting machine agency and
+  classes in Moreleta Park, Pretoria East
+- **Anchor:** sans-default headings, a new `stitched-edge` card recipe (a
+  dashed thread-red top seam — this theme's own material signature, the
+  same way Fieldwork fixes steel and Copperline fixes copper), plain-caps
+  eyebrows, standard spacing. Gallery reuses Copperline's `job-wall` —
+  tilted prints with thick white borders — because a hobby shop's own
+  photos of real finished work are the same kind of proof a neighbourhood
+  trade's are, just gentler in tone.
+- **Hero:** `workroom`, a soft paper-tone hero (Editorial's technique)
+  centred rather than asymmetric, with a dashed rule under the tagline
+  echoing the card seam.
+
+**What it does that none of the others do.** The deliberate small,
+personal opposite of Atelier's heritage-manufacturer register: no
+asymmetry, no plaque, just a warm centred welcome for a business run by
+one person the customer gets to know.
+
+**Reuse it for:** a personal craft shop or class business run by one
+person — pottery studios, art classes, small home-based makers.
