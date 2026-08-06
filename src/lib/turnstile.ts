@@ -9,7 +9,7 @@
 export async function verifyTurnstileToken(
   token: string | null,
   remoteIp?: string,
-  secretEnvVar: "TURNSTILE_SECRET_KEY" | "BIZUP_TURNSTILE_SECRET_KEY" = "TURNSTILE_SECRET_KEY",
+  secretEnvVar: "TURNSTILE_SECRET_KEY" | "BIZUP_TURNSTILE_SECRET_KEY" | "JOBS_TURNSTILE_SECRET_KEY" = "TURNSTILE_SECRET_KEY",
 ): Promise<boolean> {
   if (!token) return false;
 

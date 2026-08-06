@@ -87,4 +87,30 @@ export async function listMyGrowthClients(): Promise<
     .filter((m): m is { id: string; businessName: string; slug: string } => m !== null);
 }
 
+// Whether the current login has a partner-sourced business (BidWeb etc.) —
+// derived from an existing membership rather than a separate role table,
+// since a partner's own user always already has at least one comped
+// growth_client tagged to their partner_id. Powers the dashboard's "Add
+// another business" entry point and its server action's own authorization
+// check (never trust the client to say which partner it is).
+export async function getMyPartnerId(): Promise<string | null> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const admin = createAdminClient();
+  const { data: memberships } = await admin
+    .from("growth_members")
+    .select("growth_clients(partner_id)")
+    .eq("user_id", user.id);
+
+  for (const m of memberships ?? []) {
+    const client = m.growth_clients as unknown as { partner_id: string | null } | null;
+    if (client?.partner_id) return client.partner_id;
+  }
+  return null;
+}
+
 export { ACTIVE_ACCOUNT_COOKIE };

@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { requireGrowthClientId, listMyGrowthClients } from "@/lib/auth/require-growth-client";
+import { requireGrowthClientId, listMyGrowthClients, getMyPartnerId } from "@/lib/auth/require-growth-client";
 import { AccountSwitcher } from "@/components/dashboard/AccountSwitcher";
 import { AddTestimonialForm } from "@/components/dashboard/AddTestimonialForm";
 import { MetaTokenForm } from "@/components/dashboard/MetaTokenForm";
@@ -317,6 +317,10 @@ export default async function DashboardPage() {
   // more than one (AccountSwitcher's own guard), so this is a no-op extra
   // query for the common single-account case.
   const myAccounts = await listMyGrowthClients();
+  // Partner-only (BidWeb's Samantha, for example) — a normal member's login
+  // never has a partner_id on any of their memberships, so this is null and
+  // the "Add another business" link simply never renders for them.
+  const myPartnerId = await getMyPartnerId();
 
   const storageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/generated-assets`;
   const photosStorageBase = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
@@ -790,6 +794,14 @@ export default async function DashboardPage() {
               role first, then which business within the business role. */}
           {agentRecord && <RoleSwitcher active="business" />}
           <AccountSwitcher accounts={myAccounts} currentId={client.id ?? ""} />
+          {myPartnerId && (
+            <Link
+              href="/dashboard/add-business"
+              className="w-fit rounded-full border border-dashed border-gray-300 px-4 py-1.5 text-xs font-semibold text-gray-500 transition hover:border-brand hover:text-brand"
+            >
+              + Add another business
+            </Link>
+          )}
 
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
