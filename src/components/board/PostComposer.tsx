@@ -117,6 +117,11 @@ export function PostComposer({
 
       <input type="hidden" name="kind" value={chosen.id} />
 
+      {/* Screen one is skipped entirely when there is only one kind to
+          choose (the public "looking for" case), so the notice has to live
+          here too -- otherwise a public poster would never see it. */}
+      {kinds.length === 1 && <BannedListNotice />}
+
       <div className="flex flex-col gap-1.5">
         <label htmlFor="post-title" className="text-sm font-semibold text-neutral-ink">
           {chosen.titleLabel}
