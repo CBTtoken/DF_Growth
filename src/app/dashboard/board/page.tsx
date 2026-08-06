@@ -10,7 +10,7 @@ import { PostComposer } from "@/components/board/PostComposer";
 import { createBoardPost } from "@/app/board/new/actions";
 import { MEMBER_KINDS } from "@/lib/board/kinds";
 import { BoardCommentRow } from "@/components/dashboard/BoardCommentRow";
-import { hideBoardPost, republishBoardPost } from "@/app/dashboard/board/actions";
+import { hideBoardPost, republishBoardPost, renewBoardPost } from "@/app/dashboard/board/actions";
 import { boardPhotoUrl } from "@/lib/board/queries";
 import { boardPrice, postedWhen } from "@/lib/board/format";
 import { kindLabel } from "@/lib/board/kinds";
@@ -27,7 +27,10 @@ type MyPost = {
   photo_path: string | null;
   status: string;
   published_at: string;
+  expires_at: string | null;
 };
+
+const RENEW_WINDOW_DAYS = 7;
 
 export default async function DashboardBoardPage() {
   const client = await requireGrowthClientId();
@@ -53,7 +56,7 @@ export default async function DashboardBoardPage() {
     admin.from("growth_clients").select("city, business_name").eq("id", client.id).single(),
     admin
       .from("board_posts")
-      .select("id, slug, kind, title, price_cents, photo_path, status, published_at")
+      .select("id, slug, kind, title, price_cents, photo_path, status, published_at, expires_at")
       // A removed post is a moderation outcome, not something the member
       // manages here, so it is not in this list at all. Phase 2 owns that
       // conversation and will need its own place to have it.
@@ -71,6 +74,15 @@ export default async function DashboardBoardPage() {
       .order("created_at", { ascending: false })
       .limit(50),
   ]);
+
+  // One timestamp for the whole render, rather than a fresh Date.now() per
+  // row. react-hooks/purity flags Date.now() as an impure render call, a
+  // rule aimed at client components that may re-render from cached props
+  // with no new data -- this is an async Server Component that re-executes
+  // fully per request by definition, so there's no stale-render risk here
+  // (same reasoning as dashboard/page.tsx's own use of Date.now()).
+  // eslint-disable-next-line react-hooks/purity
+  const requestTime = Date.now();
 
   const myPosts = (posts ?? []) as MyPost[];
   const myComments = (comments ?? []) as unknown as {
@@ -134,6 +146,9 @@ export default async function DashboardBoardPage() {
                 const price = boardPrice(post.price_cents);
                 const photoUrl = boardPhotoUrl(post.photo_path);
                 const hidden = post.status === "hidden";
+                const msUntilExpiry = post.expires_at ? new Date(post.expires_at).getTime() - requestTime : null;
+                const nearingExpiry = msUntilExpiry !== null && msUntilExpiry < RENEW_WINDOW_DAYS * 24 * 60 * 60 * 1000;
+                const expired = msUntilExpiry !== null && msUntilExpiry < 0;
 
                 return (
                   <li
@@ -152,10 +167,21 @@ export default async function DashboardBoardPage() {
                         {kindLabel(post.kind)}
                         {price ? ` · ${price}` : ""} · {postedWhen(post.published_at)}
                         {hidden ? " · not public" : ""}
+                        {expired ? " · expired" : nearingExpiry ? " · expiring soon" : ""}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {!hidden && nearingExpiry && (
+                        <form action={renewBoardPost.bind(null, post.id)}>
+                          <button
+                            type="submit"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition-colors hover:border-emerald-300"
+                          >
+                            Renew
+                          </button>
+                        </form>
+                      )}
                       {!hidden && (
                         <Link
                           href={`/board/post/${post.slug}`}

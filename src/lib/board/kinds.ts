@@ -17,6 +17,22 @@
 
 export type PostKind = "special" | "offer" | "for_sale" | "looking_for";
 
+export type PostCondition = "new" | "like_new" | "good" | "for_parts";
+export type PostUrgency = "asap" | "this_week" | "flexible";
+
+export const CONDITION_OPTIONS: { id: PostCondition; label: string }[] = [
+  { id: "new", label: "New" },
+  { id: "like_new", label: "Like new" },
+  { id: "good", label: "Good" },
+  { id: "for_parts", label: "For parts" },
+];
+
+export const URGENCY_OPTIONS: { id: PostUrgency; label: string }[] = [
+  { id: "asap", label: "As soon as possible" },
+  { id: "this_week", label: "This week" },
+  { id: "flexible", label: "No rush" },
+];
+
 export type PostKindMeta = {
   id: PostKind;
   /** On the card, the filter and the page title. */
@@ -24,7 +40,7 @@ export type PostKindMeta = {
   /** On the New post picker, so the choice explains itself. */
   pickerLabel: string;
   pickerHint: string;
-  /** Who may post it. */
+  /** Who may post it. Money-attached kinds are member-only, checked again at the database. */
   author: "member" | "public" | "both";
   /** In the URL, /board?kind=for-sale, and nowhere else. */
   param: string;
@@ -34,8 +50,16 @@ export type PostKindMeta = {
   bodyPlaceholder: string;
   /** A price box only where a price means something. */
   showPrice: boolean;
+  /** An offer/special needs a price or a saving described in words, not necessarily both. */
+  requiresPriceOrSaving: boolean;
   /** Whether a business posts this as itself. Looking for is always personal. */
   businessByDefault: boolean;
+  /** A for-sale post is not a post without something to look at. */
+  requiresPhoto: boolean;
+  requiresCondition: boolean;
+  /** An offer with no end date is not an offer. */
+  requiresEndDate: boolean;
+  requiresUrgency: boolean;
 };
 
 export const POST_KINDS: PostKindMeta[] = [
@@ -50,7 +74,12 @@ export const POST_KINDS: PostKindMeta[] = [
     titlePlaceholder: "Two rooms painted for the price of one",
     bodyPlaceholder: "The details. What is included, and until when.",
     showPrice: true,
+    requiresPriceOrSaving: true,
     businessByDefault: true,
+    requiresPhoto: false,
+    requiresCondition: false,
+    requiresEndDate: true,
+    requiresUrgency: false,
   },
   {
     id: "offer",
@@ -63,20 +92,34 @@ export const POST_KINDS: PostKindMeta[] = [
     titlePlaceholder: "Same day geyser replacement",
     bodyPlaceholder: "The details. What is included, how long it takes, which areas you cover.",
     showPrice: true,
+    requiresPriceOrSaving: true,
     businessByDefault: true,
+    requiresPhoto: false,
+    requiresCondition: false,
+    requiresEndDate: true,
+    requiresUrgency: false,
   },
   {
     id: "for_sale",
     label: "For sale",
     pickerLabel: "Something for sale",
     pickerHint: "An item you are selling",
-    author: "both",
+    // Money attached, so a member only, same as offer and special. A
+    // signed-in member can still post it as himself rather than his
+    // business (see "asMyself" in the composer) -- what changes here is
+    // that a stranger with no account can no longer post one at all.
+    author: "member",
     param: "for-sale",
     titleLabel: "What are you selling",
     titlePlaceholder: "Defy double door fridge, working",
     bodyPlaceholder: "Condition, age, and anything a buyer should know.",
     showPrice: true,
+    requiresPriceOrSaving: false,
     businessByDefault: true,
+    requiresPhoto: true,
+    requiresCondition: true,
+    requiresEndDate: false,
+    requiresUrgency: false,
   },
   {
     id: "looking_for",
@@ -91,9 +134,14 @@ export const POST_KINDS: PostKindMeta[] = [
     // Somebody looking for a plumber has no price to give, and asking for
     // one would only make them guess.
     showPrice: false,
+    requiresPriceOrSaving: false,
     // Always personal. A business looking for a plumber is a person looking
     // for a plumber.
     businessByDefault: false,
+    requiresPhoto: false,
+    requiresCondition: false,
+    requiresEndDate: false,
+    requiresUrgency: true,
   },
 ];
 

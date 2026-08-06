@@ -182,6 +182,11 @@ export default async function BoardPostPage({ params }: { params: Promise<{ slug
                 {kindLabel(post.kind)}
               </span>
               <span className="text-xs text-neutral-muted">{postedWhen(post.publishedAt)}</span>
+              {post.isExpired && (
+                <span className="rounded-full bg-neutral-200 px-2.5 py-1 text-xs font-semibold text-neutral-600">
+                  Expired
+                </span>
+              )}
               {post.activeThisWeek && (
                 <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                   <Zap size={12} /> Active this week

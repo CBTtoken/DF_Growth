@@ -80,7 +80,7 @@ export async function submitComment(
   if ("error" in resolved) return { error: resolved.error };
 
   const body = stripEmDashes(parsed.data.body);
-  const auto = autoRuleForNewComment(body);
+  const auto = await autoRuleForNewComment(body);
 
   // A reply has to belong to a comment on this same post. Checked rather
   // than trusted, since the id arrives from a form.

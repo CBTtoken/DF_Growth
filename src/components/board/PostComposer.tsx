@@ -3,9 +3,12 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ImagePlus } from "lucide-react";
-import type { PostKindMeta } from "@/lib/board/kinds";
+import { CONDITION_OPTIONS, URGENCY_OPTIONS, type PostKindMeta } from "@/lib/board/kinds";
 import { CITIES, OTHER_CITY } from "@/lib/cities";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
+import { BannedListNotice } from "@/components/board/BannedListNotice";
+
+const MAX_END_DATE = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 // One composer, used by a business and by a person, on the board and in the
 // dashboard.
@@ -22,7 +25,7 @@ const inputClass =
   "w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2.5 text-sm text-neutral-ink outline-none transition-colors focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
 
 export type ComposerState =
-  | { error?: string; success?: boolean; slug?: string }
+  | { error?: string; success?: boolean; slug?: string; held?: boolean }
   | null;
 
 export function PostComposer({
@@ -51,7 +54,11 @@ export function PostComposer({
   if (state?.success) {
     return (
       <div className="flex flex-col items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-        <p className="text-sm font-semibold text-emerald-900">Posted. It is on the board now.</p>
+        <p className="text-sm font-semibold text-emerald-900">
+          {state.held
+            ? "Posted. It's waiting to be checked before it shows on the board."
+            : "Posted. It is on the board now."}
+        </p>
         <div className="flex flex-wrap gap-2">
           {state.slug && (
             <Link
@@ -90,6 +97,7 @@ export function PostComposer({
             </button>
           ))}
         </div>
+        <BannedListNotice />
       </div>
     );
   }
@@ -129,10 +137,87 @@ export function PostComposer({
       {chosen.showPrice && (
         <div className="flex flex-col gap-1.5">
           <label htmlFor="post-price" className="text-sm font-semibold text-neutral-ink">
-            Price <span className="font-normal text-neutral-muted">(optional)</span>
+            Price{" "}
+            {chosen.id === "for_sale" ? null : (
+              <span className="font-normal text-neutral-muted">
+                {chosen.requiresPriceOrSaving ? "(or a saving below)" : "(optional)"}
+              </span>
+            )}
           </label>
-          <input id="post-price" type="text" name="price" placeholder="1200" className={inputClass} />
-          <p className="text-xs text-neutral-muted">Leave it out if it depends on the job.</p>
+          <input
+            id="post-price"
+            type="text"
+            name="price"
+            required={chosen.id === "for_sale"}
+            placeholder="1200"
+            className={inputClass}
+          />
+          {!chosen.requiresPriceOrSaving && chosen.id !== "for_sale" && (
+            <p className="text-xs text-neutral-muted">Leave it out if it depends on the job.</p>
+          )}
+        </div>
+      )}
+
+      {chosen.requiresPriceOrSaving && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="post-saving" className="text-sm font-semibold text-neutral-ink">
+            Or describe the saving <span className="font-normal text-neutral-muted">(if there&apos;s no single price)</span>
+          </label>
+          <input id="post-saving" type="text" name="savingText" placeholder="20% off, or second one half price" className={inputClass} />
+          <p className="text-xs text-neutral-muted">Fill in the price above, or this. One of the two.</p>
+        </div>
+      )}
+
+      {chosen.requiresCondition && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="post-condition" className="text-sm font-semibold text-neutral-ink">
+            Condition
+          </label>
+          <select id="post-condition" name="condition" required defaultValue="" className={inputClass}>
+            <option value="" disabled>
+              Choose the condition
+            </option>
+            {CONDITION_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {chosen.requiresEndDate && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="post-end-date" className="text-sm font-semibold text-neutral-ink">
+            Runs until
+          </label>
+          <input
+            id="post-end-date"
+            type="date"
+            name="endDate"
+            required
+            max={MAX_END_DATE}
+            className={inputClass}
+          />
+          <p className="text-xs text-neutral-muted">An offer with no end date is not an offer.</p>
+        </div>
+      )}
+
+      {chosen.requiresUrgency && (
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="post-urgency" className="text-sm font-semibold text-neutral-ink">
+            How urgent
+          </label>
+          <select id="post-urgency" name="urgency" required defaultValue="" className={inputClass}>
+            <option value="" disabled>
+              Choose one
+            </option>
+            {URGENCY_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -141,15 +226,18 @@ export function PostComposer({
           htmlFor="post-photo"
           className="inline-flex items-center gap-1.5 text-sm font-semibold text-neutral-ink"
         >
-          <ImagePlus size={15} /> Photo <span className="font-normal text-neutral-muted">(optional)</span>
+          <ImagePlus size={15} /> Photo{" "}
+          <span className="font-normal text-neutral-muted">{chosen.requiresPhoto ? "(needed)" : "(optional)"}</span>
         </label>
         <input
           id="post-photo"
           type="file"
           name="photo"
           accept="image/*"
+          required={chosen.requiresPhoto}
           className="w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2 text-sm text-neutral-ink file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-light file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-neutral-mid"
         />
+        {chosen.requiresPhoto && <p className="text-xs text-neutral-muted">A for-sale post needs at least one photo.</p>}
       </div>
 
       {/* Town, always, because the area page is where a post gets found. */}

@@ -99,6 +99,42 @@ export async function hidePost(postId: string): Promise<void> {
   revalidatePath("/admin/board");
 }
 
+/**
+ * Puts a held post back in public.
+ *
+ * Job 3: banking details, a payment link, or anything else the bot holds on
+ * a post rather than a comment lands here -- held, never auto-removed, and
+ * this is the "put it back" half of that pair. `hidePost` above is already
+ * the "remove it" half, reused rather than duplicated.
+ */
+export async function restoreHeldPost(postId: string): Promise<void> {
+  const admin_ = await requireAdminEmail();
+  if ("error" in admin_) return;
+
+  const admin = createAdminClient();
+  const { data: post } = await admin
+    .from("board_posts")
+    .update({ status: "published", held_reason: null, updated_at: new Date().toISOString() })
+    .eq("id", postId)
+    .eq("status", "held")
+    .select("slug")
+    .maybeSingle();
+
+  if (!post) return;
+
+  await logModeration({
+    targetType: "post",
+    targetId: postId,
+    action: "restored",
+    rule: "admin decision",
+    actor: { kind: "admin", email: admin_.email },
+  });
+
+  revalidatePath(`/board/post/${post.slug}`);
+  revalidatePath("/board");
+  revalidatePath("/admin/board");
+}
+
 /** The report was wrong, or the post is fine. Closes it without touching the post. */
 export async function dismissPostReports(postId: string): Promise<void> {
   const admin_ = await requireAdminEmail();

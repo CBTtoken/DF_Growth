@@ -43,6 +43,8 @@ export type BoardPost = {
   city: string | null;
   /** Real KatisoBiz document activity in the last seven days. Never a count, only the fact. */
   activeThisWeek: boolean;
+  /** Job 7: past its expiry, but a business post stays reachable and indexed regardless. */
+  isExpired: boolean;
 };
 
 const PHOTOS_BASE = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos`;
@@ -99,40 +101,54 @@ async function listableMembers(): Promise<Map<string, BoardMember>> {
 
 /**
  * Which of these businesses issued a real KatisoBiz document in the last
- * seven days. A set, never a count, so the underlying numbers never leave.
+ * seven days, or renewed a board post in the last seven days. A set, never
+ * a count, so the underlying numbers never leave.
  *
  * Live reality: bizup_accounts.growth_client_id is null on every account,
- * so this correctly returns nobody until the two products are linked.
+ * so the KatisoBiz half correctly returns nobody until the two products are
+ * linked -- the renewal half (job 7: "a member renewing a post is telling
+ * you they are still trading") works regardless, since it only needs the
+ * Board's own data.
  */
 async function activeThisWeekIds(clientIds: string[]): Promise<Set<string>> {
   if (clientIds.length === 0) return new Set();
 
   const admin = createAdminClient();
-  const { data: accounts } = await admin
-    .from("bizup_accounts")
-    .select("id, growth_client_id")
-    .in("growth_client_id", clientIds);
-
-  if (!accounts?.length) return new Set();
-
-  const clientByAccount = new Map<string, string>();
-  for (const account of accounts) {
-    if (account.growth_client_id) clientByAccount.set(account.id, account.growth_client_id);
-  }
-
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const { data: documents } = await admin
-    .from("bizup_documents")
-    .select("account_id")
-    .in("account_id", [...clientByAccount.keys()])
-    .not("number", "is", null)
-    .gte("issued_at", sevenDaysAgo);
+
+  const [{ data: accounts }, { data: renewed }] = await Promise.all([
+    admin.from("bizup_accounts").select("id, growth_client_id").in("growth_client_id", clientIds),
+    admin
+      .from("board_posts")
+      .select("growth_client_id")
+      .in("growth_client_id", clientIds)
+      .gte("last_renewed_at", sevenDaysAgo),
+  ]);
 
   const active = new Set<string>();
-  for (const document of documents ?? []) {
-    const clientId = clientByAccount.get(document.account_id);
-    if (clientId) active.add(clientId);
+  for (const row of renewed ?? []) {
+    if (row.growth_client_id) active.add(row.growth_client_id);
   }
+
+  if (accounts?.length) {
+    const clientByAccount = new Map<string, string>();
+    for (const account of accounts) {
+      if (account.growth_client_id) clientByAccount.set(account.id, account.growth_client_id);
+    }
+
+    const { data: documents } = await admin
+      .from("bizup_documents")
+      .select("account_id")
+      .in("account_id", [...clientByAccount.keys()])
+      .not("number", "is", null)
+      .gte("issued_at", sevenDaysAgo);
+
+    for (const document of documents ?? []) {
+      const clientId = clientByAccount.get(document.account_id);
+      if (clientId) active.add(clientId);
+    }
+  }
+
   return active;
 }
 
@@ -155,15 +171,27 @@ type PostRow = {
 const POST_COLUMNS =
   "id, slug, kind, title, body, price_cents, photo_path, published_at, growth_client_id, identity_id, author_kind, city, expires_at";
 
-async function decorate(rows: PostRow[], members: Map<string, BoardMember>): Promise<BoardPost[]> {
+async function decorate(
+  rows: PostRow[],
+  members: Map<string, BoardMember>,
+  /** Job 7: a business post stays reachable at its own URL past its expiry -- browse and area/category pages never do. */
+  options: { includeExpiredMemberPosts?: boolean } = {}
+): Promise<BoardPost[]> {
   const now = Date.now();
+  const { includeExpiredMemberPosts = false } = options;
 
   // A business post disappears with its business. A public post disappears
   // when it expires, which is checked here as well as by the nightly job, so
   // an expired post is invisible from the moment it expires rather than from
-  // the next time the job runs.
+  // the next time the job runs -- that part is unchanged. A business post
+  // past its own expiry is different: it comes off this list (browse, area,
+  // category, "more from this business") but the permalink caller below
+  // asks to keep it, marked expired, because staying indexed is the entire
+  // point of job 7.
   const visible = rows.filter((row) => {
-    if (row.expires_at && new Date(row.expires_at).getTime() < now) return false;
+    const expired = Boolean(row.expires_at && new Date(row.expires_at).getTime() < now);
+    if (expired && row.author_kind === "public") return false;
+    if (expired && row.author_kind === "member" && !includeExpiredMemberPosts) return false;
     if (row.author_kind === "member") return Boolean(row.growth_client_id && members.has(row.growth_client_id));
     return Boolean(row.identity_id);
   });
@@ -191,6 +219,7 @@ async function decorate(rows: PostRow[], members: Map<string, BoardMember>): Pro
       authorName: member?.businessName ?? personName ?? "Someone",
       city: member?.city ?? row.city,
       activeThisWeek: member ? active.has(member.id) : false,
+      isExpired: Boolean(row.expires_at && new Date(row.expires_at).getTime() < now),
     };
   });
 }
@@ -273,7 +302,9 @@ export async function getPostBySlug(slug: string): Promise<BoardPost | null> {
   if (!data) return null;
 
   const members = await listableMembers();
-  const decorated = await decorate([data as PostRow], members);
+  // Job 7: the permalink keeps resolving a business post past its expiry,
+  // marked expired, since staying reachable and indexed is the point.
+  const decorated = await decorate([data as PostRow], members, { includeExpiredMemberPosts: true });
   return decorated[0] ?? null;
 }
 

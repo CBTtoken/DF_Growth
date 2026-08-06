@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendEmail } from "@/lib/email/resend";
 
 // The ten day clear-out, which Dewald asked for to keep the board and the
 // servers clean.
@@ -57,10 +58,55 @@ export async function GET(request: Request) {
     }
   }
 
+  // Job 7: "one-tap renew for the poster, with a reminder before it
+  // lapses." A business post never gets hard-deleted (above), so this pass
+  // is the only warning a member gets before one comes off browse. Looked
+  // up fresh, deduped via expiry_reminder_sent_at so a member is never
+  // emailed twice for the same expiry.
+  const in3Days = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+  const { data: lapsing } = await admin
+    .from("board_posts")
+    .select("id, slug, title, growth_clients!inner(business_name, contact_email)")
+    .eq("author_kind", "member")
+    .eq("status", "published")
+    .is("expiry_reminder_sent_at", null)
+    .not("expires_at", "is", null)
+    .lte("expires_at", in3Days)
+    .gt("expires_at", nowIso);
+
+  let remindersSent = 0;
+  for (const post of (lapsing ?? []) as unknown as {
+    id: string;
+    slug: string;
+    title: string;
+    growth_clients: { business_name: string; contact_email: string | null };
+  }[]) {
+    const email = post.growth_clients.contact_email;
+    if (!email) continue;
+
+    const result = await sendEmail({
+      to: email,
+      subject: "A post on The Board is about to come down",
+      html: `
+        <p>Good day ${post.growth_clients.business_name},</p>
+        <p>Your post "${post.title}" comes off The Board in the next 3 days.</p>
+        <p>Renew it from your dashboard to keep it visible, one tap, no need to post it again.</p>
+      `,
+    });
+
+    if (result.ok) {
+      await admin.from("board_posts").update({ expiry_reminder_sent_at: nowIso }).eq("id", post.id);
+      remindersSent++;
+    } else {
+      console.error("Board expiry reminder email failed", post.id, result.error);
+    }
+  }
+
   const summary = {
     expiredPosts: expiredPosts?.length ?? 0,
     deletedMessages: oldMessages?.length ?? 0,
     emptiedThreads,
+    remindersSent,
   };
 
   // Same evidence table the retention job writes to, so there is one place
