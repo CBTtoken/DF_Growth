@@ -76,6 +76,12 @@ export async function GET(request: Request) {
     .eq("plan", "foundation")
     .eq("status", "active")
     .is("paystack_reference", null)
+    // Partner-sourced clients (BidWeb etc.) are comped indefinitely by the
+    // partner's own paid relationship with DigitalFlyer, not a self-serve
+    // trial — found 2026-08-06 that this pass was only accidentally safe
+    // for the existing partner batch (plan mismatch / null trial_ends_at),
+    // not because it actually knew about is_partner_comped. Explicit now.
+    .eq("is_partner_comped", false)
     .not("trial_ends_at", "is", null)
     .lte("trial_ends_at", now.toISOString());
 
