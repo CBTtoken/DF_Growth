@@ -42,7 +42,7 @@ export async function payInvoiceOnline(
   const h = await headers();
   const host = h.get("host") ?? "";
   const proto = h.get("x-forwarded-proto") ?? "https";
-  const prefix = host.toLowerCase().startsWith("katisobiz") ? "" : "/bizup";
+  const prefix = host.toLowerCase().startsWith("katisobiz") ? "" : "/katisobiz";
   const callbackUrl = `${proto}://${host}${prefix}/d/${token}`;
 
   const result = await initInvoicePayment({

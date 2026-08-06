@@ -56,7 +56,7 @@ export async function remindAboutInvoice(formData: FormData): Promise<void> {
 
   const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const protocol = host.startsWith("localhost") ? "http" : "https";
-  const prefix = isKatisoBizHost(host) ? "" : "/bizup";
+  const prefix = isKatisoBizHost(host) ? "" : "/katisobiz";
   const publicUrl = doc.public_token
     ? `${protocol}://${host}${prefix}/d/${doc.public_token}`
     : "";

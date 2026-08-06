@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Tier } from "@/lib/paystack/plans";
 import { bizUpEntitlementForTier } from "@/lib/bizup/entitlements";
+import { activateBizUp } from "@/app/dashboard/bizup-actions";
 
 // Cross-sell in both directions, kept in one file so the two claims can
 // never drift apart and start contradicting each other.
@@ -49,12 +50,28 @@ export function BizUpFromGrowth({
           : "Your plan includes KatisoBiz Free: 10 documents a month. You can add the full tier for R49 whenever you want it, without changing your Growth plan."}
       </p>
 
-      <Link
-        href="/bizup"
-        className="mt-4 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
-      >
-        {hasBizUpAccount ? "Go to KatisoBiz" : "Set up KatisoBiz"}
-      </Link>
+      {hasBizUpAccount ? (
+        <Link
+          href="/bizup"
+          className="mt-4 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+        >
+          Go to KatisoBiz
+        </Link>
+      ) : (
+        // Handoff: scripts/handoff-activation-nudges-and-emails.md, Job 1.
+        // One press, no separate signup screen: activateBizUp creates the
+        // account, links it, and sends the member straight in. This used
+        // to be a plain link to /bizup, which dropped them onto KatisoBiz's
+        // own marketing/signup page instead of actually activating anything.
+        <form action={activateBizUp}>
+          <button
+            type="submit"
+            className="mt-4 inline-flex items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+          >
+            Activate KatisoBiz
+          </button>
+        </form>
+      )}
     </section>
   );
 }

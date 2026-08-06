@@ -100,7 +100,9 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
   // the earliest point in the flow a phone number is actually known, so
   // it's the one place unified provisioning can run. Best-effort and
   // non-blocking on purpose — a member saving their business details must
-  // never fail because of a KatisoBiz-linking hiccup.
+  // never fail because of a KatisoBiz-linking hiccup. Link-only as of the
+  // activation-nudges-and-emails handoff's Job 1: this never creates a
+  // KatisoBiz account, it only connects one that already exists.
   if (growthClient?.plan) {
     const {
       data: { user },
@@ -114,8 +116,6 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
           // actually returns one.
           growthClientId: client.id!,
           ownerUserId: user.id,
-          businessName: parsed.data.businessName,
-          email: parsed.data.contactEmail,
           tier: growthClient.plan as Tier,
           phoneCandidates: [parsed.data.callPhone, parsed.data.whatsappPhone],
         });

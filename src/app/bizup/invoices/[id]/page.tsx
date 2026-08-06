@@ -79,7 +79,7 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
   const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const publicUrl = doc.public_token
     ? `${host.startsWith("localhost") ? "http" : "https"}://${host}${
-        isKatisoBizHost(host) ? "" : "/bizup"
+        isKatisoBizHost(host) ? "" : "/katisobiz"
       }/d/${doc.public_token}`
     : "";
 

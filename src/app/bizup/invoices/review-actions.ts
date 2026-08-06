@@ -73,7 +73,7 @@ export async function requestReviewForInvoice(formData: FormData): Promise<void>
 
   const host = (await headers()).get("host") ?? "katisobiz.co.za";
   const protocol = host.startsWith("localhost") ? "http" : "https";
-  const prefix = isKatisoBizHost(host) ? "" : "/bizup";
+  const prefix = isKatisoBizHost(host) ? "" : "/katisobiz";
   const reviewUrl = linkedClient?.slug
     ? `${protocol}://${host.startsWith("localhost") ? host : "growth.digitalflyersa.co.za"}/${linkedClient.slug}#reviews`
     : `${protocol}://${host}${prefix}/review/${account.id}`;

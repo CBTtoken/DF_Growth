@@ -171,6 +171,29 @@ export default async function BizUpAdminPage({
           </div>
         </section>
 
+        {/* Handoff: scripts/handoff-activation-nudges-and-emails.md, Jobs 1
+            and 4. Activation is opt-in now, and the website question only
+            ever asks an account with no linked Growth page — both worth
+            watching separately from the "is anybody using it" numbers
+            above, which are about document activity, not this handoff. */}
+        <section>
+          <h2 className="text-sm font-semibold text-ink">Activation and the website question</h2>
+          <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <Tile
+              label="Activated from Growth"
+              value={String(m.activation.activatedFromGrowth)}
+              sub="Pressed the dashboard button"
+            />
+            <Tile label="Has a website" value={String(m.websiteQuestion.hasWebsite)} />
+            <Tile label="Facebook / WhatsApp only" value={String(m.websiteQuestion.socialOnly)} />
+            <Tile label="Neither" value={String(m.websiteQuestion.none)} />
+          </div>
+          <p className="mt-2 text-xs text-gray-500">
+            {m.websiteQuestion.unanswered} unlinked account(s) haven&apos;t answered or dismissed the
+            question yet.
+          </p>
+        </section>
+
         {/* 3. Spec Sec 16's committed metric */}
         <section>
           <h2 className="text-sm font-semibold text-ink">Is the free cap working</h2>

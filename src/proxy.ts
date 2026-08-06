@@ -16,6 +16,15 @@ import { isMoxieHost, MOXIE_PREFIX } from "@/lib/moxie/host";
 // rules happening to be correct.
 const BIZUP_PREFIX = "/bizup";
 
+// Handoff: scripts/handoff-activation-nudges-and-emails.md, Job 2. The
+// public path for KatisoBiz reached from any hostname other than its own
+// (Growth's domain, previews) — a review-request link, an invoice link, a
+// Paystack redirect, all of them things a real customer clicks, not just a
+// logged-in member. The route folder itself stays named src/app/bizup;
+// this is a public URL change only, not a rename, so the new path is
+// rewritten internally to the folder that actually exists.
+const KATISOBIZ_PUBLIC_PREFIX = "/katisobiz";
+
 // Company-wide legal pages. These are one set of documents for the whole
 // business, deliberately not one per product (Legal Pages Rebuild Brief
 // Part 2.1: two privacy policies drift apart within a year, and a
@@ -345,6 +354,46 @@ export function proxy(request: NextRequest) {
   }
 
   if (!hostname.startsWith("agent.")) {
+    const { pathname } = request.nextUrl;
+
+    // API routes and files with an extension are never rewritten, same
+    // rule as every other branch in this file. public/katisobiz/* already
+    // lives at that exact path (logos, icons) and must keep resolving as a
+    // plain static file, not get caught by the rewrite below.
+    const isAssetOrApi =
+      pathname.startsWith("/api/") || pathname.slice(pathname.lastIndexOf("/")).includes(".");
+
+    if (
+      !isAssetOrApi &&
+      (pathname === KATISOBIZ_PUBLIC_PREFIX || pathname.startsWith(`${KATISOBIZ_PUBLIC_PREFIX}/`))
+    ) {
+      const stripped = pathname.slice(KATISOBIZ_PUBLIC_PREFIX.length) || "/";
+      const url = request.nextUrl.clone();
+      url.pathname = stripped === "/" ? BIZUP_PREFIX : `${BIZUP_PREFIX}${stripped}`;
+      return NextResponse.rewrite(url);
+    }
+
+    // Every old /bizup/... link already sent or indexed before this job,
+    // reached on any hostname other than KatisoBiz's own (that case is
+    // handled inside the katisobiz/bizup hostname branch above, which
+    // already redirects /bizup away since the prefix is redundant there).
+    // Permanent, because links are already in the wild: WhatsApp messages
+    // already sent, review-request links a member has already shared.
+    //
+    // Metadata images excluded, same reasoning as the katisobiz.co.za
+    // branch's own carve-out: a social preview fetcher does not reliably
+    // follow redirects.
+    if (
+      !isAssetOrApi &&
+      !METADATA_IMAGE_SEGMENTS.some((seg) => pathname.endsWith(`/${seg}`)) &&
+      (pathname === BIZUP_PREFIX || pathname.startsWith(`${BIZUP_PREFIX}/`))
+    ) {
+      const stripped = pathname.slice(BIZUP_PREFIX.length) || "/";
+      const url = request.nextUrl.clone();
+      url.pathname = stripped === "/" ? KATISOBIZ_PUBLIC_PREFIX : `${KATISOBIZ_PUBLIC_PREFIX}${stripped}`;
+      return NextResponse.redirect(url, 301);
+    }
+
     return NextResponse.next();
   }
 

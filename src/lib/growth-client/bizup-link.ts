@@ -3,12 +3,20 @@ import { bizUpEntitlementForTier } from "@/lib/bizup/entitlements";
 import type { Tier } from "@/lib/paystack/plans";
 
 // Handoff: scripts/handoff-unified-account-and-reviews.md, Job 1 Phase B.
+// Handoff: scripts/handoff-activation-nudges-and-emails.md, Job 1 — the
+// automatic "create a fresh account when nothing matches" branch that used
+// to live here is gone. Creating a KatisoBiz account for someone who never
+// asked for one puts their details into a product they didn't opt into;
+// that only happens now via the explicit activation button
+// (src/app/dashboard/bizup-actions.ts's activateBizUp). Linking stays
+// automatic here, because matching an *existing* account to its real owner
+// is a correctness fix, not a consent question.
 //
-// Called once, from onboard/actions.ts saveStep1, at the one point in the
-// signup flow a phone number is actually known. Resolves to exactly one of
-// three outcomes and is safe to call repeatedly (saveStep1 also runs every
-// time an existing member edits their business name/phone from the
-// dashboard, not just once at signup):
+// Called from onboard/actions.ts saveStep1, at the one point in the signup
+// flow a phone number is actually known, and again from activateBizUp
+// (to catch a match that wasn't there yet at signup time) before it falls
+// back to creating. Resolves to exactly one of three outcomes and is safe
+// to call repeatedly:
 //
 //   1. Already linked (growth_client_id set on some bizup_accounts row) —
 //      nothing to do, returns immediately.
@@ -19,9 +27,9 @@ import type { Tier } from "@/lib/paystack/plans";
 //   3. A different login's unlinked KatisoBiz account matches this
 //      client's phone — link it. Covers the person who used a different
 //      email per product; phone is the only thing that ties them together.
-//   4. Neither — create a fresh, free bizup_accounts row bound to this
-//      login, so "signing up on Growth gets a working KatisoBiz account"
-//      is true even for a brand new business with no prior account.
+//   4. Neither — returns without creating anything. The caller decides
+//      what happens next (saveStep1 does nothing further; activateBizUp
+//      creates a fresh account itself).
 //
 // Every branch only ever sets growth_client_id / plan / plan_source. It
 // never touches owner_user_id, so an existing KatisoBiz login (if it's a
@@ -43,21 +51,18 @@ function normalizePhone(raw: string | null | undefined): string | null {
   return digits;
 }
 
+/** True when this call found and linked an existing account, false when there was nothing to link. */
 export async function ensureLinkedBizUpAccount({
   growthClientId,
   ownerUserId,
-  businessName,
-  email,
   tier,
   phoneCandidates,
 }: {
   growthClientId: string;
   ownerUserId: string;
-  businessName: string;
-  email: string;
   tier: Tier;
   phoneCandidates: (string | null | undefined)[];
-}): Promise<void> {
+}): Promise<boolean> {
   const admin = createAdminClient();
 
   const { data: alreadyLinked } = await admin
@@ -65,7 +70,7 @@ export async function ensureLinkedBizUpAccount({
     .select("id")
     .eq("growth_client_id", growthClientId)
     .maybeSingle();
-  if (alreadyLinked) return;
+  if (alreadyLinked) return true;
 
   const { plan, planSource } = bizUpEntitlementForTier(tier);
 
@@ -81,7 +86,7 @@ export async function ensureLinkedBizUpAccount({
       .from("bizup_accounts")
       .update({ growth_client_id: growthClientId, plan, plan_source: planSource })
       .eq("id", byOwner.id);
-    return;
+    return true;
   }
 
   const normalized = phoneCandidates.map(normalizePhone).filter((n): n is string => Boolean(n));
@@ -102,22 +107,9 @@ export async function ensureLinkedBizUpAccount({
         .from("bizup_accounts")
         .update({ growth_client_id: growthClientId, plan, plan_source: planSource })
         .eq("id", match.id);
-      return;
+      return true;
     }
   }
 
-  // Nobody to link to. owner_user_id is unique on this table — the insert
-  // can only fail if this exact login already owns a bizup_accounts row
-  // linked to a *different* growth_client, a genuine edge case (one login,
-  // two growth_clients, only one KatisoBiz account to go around). Left to
-  // the caller's own best-effort error handling rather than guarded here,
-  // since there's nothing correct to do about it automatically.
-  await admin.from("bizup_accounts").insert({
-    owner_user_id: ownerUserId,
-    growth_client_id: growthClientId,
-    business_name: businessName,
-    email,
-    plan,
-    plan_source: planSource,
-  });
+  return false;
 }

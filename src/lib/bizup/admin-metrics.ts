@@ -57,6 +57,16 @@ export interface BizUpAdminMetrics {
     activationRatePct: number | null;
     /** Issued something in the last 30 days. */
     activeLast30: number;
+    /** Job 1: created via the Growth dashboard's opt-in activation button, not a direct KatisoBiz signup. */
+    activatedFromGrowth: number;
+  };
+  /** Job 4: the one-question website check, asked only of accounts with no linked Growth page. */
+  websiteQuestion: {
+    hasWebsite: number;
+    socialOnly: number;
+    none: number;
+    /** Eligible (no Growth page) but hasn't answered or dismissed yet. */
+    unanswered: number;
   };
   revenue: {
     /** Monthly recurring, from members paying us directly. */
@@ -91,7 +101,9 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
   const [{ data: accounts }, { data: docs }, { data: billing }] = await Promise.all([
     admin
       .from("bizup_accounts")
-      .select("id, business_name, email, plan, plan_source, vat_number, created_at, plan_granted_until, plan_granted_reason")
+      .select(
+        "id, business_name, email, plan, plan_source, vat_number, created_at, plan_granted_until, plan_granted_reason, activated_at, growth_client_id, website_status, website_status_dismissed_at",
+      )
       .order("created_at", { ascending: false }),
     // Issued documents only. A draft is not usage: it is someone who opened
     // the builder and stopped, which is the opposite of the signal wanted.
@@ -128,6 +140,11 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
   let activeLast30 = 0;
   let freeMembersAtCap = 0;
   let capHittersGoneDormant = 0;
+  let activatedFromGrowth = 0;
+  let hasWebsite = 0;
+  let socialOnly = 0;
+  let noWebsite = 0;
+  let websiteUnanswered = 0;
 
   const members_list: AdminMemberRow[] = [];
 
@@ -148,6 +165,16 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
     if (selfPaid) mrrCents += PLAN_PRICE_CENTS[plan] ?? 0;
 
     if (a.created_at.slice(0, 10) >= monthStart) newThisMonth += 1;
+    if (a.activated_at) activatedFromGrowth += 1;
+
+    // Job 4: only meaningful for an account with no linked Growth page —
+    // the prompt itself is never shown otherwise.
+    if (!a.growth_client_id) {
+      if (a.website_status === "has_website") hasWebsite += 1;
+      else if (a.website_status === "social_only") socialOnly += 1;
+      else if (a.website_status === "none") noWebsite += 1;
+      else if (!a.website_status_dismissed_at) websiteUnanswered += 1;
+    }
 
     const tally = byAccount.get(a.id) ?? { total: 0, thisMonth: 0, last: null };
     if (tally.total > 0) activated += 1;
@@ -205,6 +232,13 @@ export async function loadBizUpAdminMetrics(): Promise<BizUpAdminMetrics> {
       activationRatePct:
         allAccounts.length === 0 ? null : Math.round((activated / allAccounts.length) * 100),
       activeLast30,
+      activatedFromGrowth,
+    },
+    websiteQuestion: {
+      hasWebsite,
+      socialOnly,
+      none: noWebsite,
+      unanswered: websiteUnanswered,
     },
     revenue: {
       mrrCents,

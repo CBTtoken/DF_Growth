@@ -44,13 +44,13 @@ export const metadata: Metadata = {
     // overriding this block replaces the root layout's, images included,
     // and a file-based opengraph-image is not inherited from a parent
     // route segment.
-    images: [{ url: "/bizup/opengraph-image", width: 1200, height: 630, alt: "KatisoBiz" }],
+    images: [{ url: "https://katisobiz.co.za/opengraph-image", width: 1200, height: 630, alt: "KatisoBiz" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "How KatisoBiz works",
     description: HELP_DESCRIPTION,
-    images: ["/bizup/opengraph-image"],
+    images: ["https://katisobiz.co.za/opengraph-image"],
   },
 };
 
