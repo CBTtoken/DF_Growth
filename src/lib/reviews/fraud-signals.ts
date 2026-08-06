@@ -33,6 +33,21 @@ const VELOCITY_THRESHOLD = 5;
 
 export type FraudFlag = { flaggedBy: "system"; flaggedReason: string };
 
+// Job 4 (scripts/handoff-unified-account-and-reviews.md): a review can now
+// target a Growth business or, when the member has no Growth page yet, a
+// KatisoBiz account directly (see reviews.bizup_account_id). Same three
+// signals either way, just resolved against whichever table/column the
+// review is actually being written against.
+export type ReviewTarget = { businessId: string } | { bizupAccountId: string };
+
+function targetColumn(target: ReviewTarget): "business_id" | "bizup_account_id" {
+  return "businessId" in target ? "business_id" : "bizup_account_id";
+}
+
+function targetId(target: ReviewTarget): string {
+  return "businessId" in target ? target.businessId : target.bizupAccountId;
+}
+
 // Sec 3's three fraud signals, checked in order of how likely each is to be
 // a real problem rather than a coincidence — shared identity first (highest
 // confidence), then repeat device on the same business, then velocity
@@ -40,24 +55,24 @@ export type FraudFlag = { flaggedBy: "system"; flaggedReason: string };
 // wave, so it's checked last and only after the other two have had a
 // chance to explain the burst instead).
 export async function evaluateFraudSignals({
-  businessId,
+  target,
   reviewerEmail,
   ipFingerprint,
 }: {
-  businessId: string;
+  target: ReviewTarget;
   reviewerEmail: string;
   ipFingerprint: string;
 }): Promise<FraudFlag | null> {
   const admin = createAdminClient();
 
-  const { data: business } = await admin
-    .from("growth_clients")
-    .select("contact_email")
-    .eq("id", businessId)
-    .single();
+  const ownerEmail =
+    "businessId" in target
+      ? (await admin.from("growth_clients").select("contact_email").eq("id", target.businessId).single()).data
+          ?.contact_email
+      : (await admin.from("bizup_accounts").select("email").eq("id", target.bizupAccountId).single()).data?.email;
 
   const reviewerDomain = domainOf(reviewerEmail);
-  const businessDomain = business?.contact_email ? domainOf(business.contact_email) : "";
+  const businessDomain = ownerEmail ? domainOf(ownerEmail) : "";
   if (businessDomain && reviewerDomain === businessDomain && !PUBLIC_EMAIL_DOMAINS.has(reviewerDomain)) {
     return {
       flaggedBy: "system",
@@ -65,10 +80,13 @@ export async function evaluateFraudSignals({
     };
   }
 
+  const column = targetColumn(target);
+  const id = targetId(target);
+
   const { count: sameDeviceCount } = await admin
     .from("reviews")
     .select("id", { count: "exact", head: true })
-    .eq("business_id", businessId)
+    .eq(column, id)
     .eq("ip_fingerprint", ipFingerprint);
   if ((sameDeviceCount ?? 0) > 0) {
     return {
@@ -81,7 +99,7 @@ export async function evaluateFraudSignals({
   const { count: recentCount } = await admin
     .from("reviews")
     .select("id", { count: "exact", head: true })
-    .eq("business_id", businessId)
+    .eq(column, id)
     .gte("created_at", windowStart);
   if ((recentCount ?? 0) + 1 >= VELOCITY_THRESHOLD) {
     return {

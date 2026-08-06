@@ -6,7 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { reviewerSignupSchema, reviewSubmissionSchema } from "@/lib/schemas/reviews";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
-import { evaluateFraudSignals, hashIp } from "@/lib/reviews/fraud-signals";
+import { evaluateFraudSignals, hashIp, type ReviewTarget } from "@/lib/reviews/fraud-signals";
 
 type ReviewFormState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -96,7 +96,7 @@ export async function submitReviewNewReviewer(_prevState: ReviewFormState, formD
   // so it's already in place by the time the review can be seen at all.
   const ipFingerprint = hashIp(ip);
   const fraudFlag = await evaluateFraudSignals({
-    businessId,
+    target: { businessId },
     reviewerEmail: signupParsed.data.email,
     ipFingerprint,
   });
@@ -170,7 +170,7 @@ export async function submitReviewExistingReviewer(_prevState: ReviewFormState, 
   }
 
   const ipFingerprint = hashIp(ip);
-  const fraudFlag = await evaluateFraudSignals({ businessId, reviewerEmail: email, ipFingerprint });
+  const fraudFlag = await evaluateFraudSignals({ target: { businessId }, reviewerEmail: email, ipFingerprint });
 
   const { error: reviewError } = await admin.from("reviews").insert({
     business_id: businessId,
@@ -262,9 +262,14 @@ type SimpleReviewState = { error?: string; success?: boolean; held?: boolean } |
  * The fraud checks are unchanged and still run: a review from the same
  * address as the business, or a burst from one network, is flagged for a
  * human exactly as before. What changed is the door, not the guard.
+ *
+ * Job 4 (scripts/handoff-unified-account-and-reviews.md): the target is
+ * either a Growth business or, for a KatisoBiz-only member with no Growth
+ * page, the KatisoBiz account directly — everything past that point (the
+ * identity, the bot check, the fraud signals) is identical either way.
  */
 export async function submitReviewSimple(
-  businessId: string,
+  target: ReviewTarget,
   _prevState: SimpleReviewState,
   formData: FormData
 ): Promise<SimpleReviewState> {
@@ -302,13 +307,13 @@ export async function submitReviewSimple(
   const admin = createAdminClient();
   const ipFingerprint = hashIp(ip);
   const fraudFlag = await evaluateFraudSignals({
-    businessId,
+    target,
     reviewerEmail: email ?? `identity:${resolved.visitor.id}`,
     ipFingerprint,
   });
 
   const { error } = await admin.from("reviews").insert({
-    business_id: businessId,
+    ...("businessId" in target ? { business_id: target.businessId } : { bizup_account_id: target.bizupAccountId }),
     identity_id: resolved.visitor.id,
     rating: reviewParsed.data.rating,
     review_text: reviewParsed.data.reviewText,

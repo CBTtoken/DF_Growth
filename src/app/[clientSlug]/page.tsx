@@ -221,7 +221,8 @@ export default async function ClientLandingPage({
       bookable_units(id, name, unit_type, description, base_price_cents, capacity, duration_minutes),
       booking_operational_rules(operating_hours, buffer_minutes),
       shop_products(id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, price_pending, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)),
-      reviews(id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name), board_identities(display_name))`
+      reviews(id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name), board_identities(display_name)),
+      bizup_accounts(id)`
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -288,7 +289,33 @@ export default async function ClientLandingPage({
   // is one shape everywhere: image_paths defaulted from jsonb, and inactive
   // variants dropped before anything can price against one.
   const shopProducts: ShopProductRow[] = ((client.shop_products ?? []) as unknown[]).map(shapeShopProduct);
-  const reviews = client.reviews as unknown as PublicReview[];
+  // Job 1/4 (scripts/handoff-unified-account-and-reviews.md): a review left
+  // through KatisoBiz before this business had a Growth page (or before the
+  // two accounts were linked) is stored against bizup_account_id, not this
+  // business_id. Most businesses have no linked bizup_accounts row at all
+  // (embedded above as `bizup_accounts(id)`, cheap either way), so this
+  // second query only runs for the minority that do, rather than adding a
+  // round trip to every single page render.
+  const linkedBizUpAccount = (client.bizup_accounts as unknown as { id: string }[] | { id: string } | null) ?? null;
+  const linkedBizUpAccountId = Array.isArray(linkedBizUpAccount)
+    ? (linkedBizUpAccount[0]?.id ?? null)
+    : linkedBizUpAccount?.id ?? null;
+
+  const growthReviews = (client.reviews as unknown as PublicReview[]) ?? [];
+  const bizUpReviews = linkedBizUpAccountId
+    ? ((
+        (
+          await admin
+            .from("reviews")
+            .select("id, rating, review_text, business_reply, created_at, reviewer_accounts(display_name), board_identities(display_name)")
+            .eq("bizup_account_id", linkedBizUpAccountId)
+            .eq("status", "published")
+        ).data ?? []
+      ) as unknown as PublicReview[])
+    : [];
+  const reviews = [...growthReviews, ...bizUpReviews].sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
 
   if (!landingPage) return notFound();
 

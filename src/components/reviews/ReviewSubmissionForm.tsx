@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Star } from "lucide-react";
 import { submitReviewSimple } from "@/lib/reviews/actions";
+import type { ReviewTarget } from "@/lib/reviews/fraud-signals";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 
 // Leaving a review, in one screen.
@@ -19,10 +20,21 @@ import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 // The fraud checks did not change. A review from the business's own address,
 // or a burst from one network, is still flagged and still waits for a human.
 // The door changed, not the guard.
-export function ReviewSubmissionForm({ businessId, accentColor }: { businessId: string; accentColor: string }) {
-  const [open, setOpen] = useState(false);
+export function ReviewSubmissionForm({
+  target,
+  accentColor,
+  defaultOpen = false,
+}: {
+  target: ReviewTarget;
+  accentColor: string;
+  /** The dedicated /bizup/review/[accountId] capture page has no other
+   *  content to click through first, so it skips the "Leave a review"
+   *  teaser button and opens straight into the form. */
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   const [rating, setRating] = useState(0);
-  const [state, formAction, pending] = useActionState(submitReviewSimple.bind(null, businessId), null);
+  const [state, formAction, pending] = useActionState(submitReviewSimple.bind(null, target), null);
 
   if (state?.success) {
     return (

@@ -2,7 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
+import { ensureLinkedBizUpAccount } from "@/lib/growth-client/bizup-link";
+import type { Tier } from "@/lib/paystack/plans";
 import {
   step1Schema,
   step2Schema,
@@ -88,10 +91,39 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
         : {}),
     })
     .eq("id", client.id)
-    .select("slug")
+    .select("slug, plan")
     .single();
 
   if (error) return { error: { _form: ["Could not save, please try again."] } };
+
+  // Job 1 Phase B (scripts/handoff-unified-account-and-reviews.md): this is
+  // the earliest point in the flow a phone number is actually known, so
+  // it's the one place unified provisioning can run. Best-effort and
+  // non-blocking on purpose — a member saving their business details must
+  // never fail because of a KatisoBiz-linking hiccup.
+  if (growthClient?.plan) {
+    const {
+      data: { user },
+    } = await (await createServerClient()).auth.getUser();
+    if (user) {
+      try {
+        await ensureLinkedBizUpAccount({
+          // Same non-null assertion as dashboard/page.tsx's growthClientId:
+          // TS can't rule out client.error being "" (falsy but not
+          // undefined) from the check above, requireGrowthClientId() never
+          // actually returns one.
+          growthClientId: client.id!,
+          ownerUserId: user.id,
+          businessName: parsed.data.businessName,
+          email: parsed.data.contactEmail,
+          tier: growthClient.plan as Tier,
+          phoneCandidates: [parsed.data.callPhone, parsed.data.whatsappPhone],
+        });
+      } catch (linkError) {
+        console.error("ensureLinkedBizUpAccount failed", linkError);
+      }
+    }
+  }
 
   if (wantsSetupService && !alreadyRequested) {
     // Best effort: a lost notification must never fail the signup step.

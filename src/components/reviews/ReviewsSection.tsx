@@ -89,7 +89,7 @@ export function ReviewsSection({
             ) : (
               <p className="text-sm text-gray-500">No reviews yet. Be the first.</p>
             )}
-            <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
+            <ReviewSubmissionForm target={{ businessId }} accentColor={accentColor} />
           </div>
 
           {count > 0 && (
@@ -172,7 +172,7 @@ export function ReviewsSection({
           <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet. Be the first.</p>
         )}
         <div className="mt-2">
-          <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
+          <ReviewSubmissionForm target={{ businessId }} accentColor={accentColor} />
         </div>
 
         {featured.length > 0 && (
@@ -208,7 +208,7 @@ export function ReviewsSection({
           ) : (
             <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No reviews yet. Be the first.</p>
           )}
-          <ReviewSubmissionForm businessId={businessId} accentColor={accentColor} />
+          <ReviewSubmissionForm target={{ businessId }} accentColor={accentColor} />
         </div>
 
         {count > 0 && (

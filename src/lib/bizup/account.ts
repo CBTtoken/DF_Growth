@@ -36,6 +36,8 @@ export interface BizUpAccountSummary {
  * cheap-for-everyone cost getMyAgentRecord already carries on every
  * dashboard render.
  */
+const ACCOUNT_COLUMNS = "id, business_name, vat_number, plan, plan_source, growth_client_id, address_line1, city";
+
 export async function getMyBizUpAccount(): Promise<BizUpAccountSummary | null> {
   const supabase = await createServerClient();
   const {
@@ -44,11 +46,37 @@ export async function getMyBizUpAccount(): Promise<BizUpAccountSummary | null> {
   if (!user) return null;
 
   const admin = createAdminClient();
-  const { data: account } = await admin
+  const { data: direct } = await admin
     .from("bizup_accounts")
-    .select("id, business_name, vat_number, plan, plan_source, growth_client_id, address_line1, city")
+    .select(ACCOUNT_COLUMNS)
     .eq("owner_user_id", user.id)
     .maybeSingle();
+
+  // Job 1 Phase B (scripts/handoff-unified-account-and-reviews.md): "no
+  // second password." A direct owner_user_id match above always wins when
+  // it exists — this is purely additive, a second path in, never a
+  // repoint. Only consulted when this exact login owns no KatisoBiz
+  // account of its own: does the Growth business this login belongs to
+  // have one bundled/linked instead? That's what makes a Growth login see
+  // its KatisoBiz account with no second password, without ever touching
+  // the original KatisoBiz login (a different auth.users row, if there is
+  // one) — that login keeps working exactly as it always has.
+  let account = direct;
+  if (!account) {
+    const { data: memberships } = await admin
+      .from("growth_members")
+      .select("growth_client_id")
+      .eq("user_id", user.id);
+    const growthClientIds = (memberships ?? []).map((m) => m.growth_client_id);
+    if (growthClientIds.length > 0) {
+      const { data: linked } = await admin
+        .from("bizup_accounts")
+        .select(ACCOUNT_COLUMNS)
+        .in("growth_client_id", growthClientIds)
+        .limit(1);
+      account = linked?.[0] ?? null;
+    }
+  }
 
   if (!account) return null;
 
@@ -88,10 +116,23 @@ export async function getMyBizUpAccount(): Promise<BizUpAccountSummary | null> {
  */
 export async function hasBizUpAccount(userId: string): Promise<boolean> {
   const admin = createAdminClient();
-  const { data } = await admin
+  const { data: direct } = await admin
     .from("bizup_accounts")
     .select("id")
     .eq("owner_user_id", userId)
     .limit(1);
-  return (data ?? []).length > 0;
+  if ((direct ?? []).length > 0) return true;
+
+  // Same additive Job 1 Phase B path as getMyBizUpAccount: no direct
+  // account, but this login's Growth business might have one bundled.
+  const { data: memberships } = await admin.from("growth_members").select("growth_client_id").eq("user_id", userId);
+  const growthClientIds = (memberships ?? []).map((m) => m.growth_client_id);
+  if (growthClientIds.length === 0) return false;
+
+  const { data: linked } = await admin
+    .from("bizup_accounts")
+    .select("id")
+    .in("growth_client_id", growthClientIds)
+    .limit(1);
+  return (linked ?? []).length > 0;
 }
