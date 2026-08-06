@@ -70,7 +70,7 @@ export default async function BizUpUpgradeDonePage() {
               <p className="mt-2 text-sm text-gray-600">
                 {recent.kind === "topup"
                   ? `Your topup documents are on your account. You now have ${account.topup_balance} in hand, and they do not expire.`
-                  : `You are on the ${recent.plan === "unlimited" ? "Unlimited" : "KatisoBiz R49"} plan. Everything it includes is available right now.`}
+                  : `You are on the ${recent.plan === "unlimited" ? "Unlimited Documents" : "KatisoBiz R49"} plan. Everything it includes is available right now.`}
               </p>
             </>
           ) : (

@@ -11,6 +11,8 @@ import { whatsappLinkFor } from "@/app/bizup/quotes/send-actions";
 import { updateInvoiceCustomer, addCustomerToInvoice } from "@/app/bizup/invoices/actions";
 import { remindAboutInvoice } from "@/app/bizup/invoices/reminder-actions";
 import { remindedAgoLabel } from "@/lib/bizup/reminders";
+import { requestReviewForInvoice } from "@/app/bizup/invoices/review-actions";
+import { requestedAgoLabel } from "@/lib/reviews/request-message";
 import { nowMillis } from "@/lib/bizup/period";
 import { IssueInvoiceButton, RecordPaymentForm } from "@/components/bizup/InvoiceActions";
 import { ShareQuote } from "@/components/bizup/ShareQuote";
@@ -410,6 +412,31 @@ export default async function BizUpInvoicePage({ params }: { params: Promise<{ i
                   className="shrink-0 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-bold text-white transition hover:brightness-95"
                 >
                   {doc.last_reminded_at ? "Remind again" : "Send a reminder"}
+                </button>
+              </form>
+            )}
+
+            {/* The follow-up to the reminder above: once there's nothing
+                left to chase, the next natural ask is a review. Same
+                pattern exactly — we write it, the member sends it. */}
+            {outstanding <= 0 && (
+              <form
+                action={requestReviewForInvoice}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
+              >
+                <input type="hidden" name="documentId" value={doc.id} />
+                <span>
+                  <span className="block text-sm font-semibold text-ink">Paid in full. Ask for a review?</span>
+                  <span className="block text-xs text-gray-500">
+                    We write the message, you press send from your own WhatsApp.
+                    {doc.review_requested_at ? ` ${requestedAgoLabel(doc.review_requested_at, nowMs)}.` : ""}
+                  </span>
+                </span>
+                <button
+                  type="submit"
+                  className="shrink-0 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-bold text-white transition hover:brightness-95"
+                >
+                  {doc.review_requested_at ? "Ask again" : "Request a review"}
                 </button>
               </form>
             )}

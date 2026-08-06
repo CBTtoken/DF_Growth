@@ -32,7 +32,7 @@ const PLANS = [
   },
   {
     id: "unlimited" as const,
-    name: "Unlimited",
+    name: "Unlimited Documents",
     price: "R89",
     per: "per month",
     features: [
@@ -82,7 +82,7 @@ export default async function BizUpUpgradePage({
           <p className="mt-1 text-sm text-gray-500">
             You are on the{" "}
             <span className="font-semibold text-ink">
-              {plan === "free" ? "Free" : plan === "unlimited" ? "Unlimited" : "KatisoBiz R49"}
+              {plan === "free" ? "Free" : plan === "unlimited" ? "Unlimited Documents" : "KatisoBiz R49"}
             </span>{" "}
             plan,{" "}
             {capabilities.documentsPerMonth === null

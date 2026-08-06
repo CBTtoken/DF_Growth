@@ -45,7 +45,7 @@ export function SignupForm({ plan }: { plan?: string }) {
   // plan is told what is happening and taken to payment at the end instead
   // of being quietly dropped onto the free tier.
   const chosenPlan = plan === "unlimited" ? "unlimited" : plan === "paid" ? "paid" : null;
-  const planName = chosenPlan === "unlimited" ? "Unlimited, R89 a month" : "KatisoBiz, R49 a month";
+  const planName = chosenPlan === "unlimited" ? "Unlimited Documents, R89 a month" : "KatisoBiz, R49 a month";
 
   if (awaiting) {
     return (

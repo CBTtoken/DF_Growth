@@ -15,6 +15,7 @@ import { RoleSwitcher } from "@/components/dashboard/RoleSwitcher";
 import { getMyAgentRecord, getActiveRolePreference } from "@/lib/agents/dashboard-role";
 import { getMyBizUpAccount } from "@/lib/bizup/account";
 import { BizUpFromGrowth } from "@/components/bizup/BizUpCrossSell";
+import { GrowYourReviews } from "@/components/dashboard/GrowYourReviews";
 import type { Tier } from "@/lib/paystack/plans";
 import { AccountSection } from "@/components/dashboard/AccountSection";
 import { ChangeTemplateSection } from "@/components/dashboard/ChangeTemplateSection";
@@ -92,6 +93,19 @@ export default async function DashboardPage() {
   const bizUpAccount = await getMyBizUpAccount();
 
   const admin = createAdminClient();
+
+  // Job 4 (scripts/handoff-unified-account-and-reviews.md): "Grow Your
+  // Reviews" lets a member pick a past customer instead of retyping a
+  // number, but only when they actually have some — most Growth members
+  // have no linked KatisoBiz account yet, so this is a no-op for them.
+  const { data: reviewableCustomers } = bizUpAccount
+    ? await admin
+        .from("bizup_customers")
+        .select("id, name, whatsapp, phone")
+        .eq("account_id", bizUpAccount.id)
+        .order("name")
+        .limit(50)
+    : { data: null };
   // Consolidated Sprint Sec 3.4: last 7 days' raw timestamps, bucketed by
   // day client-side below rather than a date_trunc RPC — simple enough at
   // this data volume, and avoids a second round-trip to define a function.
@@ -340,6 +354,8 @@ export default async function DashboardPage() {
       label: "Overview",
       content: (
         <>
+          <GrowYourReviews customers={reviewableCustomers ?? []} />
+
           {spotlightRow && (
             <SpotlightBanner
               queueId={spotlightRow.id}

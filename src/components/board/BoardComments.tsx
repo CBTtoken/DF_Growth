@@ -213,7 +213,7 @@ export function BoardComments({
           <p className="mb-2 text-sm font-semibold text-neutral-ink">
             Review {businessName ?? "this business"}
           </p>
-          <ReviewSubmissionForm businessId={businessId} accentColor="#1081b8" />
+          <ReviewSubmissionForm target={{ businessId }} accentColor="#1081b8" />
         </div>
       )}
 

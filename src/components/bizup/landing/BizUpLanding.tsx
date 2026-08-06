@@ -182,7 +182,7 @@ const PLANS = [
     planId: "paid",
   },
   {
-    name: "Unlimited",
+    name: "Unlimited Documents",
     price: "R89",
     per: "/month",
     highlight: false,
@@ -227,7 +227,7 @@ const FAQS = [
   },
   {
     q: "What happens if I go over my 75 documents?",
-    a: "You will see a counter all month so it is never a surprise, and warnings as you get close. If you run out, you can top up for R49 or move to Unlimited, both instantly. You can always keep building quotes, you just cannot send them until you do.",
+    a: "You will see a counter all month so it is never a surprise, and warnings as you get close. If you run out, you can top up for R49 or move to Unlimited Documents, both instantly. You can always keep building quotes, you just cannot send them until you do.",
   },
   {
     q: "Is my customer information safe?",

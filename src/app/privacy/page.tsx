@@ -148,9 +148,10 @@ export default function PrivacyPolicyPage() {
         <section className="flex flex-col gap-2">
           <h2 className="text-lg font-bold tracking-tight text-ink">6b. People Who Are Not Members</h2>
           <p className="text-sm leading-relaxed text-gray-700">
-            If you verify your email address to comment on, react to, or message a business through The
+            If you give an email address to comment on, react to, or message a business through The
             Board, we store that email address, the name you choose to display, and whether you agreed to
-            be sent a quote. We do not create an account for you, we never ask you for a password, and we
+            be sent a quote. We run an automated check to confirm you are a real person, not a bot, before
+            we accept it. We do not create an account for you, we never ask you for a password, and we
             do not build a profile of you. If you have no activity for 12 months, that information is
             deleted. You can ask us to delete it sooner at any time, using the contact details below.
           </p>
