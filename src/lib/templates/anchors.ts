@@ -167,7 +167,7 @@ export interface TemplateAnchor {
   sectionSurface: SectionSurface;
   // Structural overrides — undefined means "use each component's existing
   // default JSX shape."
-  packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack" | "concept-rail";
+  packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack" | "concept-grid";
   reviewsLayout?: "list-detail" | "hero-stat";
   servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index" | "junction-line" | "amenity-pills";
   // Dark Mode pilot rebuild: TrustBadges previously had no layout axis at
@@ -366,13 +366,16 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     // cosmetically: every tile is the same shape, so there's no mismatch to
     // notice, and it never runs out of room the way a fixed grid does.
     galleryLayout: "filmstrip",
-    // Same client, same visit: her 4 packages in the generic 3-column grid
-    // left an empty second row (2 blank cells) — invisible with 3 or 6
-    // packages, guaranteed with 4 or 5. A scroll rail has no column count
-    // to overflow, so this is correct for any number of packages, not just
-    // hers, and it fits Marquee's own "browse and compare" register better
-    // than a grid ever did.
-    packagesLayout: "concept-rail",
+    // Same client, second look: the scroll rail fixed the empty-cell
+    // problem but Dewald's own review called it right — visitors are lazy,
+    // a "swipe to see the rest" packages section is asking for work that
+    // grid-cards never asked for, wrong trade for a "browse and compare"
+    // page whose whole point is showing everything without a gesture.
+    // "concept-grid" picks the column count from the actual package count
+    // (2x2 for 4, 3 even rows for 6, etc.) instead of a fixed 3, so there
+    // is no empty cell to begin with and nothing to scroll — see
+    // PackagesSection.tsx's packageGridColumns() for the exact rule.
+    packagesLayout: "concept-grid",
     leadFormVariant: "event-enquiry",
   },
   // Retreat: the hospitality anchor. Sans-default kept deliberately quiet

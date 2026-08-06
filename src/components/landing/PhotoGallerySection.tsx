@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 
 // The lookbook shows this many before folding the rest behind one tap.
@@ -13,6 +13,87 @@ import type { TemplateAnchor } from "@/lib/templates/anchors";
 import { EYEBROW_STYLE_CLASS, SPACING_CLASS, SURFACE_SECTION_CLASS, SURFACE_BORDER_CLASS } from "@/lib/templates/anchors";
 
 type Photo = { id: string; storage_path: string };
+
+// Every gallery layout below opened the same enlarged view with only a
+// close button — SIP Happens' direct feedback: no way to move to the next
+// photo without closing and picking another thumbnail. Pulled into one
+// shared component (was six near-identical copies) so prev/next and
+// keyboard arrows land everywhere at once, not just wherever a variant
+// happened to get touched next.
+function Lightbox({
+  photos,
+  storageBase,
+  openIndex,
+  onClose,
+  onNavigate,
+  altText,
+}: {
+  photos: Photo[];
+  storageBase: string;
+  openIndex: number;
+  onClose: () => void;
+  onNavigate: (index: number) => void;
+  altText: string;
+}) {
+  const hasMultiple = photos.length > 1;
+
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+      if (hasMultiple && e.key === "ArrowLeft") onNavigate((openIndex - 1 + photos.length) % photos.length);
+      if (hasMultiple && e.key === "ArrowRight") onNavigate((openIndex + 1) % photos.length);
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [openIndex, hasMultiple, photos.length, onClose, onNavigate]);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+        className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+      >
+        &times;
+      </button>
+      {hasMultiple && (
+        <>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate((openIndex - 1 + photos.length) % photos.length);
+            }}
+            aria-label="Previous photo"
+            className="absolute left-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20 sm:left-4"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigate((openIndex + 1) % photos.length);
+            }}
+            aria-label="Next photo"
+            className="absolute right-2 top-1/2 z-10 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20 sm:right-4"
+          >
+            ›
+          </button>
+        </>
+      )}
+      <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
+        <Image src={`${storageBase}/${photos[openIndex].storage_path}`} alt={altText} fill sizes="90vw" className="object-contain" />
+      </div>
+    </div>
+  );
+}
 
 // Sprint 1, Build Item 10: photo gallery used to only ever be used as
 // background/supporting imagery inside specific templates (e.g. Left-Heavy
@@ -70,30 +151,14 @@ export function PhotoGallerySection({
         </div>
 
         {openIndex !== null && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-            onClick={() => setOpenIndex(null)}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenIndex(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-            >
-              &times;
-            </button>
-            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
-              <Image
-                src={`${storageBase}/${photos[openIndex].storage_path}`}
-                alt="Business photo, enlarged"
-                fill
-                sizes="90vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
+          <Lightbox
+            photos={photos}
+            storageBase={storageBase}
+            openIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+            onNavigate={setOpenIndex}
+            altText="Business photo, enlarged"
+          />
         )}
       </section>
     );
@@ -141,30 +206,14 @@ export function PhotoGallerySection({
         </div>
 
         {openIndex !== null && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-            onClick={() => setOpenIndex(null)}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenIndex(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-            >
-              &times;
-            </button>
-            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
-              <Image
-                src={`${storageBase}/${photos[openIndex].storage_path}`}
-                alt="Work photo, enlarged"
-                fill
-                sizes="90vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
+          <Lightbox
+            photos={photos}
+            storageBase={storageBase}
+            openIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+            onNavigate={setOpenIndex}
+            altText="Work photo, enlarged"
+          />
         )}
       </section>
     );
@@ -226,30 +275,14 @@ export function PhotoGallerySection({
         </div>
 
         {openIndex !== null && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-            onClick={() => setOpenIndex(null)}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenIndex(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-            >
-              &times;
-            </button>
-            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
-              <Image
-                src={`${storageBase}/${photos[openIndex].storage_path}`}
-                alt="Event photo, enlarged"
-                fill
-                sizes="90vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
+          <Lightbox
+            photos={visiblePhotos}
+            storageBase={storageBase}
+            openIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+            onNavigate={setOpenIndex}
+            altText="Event photo, enlarged"
+          />
         )}
       </section>
     );
@@ -296,30 +329,14 @@ export function PhotoGallerySection({
         </div>
 
         {openIndex !== null && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-            onClick={() => setOpenIndex(null)}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenIndex(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-            >
-              &times;
-            </button>
-            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
-              <Image
-                src={`${storageBase}/${photos[openIndex].storage_path}`}
-                alt="Event photo, enlarged"
-                fill
-                sizes="90vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
+          <Lightbox
+            photos={photos}
+            storageBase={storageBase}
+            openIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+            onNavigate={setOpenIndex}
+            altText="Event photo, enlarged"
+          />
         )}
       </section>
     );
@@ -366,30 +383,14 @@ export function PhotoGallerySection({
         </div>
 
         {openIndex !== null && (
-          <div
-            role="dialog"
-            aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-            onClick={() => setOpenIndex(null)}
-          >
-            <button
-              type="button"
-              onClick={() => setOpenIndex(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-            >
-              &times;
-            </button>
-            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
-              <Image
-                src={`${storageBase}/${photos[openIndex].storage_path}`}
-                alt="Work photo, enlarged"
-                fill
-                sizes="90vw"
-                className="object-contain"
-              />
-            </div>
-          </div>
+          <Lightbox
+            photos={photos}
+            storageBase={storageBase}
+            openIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+            onNavigate={setOpenIndex}
+            altText="Work photo, enlarged"
+          />
         )}
       </section>
     );
@@ -422,30 +423,14 @@ export function PhotoGallerySection({
       </div>
 
       {openIndex !== null && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
-          onClick={() => setOpenIndex(null)}
-        >
-          <button
-            type="button"
-            onClick={() => setOpenIndex(null)}
-            aria-label="Close"
-            className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
-          >
-            &times;
-          </button>
-          <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
-            <Image
-              src={`${storageBase}/${photos[openIndex].storage_path}`}
-              alt="Business photo, enlarged"
-              fill
-              sizes="90vw"
-              className="object-contain"
-            />
-          </div>
-        </div>
+        <Lightbox
+          photos={photos}
+          storageBase={storageBase}
+          openIndex={openIndex}
+          onClose={() => setOpenIndex(null)}
+          onNavigate={setOpenIndex}
+          altText="Business photo, enlarged"
+        />
       )}
     </section>
   );

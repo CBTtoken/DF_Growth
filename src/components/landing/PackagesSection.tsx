@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type { TemplateAnchor } from "@/lib/templates/anchors";
 import {
   HEADING_FONT_CLASS,
@@ -66,6 +66,20 @@ function formatPrice(price: string): string {
 function splitDate(value: string): { lead: string; rest: string } | null {
   const m = value.trim().match(/^(\d{1,2})\s+(.+)$/);
   return m ? { lead: m[1], rest: m[2] } : null;
+}
+
+// "concept-grid" packages layout: the column count that leaves the fewest
+// empty cells for a given package count, rather than a fixed 3 that leaves
+// a visibly short last row whenever the count isn't a multiple of 3 (2
+// empty cells at exactly 4 packages, the shape that prompted this). Every
+// count from 1-8 lands on an exact fit except 5 and 7, where a genuinely
+// even grid isn't possible at any column count and a short last row is the
+// least-bad outcome either way.
+function packageGridColumns(count: number): number {
+  if (count <= 1) return 1;
+  if (count % 3 === 0) return 3;
+  if (count % 2 === 0) return 2;
+  return 3;
 }
 
 export function PackagesSection({
@@ -246,22 +260,27 @@ export function PackagesSection({
         </div>
       </div>
     );
-  } else if (layout === "concept-rail") {
-    // Marquee anchor, reworked 6 August (SIP Happens' direct feedback):
-    // the generic 3-column grid left a visibly empty row whenever the
-    // package count wasn't a multiple of 3 — 2 blank cells with exactly 4
-    // packages, her real count. A scroll rail has no column count to
-    // overflow, so it's correct for any number of packages, and it fits
-    // this anchor's own "browse and compare" register better than a grid
-    // of boxes did.
+  } else if (layout === "concept-grid") {
+    // Marquee anchor, second pass 6 August (SIP Happens' direct feedback,
+    // twice): a fixed 3-column grid left 2 empty cells with her real
+    // 4-package count; the scroll-rail fix that followed solved the empty
+    // cells but Dewald's own review called it right that a "swipe to see
+    // the rest" packages section asks visitors for work a browse-and-
+    // compare page shouldn't ask for. This picks the column count from the
+    // actual package count instead, so there's nothing to scroll and no
+    // gap: 4 becomes a clean 2x2, 6 becomes two full rows of 3, and so on.
+    const columns = packageGridColumns(packages.length);
     body = (
-      <div className="mt-10 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2 [scrollbar-width:thin]">
+      <div
+        className="mt-10 grid grid-cols-1 gap-6 sm:[grid-template-columns:var(--pkg-cols)]"
+        style={{ "--pkg-cols": `repeat(${columns}, minmax(0, 1fr))` } as CSSProperties}
+      >
         {packages.map((pkg, i) => {
           const highlighted = i === highlightIndex;
           return (
             <div
               key={i}
-              className={`flex w-[280px] flex-shrink-0 snap-start flex-col gap-3 p-6 sm:w-[320px] ${CARD_RECIPE_CLASS[anchor.cardRecipe]}`}
+              className={`flex flex-col gap-3 p-6 ${CARD_RECIPE_CLASS[anchor.cardRecipe]}`}
               style={highlighted ? { borderWidth: 2, borderStyle: "solid", borderColor: accentColor } : undefined}
             >
               {highlighted && (
