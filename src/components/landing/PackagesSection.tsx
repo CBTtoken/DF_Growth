@@ -8,6 +8,7 @@ import {
   SURFACE_BORDER_CLASS,
   SURFACE_HEADING_CLASS,
   SURFACE_BODY_CLASS,
+  CARD_RECIPE_CLASS,
 } from "@/lib/templates/anchors";
 
 // Server component. A client's own service packages / pricing tiers —
@@ -243,6 +244,41 @@ export function PackagesSection({
             </div>
           ))}
         </div>
+      </div>
+    );
+  } else if (layout === "concept-rail") {
+    // Marquee anchor, reworked 6 August (SIP Happens' direct feedback):
+    // the generic 3-column grid left a visibly empty row whenever the
+    // package count wasn't a multiple of 3 — 2 blank cells with exactly 4
+    // packages, her real count. A scroll rail has no column count to
+    // overflow, so it's correct for any number of packages, and it fits
+    // this anchor's own "browse and compare" register better than a grid
+    // of boxes did.
+    body = (
+      <div className="mt-10 flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2 [scrollbar-width:thin]">
+        {packages.map((pkg, i) => {
+          const highlighted = i === highlightIndex;
+          return (
+            <div
+              key={i}
+              className={`flex w-[280px] flex-shrink-0 snap-start flex-col gap-3 p-6 sm:w-[320px] ${CARD_RECIPE_CLASS[anchor.cardRecipe]}`}
+              style={highlighted ? { borderWidth: 2, borderStyle: "solid", borderColor: accentColor } : undefined}
+            >
+              {highlighted && (
+                <span
+                  className="w-fit rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white"
+                  style={{ backgroundColor: accentColor }}
+                >
+                  Most popular
+                </span>
+              )}
+              <h3 className={`text-lg font-semibold ${headingClass}`}>{pkg.name}</h3>
+              {pkg.price && <p className="text-xl font-bold" style={{ color: accentColor }}>{formatPrice(pkg.price)}</p>}
+              {pkg.description && <p className={`text-sm ${bodyClass}`}>{pkg.description}</p>}
+              <div className="mt-auto w-fit">{enquireCta}</div>
+            </div>
+          );
+        })}
       </div>
     );
   } else if (layout === "ambient-stack") {

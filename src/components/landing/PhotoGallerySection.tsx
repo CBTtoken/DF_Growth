@@ -255,6 +255,76 @@ export function PhotoGallerySection({
     );
   }
 
+  if (anchor.galleryLayout === "filmstrip") {
+    // Marquee anchor, reworked 6 August after SIP Happens' direct feedback
+    // on the original "lookbook" mosaic: mixing a portrait hero tile with
+    // alternating square/4:3 tiles read as scattered once a real photo set
+    // of varying aspect ratios went in, the opposite of "the photography
+    // carries the page". Every tile here is the same 4:3 shape and the row
+    // just scrolls, so there's no mismatch to notice and no photo count
+    // that ever looks wrong — 5 photos or 50 read the same way.
+    return (
+      <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} bg-white`}>
+        <div className={`mx-auto max-w-5xl ${SPACING_CLASS[anchor.spacing]}`}>
+          <div className="px-4 sm:px-8">
+            <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
+              {eyebrowNumber} · Gallery
+            </p>
+            <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 font-[family-name:var(--font-anchor-serif)] sm:text-3xl">
+              Moments from past events.
+            </h2>
+          </div>
+          <div className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:gap-6 sm:px-8 [scrollbar-width:thin]">
+            {photos.map((photo, i) => (
+              <button
+                key={photo.id}
+                type="button"
+                onClick={() => setOpenIndex(i)}
+                className="group relative aspect-[4/3] w-[260px] flex-shrink-0 snap-start overflow-hidden sm:w-[340px]"
+              >
+                <Image
+                  src={`${storageBase}/${photo.storage_path}`}
+                  alt="A past event"
+                  fill
+                  sizes="(min-width: 640px) 340px, 260px"
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                />
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 px-4 text-xs text-gray-400 sm:px-8">Scroll for more →</p>
+        </div>
+
+        {openIndex !== null && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4"
+            onClick={() => setOpenIndex(null)}
+          >
+            <button
+              type="button"
+              onClick={() => setOpenIndex(null)}
+              aria-label="Close"
+              className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white transition hover:bg-white/20"
+            >
+              &times;
+            </button>
+            <div className="relative h-full max-h-[85vh] w-full max-w-3xl">
+              <Image
+                src={`${storageBase}/${photos[openIndex].storage_path}`}
+                alt="Event photo, enlarged"
+                fill
+                sizes="90vw"
+                className="object-contain"
+              />
+            </div>
+          </div>
+        )}
+      </section>
+    );
+  }
+
   if (anchor.galleryLayout === "evidence-board") {
     // Fieldwork anchor: photos as job evidence, not a mood board. The first
     // photo runs wide at documentary scale, the rest tile beside it; every

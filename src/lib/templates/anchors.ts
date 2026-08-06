@@ -167,7 +167,7 @@ export interface TemplateAnchor {
   sectionSurface: SectionSurface;
   // Structural overrides — undefined means "use each component's existing
   // default JSX shape."
-  packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack";
+  packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack" | "concept-rail";
   reviewsLayout?: "list-detail" | "hero-stat";
   servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index" | "junction-line" | "amenity-pills";
   // Dark Mode pilot rebuild: TrustBadges previously had no layout axis at
@@ -184,7 +184,7 @@ export interface TemplateAnchor {
   aboutLayout?: "split-grid" | "statement";
   howItWorksLayout?: "cards" | "jobline";
   locationLayout?: "map-split" | "coverage-panel" | "home-base";
-  galleryLayout?: "square-grid" | "evidence-board" | "job-wall" | "lookbook";
+  galleryLayout?: "square-grid" | "evidence-board" | "job-wall" | "lookbook" | "filmstrip";
   // Marquee build, after Dewald's live review: an events enquiry needs the
   // questions an events business actually asks (event type, date, guests,
   // venue), which the standard four-field form does not carry. All extra
@@ -357,7 +357,22 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     eyebrowStyle: "rule-line",
     spacing: "airy",
     sectionSurface: "light-default",
-    galleryLayout: "lookbook",
+    // Reworked 6 August (SIP Happens' direct feedback, first real Marquee
+    // client): the original "lookbook" mosaic mixed a portrait hero tile
+    // with alternating square/4:3 tiles in the same grid — with a real
+    // photo set of varying aspect ratios that read as scattered rather than
+    // curated, exactly the opposite of the "photography carries the page"
+    // intent. A horizontal scroll rail fixes it structurally, not
+    // cosmetically: every tile is the same shape, so there's no mismatch to
+    // notice, and it never runs out of room the way a fixed grid does.
+    galleryLayout: "filmstrip",
+    // Same client, same visit: her 4 packages in the generic 3-column grid
+    // left an empty second row (2 blank cells) — invisible with 3 or 6
+    // packages, guaranteed with 4 or 5. A scroll rail has no column count
+    // to overflow, so this is correct for any number of packages, not just
+    // hers, and it fits Marquee's own "browse and compare" register better
+    // than a grid ever did.
+    packagesLayout: "concept-rail",
     leadFormVariant: "event-enquiry",
   },
   // Retreat: the hospitality anchor. Sans-default kept deliberately quiet
