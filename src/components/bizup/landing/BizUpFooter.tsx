@@ -61,13 +61,6 @@ export async function BizUpFooter() {
           <span className="font-extrabold text-neutral-ink">KatisoBiz</span>
           <a href="#pricing" className="hover:text-brand-blue">Pricing</a>
           <a href={howItWorks} className="hover:text-brand-blue">How it works</a>
-          {/* KatisoBiz Jobs, Sprint 1: the one internal link this new
-              product needs so it isn't an orphan page for a crawler --
-              katisobiz.co.za is already indexed and ranking, jobs.katisobiz.co.za
-              is brand new. A plain <a>, not a Next Link: genuinely a
-              different hostname, same reasoning as the Growth cross-sell
-              link above. */}
-          <a href="https://jobs.katisobiz.co.za" className="hover:text-brand-blue">Looking for work?</a>
           <Link href={help} className="hover:text-brand-blue">Help</Link>
           <a href={faq} className="hover:text-brand-blue">FAQ</a>
           <Link href="/terms" className="hover:text-brand-blue">Terms</Link>

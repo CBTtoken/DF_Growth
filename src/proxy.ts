@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isMoxieHost, MOXIE_PREFIX } from "@/lib/moxie/host";
-import { isJobsHost, JOBS_PREFIX } from "@/lib/jobs/host";
 
 // Agent Referral Programme, real agent feedback follow-up: personalized
 // referral links live on their own subdomain (agent.digitalflyersa.co.za/
@@ -38,14 +37,7 @@ const KATISOBIZ_PUBLIC_PREFIX = "/katisobiz";
 // /bizup/terms does not exist and never should. Serving the same routes on
 // every mapped domain is what the brief's Part 2.2 asks for, with a
 // canonical tag on each page pointing at one host.
-//
-// /forgot-password added here for the same reason (found while building
-// Jobs' own login page, which links to it exactly as KatisoBiz's login
-// already does): a shared top-level auth route with no per-product copy,
-// so it needs the same pass-through or it 404s on every non-Growth
-// hostname. This was already silently broken on katisobiz.co.za before
-// this line existed -- fixed here rather than worked around a second time.
-const SHARED_LEGAL_PATHS = new Set(["/terms", "/privacy", "/paia", "/forgot-password"]);
+const SHARED_LEGAL_PATHS = new Set(["/terms", "/privacy", "/paia"]);
 
 // Crawler files. Next serves these from src/app/robots.ts and sitemap.ts,
 // and rewriting them into /bizup meant katisobiz.co.za/robots.txt returned
@@ -247,56 +239,6 @@ export function proxy(request: NextRequest) {
     request.nextUrl.pathname === MOXIE_PREFIX ||
     request.nextUrl.pathname.startsWith(`${MOXIE_PREFIX}/`)
   ) {
-    const response = NextResponse.next();
-    response.headers.set("X-Robots-Tag", NOINDEX);
-    return response;
-  }
-
-  // KatisoBiz Jobs, the fourth product on this application (Sprint 1,
-  // scripts/spec-katisobiz-jobs.md). jobs.katisobiz.co.za's first label is
-  // "jobs", not "katisobiz", so it falls through the KatisoBiz branch below
-  // untouched without a check of its own -- this branch is that check,
-  // placed before it for clarity even though the two can never collide.
-  //
-  // Unlike The Desk, this sets no X-Robots-Tag on its own hostname: Jobs is
-  // explicitly the widest-funnel, most-indexable surface in the portfolio
-  // (every anonymous candidate card is meant to rank), so it wants the same
-  // "indexed from day one" treatment Moxie got, not Desk's permanent
-  // noindex.
-  if (isJobsHost(host)) {
-    const { pathname } = request.nextUrl;
-
-    // API routes are never rewritten under any hostname, same rule as
-    // every other branch in this file.
-    if (pathname.startsWith("/api/")) return NextResponse.next();
-
-    // Any file with an extension is served as-is. A dot in the last
-    // segment is the tell: page routes never have one.
-    if (pathname.slice(pathname.lastIndexOf("/")).includes(".")) {
-      return NextResponse.next();
-    }
-
-    // The company-wide legal pages and crawler files, served as-is here
-    // too, same reasoning as every other product branch.
-    if (SHARED_LEGAL_PATHS.has(pathname)) return NextResponse.next();
-    if (SHARED_CRAWLER_PATHS.has(pathname)) return NextResponse.next();
-
-    // jobs.katisobiz.co.za/              -> /jobs
-    // jobs.katisobiz.co.za/find-people   -> /jobs/find-people
-    const jobsUrl = request.nextUrl.clone();
-    if (!(pathname === JOBS_PREFIX || pathname.startsWith(`${JOBS_PREFIX}/`))) {
-      jobsUrl.pathname = pathname === "/" ? JOBS_PREFIX : `${JOBS_PREFIX}${pathname}`;
-    }
-    return NextResponse.rewrite(jobsUrl);
-  }
-
-  // The same Jobs pages reached on any other hostname: the Growth domain
-  // while jobs.katisobiz.co.za's DNS is still being set up, and every
-  // Vercel preview URL. Noindexed for the same reason Moxie's equivalent
-  // block is: the real hostname above always wins first, so this only ever
-  // catches a duplicate that would otherwise split ranking with the real
-  // page.
-  if (request.nextUrl.pathname === JOBS_PREFIX || request.nextUrl.pathname.startsWith(`${JOBS_PREFIX}/`)) {
     const response = NextResponse.next();
     response.headers.set("X-Robots-Tag", NOINDEX);
     return response;

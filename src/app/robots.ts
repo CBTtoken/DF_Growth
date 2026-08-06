@@ -1,7 +1,6 @@
 import type { MetadataRoute } from "next";
 import { isKatisoBizHost } from "@/lib/bizup/product";
 import { isMoxieHost } from "@/lib/moxie/host";
-import { isJobsHost } from "@/lib/jobs/host";
 
 // Next.js special file — serves this at /robots.txt automatically.
 //
@@ -45,18 +44,6 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
   if (isMoxieHost(host)) {
     return {
       rules: { userAgent: "*", allow: "/" },
-      sitemap: `https://${bare}/sitemap.xml`,
-    };
-  }
-
-  // KatisoBiz Jobs is on its own subdomain (jobs.katisobiz.co.za), not
-  // matched by isKatisoBizHost (that checks the "katisobiz"/"bizup" first
-  // label, not "jobs") -- without this branch it would fall through to the
-  // generic case below and its sitemap link would point at the Growth
-  // domain, exactly the bug the Moxie branch above exists to avoid.
-  if (isJobsHost(host)) {
-    return {
-      rules: { userAgent: "*", allow: "/", disallow: ["/cv"] },
       sitemap: `https://${bare}/sitemap.xml`,
     };
   }
