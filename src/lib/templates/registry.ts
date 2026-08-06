@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench, Droplets, PartyPopper } from "lucide-react";
+import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench, Droplets, PartyPopper, Palmtree, GraduationCap, Hammer, Scissors } from "lucide-react";
 
 // Every "section" a template can arrange, beyond the hero (always first)
 // and the lead form (always last, since #lead-form is the CTA anchor every
@@ -33,7 +33,11 @@ export type TemplateId =
   | "dual-offer"
   | "fieldwork"
   | "copperline"
-  | "marquee";
+  | "marquee"
+  | "retreat"
+  | "programme"
+  | "atelier"
+  | "workroom";
 
 export type HeroVariant =
   | "default"
@@ -50,7 +54,11 @@ export type HeroVariant =
   | "duo"
   | "jobcard"
   | "pipeline"
-  | "showreel";
+  | "showreel"
+  | "retreat"
+  | "programme"
+  | "atelier"
+  | "workroom";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -256,6 +264,77 @@ export const templates: TemplateMeta[] = [
     // questions do not, and on a browsing page every screen has to earn
     // its place.
     sections: ["gallery", "packages", "services", "about", "story", "trust", "reviews"],
+  },
+  // Built for the fifth done-for-you client build (The Falling Feather
+  // Inn, Val-de-Grace, Pretoria East) and kept general because the shape
+  // recurs for any stay-and-relax business: guest houses, B&Bs, lodges,
+  // self-catering. A visitor here isn't fixing an urgent problem or
+  // comparing considered-purchase options, they're deciding whether this
+  // is a nice place to be — so the hero leads with the place itself (a
+  // real photo, not brand color alone) and the facilities read as a quiet
+  // at-a-glance strip rather than a services list or a job sheet.
+  {
+    id: "retreat",
+    name: "Retreat",
+    archetype: "Hospitality · photo-led, unhurried",
+    description:
+      "For guest houses, B&Bs and lodges. The property itself fills the hero, facilities read at a glance, and the whole page takes its time.",
+    icon: Palmtree,
+    hero: "retreat",
+    sections: ["about", "services", "gallery", "story", "packages", "trust", "location", "reviews"],
+  },
+  // Built for the sixth done-for-you client build (Cape Town Butler,
+  // hospitality skills training) and kept general for any credentialed
+  // training or coaching business: no testimonials are allowed anywhere on
+  // Growth, so a page like this has to carry its own trust a different
+  // way — real, stated qualifications up front, and its programmes read
+  // as a proper course list with prices, not a paragraph of prose.
+  {
+    id: "programme",
+    name: "Programme",
+    archetype: "Training · credentials-first",
+    description:
+      "For training, coaching and skills-based services. Real qualifications sit in the hero, and each course or programme lists as its own priced row.",
+    icon: GraduationCap,
+    hero: "programme",
+    sections: ["about", "packages", "services", "gallery", "story", "trust", "location", "reviews"],
+  },
+  // Built for the seventh done-for-you client build (Greeff Kitchens,
+  // Klerksdorp, custom kitchens since 1991) and kept general for any
+  // bespoke manufacturer or workshop trading on real years and a body of
+  // finished work: cabinetmakers, upholsterers, furniture makers, custom
+  // fabricators. A kitchen is a considered purchase, not an emergency, so
+  // this shares Marquee's unhurried, browse-first temperature, but the
+  // trust signal is heritage (a founding year, a founder's own pitch)
+  // rather than photography-as-product.
+  {
+    id: "atelier",
+    name: "Atelier",
+    archetype: "Craft workshop · heritage, considered purchase",
+    description:
+      "For bespoke manufacturers and workshops with real years behind them. A founding-year badge in the hero, the founder's own pitch beside a work photo, and a browsable gallery of finished work.",
+    icon: Hammer,
+    hero: "atelier",
+    sections: ["about", "gallery", "services", "story", "packages", "trust", "location", "reviews"],
+  },
+  // Built for the eighth done-for-you client build (Cottonball, Moreleta
+  // Park, sewing/embroidery/quilting agency and classes) and kept general
+  // for any personal craft or hobby business run by one person the
+  // customer gets to know: sewing and craft shops, pottery studios, art
+  // classes, small home-based makers. The register is deliberately the
+  // opposite of Atelier's heritage-manufacturer tone: this is small,
+  // handmade and personal, so the gallery is a pinned-up wall of real work
+  // rather than a lookbook, and the card recipe carries a stitched top
+  // seam as this theme's own material signature.
+  {
+    id: "workroom",
+    name: "Workroom",
+    archetype: "Craft & classes · handmade, personal",
+    description:
+      "For a personal craft shop or class business run by one person. Warm and small-scale, with a pinned-up wall of the member's own work.",
+    icon: Scissors,
+    hero: "workroom",
+    sections: ["about", "gallery", "services", "packages", "story", "trust", "location", "reviews"],
   },
 ];
 

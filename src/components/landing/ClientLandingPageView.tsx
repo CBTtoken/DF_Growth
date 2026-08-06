@@ -32,6 +32,10 @@ import { DuoHero } from "@/components/landing/heroes/DuoHero";
 import { JobCardHero } from "@/components/landing/heroes/JobCardHero";
 import { PipelineHero } from "@/components/landing/heroes/PipelineHero";
 import { ShowreelHero } from "@/components/landing/heroes/ShowreelHero";
+import { RetreatHero } from "@/components/landing/heroes/RetreatHero";
+import { ProgrammeHero } from "@/components/landing/heroes/ProgrammeHero";
+import { AtelierHero } from "@/components/landing/heroes/AtelierHero";
+import { WorkroomHero } from "@/components/landing/heroes/WorkroomHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -343,7 +347,16 @@ export async function ClientLandingPageView({
   // fallback ambient image — the trade heroes' credibility captions ("A real
   // job, our photo" / "On the job") render only when this is true.
   let photoIsOwn = false;
-  if (template.hero === "split" || template.hero === "dark" || template.hero === "duo" || template.hero === "jobcard" || template.hero === "pipeline" || template.hero === "showreel") {
+  if (
+    template.hero === "split" ||
+    template.hero === "dark" ||
+    template.hero === "duo" ||
+    template.hero === "jobcard" ||
+    template.hero === "pipeline" ||
+    template.hero === "showreel" ||
+    template.hero === "retreat" ||
+    template.hero === "programme"
+  ) {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
     // does that. No selection falls back to the client's stored fallback
@@ -575,6 +588,10 @@ export async function ClientLandingPageView({
       {template.hero === "default" && (
         <ConversionHero {...heroProps} tagline={client.tagline} ctaHref={template.ctaHref} />
       )}
+      {template.hero === "retreat" && <RetreatHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
+      {template.hero === "programme" && <ProgrammeHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
+      {template.hero === "atelier" && <AtelierHero {...heroProps} tagline={client.tagline} />}
+      {template.hero === "workroom" && <WorkroomHero {...heroProps} tagline={client.tagline} />}
       {/* Combined spec Sec 19: templates don't share a fixed section order
           (About isn't always first), so this goes right after the hero
           instead — the other position the spec allows for. */}

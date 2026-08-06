@@ -57,7 +57,7 @@ export const HEADING_FONT_CLASS: Record<HeadingFontKey, string> = {
   "mono-technical": "font-[family-name:var(--font-anchor-mono)]",
 };
 
-export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate" | "copper-seam" | "invitation";
+export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate" | "copper-seam" | "invitation" | "stitched-edge";
 
 // "soft-shadow" is today's existing default card look, unchanged — every
 // other recipe is a genuinely different container treatment. "dark-panel"
@@ -92,6 +92,10 @@ export const CARD_RECIPE_CLASS: Record<CardRecipeId, string> = {
   // than SaaS. Neutral greys like steel-plate's steel: it is the theme's
   // material, not the member's palette.
   invitation: "rounded-none border-[3px] border-double border-gray-300 bg-white shadow-sm",
+  // Workroom build: a dashed top seam in a fixed thread-red, the way a
+  // hemmed edge is finished — this theme's own material signature, the
+  // same way steel-plate fixes its steel and copper-seam its copper.
+  "stitched-edge": "rounded-lg border border-gray-200 border-t-2 border-dashed border-t-[#c76b6b] bg-white shadow-sm",
 };
 
 export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps" | "stencil-tag" | "junction-tag";
@@ -165,7 +169,7 @@ export interface TemplateAnchor {
   // default JSX shape."
   packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack";
   reviewsLayout?: "list-detail" | "hero-stat";
-  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index" | "junction-line";
+  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index" | "junction-line" | "amenity-pills";
   // Dark Mode pilot rebuild: TrustBadges previously had no layout axis at
   // all (a deliberate earlier decision to keep the axis count bounded) —
   // reversed here because direct client feedback named structural sameness
@@ -355,6 +359,71 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     sectionSurface: "light-default",
     galleryLayout: "lookbook",
     leadFormVariant: "event-enquiry",
+  },
+  // Retreat: the hospitality anchor. Sans-default kept deliberately quiet
+  // (nothing about a guest house needs display type or a serif flourish),
+  // paired with outlined-accent cards and plain-caps eyebrows — a
+  // combination no anchor before it uses, and airy spacing so the page
+  // doesn't rush a visitor deciding whether to stay somewhere. The one
+  // structural signature is amenity-pills: facilities read as a loose wrap
+  // of quiet pills, not a services checklist or a job sheet.
+  retreat: {
+    id: "retreat",
+    headingFont: "sans-default",
+    cardRecipe: "outlined-accent",
+    eyebrowStyle: "plain-caps",
+    spacing: "airy",
+    sectionSurface: "light-default",
+    servicesLayout: "amenity-pills",
+  },
+  // Programme: the credentialed-training anchor. Sans-default again, but
+  // paired with flat-border cards and pill-badge eyebrows at standard
+  // spacing — nothing before it combines those three. Packages render as
+  // list-rows (first real use of this layout for actual priced courses
+  // rather than pricing tiers), since with no testimonials allowed
+  // anywhere on Growth, a real course list with real prices is this
+  // anchor's whole trust signal.
+  programme: {
+    id: "programme",
+    headingFont: "sans-default",
+    cardRecipe: "flat-border",
+    eyebrowStyle: "pill-badge",
+    spacing: "standard",
+    sectionSurface: "light-default",
+    packagesLayout: "list-rows",
+  },
+  // Atelier: the heritage-workshop anchor. Shares Storyteller's and
+  // Marquee's serif, but pairs it with flat-border cards (nothing rounded
+  // or shadowed — a clean, considered frame around real work) and standard
+  // rather than airy spacing, so it reads as neither of those two. The
+  // founder's own pitch uses the "statement" about layout beside a real
+  // work photo, and the gallery is a browsable lookbook, the same
+  // unhurried temperature Marquee proved for a considered purchase.
+  atelier: {
+    id: "atelier",
+    headingFont: "serif-editorial",
+    cardRecipe: "flat-border",
+    eyebrowStyle: "rule-line",
+    spacing: "standard",
+    sectionSurface: "light-default",
+    aboutLayout: "statement",
+    galleryLayout: "lookbook",
+  },
+  // Workroom: the personal craft-and-classes anchor. Its own new
+  // stitched-edge card recipe (a dashed thread-red seam, this theme's
+  // material signature) is enough on its own to keep it from reading like
+  // anything before it. The gallery reuses Copperline's job-wall — tilted
+  // prints with thick white borders — because a hobby shop's own photos of
+  // real finished work are exactly the same kind of proof a neighbourhood
+  // trade's are, just gentler in tone.
+  workroom: {
+    id: "workroom",
+    headingFont: "sans-default",
+    cardRecipe: "stitched-edge",
+    eyebrowStyle: "plain-caps",
+    spacing: "standard",
+    sectionSurface: "light-default",
+    galleryLayout: "job-wall",
   },
 };
 

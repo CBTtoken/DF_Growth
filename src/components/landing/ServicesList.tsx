@@ -164,6 +164,22 @@ export function ServicesList({
         ))}
       </ol>
     );
+  } else if (layout === "amenity-pills") {
+    // Retreat anchor: facilities read as a loose wrap of quiet pills rather
+    // than a checklist or a job sheet — right for a guest house, where
+    // "WiFi, pool, braai area" is a glance, not a services pitch.
+    body = (
+      <ul className="mt-10 flex flex-wrap gap-3">
+        {services.map((service, i) => (
+          <li
+            key={i}
+            className={`px-5 py-2.5 text-sm font-medium ${isDark ? "text-gray-200" : "text-gray-700"} ${CARD_RECIPE_CLASS[anchor.cardRecipe]}`}
+          >
+            {service}
+          </li>
+        ))}
+      </ul>
+    );
   } else if (layout === "checklist-compact") {
     // feature-grid / app-dashboard anchors: a dense single-column list
     // rather than a grid of cards — more services readable at a glance,
@@ -206,14 +222,23 @@ export function ServicesList({
     <section id="services" className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} ${isDark ? SURFACE_SECTION_CLASS.dark : "bg-gray-50"}`}>
       <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
         <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-          {eyebrowNumber} · {layout === "work-index" ? "Scope of work" : layout === "junction-line" ? "What we do" : "What we offer"}
+          {eyebrowNumber} ·{" "}
+          {layout === "work-index"
+            ? "Scope of work"
+            : layout === "junction-line"
+              ? "What we do"
+              : layout === "amenity-pills"
+                ? "Facilities"
+                : "What we offer"}
         </p>
         <h2 className={`mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight sm:text-3xl ${headingClass}`}>
           {layout === "work-index"
             ? "The work we take on."
             : layout === "junction-line"
               ? "Call us for any of this."
-              : "Everything you need, in one place."}
+              : layout === "amenity-pills"
+                ? "Everything on site."
+                : "Everything you need, in one place."}
         </h2>
 
         {body}
