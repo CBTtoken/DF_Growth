@@ -187,7 +187,7 @@ export function PhotoGallerySection({
             {eyebrowNumber} · Gallery
           </p>
           <h2 className="mt-3 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 font-[family-name:var(--font-anchor-serif)] sm:text-3xl">
-            Moments from past events.
+            {anchor.id === "atelier" ? "A look at finished work." : "Moments from past events."}
           </h2>
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6">
             {visiblePhotos.map((photo, i) => (
