@@ -1,14 +1,16 @@
+import Image from "next/image";
 import { readableTextOn, shade, ensureContrast } from "@/lib/color";
 import { HeroBrandBar } from "./HeroBrandBar";
 
 // "Workroom" archetype (Growth Build Kit, Cottonball): built for a personal
 // craft shop or class business run by one person the customer gets to
 // know. Deliberately the small, warm opposite of Atelier's heritage-
-// manufacturer register: a soft paper tone derived from the client's own
-// colour (Editorial's technique, reused for the same reason — a warm
-// neutral that still looks considered whatever colour a member picked),
-// centred rather than asymmetric, and a dashed rule under the tagline
-// echoing the theme's own stitched-edge card seam.
+// manufacturer register: centred rather than asymmetric, and a lighter
+// scrim than Atelier's when a photo is present — this stays cosy, not
+// dramatic. A member's own photo of their work/space fills the hero behind
+// that scrim; no photo falls back to the soft paper tone (Editorial's
+// technique) this theme launched with. A dashed rule under the tagline
+// echoes the theme's own stitched-edge card seam either way.
 export function WorkroomHero({
   businessName,
   logoUrl,
@@ -22,6 +24,7 @@ export function WorkroomHero({
   instagramUrl,
   websiteUrl,
   shopHref,
+  photoUrl,
 }: {
   businessName: string;
   logoUrl: string | null;
@@ -36,15 +39,28 @@ export function WorkroomHero({
   websiteUrl?: string | null;
   /** Set only when this business has products on sale. */
   shopHref?: string;
+  photoUrl: string | null;
 }) {
   const paper = shade(secondaryColor, 0.9);
-  const textColor = readableTextOn(paper);
-  const accent = ensureContrast(primaryColor, paper);
+  const scrim = shade(primaryColor, -0.15);
+  const textColor = photoUrl ? "#ffffff" : readableTextOn(paper);
+  const accent = photoUrl ? ensureContrast(primaryColor, scrim, 3) : ensureContrast(primaryColor, paper);
   const ctaTextColor = readableTextOn(primaryColor);
 
   return (
-    <header id="top" style={{ backgroundColor: paper }}>
-      <div className="mx-auto flex max-w-4xl items-center justify-center px-5 py-5 sm:px-8">
+    <header id="top" className="relative overflow-hidden" style={{ backgroundColor: photoUrl ? scrim : paper }}>
+      {photoUrl && (
+        <>
+          <Image src={photoUrl} alt={businessName} fill priority sizes="100vw" className="absolute inset-0 object-cover" />
+          <div
+            aria-hidden
+            className="absolute inset-0"
+            style={{ background: `linear-gradient(180deg, ${scrim}b3 0%, ${scrim}80 45%, ${scrim}e6 100%)` }}
+          />
+        </>
+      )}
+
+      <div className="relative mx-auto flex max-w-4xl items-center justify-center px-5 py-5 sm:px-8">
         <HeroBrandBar
           businessName={businessName}
           logoUrl={logoUrl}
@@ -56,7 +72,7 @@ export function WorkroomHero({
         />
       </div>
 
-      <div className="mx-auto flex max-w-2xl flex-col items-center gap-5 px-4 pb-20 pt-6 text-center sm:pb-24">
+      <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-5 px-4 pb-24 pt-6 text-center sm:pb-28">
         {tagline && (
           <p
             className="border-t-2 border-dashed pt-3 text-xs font-semibold uppercase tracking-[0.25em]"

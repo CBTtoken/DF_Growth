@@ -355,7 +355,9 @@ export async function ClientLandingPageView({
     template.hero === "pipeline" ||
     template.hero === "showreel" ||
     template.hero === "retreat" ||
-    template.hero === "programme"
+    template.hero === "programme" ||
+    template.hero === "atelier" ||
+    template.hero === "workroom"
   ) {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
@@ -590,8 +592,8 @@ export async function ClientLandingPageView({
       )}
       {template.hero === "retreat" && <RetreatHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
       {template.hero === "programme" && <ProgrammeHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
-      {template.hero === "atelier" && <AtelierHero {...heroProps} tagline={client.tagline} />}
-      {template.hero === "workroom" && <WorkroomHero {...heroProps} tagline={client.tagline} />}
+      {template.hero === "atelier" && <AtelierHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
+      {template.hero === "workroom" && <WorkroomHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
       {/* Combined spec Sec 19: templates don't share a fixed section order
           (About isn't always first), so this goes right after the hero
           instead — the other position the spec allows for. */}
