@@ -77,7 +77,9 @@ below.
 **KatisoBiz Jobs** (`jobs.katisobiz.co.za`) lives in `docs/`. Read them in
 this order: `SPEC-katisobiz-jobs-public-launch.md` is the current one, the
 full flow map and functional spec as the product stands at launch, written
-for business analyst review. `REPORT-jobs-prelaunch.md` and
+for business analyst review. `TESTER-BRIEF-katisobiz-jobs.md` is the
+hand-to-a-stranger version: six scripted tests plus a free roam, written to
+be given to somebody with no background at all. `REPORT-jobs-prelaunch.md` and
 `REPORT-katisobiz-jobs-sprints-1-2.md` are the two builds before it and are
 still accurate about how the taxonomy, entitlements and moderation work.
 The original build spec and the pre-launch handoff are in `scripts/`
