@@ -11,10 +11,10 @@ import {
   NewAnswerForm,
   BotCopyRow,
   SettingsForm,
-  GROUP_OPTIONS,
   type SavedAnswer,
   type BotCopyRowData,
 } from "@/components/admin/whatsapp/AnswerLibrary";
+import { GROUP_OPTIONS } from "@/lib/wa-inbox/groups";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 

@@ -13,6 +13,7 @@ import {
 } from "@/app/admin/whatsapp/answers/actions";
 import { Button } from "@/components/ui/Button";
 import { StatusPill } from "@/components/ui/StatusPill";
+import { GROUP_OPTIONS } from "@/lib/wa-inbox/groups";
 
 // Client pieces of /admin/whatsapp/answers: a saved answer card that edits
 // in place, the add form, a system copy row with its approve tick, and the
@@ -32,13 +33,6 @@ export type BotCopyRowData = {
   body: string;
   approved: boolean;
 };
-
-export const GROUP_OPTIONS = [
-  { id: "member", label: "Member support (offered behind door 2)" },
-  { id: "join", label: "Joining (door 3 follow-ups)" },
-  { id: "job", label: "Job requests" },
-  { id: "general", label: "General (only you see these)" },
-];
 
 const inputClasses =
   "rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition-colors focus:border-brand";
