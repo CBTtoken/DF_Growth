@@ -10,6 +10,7 @@ import {
   writeCv,
   acceptWrittenCv,
   startDraft,
+  startFreshDraft,
   type CvRow,
 } from "@/app/jobs/cv/actions";
 import { CV_TEMPLATES } from "@/lib/jobs/pdf/cv-templates";
@@ -130,13 +131,21 @@ function CvBuilderScreens({
   const homeHref = useJobsPath("/");
   const pdfPrefix = useJobsPath("/cv");
   const signupHref = useJobsPath("/signup");
+  const loginHref = useJobsPath("/login");
   const dashboardHref = useJobsPath("/dashboard");
   const importHref = useJobsPath("/cv/import");
   const vacancyPrefix = useJobsPath("/vacancies");
 
   const [saving, startSaving] = useTransition();
+  const [restarting, startRestarting] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // An unfinished CV picked up from this browser's cookie, belonging to no
+  // account. Named so the person can see at a glance whether it is theirs.
+  const resumedDraft = !candidate.owner_user_id && candidate.full_name?.trim() ? candidate.full_name.trim() : null;
+  // The builder's own path, for the hard reload after starting fresh.
+  const cvHrefPlain = useJobsPath("/cv");
 
   const roleLabel = occupations[0]?.title;
   const roleCapReached = occupations.length >= MAX_ROLES;
@@ -247,6 +256,36 @@ function CvBuilderScreens({
           </div>
         )}
       </div>
+
+      {/* Somebody else's unfinished CV, resumed from this browser's cookie.
+          Only shown when there is a real name in it and no account behind
+          it, so it never nags a person working on their own CV. Dewald,
+          9 August: logged out in Chrome, tapped Build my free CV, and his
+          own details came back. On a borrowed phone that is the previous
+          person's name and number, editable, with no way out. */}
+      {resumedDraft && (
+        <div className="mx-4 mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm text-amber-900">
+            Carrying on with the CV for <strong>{resumedDraft}</strong>.
+          </p>
+          <button
+            type="button"
+            disabled={restarting}
+            onClick={() =>
+              startRestarting(async () => {
+                await startFreshDraft();
+                // A hard reload rather than a router refresh: every answer
+                // on this screen is React state seeded from the old row,
+                // and a fresh cookie has to be read from scratch.
+                window.location.assign(cvHrefPlain);
+              })
+            }
+            className="shrink-0 rounded-full border border-amber-400 px-4 py-2 text-xs font-semibold text-amber-900 disabled:opacity-50"
+          >
+            {restarting ? "Starting..." : "Not me, start fresh"}
+          </button>
+        </div>
+      )}
 
       {notice && (
         <p className="mx-4 mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">{notice}</p>
@@ -560,6 +599,7 @@ function CvBuilderScreens({
             candidateId={id}
             pdfPrefix={pdfPrefix}
             signupHref={signupHref}
+            loginHref={loginHref}
             homeHref={homeHref}
             dashboardHref={dashboardHref}
             onEdit={jumpTo}
@@ -720,6 +760,7 @@ function ReviewStep({
   candidateId,
   pdfPrefix,
   signupHref,
+  loginHref,
   homeHref,
   dashboardHref,
   onEdit,
@@ -749,6 +790,7 @@ function ReviewStep({
   candidateId: string;
   pdfPrefix: string;
   signupHref: string;
+  loginHref: string;
   homeHref: string;
   dashboardHref: string;
   /** Open one question for editing and come straight back here. */
@@ -1081,12 +1123,28 @@ function ReviewStep({
           {listed ? "Employers can find you, tap to stop" : "Let employers looking for someone like you find you"}
         </button>
       ) : (
-        <Link
-          href={signupHref}
-          className="inline-flex w-full items-center justify-center rounded-full border border-neutral-900 px-6 py-3.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
-        >
-          Save my CV so I can come back to it
-        </Link>
+        <>
+          <Link
+            href={signupHref}
+            className="inline-flex w-full items-center justify-center rounded-full border border-neutral-900 px-6 py-3.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+          >
+            Save my CV so I can come back to it
+          </Link>
+          {/* Dewald, 9 August: "when I click on Save my CV so I can come
+              back it takes me to a new registration screen, should it not
+              take me back to my dashboard?" Registration is right for
+              somebody genuinely new and a dead end for everybody else, who
+              were being asked to make a second account to save a CV they
+              already had somewhere to put. Logging in now claims this
+              draft too, so the CV on this screen follows them into the
+              account they already have. */}
+          <Link
+            href={loginHref}
+            className="text-center text-sm font-medium text-neutral-600 underline-offset-2 hover:text-neutral-900 hover:underline"
+          >
+            I already have an account, log in
+          </Link>
+        </>
       )}
 
       {/* Destructive action, asks first, worded so it's clear what's lost

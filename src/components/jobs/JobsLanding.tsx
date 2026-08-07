@@ -32,7 +32,7 @@ export type JobsLandingData = {
 };
 
 const SEEKER_STEPS = [
-  { n: "1", text: "Answer a few questions, or upload the CV you already have." },
+  { n: "1", text: "Make a free account, then answer a few questions or upload the CV you already have." },
   { n: "2", text: "Download it free as PDF or Word, made professional." },
   { n: "3", text: "Apply with one tap, and let employers find you." },
 ];

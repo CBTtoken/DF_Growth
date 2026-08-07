@@ -28,7 +28,7 @@ const SEEKER_QA: Qa[] = [
   },
   {
     q: "Do I need an account?",
-    a: "Not to build a CV or download it. You only need one if you want to come back to it later, be found by employers, or apply for a job here. Signing up takes an email address, a password and a code we email you.",
+    a: "Yes, and it is free. It takes your name, your mobile number, an email address, a password and a code we email you. Your name and number are the first two questions of the CV anyway, so it is barely a detour, and it means the CV is yours from the start: you can close the phone, come back next week, log in from anywhere, and it is exactly where you left it.",
   },
   {
     q: "I already have a CV. Do I have to type it all in again?",

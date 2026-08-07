@@ -23,7 +23,7 @@ const SEEKER_STEPS: Step[] = [
   {
     n: "1",
     title: "Start your CV, or upload the one you have",
-    body: "Answer a few short questions on your phone, one per screen, and it saves as you go so you can stop and come back. If you already have a CV as a PDF or a Word file, upload it instead: we read it in, you check what we found, and you answer one question about the kind of work you do. Either way you need no account to get this far.",
+    body: "First a free account: your name, your mobile number, an email address and a password. The name and number are the first two questions of the CV anyway, and having an account is what makes the CV yours, so you can stop halfway and pick it up next week from any phone. Then you answer a few short questions, one per screen, and it saves as you go. If you already have a CV as a PDF or a Word file, upload it instead and we read it in for you.",
   },
   {
     n: "2",

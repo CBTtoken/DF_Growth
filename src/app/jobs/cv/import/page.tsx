@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { CvImport } from "@/components/jobs/CvImport";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
@@ -13,6 +15,16 @@ export const metadata: Metadata = {
 };
 
 export default async function CvImportPage() {
+  // Same gate as the builder: a CV belongs to a person, not to a browser.
+  // Uploading is the path most likely to be used by somebody who already
+  // has an account, so sending them through signup first is also what
+  // stops a second account being made by accident.
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect(await jobsPath("/signup"));
+
   const cvHref = await jobsPath("/cv");
 
   return (

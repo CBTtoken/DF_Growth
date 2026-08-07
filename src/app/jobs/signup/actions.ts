@@ -10,6 +10,7 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 import { verifyEmailAddress } from "@/lib/email/verify-address";
 import { getDraftCandidateId, clearDraftCandidateId } from "@/lib/jobs/draft-session";
 import { getLiveApplyIntent } from "@/lib/jobs/apply-intent";
+import { emailAlreadyRegistered } from "@/lib/jobs/email-taken";
 import { jobsPath } from "@/lib/jobs/host";
 
 // Candidate signup, in two steps -- the same shape as KatisoBiz's own
@@ -64,6 +65,18 @@ export async function signUpForJobs(_prev: JobsSignupState, formData: FormData):
   const address = await verifyEmailAddress(email);
   if (!address.valid) {
     return { error: { email: ["We cannot find that email domain. Please check the spelling."] } };
+  }
+
+  // Checked before signUp, not only after. The identities check below is
+  // Supabase's own signal and it does not fire in every state, which is how
+  // somebody registered a second time on an address they already had and
+  // was walked through the whole flow without being told.
+  if (await emailAlreadyRegistered(email)) {
+    return {
+      error: {
+        email: ["You already have an account on this email address. Log in instead and your CV will be waiting."],
+      },
+    };
   }
 
   const supabase = await createServerClient();
@@ -141,6 +154,11 @@ export async function confirmJobsSignup(_prev: JobsSignupState, formData: FormDa
         full_name: fullName,
         phone,
         email,
+        // Signup asked for name and number, which are CV questions one and
+        // two. Starting the builder back at question one would ask for
+        // both again, which is exactly the kind of thing that makes people
+        // think the product has forgotten them.
+        cv_step: "primary_role",
       });
       if (createError) {
         console.error("Failed to create jobs_candidates row after confirmation", createError);
@@ -160,7 +178,11 @@ export async function confirmJobsSignup(_prev: JobsSignupState, formData: FormDa
   const intent = await getLiveApplyIntent();
   if (intent) redirect(await jobsPath(`/vacancies/${intent}`));
 
-  redirect(await jobsPath("/dashboard"));
+  // Straight on with the CV, not to a dashboard showing an empty one.
+  // Signup is now the first screen of building it, so this is the second,
+  // and stopping in between to explain a dashboard would be an
+  // interruption in the middle of one task.
+  redirect(await jobsPath("/cv"));
 }
 
 export async function resendJobsCode(_prev: JobsSignupState, formData: FormData): Promise<JobsSignupState> {

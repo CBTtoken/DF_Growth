@@ -2,7 +2,11 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
-import { getDraftCandidateId, setDraftCandidateId } from "@/lib/jobs/draft-session";
+import {
+  getDraftCandidateId,
+  setDraftCandidateId,
+  clearDraftCandidateId,
+} from "@/lib/jobs/draft-session";
 import {
   sanitizeFreeText,
   MAX_ROLES,
@@ -121,6 +125,28 @@ export async function startDraft(): Promise<CvRow> {
   if (error || !created) throw new Error("Could not start a new CV");
   await setDraftCandidateId(created.id);
   return created as CvRow;
+}
+
+/**
+ * "This is not me, start a fresh one."
+ *
+ * The draft cookie lasts 30 days on purpose, so a person can build a CV
+ * over a few evenings without an account. The cost is that a phone which
+ * has been handed to somebody else opens on the last person's half-built
+ * CV, with their name and number in it, and there was no way out of it
+ * except knowing to clear browser cookies.
+ *
+ * Log out now clears the cookie too, but log out only helps somebody who
+ * logged in. Anyone can build an anonymous CV and walk away without ever
+ * making an account, so the builder needs its own escape as well.
+ *
+ * The old draft row is abandoned, not deleted: it may be a real person's
+ * only copy, and the 30-day cleanup already sweeps up anything nobody
+ * comes back to.
+ */
+export async function startFreshDraft(): Promise<CvRow> {
+  await clearDraftCandidateId();
+  return startDraft();
 }
 
 /**
