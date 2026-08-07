@@ -89,7 +89,7 @@ export async function generateMetadata({
   const { data: client } = await admin
     .from("growth_clients")
     .select(
-      "id, business_name, tagline, business_description, logo_path, fallback_photo_url, google_site_verification, facebook_domain_verification, industry, city, unlisted, landing_pages!inner(page_type, custom_page_key)"
+      "id, business_name, tagline, business_description, logo_path, fallback_photo_url, hero_photo_id, google_site_verification, facebook_domain_verification, industry, city, unlisted, landing_pages!inner(page_type, custom_page_key), client_photos!client_photos_growth_client_id_fkey(id, storage_path)"
     )
     .eq("slug", clientSlug)
     .eq("status", "active")
@@ -157,13 +157,41 @@ export async function generateMetadata({
     client.tagline || client.business_description || `${client.business_name} on DigitalFlyer.`,
     160
   );
-  // Share-image preference: the member's own logo, else their curated
-  // trade image (media library fallback), else the platform logo. A link
-  // preview showing the member's trade beats a generic platform mark
-  // (platform queue item 1's image-SEO ride-along).
+  // Share-image preference: the member's own logo, else their own chosen
+  // hero photo, else their curated trade image (media library fallback),
+  // else the platform logo. A link preview showing the member's trade
+  // beats a generic platform mark (platform queue item 1's image-SEO
+  // ride-along).
+  //
+  // The hero-photo step was added 8 August 2026, after Dewald saw a real
+  // Facebook share of a member page: a member with no logo AND no stored
+  // fallback (anyone who never finished the wizard, e.g. a done-for-you
+  // build) fell all the way through to the platform logo, which a
+  // 1.91:1 link preview crops into half a DigitalFlyer mark. Their own
+  // hero photo was sitting there unused, ranked below an ambient stock
+  // image, which was backwards: a member's real photo is always the
+  // better preview. Members WITH a logo are unaffected — that branch is
+  // untouched, so no existing member's share image changes.
+  const heroPhoto = client.hero_photo_id
+    ? (client.client_photos as unknown as { id: string; storage_path: string }[] | null)?.find(
+        (p) => p.id === client.hero_photo_id
+      )
+    : undefined;
+  // A hero photo is usually portrait (a phone photo), and a link preview
+  // is a wide 1.91:1 band — served raw, the crop cuts the subject in
+  // half. Supabase's render endpoint returns a properly composed
+  // 1200x630 for the preview only; the page itself still serves the
+  // full-resolution original through next/image.
+  const heroShareImage = heroPhoto
+    ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/render/image/public/client-photos/${heroPhoto.storage_path}?width=1200&height=630&resize=cover`
+    : null;
   const image = client.logo_path
     ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${client.logo_path}`
-    : (client.fallback_photo_url ?? "/brand/logo-blue.png");
+    : (heroShareImage ?? client.fallback_photo_url ?? "/brand/logo-blue.png");
+  // Explicit dimensions let Facebook render the large card on first
+  // scrape instead of falling back to a small thumbnail while it fetches
+  // the image to measure it.
+  const shareImage = heroShareImage && image === heroShareImage ? { url: image, width: 1200, height: 630 } : image;
   const url = `/${clientSlug}`;
 
   return {
@@ -175,8 +203,8 @@ export async function generateMetadata({
     // scraper and a link preview which English this is, which is the
     // difference between a South African buyer seeing a date and a price
     // written the way they write them and seeing an American one.
-    openGraph: { title, description, url, images: [image], locale: "en_ZA", type: "website" },
-    twitter: { card: "summary_large_image", title, description, images: [image] },
+    openGraph: { title, description, url, images: [shareImage], locale: "en_ZA", type: "website" },
+    twitter: { card: "summary_large_image", title, description, images: [shareImage] },
     verification: {
       google: client.google_site_verification ?? undefined,
       other: client.facebook_domain_verification
