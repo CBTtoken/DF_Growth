@@ -8,10 +8,18 @@ import Link from "next/link";
 // words as the legacy mailer, so a mailer click lands on a page repeating
 // the offer.
 //
-// href is where the button sends people: "#pricing" when the plan cards are
-// on the same page, "/pricing" when they are not. The R450 only exists
-// attached to a membership; the tick itself lives inside signup.
-export function BuildItForMe({ href }: { href: string }) {
+// Sprint "Onboarding two doors", 7 August 2026: this used to promise that
+// nothing extra was charged at signup and that the R450 would be "arranged
+// when we make contact". It is now a real product with its own door and its
+// own checkout (/pricing/build), so the words describe what actually
+// happens: one payment, one form, a page inside three working days.
+//
+// The href prop is gone with that change. It existed to send people to the
+// plan cards, "#pricing" or "/pricing#pricing" depending on the page, so
+// they could hunt for a tick inside signup. There is now one destination
+// from everywhere, so passing it per call site could only introduce a way
+// to get it wrong.
+export function BuildItForMe() {
   return (
     <div className="rounded-2xl bg-brand px-6 py-7 text-white shadow-lg sm:px-9">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between lg:gap-8">
@@ -20,15 +28,15 @@ export function BuildItForMe({ href }: { href: string }) {
             No time, or want an extra creative touch? We build it for you.
           </p>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-white/85">
-            Once-off <strong className="text-white">R450</strong> with any package. Pick your
-            package, tick <em>Build it for me</em> at signup, send us your information, and we
-            set up the whole page for you, with a step-by-step guide so running it yourself
-            afterwards is easy. Nothing extra is charged at signup; we arrange the R450 when
-            we make contact, within a day.
+            Once-off <strong className="text-white">R450</strong> with any plan. Fill in one short
+            form, pay once for the build and your first period together, and we set up the whole
+            page for you: the right look for your trade, your photos sorted, and your own words
+            turned into proper copy. Live within 3 working days, and easy to run yourself
+            afterwards.
           </p>
         </div>
         <Link
-          href={href}
+          href="/pricing/build"
           className="inline-flex shrink-0 items-center justify-center rounded-full bg-white px-7 py-3.5 text-base font-bold text-brand shadow-md transition hover:-translate-y-0.5 hover:shadow-lg"
         >
           Get started, we build it →

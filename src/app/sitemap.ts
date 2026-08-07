@@ -282,6 +282,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly",
       priority: 0.9,
     },
+    // Sprint "Onboarding two doors", 7 Aug 2026: the done-for-you door is a
+    // real commercial page with its own offer, and people search for
+    // somebody to build the thing rather than for software to build it
+    // with. Same priority as /pricing because it is the same decision,
+    // taken from the other end. Its /thank-you child is noindex and stays
+    // out, being a private post-payment screen.
+    {
+      url: `${siteUrl}/pricing/build`,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
     // Search Console review, 4 Aug 2026: the two hub pages that link every
     // member page were never listed here, which undersells the pages this
     // sitemap exists to promote — a crawler weighs a URL partly by who

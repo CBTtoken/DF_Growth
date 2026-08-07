@@ -54,7 +54,7 @@ export function HomePricing() {
         </p>
 
         <div className="mt-6">
-          <BuildItForMe href="#pricing" />
+          <BuildItForMe />
         </div>
       </div>
     </section>

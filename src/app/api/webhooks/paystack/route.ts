@@ -12,6 +12,9 @@ import { recordCommissionIfEligible } from "@/lib/agents/commission";
 import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
 import { handleMoxieEvent } from "@/lib/moxie/webhook";
 import { handleJobsEvent } from "@/lib/jobs/webhook";
+import { buildOrderDueAt } from "@/lib/growth-client/build-order";
+import { createSubscriptionFromAuthorization, nextPeriodStart } from "@/lib/paystack/subscriptions";
+import { planCodeForTier, type Tier } from "@/lib/paystack/plans";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -548,6 +551,76 @@ export async function POST(request: Request) {
           value: (amount ?? 0) / 100,
           currency: "ZAR",
           contentName: `growth_${existingClient.plan}`,
+        });
+      }
+    }
+
+    // Sprint "Onboarding two doors" item 1: a done-for-you build order.
+    //
+    // This charge was a plain transaction carrying R450 plus the first
+    // period, with no plan attached (see initializeBuildOrderCheckout for
+    // why it cannot have one), so Paystack has created no subscription. Two
+    // things happen here and the order matters: the order goes into the
+    // queue first, because that is what Dewald has been paid to do, and the
+    // subscription is created second, because a failure there is a billing
+    // problem to chase rather than a reason to lose the order.
+    if (!error && metadata?.build_order === "true") {
+      const paidAt = new Date();
+      const dueAt = buildOrderDueAt(paidAt);
+
+      const { error: buildError } = await admin
+        .from("growth_clients")
+        .update({
+          build_order_status: "paid",
+          build_order_paid_at: paidAt.toISOString(),
+          build_order_due_at: dueAt.toISOString(),
+        })
+        .eq("id", trialClientId);
+
+      if (buildError) {
+        // Money has been taken for a build that is now not in the queue.
+        // Loud on purpose.
+        console.error("Failed to record a paid build order", buildError, { trialClientId, reference });
+        Sentry.captureMessage("Paid build order not recorded", {
+          extra: { error: buildError, trialClientId, reference },
+        });
+      }
+
+      const authorizationCode = event.data?.authorization?.authorization_code as string | undefined;
+      const customerCode = customer?.customer_code as string | undefined;
+      const buildInterval = metadata?.build_interval === "annual" ? "annual" : "monthly";
+      const buildTier = (metadata?.build_tier ?? existingClient?.plan) as Tier | undefined;
+
+      if (authorizationCode && customerCode && buildTier) {
+        // Starts one full period from today, because today's period has
+        // already been paid for inside this very charge. Without the
+        // start_date the member would be billed twice for the same month.
+        const subscription = await createSubscriptionFromAuthorization({
+          customerCode,
+          planCode: planCodeForTier(buildTier, buildInterval),
+          authorizationCode,
+          startDate: nextPeriodStart(paidAt, buildInterval),
+        });
+
+        if ("error" in subscription) {
+          // The member has paid and their build is queued, so this is not
+          // failed at their end: what is missing is the recurring billing,
+          // which Dewald can create from the Paystack dashboard against
+          // this same customer. Never retried automatically here, because a
+          // blind retry on a redelivered webhook is how someone ends up
+          // with two subscriptions.
+          Sentry.captureMessage("Build order paid but subscription not created", {
+            extra: { trialClientId, reference, error: subscription.error },
+          });
+        } else {
+          await admin
+            .from("growth_clients")
+            .update({ paystack_subscription_code: subscription.subscriptionCode })
+            .eq("id", trialClientId);
+        }
+      } else {
+        Sentry.captureMessage("Build order paid but no authorization to subscribe with", {
+          extra: { trialClientId, reference, hasAuth: Boolean(authorizationCode), hasCustomer: Boolean(customerCode) },
         });
       }
     }
