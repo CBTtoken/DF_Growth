@@ -127,6 +127,23 @@ export async function startDraft(): Promise<CvRow> {
 }
 
 /**
+ * The import confirmation's "use this" (handoff Job 2): the person has
+ * seen and corrected the parsed fields, so they land in their draft in
+ * one round trip -- resolve-or-create, then the same sanitised save path
+ * as hand-typed answers. The builder resumes at the occupation step,
+ * because the official OFO pick is the one thing a parse cannot make for
+ * them; everything else arrives pre-filled.
+ */
+export async function applyImportedCv(patch: CvPatch): Promise<{ id: string } | { error: string }> {
+  const existing = await resolveCandidateRow();
+  const row = existing ?? (await startDraft());
+
+  const result = await saveCvAnswer(row.id, { ...patch, cv_step: "primary_role" });
+  if ("error" in result) return { error: result.error };
+  return { id: row.id };
+}
+
+/**
  * Whether the current request is allowed to touch this candidate id: either
  * it's the logged-in owner, or it's the unclaimed draft named by this
  * visitor's own cookie. Re-checked on every save, not just on load --

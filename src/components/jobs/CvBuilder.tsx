@@ -100,6 +100,7 @@ function CvBuilderScreens({
   const pdfPrefix = useJobsPath("/cv");
   const signupHref = useJobsPath("/signup");
   const dashboardHref = useJobsPath("/dashboard");
+  const importHref = useJobsPath("/cv/import");
 
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +182,12 @@ function CvBuilderScreens({
             <Primary disabled={!fullName.trim() || saving} onClick={() => go(nextStep(step), { full_name: fullName })}>
               Continue
             </Primary>
+            <Link
+              href={importHref}
+              className="mt-1 text-center text-sm font-medium text-neutral-500 underline-offset-2 hover:text-neutral-900 hover:underline"
+            >
+              Already have a CV? Upload it instead
+            </Link>
           </Question>
         )}
 
