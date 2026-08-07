@@ -11,6 +11,45 @@ Every future sprint adds its entry here before reporting back, per
 
 ---
 
+## 7 August 2026 — KatisoBiz Jobs: Sprints 1 and 2, then the pre-launch rebuild
+
+**Branches:** `jobs-sprint-1-job-seekers` and `jobs-sprint-2-employers`
+(merged to main in the morning), then `jobs-prelaunch` (merged the same
+day, after `codebase-health-audit` landed first, per Dewald's merge order).
+
+**Shipped, morning (Sprints 1 and 2):** the CV builder with typed-code
+email auth and anonymous drafts, three PDF templates, capped AI wording
+checks, the ID/bank auto-strip, the anonymous indexable browse layer,
+employer accounts with Paystack tiers (R45 starter / R69 unlimited, member
+bridge for paying Growth/KatisoBiz members, two-week lapse grace), vacancy
+posting with the advance-fee auto-hold, full-record views logged per
+employer account, the jobs-cleanup cron, admin queues, and the conversion
+landing page. jobs.katisobiz.co.za went live with this merge.
+
+**Shipped, afternoon (pre-launch rebuild,
+`scripts/handoff-jobs-pre-launch-improvements.md`):** the official OFO 2021
+taxonomy (8/40/125/440/1,511 levels plus 5,946 specialisations as search
+synonyms, seeded by script from the DHET workbook, two source anomalies
+handled and logged); one shared searchable occupation picker on both
+sides; branch-scoped skills that are structurally cross-branch-impossible;
+experience level everywhere; CV import (in-memory parse, file never
+stored); Write with AI (capped, accept-before-apply); Word export; the
+seeker dashboard as the post-login landing; the apply flow and employer
+applicant pipeline with saved candidates; structured vacancies with
+draft → preview → publish and close/repost; the rebuilt home page with
+real live counters, the CSS vacancy ticker and the KJ mark; the role-aware
+header on every public page. Two entitlement bugs found and fixed by
+walking the flows: drafts spending the post allowance, and the free post
+"once ever" resetting every purge cycle (now a durable stamp).
+
+**Deliberately not done:** dropping the dead `jobs_taxonomy` table waited
+for Dewald's word (given later the same day, done in the follow-up);
+friendly names for the 40 OFO sub-major filters await his approval.
+
+**Reached main?** Yes, all of it, 7 August 2026.
+
+---
+
 ## 6 August 2026 — Codebase health audit and the three reference documents
 
 **Branch:** `codebase-health-audit` (off `origin/main`, in an isolated git

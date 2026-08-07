@@ -383,32 +383,51 @@ different, already-live module — see Naming in `HOUSE-RULES.md`.
 
 ---
 
-## Jobs
+## Jobs (KatisoBiz Jobs)
 
-**What it is:** A CV builder, candidate/employer signup, and a "find
-people" employer-facing search, per `scripts/spec-katisobiz-jobs.md` (not
-in git).
+**What it is:** A jobs board on `jobs.katisobiz.co.za` with a free CV
+builder as the core product. Job seekers build a CV by answering questions
+or by uploading an existing PDF/Word CV (parsed in memory, file never
+stored), get AI writing and wording help (capped, restate-only, accepted
+before anything saves), download it free as PDF or Word, apply to
+vacancies in one tap, and manage everything from a dashboard. Employers
+post structured vacancies chosen from the official OFO 2021 occupation
+list, preview the advert exactly as applicants see it before publishing,
+and manage applicants through a new/reviewing/shortlisted/declined pipe.
+An anonymous, indexable browse layer shows candidates without any
+identifying detail; full records show only to registered employers with
+every view logged. Pricing: paying Growth/KatisoBiz members post free and
+unlimited; non-members get one free post once ever, then R45/month
+(5 posts) or R69/month (unlimited) via Paystack, with a two-week lapse
+grace enforced by cron.
 
-**What it is not:** N/A — see status.
+**What it is not:** A match-scoring engine (alerts and written reasoning
+only, never scores), a file store (uploads are never kept), a place that
+ever charges a job seeker, or an auto-poster of people to Facebook (roles
+may be posted, people never).
 
-**Status:** **Built, but not on `main`.** As of 6 August 2026 the full
-implementation (CV builder, find-people, login/signup, a foundation
-migration) exists uncommitted on a local branch,
-`jobs-sprint-1-job-seekers`, which is *not* included in this audit's
-worktree (checked out from `origin/main`, where none of it exists). It
-briefly leaked into a `main` commit by accident on 6 Aug and was corrected
-the same day — see `CHANGELOG.md`. **This audit did not touch jobs at all**,
-per its own out-of-scope list; this entry exists only so the next session
-doesn't have to rediscover that the branch exists.
+**Status:** Live on main since 7 August 2026, including the pre-launch
+rebuild (OFO 2021 taxonomy with 1,511 occupations and 5,946 synonyms,
+CV import, Write with AI, Word export, both dashboards, applications,
+structured vacancies with preview-before-publish, rebuilt home page with
+live counters and the KJ mark).
 
-**Who for:** Unconfirmed — spec file not read as part of this audit.
+**Who for:** South African job seekers on phones (free, always), and the
+small businesses and recruiters hiring them (the only paying side).
 
-**Spec:** `scripts/spec-katisobiz-jobs.md` (not in git).
+**Spec:** `scripts/spec-katisobiz-jobs.md` and
+`scripts/handoff-jobs-pre-launch-improvements.md`; end-of-sprint reports in
+`docs/REPORT-katisobiz-jobs-sprints-1-2.md` and
+`docs/REPORT-jobs-prelaunch.md`.
 
-**Known gaps:** Whether it's finished, tested, or ready to merge is unknown
-to this audit.
+**Known gaps:** Sprint 3 backlog (job alerts both ways, Facebook posting
+via Page Poster, verified-employer badge, vouching, application fit notes
+as written reasoning). Friendly display names for the 40 OFO sub-major
+browse filters awaiting Dewald's approval. In-memory rate limits reset per
+serverless instance (documented; the durable anti-scrape control is the
+view-log watchlist on /admin/board).
 
-**Last updated:** 6 August 2026 (flagged from git history, not audited).
+**Last updated:** 7 August 2026.
 
 ---
 

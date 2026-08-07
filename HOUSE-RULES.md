@@ -146,3 +146,30 @@ Every sprint ends by updating `HOUSE-RULES.md` where a rule changed,
 the sprint made dead, with every deletion listed. Reporting anything stale,
 contradictory or unsafe found along the way. Flagging any query likely to get
 slow at scale, even if it was deliberately left alone this time.
+
+**Only one branch is open at a time (Dewald, 7 August 2026).** A sprint is
+not finished until it is merged to main and these three documents are
+updated on main. If a sprint cannot update the documents because another
+branch holds them, stop and tell Dewald rather than writing the entries
+into a report. The Jobs pre-launch sprint hit exactly this: the three
+documents lived on the unmerged `codebase-health-audit` branch, its entries
+went into a report instead, and this rule exists so that never repeats.
+
+## Jobs (added 7 August 2026)
+
+- The jobs taxonomy is the official **OFO 2021** (DHET), seeded by
+  `scripts/seed-ofo-2021.mjs` from `docs/OFO-Codes-2021.xlsx`, codes stored
+  as text with real parent FKs. Never retype or approximate it; a new OFO
+  version is a re-run of the script against the new workbook. Both sides of
+  the market pick from the identical list through the one shared picker.
+- **Uploaded CV files are parsed in memory and never stored**, on disk or in
+  storage, full stop. What survives is only the structured fields the person
+  confirmed. ID numbers and bank-like digit runs are stripped before the
+  text reaches the model and again on every output field.
+- **No job post may ask an applicant to pay for anything** (training,
+  uniform, transport, placement, admin). Any post that does is held for
+  review automatically at publish time, never published, and a held post
+  still spends the free-tier post.
+- Job seekers are never charged, never ranked and never scored. Matching
+  surfaces are plain lists (alerts), and Sprint 3's fit notes are written
+  reasoning only.
