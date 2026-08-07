@@ -124,6 +124,26 @@ export const INDUSTRY_TAXONOMY: IndustryCategory[] = [
       "General Events",
     ],
   },
+  // Added 7 August 2026. The Retreat theme has existed since the Falling
+  // Feather Inn build, and nothing in this list led to it: a guest house
+  // signing up had to pick "Other / Not Listed" and type its own trade,
+  // which also cost it a Board category page and a specific schema type.
+  //
+  // Appended rather than slotted in alphabetically on purpose. The WhatsApp
+  // signup flow (lib/whatsapp/conversation.ts) presents this list numbered
+  // and resolves the member's reply by index, so inserting anywhere above
+  // here would silently change what "7" means to someone halfway through a
+  // conversation.
+  {
+    name: "Accommodation & Stays",
+    subcategories: [
+      "Guest Houses & B&Bs",
+      "Lodges & Country Stays",
+      "Self-Catering & Holiday Homes",
+      "Backpackers & Hostels",
+      "General Accommodation",
+    ],
+  },
 ];
 
 export const ALL_INDUSTRY_SUBCATEGORIES = INDUSTRY_TAXONOMY.flatMap((c) => c.subcategories);

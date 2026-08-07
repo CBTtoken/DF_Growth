@@ -114,6 +114,15 @@ const BY_SUBCATEGORY: Record<string, TemplateId> = {
   "Event Photography & Video": "marquee",
   "Equipment Rental": "marquee",
   "General Events": "marquee",
+
+  // Accommodation & Stays — Retreat throughout. This is the category the
+  // theme was built for, and until 7 August 2026 nothing in the industry
+  // list reached it.
+  "Guest Houses & B&Bs": "retreat",
+  "Lodges & Country Stays": "retreat",
+  "Self-Catering & Holiday Homes": "retreat",
+  "Backpackers & Hostels": "retreat",
+  "General Accommodation": "retreat",
 };
 
 // Second pass for a member who typed their own industry under "Other /
@@ -158,6 +167,7 @@ const BY_CATEGORY: Record<string, TemplateId> = {
   "Education & Lessons": "programme",
   "Automotive & Transport": "fieldwork",
   "Events & Entertainment": "marquee",
+  "Accommodation & Stays": "retreat",
 };
 
 // Returns null when nothing matches confidently, which the picker reads as

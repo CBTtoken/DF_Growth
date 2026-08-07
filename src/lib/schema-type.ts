@@ -19,6 +19,11 @@ const CATEGORY_TO_SCHEMA_TYPE: Record<string, string> = {
   "Education & Lessons": "EducationalOrganization",
   "Automotive & Transport": "AutomotiveBusiness",
   "Events & Entertainment": "EntertainmentBusiness",
+  // Schema.org's LodgingBusiness, the parent of BedAndBreakfast, Hotel and
+  // Resort. Staying at the parent is deliberate: this category covers all
+  // of them and a guest house typed as a Hotel would be a wrong specific
+  // type, which is worse than an honest general one.
+  "Accommodation & Stays": "LodgingBusiness",
 };
 
 export function schemaTypeForIndustry(industry: string | null): string {
