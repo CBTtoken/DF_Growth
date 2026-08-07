@@ -9,6 +9,7 @@ import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { verifyEmailAddress } from "@/lib/email/verify-address";
 import { getDraftCandidateId, clearDraftCandidateId } from "@/lib/jobs/draft-session";
+import { getApplyIntent } from "@/lib/jobs/apply-intent";
 import { jobsPath } from "@/lib/jobs/host";
 
 // Candidate signup, in two steps -- the same shape as KatisoBiz's own
@@ -150,9 +151,15 @@ export async function confirmJobsSignup(_prev: JobsSignupState, formData: FormDa
     await clearDraftCandidateId();
   }
 
-  // Flow completion lands on the dashboard, never the home page or a
-  // mid-flow screen (handoff Job 8) -- the dashboard shows the saved CV
-  // with its completeness bar as the confirmation of what just happened.
+  // Somebody who started at a job advert goes back to that advert: they
+  // came to apply for one specific thing, and the walkthrough found that
+  // this was exactly where they were being lost. Everyone else lands on
+  // the dashboard, never the home page or a mid-flow screen (handoff Job
+  // 8) -- the dashboard shows the saved CV with its completeness bar as
+  // the confirmation of what just happened.
+  const intent = await getApplyIntent();
+  if (intent) redirect(await jobsPath(`/vacancies/${intent}`));
+
   redirect(await jobsPath("/dashboard"));
 }
 

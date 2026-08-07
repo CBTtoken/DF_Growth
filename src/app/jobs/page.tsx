@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { JobsLanding, type LandingVacancy } from "@/components/jobs/JobsLanding";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
@@ -52,24 +51,25 @@ export default async function JobsHomePage() {
     employer: (v.jobs_employers as unknown as { business_name: string } | null)?.business_name ?? "",
   }));
 
-  const [cv, cvImport, vacancies, employers, login, vacancyPrefix] = await Promise.all([
+  const [cv, cvImport, vacancies, employers, login, vacancyPrefix, howItWorks, faq] = await Promise.all([
     jobsPath("/cv"),
     jobsPath("/cv/import"),
     jobsPath("/vacancies"),
     jobsPath("/employers"),
     jobsPath("/login"),
     jobsPath("/vacancies"),
+    jobsPath("/how-it-works"),
+    jobsPath("/faq"),
   ]);
 
   return (
     <>
-      <JobsHeader />
       <JobsLanding
         data={{
           seekerCount: seekerRes.count ?? 0,
           vacancyCount: vacancyRes.count ?? 0,
           liveVacancies,
-          hrefs: { cv, cvImport, vacancies, employers, login, vacancyPrefix },
+          hrefs: { cv, cvImport, vacancies, employers, login, vacancyPrefix, howItWorks, faq },
         }}
       />
       <JobsFooter />

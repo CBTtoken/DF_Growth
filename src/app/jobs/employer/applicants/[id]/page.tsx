@@ -36,7 +36,7 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
   const admin = createAdminClient();
   const { data: application } = await admin
     .from("jobs_applications")
-    .select("id, candidate_id, vacancy_title, status, created_at")
+    .select("id, candidate_id, vacancy_title, status, created_at, cover_message")
     .eq("id", id)
     .eq("employer_id", employer.id)
     .maybeSingle();
@@ -113,6 +113,18 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
         </p>
         {alsoOpenTo.length > 0 && (
           <p className="mt-1 text-sm text-neutral-500">Also open to: {alsoOpenTo.join(", ")}</p>
+        )}
+
+        {/* The applicant's own words, above the CV. Somebody who took the
+            trouble to write something wrote it to be read first, and it is
+            usually the fastest read on the page. */}
+        {application.cover_message && (
+          <div className="mt-4 rounded-xl border border-neutral-100 bg-accent-light p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              What {c.full_name?.trim().split(" ")[0] ?? "they"} wrote
+            </p>
+            <p className="mt-1 whitespace-pre-line text-sm text-neutral-800">{application.cover_message}</p>
+          </div>
         )}
 
         <div className="mt-4 rounded-xl border border-neutral-900 bg-white p-4 shadow-sm">
