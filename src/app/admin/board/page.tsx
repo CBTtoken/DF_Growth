@@ -5,7 +5,15 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdminEmail } from "@/lib/auth/require-admin";
 import { BrandHeader } from "@/components/brand/BrandHeader";
 import { StatusPill } from "@/components/ui/StatusPill";
-import { restoreComment, removeComment, hidePost, dismissPostReports, restoreHeldPost } from "@/app/admin/board/actions";
+import {
+  restoreComment,
+  removeComment,
+  hidePost,
+  dismissPostReports,
+  restoreHeldPost,
+  dismissJobsReport,
+  unlistJobsCandidate,
+} from "@/app/admin/board/actions";
 import { blockFromForm, unblockIdentity } from "@/app/admin/board/block-actions";
 import { toggleRuleFromForm } from "@/app/admin/board/rule-actions";
 
@@ -53,7 +61,7 @@ export default async function AdminBoardPage() {
 
   const admin = createAdminClient();
 
-  const [{ data: heldComments }, { data: heldPosts }, { data: postReports }, { data: log }, { data: rules }] = await Promise.all([
+  const [{ data: heldComments }, { data: heldPosts }, { data: postReports }, { data: log }, { data: rules }, { data: jobsReports }] = await Promise.all([
     admin
       .from("board_comments")
       .select(
@@ -78,6 +86,12 @@ export default async function AdminBoardPage() {
       .order("created_at", { ascending: false })
       .limit(40),
     admin.from("board_moderation_rules").select("rule_key, category, label, description, enabled").order("category").order("rule_key"),
+    admin
+      .from("jobs_reports")
+      .select("id, target_id, reason, created_at")
+      .eq("target_type", "candidate")
+      .eq("status", "open")
+      .order("created_at", { ascending: true }),
   ]);
 
   const held = (heldComments ?? []) as unknown as HeldComment[];
@@ -94,6 +108,19 @@ export default async function AdminBoardPage() {
     : { data: [] as { id: string; slug: string; title: string; status: string; growth_client_id: string | null; identity_id: string | null }[] };
   const postById = new Map((reportedPosts ?? []).map((p) => [p.id, p]));
 
+  // Same one-query-not-N pattern as the post reports above. Full name is
+  // shown here even though the public browse layer never carries one --
+  // this is the admin's own gated page, and investigating a report
+  // properly needs to know who the listing actually is.
+  const jobsReportedIds = [...new Set((jobsReports ?? []).map((r) => r.target_id))];
+  const { data: reportedCandidates } = jobsReportedIds.length
+    ? await admin
+        .from("jobs_candidates")
+        .select("id, full_name, suburb, years_experience, listed, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)")
+        .in("id", jobsReportedIds)
+    : { data: [] as { id: string; full_name: string | null; suburb: string | null; years_experience: number | null; listed: boolean; jobs_taxonomy: { label: string } | null }[] };
+  const candidateById = new Map((reportedCandidates ?? []).map((c) => [c.id, c]));
+
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -106,7 +133,9 @@ export default async function AdminBoardPage() {
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-ink">The Board</h1>
           </div>
-          <StatusPill>{held.length + heldPostRows.length + (postReports?.length ?? 0)} waiting</StatusPill>
+          <StatusPill>
+            {held.length + heldPostRows.length + (postReports?.length ?? 0) + (jobsReports?.length ?? 0)} waiting
+          </StatusPill>
         </div>
 
         <section className="flex flex-col gap-3">
@@ -318,6 +347,68 @@ export default async function AdminBoardPage() {
                         className="self-center text-xs font-semibold text-gray-400 underline-offset-2 hover:text-brand hover:underline"
                       >
                         See their history
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </section>
+
+        {/* KatisoBiz Jobs, Sprint 1: a new, parallel queue rather than a
+            widened Board section -- jobs_reports is its own table (see the
+            migration's own reasoning), so this is the one extra section
+            this sprint adds to the same admin page rather than a second
+            admin screen to remember to check. */}
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-bold text-ink">Reported jobs listings</h2>
+          {(jobsReports?.length ?? 0) === 0 ? (
+            <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+              Nothing reported.
+            </p>
+          ) : (
+            (jobsReports ?? []).map((report) => {
+              const candidate = candidateById.get(report.target_id);
+              const roleLabel = (candidate?.jobs_taxonomy as unknown as { label: string } | null)?.label;
+              return (
+                <div key={report.id} className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-ink">
+                    {candidate ? `${candidate.full_name ?? "Unnamed"}, ${roleLabel ?? "no role set"}` : "Listing no longer available"}
+                  </p>
+                  {candidate && (
+                    <p className="text-xs text-gray-500">
+                      {[candidate.suburb, candidate.years_experience != null ? `${candidate.years_experience} years` : null]
+                        .filter(Boolean)
+                        .join(", ")}
+                      {!candidate.listed && " · already unlisted"}
+                    </p>
+                  )}
+                  {report.reason && <p className="text-sm text-gray-600">Reason given: {report.reason}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    <form action={dismissJobsReport.bind(null, report.id, report.target_id)}>
+                      <button
+                        type="submit"
+                        className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                      >
+                        Leave it up
+                      </button>
+                    </form>
+                    <form action={unlistJobsCandidate.bind(null, report.id, report.target_id)}>
+                      <button
+                        type="submit"
+                        className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
+                      >
+                        Unlist it
+                      </button>
+                    </form>
+                    {candidate && (
+                      <Link
+                        href={`https://jobs.katisobiz.co.za/find-people/${candidate.id}`}
+                        target="_blank"
+                        className="self-center text-xs font-semibold text-gray-400 underline-offset-2 hover:text-brand hover:underline"
+                      >
+                        See it
                       </Link>
                     )}
                   </div>
