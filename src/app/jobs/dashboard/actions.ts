@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { sanitizeFreeText } from "@/lib/jobs/cv-conversation";
+import { getDraftCandidateId, clearDraftCandidateId } from "@/lib/jobs/draft-session";
 
 async function myCandidateId(): Promise<string | null> {
   const supabase = await createServerClient();
@@ -84,6 +85,96 @@ export async function updateMyDetails(formData: FormData): Promise<void> {
     })
     .eq("id", candidateId);
   if (error) console.error("Failed to update candidate details", error);
+  revalidatePath("/jobs/dashboard");
+}
+
+/**
+ * Taking the CV built before logging in and making it the real one.
+ *
+ * Only reachable when the person has both: a saved CV on their account and
+ * an unclaimed draft behind this browser's cookie. The dashboard shows
+ * both and they choose. We never choose for them, because the wrong guess
+ * destroys work either way.
+ *
+ * The old CV is soft-deleted rather than hard-deleted, so a mistake here
+ * is recoverable from the database rather than gone for good. Applications
+ * already sent are untouched: they point at the old candidate row, and the
+ * employer keeps seeing the CV as it was when it was sent, which is the
+ * honest record of what they were offered.
+ */
+export async function useDraftInstead(): Promise<void> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const draftId = await getDraftCandidateId();
+  if (!draftId) return;
+
+  const admin = createAdminClient();
+
+  // Re-check it is still unclaimed before doing anything irreversible.
+  const { data: draft } = await admin
+    .from("jobs_candidates")
+    .select("id")
+    .eq("id", draftId)
+    .is("owner_user_id", null)
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (!draft) {
+    await clearDraftCandidateId();
+    return;
+  }
+
+  const { data: owned } = await admin
+    .from("jobs_candidates")
+    .select("id")
+    .eq("owner_user_id", user.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  // The old CV must release its ownership before the new one can take it:
+  // jobs_candidates.owner_user_id is UNIQUE, one CV per login. Soft
+  // deleting it alone leaves the id occupied, so the claim below fails and
+  // the person is left owning nothing. Nulling it here is what frees the
+  // slot; the row itself survives, so a mistake is recoverable from the
+  // database rather than gone.
+  if (owned) {
+    await admin
+      .from("jobs_candidates")
+      .update({ deleted_at: new Date().toISOString(), listed: false, owner_user_id: null })
+      .eq("id", owned.id);
+  }
+
+  const { data: adopted, error } = await admin
+    .from("jobs_candidates")
+    .update({ owner_user_id: user.id, updated_at: new Date().toISOString() })
+    .eq("id", draftId)
+    .is("owner_user_id", null)
+    .select("id")
+    .maybeSingle();
+
+  // Put the old CV back rather than leave them with none. This should not
+  // happen, but "should not" is how the first version lost people's CVs.
+  if (error || !adopted) {
+    console.error("Failed to adopt draft CV, restoring the previous one", error);
+    if (owned) {
+      await admin
+        .from("jobs_candidates")
+        .update({ deleted_at: null, owner_user_id: user.id })
+        .eq("id", owned.id);
+    }
+    return;
+  }
+
+  await clearDraftCandidateId();
+  revalidatePath("/jobs/dashboard");
+}
+
+/** Keep the saved CV and let the unfinished one go. Only forgets the cookie. */
+export async function discardDraft(): Promise<void> {
+  await clearDraftCandidateId();
   revalidatePath("/jobs/dashboard");
 }
 

@@ -19,7 +19,7 @@ const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const VACANCY_COLUMNS =
-  "id, title, description, suburb, province, employment_type, pay_text, salary_public, status, expires_at, created_at, experience_level, starts_text, closing_date, duties, must_have, nice_to_have, qualifications, selection_process, jobs_ofo_occupations(title), jobs_employers!inner(business_name, phone)";
+  "id, title, description, suburb, province, employment_type, pay_text, salary_public, status, expires_at, created_at, experience_level, starts_text, closing_date, duties, must_have, nice_to_have, qualifications, selection_process, jobs_ofo_occupations(title), jobs_employers!inner(business_name)";
 
 // An expired vacancy's permalink stays alive (the Board's own rule: the
 // indexed page survives) but says plainly that it is no longer open, and
@@ -76,34 +76,28 @@ async function resolveApplyState(): Promise<ApplyState> {
   return { kind: "ready", firstName: candidate.full_name.trim().split(" ")[0] };
 }
 
+// Dewald, 9 August: "We should not have the employer's contact details
+// visible to the seeker or public, they can apply only."
+//
+// The phone number is no longer selected from the database on this page at
+// all, rather than fetched and left unrendered: a column that never
+// arrives cannot be leaked by a later edit. Contact now happens through
+// the application thread, which is the same reason the CV is not attached
+// to the alert email: both sides get a record, and neither side's details
+// are handed to a stranger who has not applied.
 function ApplyBox({
   vacancyId,
   employerName,
-  employerPhone,
   state,
   cvHref,
   loginHref,
 }: {
   vacancyId: string;
   employerName: string;
-  employerPhone: string | null;
   state: ApplyState;
   cvHref: string;
   loginHref: string;
 }) {
-  const contactLine = employerPhone ? (
-    <p className="mt-3 text-sm text-neutral-600">
-      Or contact {employerName} on{" "}
-      <a
-        href={`tel:${employerPhone.replace(/\s/g, "")}`}
-        className="font-semibold text-neutral-900 underline-offset-2 hover:underline"
-      >
-        {employerPhone}
-      </a>{" "}
-      and mention you saw the job on KatisoBiz Jobs.
-    </p>
-  ) : null;
-
   return (
     <div className="mt-8 rounded-xl border border-neutral-100 bg-neutral-50 p-4">
       <p className="text-sm font-bold text-neutral-900">How to apply</p>
@@ -185,7 +179,9 @@ function ApplyBox({
         </>
       )}
 
-      {contactLine}
+      <p className="mt-3 text-xs text-neutral-500">
+        {employerName} will reply through KatisoBiz Jobs, so you both have a record of what was said.
+      </p>
     </div>
   );
 }
@@ -195,7 +191,7 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
   const v = await getVacancy(id);
   if (!v) return notFound();
 
-  const employer = v.jobs_employers as unknown as { business_name: string; phone: string | null } | null;
+  const employer = v.jobs_employers as unknown as { business_name: string } | null;
   const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
   const expired = vacancyIsExpired(v.expires_at);
   const [backHref, cvHref, loginHref] = await Promise.all([
@@ -252,7 +248,6 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
           <ApplyBox
             vacancyId={id}
             employerName={employer.business_name}
-            employerPhone={employer.phone}
             state={applyState}
             cvHref={cvHref}
             loginHref={loginHref}

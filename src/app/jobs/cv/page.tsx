@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveCandidateRow } from "@/app/jobs/cv/actions";
 import { CvBuilder } from "@/components/jobs/CvBuilder";
 import { jobsCanonical } from "@/lib/jobs/host";
-import { getApplyIntent } from "@/lib/jobs/apply-intent";
+import { getLiveApplyIntent } from "@/lib/jobs/apply-intent";
 import type { OccupationPick } from "@/lib/jobs/cv-conversation";
 
 export const metadata: Metadata = {
@@ -26,7 +26,7 @@ export default async function CvBuilderPage({
   // offer the thing they actually came for, by name, rather than a
   // dashboard link. Looked up here rather than in the builder so the
   // client never has to know the vacancy exists.
-  const intentId = await getApplyIntent();
+  const intentId = await getLiveApplyIntent();
   let applyIntent: { id: string; title: string } | null = null;
   if (intentId) {
     const { data: vacancy } = await createAdminClient()

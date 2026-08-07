@@ -6,6 +6,7 @@ import { getMyJobsEmployer } from "@/lib/jobs/employer";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { jobsPath } from "@/lib/jobs/host";
 import { setApplicationStatus } from "@/app/jobs/employer/applicants/actions";
+import { unreadByApplication } from "@/lib/jobs/messages";
 
 export const metadata: Metadata = {
   title: { absolute: "Applicants | KatisoBiz Jobs" },
@@ -17,6 +18,7 @@ const STATUS_LABELS: Record<string, string> = {
   reviewing: "Reviewing",
   shortlisted: "Shortlisted",
   declined: "Declined",
+  withdrawn: "Pulled out",
 };
 
 // Every application against this employer, grouped by vacancy, with the
@@ -50,6 +52,13 @@ export default async function ApplicantsPage({
     jobsPath("/employer"),
     jobsPath("/employer/applicants"),
   ]);
+
+  // Which applicants are waiting on a reply, so the list points at the ones
+  // that need something rather than making the employer open every card.
+  const unread = await unreadByApplication(
+    (applications ?? []).map((a) => a.id),
+    "employer",
+  );
 
   // Group by vacancy title, newest vacancy first (insertion order of the
   // already-sorted list).
@@ -129,6 +138,19 @@ export default async function ApplicantsPage({
                             &ldquo;{a.cover_message}&rdquo;
                           </p>
                         )}
+                        {/* The name alone was the only way in and it did not
+                            read as one. Dewald: "I can see I have 1 applicant
+                            but I can't read the CV or download it?" This is
+                            the primary action on the card: everything else
+                            here is triage you do after reading it. */}
+                        <Link
+                          href={`${applicantPrefix}/${a.id}`}
+                          className="mt-3 inline-flex items-center justify-center rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
+                        >
+                          Open CV and reply
+                          {(unread.get(a.id) ?? 0) > 0 ? ` (${unread.get(a.id)} new)` : ""}
+                        </Link>
+
                         <form action={setApplicationStatus} className="mt-3 flex flex-wrap gap-2">
                           <input type="hidden" name="applicationId" value={a.id} />
                           {(["reviewing", "shortlisted", "declined"] as const).map((s) => (

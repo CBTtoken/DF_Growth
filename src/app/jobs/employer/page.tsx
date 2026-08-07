@@ -8,6 +8,7 @@ import { publishVacancy, closeVacancy } from "@/app/jobs/employer/post/actions";
 import { vacancyIsExpired, vacancyNearingExpiry } from "@/lib/jobs/entitlements";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { jobsPath } from "@/lib/jobs/host";
+import { unreadByApplication } from "@/lib/jobs/messages";
 
 export const metadata: Metadata = {
   title: { absolute: "My jobs | KatisoBiz Jobs" },
@@ -51,6 +52,13 @@ export default async function EmployerDashboardPage() {
     if (a.status === "new") newApplications += 1;
   }
 
+  // Applicants who have written and had no answer.
+  const unread = await unreadByApplication(
+    (applications ?? []).map((a) => a.id),
+    "employer",
+  );
+  const unreadMessages = [...unread.values()].reduce((sum, n) => sum + n, 0);
+
   const [postHref, upgradeHref, browseHref, applicantsHref, findPeoplePrefix] = await Promise.all([
     jobsPath("/employer/post"),
     jobsPath("/employer/upgrade"),
@@ -78,37 +86,73 @@ export default async function EmployerDashboardPage() {
           </div>
         )}
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        {/* Somebody waiting on you, first, before the buttons. An employer
+            who leaves an applicant unanswered for a week loses them to
+            whoever answered, and a count buried on a secondary button was
+            not telling them that. */}
+        {(newApplications > 0 || unreadMessages > 0) && (
+          <Link
+            href={applicantsHref}
+            className="mt-6 block rounded-2xl border border-accent bg-accent-light p-5 transition hover:border-accent-hover"
+          >
+            <p className="text-sm font-extrabold uppercase tracking-wide text-neutral-ink">
+              Waiting for you
+            </p>
+            <p className="mt-2 text-lg font-bold text-neutral-ink">
+              {[
+                newApplications > 0
+                  ? `${newApplications} new ${newApplications === 1 ? "applicant" : "applicants"}`
+                  : null,
+                unreadMessages > 0
+                  ? `${unreadMessages} unanswered ${unreadMessages === 1 ? "message" : "messages"}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" and ")}
+            </p>
+            <p className="mt-1 text-sm text-neutral-700">
+              Open them, read their CVs, and reply. Tap here.
+            </p>
+          </Link>
+        )}
+
+        {/* One primary action. Posting is what an employer came to do, and
+            it is the only thing styled as the main action. */}
+        <div className="mt-6">
           {e.canPostNow ? (
             <Link
               href={postHref}
-              className="inline-flex flex-1 items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
+              className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
             >
               Post a job
             </Link>
           ) : (
             <Link
               href={upgradeHref}
-              className="inline-flex flex-1 items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
+              className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
             >
               {e.lapsed ? "Restart my plan" : "Get more posts"}
             </Link>
           )}
-          <Link
-            href={applicantsHref}
-            className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200 px-6 py-3.5 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
-          >
-            Applicants{newApplications > 0 ? ` (${newApplications} new)` : ""}
-          </Link>
-          <Link
-            href={browseHref}
-            className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200 px-6 py-3.5 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
-          >
-            Browse candidates
-          </Link>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <Link
+              href={applicantsHref}
+              className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+            >
+              Applicants{newApplications > 0 ? ` (${newApplications} new)` : ""}
+            </Link>
+            <Link
+              href={browseHref}
+              className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+            >
+              Find people myself
+            </Link>
+          </div>
         </div>
 
-        <h2 className="mt-10 text-sm font-bold text-neutral-900">Your posts</h2>
+        <h2 className="mt-10 text-sm font-extrabold uppercase tracking-wide text-neutral-500">
+          Your posts
+        </h2>
         {(vacancies ?? []).length === 0 ? (
           <p className="mt-3 rounded-xl border border-dashed border-neutral-200 p-8 text-center text-sm text-neutral-500">
             Nothing posted yet. Your vacancies will appear here, with their expiry dates and a renew button.
@@ -227,7 +271,8 @@ export default async function EmployerDashboardPage() {
                 className="rounded-xl border border-neutral-200 px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
               />
               <span className="font-normal text-neutral-400">
-                Shown publicly on your adverts so a candidate can call you. Leave it blank to keep it private.
+                For us to reach you about your account. It is never shown on your adverts and applicants
+                never see it: they apply and message you through KatisoBiz Jobs.
               </span>
             </label>
             <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
@@ -254,7 +299,7 @@ export default async function EmployerDashboardPage() {
 
         {(savedRows ?? []).length > 0 && (
           <>
-            <h2 className="mt-10 text-sm font-bold text-neutral-900">Saved candidates</h2>
+            <h2 className="mt-10 text-sm font-extrabold uppercase tracking-wide text-neutral-500">Saved candidates</h2>
             <ul className="mt-3 flex flex-col gap-2">
               {(savedRows ?? []).map((row) => {
                 const c = row.jobs_candidates as unknown as {

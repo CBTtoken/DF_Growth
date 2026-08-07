@@ -32,6 +32,50 @@ export async function getApplyIntent(): Promise<string | null> {
   return value && /^[0-9a-f-]{36}$/.test(value) ? value : null;
 }
 
+/**
+ * The parked vacancy, but only if it is still a real job somebody can
+ * apply for.
+ *
+ * Found on 9 August 2026 by walking the login with an old cookie still
+ * set: the job had been taken down in the meantime, and logging in sent
+ * the person to a 404. That is a worse dead end than the one the intent
+ * cookie was built to fix, and it lands on somebody at the exact moment
+ * they have just proved who they are.
+ *
+ * Callers redirect to the dashboard when this returns null, which is the
+ * honest outcome: the job is gone, and the dashboard is where the rest of
+ * their applications are.
+ *
+ * Read-only on purpose. It is called from Server Components (the CV
+ * builder page) as well as Server Actions, and a Server Component may not
+ * write cookies: Next throws "Cookies can only be modified in a Server
+ * Action or Route Handler" and the whole page becomes an error screen.
+ * The first version of this cleared the stale cookie here and took the CV
+ * builder down with it. Nothing needs clearing anyway: the cookie lasts
+ * two hours, applyToVacancy clears it on success, and a stale value is
+ * simply ignored every time it is read.
+ */
+export async function getLiveApplyIntent(): Promise<string | null> {
+  const id = await getApplyIntent();
+  if (!id) return null;
+
+  const { createAdminClient } = await import("@/lib/supabase/admin");
+  const { data } = await createAdminClient()
+    .from("jobs_vacancies")
+    .select("id, expires_at")
+    .eq("id", id)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (!data) return null;
+
+  // An expired post is still readable but can no longer be applied to, so
+  // it is not somewhere to send somebody who just logged in to apply.
+  if (data.expires_at && new Date(data.expires_at).getTime() < Date.now()) return null;
+
+  return data.id;
+}
+
 export async function setApplyIntent(vacancyId: string): Promise<void> {
   const jar = await cookies();
   jar.set(COOKIE_NAME, vacancyId, {

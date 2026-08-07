@@ -159,17 +159,25 @@ export function VacancyComposer({ initialValues }: { initialValues?: VacancyInit
         {state?.error?.suburb?.[0] && <span className={err}>{state.error.suburb[0]}</span>}
       </label>
 
-      <div className="flex flex-col gap-2">
-        <p className="text-sm font-semibold text-neutral-700">Province</p>
-        <div className="flex flex-wrap gap-2">
+      {/* A select, not nine chips: same change as the CV builder, same
+          reason. Nine fixed options is what a dropdown is for, and on a
+          phone the chips wrapped to four rows. */}
+      <label className="flex flex-col gap-1.5 text-sm font-semibold text-neutral-700">
+        Province
+        <select
+          value={province}
+          onChange={(e) => setProvince(e.target.value)}
+          className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+        >
+          <option value="">Choose a province</option>
           {PROVINCE_OPTIONS.map((p) => (
-            <button key={p} type="button" onClick={() => setProvince(p)} className={chip(province === p)}>
+            <option key={p} value={p}>
               {p}
-            </button>
+            </option>
           ))}
-        </div>
+        </select>
         {state?.error?.province?.[0] && <span className={err}>{state.error.province[0]}</span>}
-      </div>
+      </label>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <label className={label}>

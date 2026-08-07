@@ -9,7 +9,7 @@ import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { verifyEmailAddress } from "@/lib/email/verify-address";
 import { getDraftCandidateId, clearDraftCandidateId } from "@/lib/jobs/draft-session";
-import { getApplyIntent } from "@/lib/jobs/apply-intent";
+import { getLiveApplyIntent } from "@/lib/jobs/apply-intent";
 import { jobsPath } from "@/lib/jobs/host";
 
 // Candidate signup, in two steps -- the same shape as KatisoBiz's own
@@ -157,7 +157,7 @@ export async function confirmJobsSignup(_prev: JobsSignupState, formData: FormDa
   // the dashboard, never the home page or a mid-flow screen (handoff Job
   // 8) -- the dashboard shows the saved CV with its completeness bar as
   // the confirmation of what just happened.
-  const intent = await getApplyIntent();
+  const intent = await getLiveApplyIntent();
   if (intent) redirect(await jobsPath(`/vacancies/${intent}`));
 
   redirect(await jobsPath("/dashboard"));

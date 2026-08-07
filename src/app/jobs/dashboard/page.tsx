@@ -11,7 +11,15 @@ import {
   experienceLevelLabel,
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
-import { updateAvailability, toggleListed, updateMyDetails } from "@/app/jobs/dashboard/actions";
+import {
+  updateAvailability,
+  toggleListed,
+  updateMyDetails,
+  useDraftInstead,
+  discardDraft,
+} from "@/app/jobs/dashboard/actions";
+import { pendingDraftForUser } from "@/lib/jobs/claim-draft";
+import { unreadByApplication } from "@/lib/jobs/messages";
 
 export const metadata: Metadata = {
   title: { absolute: "My dashboard | KatisoBiz Jobs" },
@@ -23,6 +31,7 @@ const APPLICATION_STATUS_LABELS: Record<string, string> = {
   reviewing: "Being reviewed",
   shortlisted: "Shortlisted",
   declined: "Not successful this time",
+  withdrawn: "You pulled out",
 };
 
 // The landing place after login and after finishing the CV (handoff Job 5:
@@ -124,7 +133,7 @@ export default async function SeekerDashboardPage({
       }));
   }
 
-  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix, importHref, faqHref] = await Promise.all([
+  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix, importHref, faqHref, applicationPrefix] = await Promise.all([
     jobsPath("/cv"),
     jobsPath(`/cv/${candidate.id}/pdf`),
     jobsPath(`/cv/${candidate.id}/docx`),
@@ -132,8 +141,18 @@ export default async function SeekerDashboardPage({
     jobsPath("/vacancies"),
     jobsPath("/cv/import"),
     jobsPath("/faq"),
+    jobsPath("/dashboard/applications"),
   ]);
 
+  // Unread messages per application, so the dashboard can point straight at
+  // the one that needs an answer.
+  const unread_ = await unreadByApplication(
+    (applications ?? []).map((a) => a.id),
+    "candidate",
+  );
+  const totalUnread = [...unread_.values()].reduce((sum, n) => sum + n, 0);
+
+  const pendingDraft = await pendingDraftForUser(user.id);
   const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === candidate.availability)?.label;
   const card = "rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm";
 
@@ -146,6 +165,43 @@ export default async function SeekerDashboardPage({
           </p>
         )}
 
+        {/* The CV they built before logging in, when they already had one.
+            Never resolved silently: whichever way we guessed, somebody
+            loses work they did on purpose. */}
+        {pendingDraft && (
+          <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-4">
+            <p className="text-sm font-bold text-amber-900">
+              You have another CV on this phone that is not saved to your account
+            </p>
+            <p className="mt-1 text-sm text-amber-800">
+              It was built or uploaded before you logged in
+              {pendingDraft.occupationTitle ? `, as a ${pendingDraft.occupationTitle.toLowerCase()}` : ""}
+              {pendingDraft.jobCount > 0
+                ? `, with ${pendingDraft.jobCount} ${pendingDraft.jobCount === 1 ? "job" : "jobs"} of work history`
+                : ""}
+              . Your account currently uses the CV below. Which one do you want to keep?
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <form action={useDraftInstead}>
+                <button
+                  type="submit"
+                  className="rounded-full bg-amber-900 px-5 py-2.5 text-sm font-semibold text-white"
+                >
+                  Use the other one
+                </button>
+              </form>
+              <form action={discardDraft}>
+                <button
+                  type="submit"
+                  className="rounded-full border border-amber-300 px-5 py-2.5 text-sm font-semibold text-amber-900"
+                >
+                  Keep this one
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
         <h1 className="text-2xl font-bold text-neutral-900">
           {candidate.full_name ? `Good day, ${candidate.full_name.trim().split(" ")[0]}` : "My dashboard"}
         </h1>
@@ -154,54 +210,136 @@ export default async function SeekerDashboardPage({
           {experienceLevelLabel(candidate.experience_level) ? ` · ${experienceLevelLabel(candidate.experience_level)}` : ""}
         </p>
 
-        <div className="mt-6 flex flex-col gap-4">
-          {/* The CV itself */}
+        {/* What needs doing, before anything else on the screen.
+            Dewald: "the overall dashboards can be much better structured
+            of what is important to each one, easier to find and navigate."
+            Six equally weighted cards made everything equally urgent,
+            which means nothing was. This strip appears only when there is
+            genuinely something to do, and it is the only thing above the
+            fold when there is. */}
+        {(totalUnread > 0 || missing.length > 0 || !candidate.listed) && (
+          <div className="mt-6 rounded-2xl border border-accent bg-accent-light p-5">
+            <p className="text-sm font-extrabold uppercase tracking-wide text-neutral-ink">
+              Worth doing now
+            </p>
+            <ul className="mt-3 flex flex-col gap-3">
+              {totalUnread > 0 && (
+                <li className="text-sm text-neutral-800">
+                  <strong>
+                    {totalUnread} new {totalUnread === 1 ? "message" : "messages"} from an employer.
+                  </strong>{" "}
+                  Answering quickly is the single thing most likely to get you the job. See it under
+                  Jobs I applied for below.
+                </li>
+              )}
+              {missing.length > 0 && (
+                <li className="text-sm text-neutral-800">
+                  <strong>Your CV is {completeness}% done.</strong> Still missing: {missing.join(", ")}.{" "}
+                  <Link href={cvHref} className="font-semibold underline underline-offset-2">
+                    Finish it
+                  </Link>
+                </li>
+              )}
+              {!candidate.listed && (
+                <li className="text-sm text-neutral-800">
+                  <strong>Employers cannot find you yet.</strong> Switching on being found is how work
+                  comes to you instead of you chasing it. It is under Being found below.
+                </li>
+              )}
+            </ul>
+          </div>
+        )}
+
+        <h2 className="mt-8 text-sm font-extrabold uppercase tracking-wide text-neutral-500">
+          Finding work
+        </h2>
+
+        <div className="mt-3 flex flex-col gap-4">
+          {/* Applications. Each one is now a screen of its own: a status
+              word alone told somebody nothing about what to do next, and
+              there was no way to say anything or to pull out. */}
           <div className={card}>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-neutral-900">My CV</p>
-              <span className="text-xs font-semibold text-neutral-500">{completeness}% complete</span>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100">
-              <div className="h-full rounded-full bg-neutral-900" style={{ width: `${completeness}%` }} />
-            </div>
-            {missing.length > 0 && (
-              <p className="mt-2 text-xs text-neutral-500">Still missing: {missing.join(", ")}</p>
+            <p className="text-sm font-bold text-neutral-900">
+              Jobs I applied for
+              {totalUnread > 0 ? (
+                <span className="ml-2 rounded-full bg-accent px-2.5 py-0.5 text-xs font-bold text-white">
+                  {totalUnread} new {totalUnread === 1 ? "message" : "messages"}
+                </span>
+              ) : null}
+            </p>
+            {(applications ?? []).length === 0 ? (
+              <p className="mt-1 text-sm text-neutral-600">
+                Nothing yet.{" "}
+                <Link href={vacanciesHref} className="font-semibold text-neutral-900 hover:underline">
+                  Browse jobs near you
+                </Link>{" "}
+                and apply with one tap.
+              </p>
+            ) : (
+              <ul className="mt-2 flex flex-col gap-2">
+                {(applications ?? []).map((a) => {
+                  const unread = unread_.get(a.id) ?? 0;
+                  return (
+                    <li key={a.id}>
+                      <Link
+                        href={`${applicationPrefix}/${a.id}`}
+                        className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 px-3 py-2.5 transition hover:bg-neutral-100"
+                      >
+                        <span className="min-w-0 text-sm text-neutral-800">
+                          <span className="font-semibold">{a.vacancy_title}</span>
+                          {a.employer_name ? (
+                            <span className="text-neutral-500"> · {a.employer_name}</span>
+                          ) : null}
+                          {unread > 0 && (
+                            <span className="mt-0.5 block text-xs font-bold text-accent">
+                              {unread} new {unread === 1 ? "message" : "messages"}
+                            </span>
+                          )}
+                        </span>
+                        <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-neutral-700">
+                          {APPLICATION_STATUS_LABELS[a.status] ?? a.status}
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                href={cvHref}
-                className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
-              >
-                Edit my CV
-              </Link>
-              <a
-                href={pdfHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-neutral-900 px-5 py-2.5 text-sm font-semibold text-neutral-900"
-              >
-                Download PDF
-              </a>
-              <a
-                href={docxHref}
-                className="inline-flex items-center justify-center rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700"
-              >
-                Download Word
-              </a>
-            </div>
-            {/* The upload route existed but was reachable only from the
-                home page and the first question of the builder, which is
-                no use to somebody who has already made an account.
-                Dewald: "it is not very clear where they can import their
-                existing CV." */}
-            <Link
-              href={importHref}
-              className="mt-3 inline-block text-sm font-semibold text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
-            >
-              Fill this in from a CV file I already have
-            </Link>
           </div>
 
+          {/* Alerts */}
+          <div className={card}>
+            <p className="text-sm font-bold text-neutral-900">Jobs that match your work</p>
+            {alerts.length === 0 ? (
+              <p className="mt-1 text-sm text-neutral-600">
+                Nothing matching your kind of work right now. New jobs appear here the moment they are posted.
+              </p>
+            ) : (
+              <ul className="mt-2 flex flex-col gap-2">
+                {alerts.map((v) => (
+                  <li key={v.id}>
+                    <Link
+                      href={`${vacancyPrefix}/${v.id}`}
+                      className="flex flex-col rounded-xl bg-neutral-50 px-3 py-2.5 transition hover:bg-neutral-100"
+                    >
+                      <span className="text-sm font-semibold text-neutral-900">{v.title}</span>
+                      <span className="text-xs text-neutral-500">
+                        {[v.employer, `${v.suburb}, ${v.province}`].filter(Boolean).join(" · ")}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+        </div>
+
+        <h2 className="mt-8 text-sm font-extrabold uppercase tracking-wide text-neutral-500">
+          Being found by employers
+        </h2>
+
+        <div className="mt-3 flex flex-col gap-4">
           {/* Listing */}
           <div className={card}>
             <p className="text-sm font-bold text-neutral-900">Being found</p>
@@ -248,58 +386,57 @@ export default async function SeekerDashboardPage({
             </form>
           </div>
 
-          {/* Applications */}
-          <div className={card}>
-            <p className="text-sm font-bold text-neutral-900">Jobs I applied for</p>
-            {(applications ?? []).length === 0 ? (
-              <p className="mt-1 text-sm text-neutral-600">
-                Nothing yet.{" "}
-                <Link href={vacanciesHref} className="font-semibold text-neutral-900 hover:underline">
-                  Browse jobs near you
-                </Link>{" "}
-                and apply with one tap.
-              </p>
-            ) : (
-              <ul className="mt-2 flex flex-col gap-2">
-                {(applications ?? []).map((a) => (
-                  <li key={a.id} className="flex items-center justify-between gap-3 rounded-xl bg-neutral-50 px-3 py-2.5">
-                    <span className="min-w-0 text-sm text-neutral-800">
-                      <span className="font-semibold">{a.vacancy_title}</span>
-                      {a.employer_name ? <span className="text-neutral-500"> · {a.employer_name}</span> : null}
-                    </span>
-                    <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-neutral-700">
-                      {APPLICATION_STATUS_LABELS[a.status] ?? a.status}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+        </div>
 
-          {/* Alerts */}
+        <h2 className="mt-8 text-sm font-extrabold uppercase tracking-wide text-neutral-500">My CV</h2>
+
+        <div className="mt-3 flex flex-col gap-4">
           <div className={card}>
-            <p className="text-sm font-bold text-neutral-900">Jobs that match your work</p>
-            {alerts.length === 0 ? (
-              <p className="mt-1 text-sm text-neutral-600">
-                Nothing matching your kind of work right now. New jobs appear here the moment they are posted.
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-bold text-neutral-900">
+                {completeness === 100 ? "Your CV is complete" : "Your CV"}
               </p>
-            ) : (
-              <ul className="mt-2 flex flex-col gap-2">
-                {alerts.map((v) => (
-                  <li key={v.id}>
-                    <Link
-                      href={`${vacancyPrefix}/${v.id}`}
-                      className="flex flex-col rounded-xl bg-neutral-50 px-3 py-2.5 transition hover:bg-neutral-100"
-                    >
-                      <span className="text-sm font-semibold text-neutral-900">{v.title}</span>
-                      <span className="text-xs text-neutral-500">
-                        {[v.employer, `${v.suburb}, ${v.province}`].filter(Boolean).join(" · ")}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <span className="text-xs font-semibold text-neutral-500">{completeness}% complete</span>
+            </div>
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100">
+              <div className="h-full rounded-full bg-neutral-900" style={{ width: `${completeness}%` }} />
+            </div>
+            {missing.length > 0 && (
+              <p className="mt-2 text-xs text-neutral-500">Still missing: {missing.join(", ")}</p>
             )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href={cvHref}
+                className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
+              >
+                Edit my CV
+              </Link>
+              <a
+                href={pdfHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center rounded-full border border-neutral-900 px-5 py-2.5 text-sm font-semibold text-neutral-900"
+              >
+                Download PDF
+              </a>
+              <a
+                href={docxHref}
+                className="inline-flex items-center justify-center rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700"
+              >
+                Download Word
+              </a>
+            </div>
+            {/* The upload route existed but was reachable only from the
+                home page and the first question of the builder, which is
+                no use to somebody who has already made an account.
+                Dewald: "it is not very clear where they can import their
+                existing CV." */}
+            <Link
+              href={importHref}
+              className="mt-3 inline-block text-sm font-semibold text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
+            >
+              Fill this in from a CV file I already have
+            </Link>
           </div>
 
           {/* Profile. This was three lines of read-only text and the

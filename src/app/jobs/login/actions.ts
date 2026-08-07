@@ -7,7 +7,8 @@ import { loginSchema } from "@/lib/schemas/auth";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { jobsPath } from "@/lib/jobs/host";
 import { hasJobsEmployer } from "@/lib/jobs/employer";
-import { getApplyIntent } from "@/lib/jobs/apply-intent";
+import { getLiveApplyIntent } from "@/lib/jobs/apply-intent";
+import { claimDraftForUser } from "@/lib/jobs/claim-draft";
 
 type LoginState = { error?: Record<string, string[]> & { _form?: string[] } } | null;
 
@@ -50,10 +51,17 @@ export async function loginToJobs(_prevState: LoginState, formData: FormData): P
     redirect(await jobsPath("/employer"));
   }
 
+  // A CV built or uploaded before logging in belongs to this person the
+  // moment they prove who they are. Without this it stayed stranded behind
+  // the cookie while their account showed an older, emptier CV, which is
+  // what "it is mixing accounts" turned out to be. If they already have a
+  // real CV this leaves both alone and the dashboard offers the choice.
+  await claimDraftForUser(data.user.id);
+
   // Unless they were sent here from a job advert, in which case the useful
   // place is that advert, not a dashboard that says nothing about why they
   // logged in. The dashboard is one tap away from there.
-  const intent = await getApplyIntent();
+  const intent = await getLiveApplyIntent();
   if (intent) redirect(await jobsPath(`/vacancies/${intent}`));
 
   redirect(await jobsPath("/dashboard"));
