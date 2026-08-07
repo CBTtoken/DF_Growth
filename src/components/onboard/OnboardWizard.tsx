@@ -24,6 +24,7 @@ export function OnboardWizard({
   slug,
   photos,
   photosStorageBase,
+  heroPhotoId,
   initialData,
 }: {
   startStep: number;
@@ -32,6 +33,9 @@ export function OnboardWizard({
   slug: string;
   photos: PhotoInitial[];
   photosStorageBase: string;
+  // Sprint "Onboarding two doors" item 3: the hero photo is now chosen
+  // inside the wizard, not only later from the dashboard.
+  heroPhotoId: string | null;
   initialData: {
     businessName: string;
     contactEmail: string;
@@ -174,11 +178,17 @@ export function OnboardWizard({
           initialPhotos={photos}
           storageBase={photosStorageBase}
           industryHint={initialData.industry}
+          heroPhotoId={heroPhotoId}
+          template={initialData.template}
           onSuccess={() => setStep(5)}
         />
       )}
       {step === 5 && (
-        <Step4TemplatePicker initialTemplate={initialData.template} onSuccess={() => setStep(6)} />
+        <Step4TemplatePicker
+          initialTemplate={initialData.template}
+          initialIndustry={initialData.industry}
+          onSuccess={() => setStep(6)}
+        />
       )}
       {step === 6 && (
         <Step5LandingCopy

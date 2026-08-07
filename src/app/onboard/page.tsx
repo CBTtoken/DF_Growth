@@ -65,7 +65,7 @@ export default async function OnboardPage() {
   const { data: growthClient } = await admin
     .from("growth_clients")
     .select(
-      "business_name, contact_email, call_phone, whatsapp_phone, province, industry, business_address, city, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, website_url, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, template, packages, meta_pixel_id, meta_ad_account_id, meta_setup_requested_help, plan, slug, status, billing_cycle, setup_service_requested_at"
+      "business_name, contact_email, call_phone, whatsapp_phone, province, industry, business_address, city, business_description, tagline, products_services, additional_notes, facebook_url, instagram_url, website_url, ai_landing_draft, brand_primary_color, brand_secondary_color, logo_path, template, packages, meta_pixel_id, meta_ad_account_id, meta_setup_requested_help, plan, slug, status, billing_cycle, setup_service_requested_at, hero_photo_id"
     )
     .eq("id", membership.growth_client_id)
     .single();
@@ -170,6 +170,7 @@ export default async function OnboardPage() {
         slug={growthClient.slug}
         photos={photos ?? []}
         photosStorageBase={photosStorageBase}
+        heroPhotoId={growthClient.hero_photo_id ?? null}
         initialData={{
           businessName: growthClient.business_name ?? "",
           contactEmail: growthClient.contact_email ?? "",

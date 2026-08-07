@@ -14,9 +14,9 @@ import { findActiveSubscription, disableSubscription } from "@/lib/paystack/subs
 import { templateSchema } from "@/lib/schemas/intake";
 import { socialAssetSchema } from "@/lib/schemas/social-asset";
 import { isRateLimited } from "@/lib/rate-limit";
+import { PHOTO_CAP } from "@/lib/photos";
+import { processMemberPhoto } from "@/lib/photos-server";
 import crypto from "crypto";
-
-const PHOTO_CAP = 10;
 
 type DashboardState = { error?: Record<string, string[]> & { _form?: string[] }; success?: boolean } | null;
 
@@ -495,11 +495,16 @@ export async function uploadClientPhoto(_prevState: DashboardState, formData: Fo
   let failed = 0;
 
   for (const photo of toUpload) {
-    const ext = photo.name.split(".").pop() || "jpg";
+    // Sprint "Onboarding two doors" item 3: every member photo now gets
+    // the same EXIF rotation and resize the done-for-you builds apply by
+    // hand (lib/photos.ts). A null return means sharp could not read the
+    // file, so the original bytes go up untouched exactly as before.
+    const processed = await processMemberPhoto(Buffer.from(await photo.arrayBuffer()));
+    const ext = processed?.extension ?? photo.name.split(".").pop() ?? "jpg";
     const path = `${client.id}/${crypto.randomUUID()}.${ext}`;
     const { error: uploadError } = await admin.storage
       .from("client-photos")
-      .upload(path, photo, { contentType: photo.type });
+      .upload(path, processed?.data ?? photo, { contentType: processed?.contentType ?? photo.type });
 
     if (uploadError) {
       failed++;
@@ -577,14 +582,19 @@ export async function addPhotoFromPexels(_prevState: DashboardState, formData: F
     return { error: { _form: ["Could not fetch that photo, please try again."] } };
   }
 
-  const contentType = imageRes.headers.get("content-type") ?? "image/jpeg";
-  const ext = contentType.includes("png") ? "png" : "jpg";
-  const path = `${client.id}/${crypto.randomUUID()}.${ext}`;
   const buffer = Buffer.from(await imageRes.arrayBuffer());
+  // Same resize treatment as an uploaded photo (lib/photos.ts). Pexels
+  // images need no rotation, but they come off the CDN large enough to
+  // matter on a phone data plan, which is the whole reason the cap exists.
+  const processed = await processMemberPhoto(buffer);
+  const fallbackType = imageRes.headers.get("content-type") ?? "image/jpeg";
+  const contentType = processed?.contentType ?? fallbackType;
+  const ext = processed?.extension ?? (fallbackType.includes("png") ? "png" : "jpg");
+  const path = `${client.id}/${crypto.randomUUID()}.${ext}`;
 
   const { error: uploadError } = await admin.storage
     .from("client-photos")
-    .upload(path, buffer, { contentType });
+    .upload(path, processed?.data ?? buffer, { contentType });
 
   if (uploadError) return { error: { _form: ["Could not save that photo, please try again."] } };
 

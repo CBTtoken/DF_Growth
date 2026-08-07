@@ -3,7 +3,7 @@ import { dismissSpotlightBanner } from "@/app/dashboard/page-poster-actions";
 // Handoff Sec 6, "not optional and it is half the value of the build": a
 // spotlight the member never sees is a post to a small page audience, a
 // spotlight they share is the whole point. Same visual language as
-// ProfileCompletenessBanner (amber, one line, plain words), placed above
+// PageChecklist (amber, one line, plain words), placed above
 // the fold so it isn't missed — the one thing on this screen that expects
 // same-day action.
 export function SpotlightBanner({

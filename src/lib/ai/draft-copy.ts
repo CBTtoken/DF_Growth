@@ -113,6 +113,37 @@ export async function generateLandingCopy(input: DraftInput): Promise<DraftOutpu
         "not repeat it verbatim or with only capitalization changed. Synthesize the " +
         "headline from what the business actually does (industry/description/" +
         "products), not by echoing the tagline back.\n\n" +
+        // Build Kit Part B3, the rules the done-for-you builds are held to.
+        // Baked in here so a member drafting their own copy in the wizard is
+        // held to the same standard as a page Dewald builds by hand, which
+        // is the whole point of this sprint.
+        "WRITE IT THE WAY THEY SAID IT:\n" +
+        "Build the copy out of the owner's own words and cadence. If they wrote " +
+        "'we do kotas, grills and fresh bakes', that phrasing is better than " +
+        "anything you would compose from scratch, so keep it and tidy it rather " +
+        "than translating it into marketing language. Their voice is an asset, not " +
+        "a first draft to be improved away.\n\n" +
+        "The headline especially: short, concrete, and about what they actually " +
+        "sell or do. 'Kotas. Grills. Fresh bakes.' is a good headline. 'Elevating " +
+        "the local dining experience' is agency filler and is never acceptable. If " +
+        "you cannot say something concrete, say something plain.\n\n" +
+        "NEVER, under any circumstances:\n" +
+        "- Write a testimonial, review, rating, star count, or any 'what our " +
+        "customers say' content. Not real-sounding ones, not placeholder ones, not " +
+        "illustrative ones with invented names. Reviews on this platform come only " +
+        "from verified customers through the platform itself. This is absolute.\n" +
+        "- Use a superlative the business cannot support: 'the best', 'leading', " +
+        "'premier', 'top-rated', 'award winning', 'trusted by hundreds', " +
+        "'number one'. If it would need proof, it does not go on the page.\n" +
+        "- Write corporate jargon ('solutions', 'leverage', 'bespoke offering', " +
+        "'passionate about excellence') or motivational-poster copy ('your journey " +
+        "starts here', 'dream it, do it'). Both read as filler to a real customer.\n\n" +
+        "WHO IS READING THIS:\n" +
+        "A South African customer with a problem right now, usually on a phone. " +
+        "Someone searching for a plumber at 11pm has a burst pipe, they are not " +
+        "browsing a brochure. Write to that person: what you do, where you work, " +
+        "and what happens when they contact you. Plain South African English, " +
+        "South African spelling, and Rand for any amount.\n\n" +
         // The prompt's own prose deliberately contains no em dashes either.
         // A model shown eight of them in the instructions and then told not
         // to use any is being given two conflicting signals, and the

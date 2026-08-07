@@ -6,6 +6,7 @@ import { deleteClientPhoto, setHeroPhoto } from "@/app/dashboard/actions";
 import { PexelsPicker } from "@/components/dashboard/PexelsPicker";
 import { PhotoUploadInput } from "@/components/dashboard/PhotoUploadInput";
 import { Card } from "@/components/ui/Card";
+import { PHOTO_CAP } from "@/lib/photos";
 
 type Photo = { id: string; storage_path: string };
 
@@ -30,15 +31,18 @@ export function PhotoGallery({
       <div>
         <h2 className="text-lg font-bold tracking-tight text-ink">Your photos</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Up to 10 real photos of your business, used in templates that showcase real imagery. Pick
-          one as your hero image below if your page style shows one, otherwise skip it.
+          Up to {PHOTO_CAP} real photos of your business, used in templates that showcase real
+          imagery. Pick one as your hero image below if your page style shows one, otherwise skip
+          it. You can change your hero image, or any photo here, whenever you like.
         </p>
       </div>
 
-      <PhotoUploadInput disabled={photos.length >= 10} />
-      {photos.length >= 10 && <p className="text-xs text-gray-400">Photo limit reached, delete one to add another.</p>}
+      <PhotoUploadInput disabled={photos.length >= PHOTO_CAP} />
+      {photos.length >= PHOTO_CAP && (
+        <p className="text-xs text-gray-400">Photo limit reached, delete one to add another.</p>
+      )}
 
-      <PexelsPicker industryHint={industryHint} disabled={photos.length >= 10} />
+      <PexelsPicker industryHint={industryHint} disabled={photos.length >= PHOTO_CAP} />
 
       {photos.length > 0 ? (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">

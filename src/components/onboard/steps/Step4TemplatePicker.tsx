@@ -3,16 +3,25 @@
 import { useActionState, useEffect, useState } from "react";
 import { saveStepTemplate, type OnboardState } from "@/app/onboard/actions";
 import { TemplateGallery } from "@/components/templates/TemplateGallery";
+import { recommendedTemplateFor } from "@/lib/templates/recommend";
 
 export function Step4TemplatePicker({
   initialTemplate,
+  initialIndustry,
   onSuccess,
 }: {
   initialTemplate: string;
+  // Sprint "Onboarding two doors" item 2: the industry captured back at
+  // step 2, used only to preselect a starting point.
+  initialIndustry: string;
   onSuccess: () => void;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStepTemplate, null);
-  const [selected, setSelected] = useState(initialTemplate || "conversion");
+  const recommended = recommendedTemplateFor(initialIndustry);
+  // A member resuming the wizard keeps whatever they already chose. Only a
+  // first visit, with nothing saved yet, starts on the recommendation, and
+  // Classic stays the fallback when the trade matches nothing.
+  const [selected, setSelected] = useState(initialTemplate || recommended || "conversion");
 
   useEffect(() => {
     if (state?.success) onSuccess();
@@ -23,14 +32,17 @@ export function Step4TemplatePicker({
       <div>
         <h2 className="text-xl font-bold tracking-tight text-ink">Choose your page style</h2>
         <p className="mt-1 text-sm text-gray-500">
-          Real previews, not descriptions. All ten use your own colors, logo, and the details you
-          give us next. Tap one to select it. You can change this later from your dashboard.
+          {recommended
+            ? "We've started you on the style that suits your trade, at the top. Have a look through the rest and pick whichever you like best."
+            : "Real previews, not descriptions."}{" "}
+          They all use your own colors, logo, and the details you give us next. Tap one to select it.
+          You can change this later from your dashboard.
         </p>
       </div>
 
       <input type="hidden" name="template" value={selected} />
 
-      <TemplateGallery selected={selected} onSelect={setSelected} />
+      <TemplateGallery selected={selected} onSelect={setSelected} recommendedId={recommended} />
 
       {state?.error?.template && <p className="text-xs text-red-600">{state.error.template[0]}</p>}
       {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}

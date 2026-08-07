@@ -29,14 +29,30 @@ const PREVIEW_HEIGHT = 760;
 export function TemplateGallery({
   selected,
   onSelect,
+  recommendedId,
 }: {
   selected: string;
   onSelect: (id: string) => void;
+  // Sprint "Onboarding two doors" item 2: the template matched to the
+  // member's trade (lib/templates/recommend.ts). Only ever a badge and a
+  // reorder, never a restriction — every option below stays selectable.
+  recommendedId?: string | null;
 }) {
+  // The recommendation is worth nothing at the bottom of a scrolling list
+  // of twenty, so it moves to the top. Everything else keeps its existing
+  // order, Classic included.
+  const options = recommendedId
+    ? [
+        ...TEMPLATE_OPTIONS.filter((t) => t.id === recommendedId),
+        ...TEMPLATE_OPTIONS.filter((t) => t.id !== recommendedId),
+      ]
+    : TEMPLATE_OPTIONS;
+
   return (
     <div className="flex max-h-[480px] flex-col gap-3 overflow-y-auto pr-1">
-      {TEMPLATE_OPTIONS.map((t) => {
+      {options.map((t) => {
         const isSelected = selected === t.id;
+        const isRecommended = t.id === recommendedId;
         // Combined spec Sec 8: without shrink-0 here and on the preview-image
         // wrapper below, these cards are flex items with Tailwind's default
         // flex-shrink:1 inside the scrollable list above — once ten cards'
@@ -96,7 +112,14 @@ export function TemplateGallery({
               )}
             </div>
             <div className="flex flex-col gap-1 border-t border-gray-100 bg-white px-4 py-3.5">
-              <p className="text-sm font-semibold leading-snug text-gray-900">{t.name}</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-semibold leading-snug text-gray-900">{t.name}</p>
+                {isRecommended && (
+                  <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand">
+                    Recommended for your trade
+                  </span>
+                )}
+              </div>
               <p className="text-xs leading-relaxed text-gray-500">{t.description}</p>
             </div>
           </div>
