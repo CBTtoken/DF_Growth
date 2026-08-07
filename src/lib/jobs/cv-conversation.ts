@@ -141,7 +141,7 @@ export type WorkHistoryEntry = {
 const ID_NUMBER_PATTERN = /\b\d{13}\b/g;
 const LONG_DIGIT_RUN_PATTERN = /\b\d{9,16}\b/g;
 const REDACTION_NOTICE =
-  "[removed -- we do not ask for ID numbers or bank details, and no real employer needs them before an interview]";
+  "[removed: we do not ask for ID numbers or bank details, and no real employer needs them before an interview]";
 
 export function sanitizeFreeText(input: string): { text: string; wasRedacted: boolean } {
   let text = input;

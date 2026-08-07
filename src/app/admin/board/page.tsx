@@ -13,8 +13,13 @@ import {
   restoreHeldPost,
   dismissJobsReport,
   unlistJobsCandidate,
+  restoreHeldVacancy,
+  removeHeldVacancy,
+  dismissVacancyReport,
+  takeDownReportedVacancy,
 } from "@/app/admin/board/actions";
 import { blockFromForm, unblockIdentity } from "@/app/admin/board/block-actions";
+import { daysAgoIso } from "@/lib/jobs/entitlements";
 import { toggleRuleFromForm } from "@/app/admin/board/rule-actions";
 
 export const metadata: Metadata = { robots: { index: false, follow: false } };
@@ -61,7 +66,17 @@ export default async function AdminBoardPage() {
 
   const admin = createAdminClient();
 
-  const [{ data: heldComments }, { data: heldPosts }, { data: postReports }, { data: log }, { data: rules }, { data: jobsReports }] = await Promise.all([
+  const [
+    { data: heldComments },
+    { data: heldPosts },
+    { data: postReports },
+    { data: log },
+    { data: rules },
+    { data: jobsReports },
+    { data: heldVacancies },
+    { data: vacancyReports },
+    { data: recentViews },
+  ] = await Promise.all([
     admin
       .from("board_comments")
       .select(
@@ -92,6 +107,25 @@ export default async function AdminBoardPage() {
       .eq("target_type", "candidate")
       .eq("status", "open")
       .order("created_at", { ascending: true }),
+    admin
+      .from("jobs_vacancies")
+      .select("id, title, held_reason, created_at, jobs_employers!inner(business_name, email)")
+      .eq("status", "held")
+      .order("created_at", { ascending: true }),
+    admin
+      .from("jobs_reports")
+      .select("id, target_id, reason, created_at")
+      .eq("target_type", "vacancy")
+      .eq("status", "open")
+      .order("created_at", { ascending: true }),
+    // The scraping watchlist's raw material: a week of full-record views,
+    // aggregated below. Capped generously; if this ever tops out, that IS
+    // the signal the page exists to catch.
+    admin
+      .from("jobs_record_views")
+      .select("employer_id, jobs_employers!inner(business_name, email)")
+      .gte("created_at", daysAgoIso(7))
+      .limit(5000),
   ]);
 
   const held = (heldComments ?? []) as unknown as HeldComment[];
@@ -121,6 +155,28 @@ export default async function AdminBoardPage() {
     : { data: [] as { id: string; full_name: string | null; suburb: string | null; years_experience: number | null; listed: boolean; jobs_taxonomy: { label: string } | null }[] };
   const candidateById = new Map((reportedCandidates ?? []).map((c) => [c.id, c]));
 
+  // Reported vacancies, one query for the lot (the post-reports pattern).
+  const reportedVacancyIds = [...new Set((vacancyReports ?? []).map((r) => r.target_id))];
+  const { data: reportedVacancies } = reportedVacancyIds.length
+    ? await admin
+        .from("jobs_vacancies")
+        .select("id, title, status, jobs_employers!inner(business_name)")
+        .in("id", reportedVacancyIds)
+    : { data: [] as { id: string; title: string; status: string; jobs_employers: { business_name: string } }[] };
+  const vacancyById = new Map((reportedVacancies ?? []).map((v) => [v.id, v]));
+
+  // The scraping watchlist: full-record views per employer, last 7 days,
+  // heaviest first. The number itself is the judgement call, so the list
+  // just shows it; killing an account stays a deliberate act.
+  const viewCounts = new Map<string, { name: string; email: string; count: number }>();
+  for (const view of recentViews ?? []) {
+    const emp = view.jobs_employers as unknown as { business_name: string; email: string };
+    const existing = viewCounts.get(view.employer_id);
+    if (existing) existing.count++;
+    else viewCounts.set(view.employer_id, { name: emp.business_name, email: emp.email, count: 1 });
+  }
+  const topViewers = [...viewCounts.values()].sort((a, b) => b.count - a.count).slice(0, 10);
+
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -134,7 +190,13 @@ export default async function AdminBoardPage() {
             <h1 className="text-2xl font-bold tracking-tight text-ink">The Board</h1>
           </div>
           <StatusPill>
-            {held.length + heldPostRows.length + (postReports?.length ?? 0) + (jobsReports?.length ?? 0)} waiting
+            {held.length +
+              heldPostRows.length +
+              (postReports?.length ?? 0) +
+              (jobsReports?.length ?? 0) +
+              (heldVacancies?.length ?? 0) +
+              (vacancyReports?.length ?? 0)}{" "}
+            waiting
           </StatusPill>
         </div>
 
@@ -415,6 +477,134 @@ export default async function AdminBoardPage() {
                 </div>
               );
             })
+          )}
+        </section>
+
+        {/* Sprint 2: held vacancies -- the advance-fee auto-hold's queue. */}
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-bold text-ink">Job posts held for review</h2>
+          <p className="text-xs text-gray-500">
+            Held because the wording asked candidates for money, or looked like it did. Never auto-removed,
+            always a person&apos;s call.
+          </p>
+          {(heldVacancies?.length ?? 0) === 0 ? (
+            <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+              Nothing waiting.
+            </p>
+          ) : (
+            (heldVacancies ?? []).map((v) => {
+              const emp = v.jobs_employers as unknown as { business_name: string; email: string };
+              return (
+                <div key={v.id} className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="text-sm font-semibold text-ink">{v.title}</p>
+                    <span className="text-xs text-gray-400">
+                      {new Date(v.created_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    By {emp.business_name} <span className="text-gray-400">{emp.email}</span>
+                  </p>
+                  {v.held_reason && <p className="text-xs font-semibold text-amber-700">Held because: {v.held_reason}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    <form action={restoreHeldVacancy.bind(null, v.id)}>
+                      <button
+                        type="submit"
+                        className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                      >
+                        Approve and publish
+                      </button>
+                    </form>
+                    <form action={removeHeldVacancy.bind(null, v.id)}>
+                      <button
+                        type="submit"
+                        className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
+                      >
+                        Remove it
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-bold text-ink">Reported job posts</h2>
+          {(vacancyReports?.length ?? 0) === 0 ? (
+            <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+              Nothing reported.
+            </p>
+          ) : (
+            (vacancyReports ?? []).map((report) => {
+              const vacancy = vacancyById.get(report.target_id);
+              const emp = vacancy?.jobs_employers as unknown as { business_name: string } | undefined;
+              return (
+                <div key={report.id} className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <p className="text-sm font-semibold text-ink">
+                    {vacancy ? `${vacancy.title}, by ${emp?.business_name}` : "Post no longer available"}
+                    {vacancy && vacancy.status !== "published" && " · already down"}
+                  </p>
+                  {report.reason && <p className="text-sm text-gray-600">Reason given: {report.reason}</p>}
+                  <div className="flex flex-wrap gap-2">
+                    <form action={dismissVacancyReport.bind(null, report.id, report.target_id)}>
+                      <button
+                        type="submit"
+                        className="rounded-full border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                      >
+                        Leave it up
+                      </button>
+                    </form>
+                    <form action={takeDownReportedVacancy.bind(null, report.id, report.target_id)}>
+                      <button
+                        type="submit"
+                        className="rounded-full bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700"
+                      >
+                        Take it down
+                      </button>
+                    </form>
+                    {vacancy && (
+                      <Link
+                        href={`https://jobs.katisobiz.co.za/vacancies/${vacancy.id}`}
+                        target="_blank"
+                        className="self-center text-xs font-semibold text-gray-400 underline-offset-2 hover:text-brand hover:underline"
+                      >
+                        See it
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </section>
+
+        {/* The anti-scraping watchlist: who pulled how many full candidate
+            records this week. The spec's own words: you will not stop the
+            first scrape, you will see the account that pulled 400 records
+            in an hour and kill it. Killing one stays a deliberate act done
+            by hand, not a button pressed in passing. */}
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-bold text-ink">Candidate record views, last 7 days</h2>
+          {topViewers.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
+              No full-record views yet.
+            </p>
+          ) : (
+            <div className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+              {topViewers.map((viewer) => (
+                <div key={viewer.email} className="flex items-center justify-between gap-3 border-b border-gray-50 px-4 py-3 last:border-0">
+                  <div>
+                    <p className="text-sm font-semibold text-ink">{viewer.name}</p>
+                    <p className="text-xs text-gray-500">{viewer.email}</p>
+                  </div>
+                  <span className={`text-sm font-bold ${viewer.count > 200 ? "text-red-600" : "text-gray-700"}`}>
+                    {viewer.count} views
+                  </span>
+                </div>
+              ))}
+            </div>
           )}
         </section>
 

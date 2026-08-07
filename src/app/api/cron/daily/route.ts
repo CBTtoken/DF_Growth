@@ -8,6 +8,7 @@ import { GET as bizupNotifications } from "../bizup-notifications/route";
 import { GET as bizupCheckins } from "../bizup-checkins/route";
 import { GET as retentionReport } from "../retention/route";
 import { GET as boardCleanup } from "../board-cleanup/route";
+import { GET as jobsCleanup } from "../jobs-cleanup/route";
 import { GET as pagePosterGenerate } from "../page-poster-generate/route";
 import { runHealthChecks } from "@/lib/desk/health/run";
 
@@ -63,6 +64,9 @@ export async function GET(request: Request) {
     // decision, because a want-ad and a finished chat were both told up
     // front that they last ten days. Never touches a business post.
     ["boardCleanup", boardCleanup],
+    // Jobs housekeeping: vacancy expiry reminders, the 30-day purge with
+    // its demand-data line, and the two-week subscription-lapse cleanup.
+    ["jobsCleanup", jobsCleanup],
     // Tops the page poster queue up a week ahead. Never publishes, only
     // ever writes pending_approval rows for Dewald to act on.
     ["pagePosterGenerate", pagePosterGenerate],

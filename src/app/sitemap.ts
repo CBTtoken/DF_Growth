@@ -95,16 +95,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (isJobsHost(host)) {
     const jobsUrl = `https://${bare}`;
     const admin = createAdminClient();
-    const { data: listed } = await admin
-      .from("jobs_candidates")
-      .select("id, updated_at")
-      .eq("listed", true)
-      .is("deleted_at", null);
+    const [{ data: listed }, { data: vacancies }] = await Promise.all([
+      admin.from("jobs_candidates").select("id, updated_at").eq("listed", true).is("deleted_at", null),
+      // Every live vacancy page is indexable -- the spec's whole traffic
+      // thesis ("every vacancy page and every anonymous candidate page is
+      // indexable by Google").
+      admin
+        .from("jobs_vacancies")
+        .select("id, updated_at")
+        .eq("status", "published")
+        .gt("expires_at", new Date().toISOString()),
+    ]);
 
     return [
       { url: jobsUrl, changeFrequency: "weekly", priority: 1 },
+      { url: `${jobsUrl}/vacancies`, changeFrequency: "daily", priority: 1 },
       { url: `${jobsUrl}/find-people`, changeFrequency: "daily", priority: 0.9 },
+      { url: `${jobsUrl}/employers`, changeFrequency: "weekly", priority: 0.8 },
       { url: `${jobsUrl}/signup`, changeFrequency: "monthly", priority: 0.5 },
+      ...(vacancies ?? []).map((v) => ({
+        url: `${jobsUrl}/vacancies/${v.id}`,
+        lastModified: v.updated_at ?? undefined,
+        changeFrequency: "daily" as const,
+        priority: 0.8,
+      })),
       ...(listed ?? []).map((c) => ({
         url: `${jobsUrl}/find-people/${c.id}`,
         lastModified: c.updated_at ?? undefined,

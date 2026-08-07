@@ -1,12 +1,23 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { reportCandidate } from "@/app/jobs/find-people/actions";
 import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
+import type { ReportState } from "@/app/jobs/find-people/actions";
 
-export function ReportCandidateForm({ candidateId }: { candidateId: string }) {
+// One report form for both public browse layers. The Server Action comes
+// in as a prop (candidate or vacancy variant), so the Turnstile rule and
+// the UI live once.
+export function ReportListingForm({
+  targetId,
+  action,
+  label = "Report this listing",
+}: {
+  targetId: string;
+  action: (prev: ReportState, formData: FormData) => Promise<ReportState>;
+  label?: string;
+}) {
   const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState(reportCandidate, null);
+  const [state, formAction, pending] = useActionState(action, null);
 
   if (state?.success) {
     return <p className="text-sm text-neutral-500">Thanks, we&apos;ve received your report.</p>;
@@ -19,14 +30,14 @@ export function ReportCandidateForm({ candidateId }: { candidateId: string }) {
         onClick={() => setOpen(true)}
         className="text-xs font-medium text-neutral-400 underline-offset-2 hover:text-neutral-700 hover:underline"
       >
-        Report this listing
+        {label}
       </button>
     );
   }
 
   return (
-    <form action={action} className="flex flex-col gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-4">
-      <input type="hidden" name="candidateId" value={candidateId} />
+    <form action={formAction} className="flex flex-col gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-4">
+      <input type="hidden" name="targetId" value={targetId} />
       <label className="flex flex-col gap-1.5 text-sm font-medium text-neutral-700">
         What&apos;s wrong with this listing?
         <textarea
