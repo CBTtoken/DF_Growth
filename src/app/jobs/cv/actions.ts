@@ -22,9 +22,6 @@ export type CvRow = {
   full_name: string | null;
   phone: string | null;
   email: string | null;
-  primary_role_id: string | null;
-  secondary_role_ids: string[];
-  other_role_text: string | null;
   ofo_occupation_code: string | null;
   secondary_ofo_codes: OccupationPick[];
   experience_level: ExperienceLevel | null;
@@ -44,7 +41,7 @@ export type CvRow = {
 };
 
 const CANDIDATE_COLUMNS =
-  "id, owner_user_id, full_name, phone, email, primary_role_id, secondary_role_ids, other_role_text, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_write_count, ai_recommendations";
+  "id, owner_user_id, full_name, phone, email, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_write_count, ai_recommendations";
 
 /**
  * Server-only, read-only: the row this visitor should be editing, if one
@@ -172,9 +169,6 @@ async function assertOwnership(admin: ReturnType<typeof createAdminClient>, cand
 export type CvPatch = Partial<{
   full_name: string;
   phone: string;
-  primary_role_id: string | null;
-  secondary_role_ids: string[];
-  other_role_text: string | null;
   ofo_occupation_code: string | null;
   secondary_ofo_codes: OccupationPick[];
   experience_level: ExperienceLevel;
@@ -216,17 +210,9 @@ export async function saveCvAnswer(candidateId: string, patch: CvPatch): Promise
       return { ...entry, description: r.text };
     });
   }
-  if (typeof clean.other_role_text === "string") {
-    const r = sanitizeFreeText(clean.other_role_text);
-    clean.other_role_text = r.text.slice(0, 80) || null;
-    redacted = redacted || r.wasRedacted;
-  }
   // Three positions, never more, whatever the client sends: the first
-  // choice lives in primary_role_id, so this array holds at most two.
-  if (clean.secondary_role_ids) {
-    clean.secondary_role_ids = clean.secondary_role_ids.slice(0, MAX_ROLES - 1);
-  }
-  // Same cap for the OFO model, and never trust a client-sent title: the
+  // lives in ofo_occupation_code, so the jsonb holds at most two. Never
+  // trust a client-sent title either: the
   // codes are re-resolved against the official table, so the stored jsonb
   // can only ever hold real occupations with their official titles.
   if (clean.secondary_ofo_codes) {

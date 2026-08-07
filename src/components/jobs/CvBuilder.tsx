@@ -238,11 +238,6 @@ function CvBuilderScreens({
                 go(nextStep(step), {
                   ofo_occupation_code: occupations[0]?.code ?? null,
                   secondary_ofo_codes: occupations.slice(1),
-                  // The pre-OFO fields die with this save so no CV ever
-                  // carries both models at once.
-                  primary_role_id: null,
-                  secondary_role_ids: [],
-                  other_role_text: null,
                 })
               }
             >
