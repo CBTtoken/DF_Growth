@@ -35,7 +35,7 @@ export default async function ApplicantsPage({
   let query = admin
     .from("jobs_applications")
     .select(
-      "id, vacancy_id, vacancy_title, status, created_at, jobs_candidates(id, full_name, years_experience, experience_level, suburb, province, jobs_ofo_occupations(title))",
+      "id, vacancy_id, vacancy_title, status, created_at, cover_message, jobs_candidates(id, full_name, years_experience, experience_level, suburb, province, jobs_ofo_occupations(title))",
     )
     .eq("employer_id", employer.id)
     .order("created_at", { ascending: false })
@@ -120,6 +120,15 @@ export default async function ApplicantsPage({
                             .filter(Boolean)
                             .join(" · ")}
                         </p>
+                        {/* The first line of what they wrote, so a list of
+                            twenty applicants can be triaged without opening
+                            twenty CVs. Clamped, not truncated with an
+                            ellipsis, so it reflows properly on a phone. */}
+                        {a.cover_message && (
+                          <p className="mt-1.5 line-clamp-2 text-sm italic text-neutral-500">
+                            &ldquo;{a.cover_message}&rdquo;
+                          </p>
+                        )}
                         <form action={setApplicationStatus} className="mt-3 flex flex-wrap gap-2">
                           <input type="hidden" name="applicationId" value={a.id} />
                           {(["reviewing", "shortlisted", "declined"] as const).map((s) => (

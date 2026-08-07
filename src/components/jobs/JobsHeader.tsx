@@ -1,62 +1,102 @@
-import Link from "next/link";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { jobsPath } from "@/lib/jobs/host";
-import { JobsMark } from "@/components/jobs/JobsMark";
+import { JobsNav, type JobsNavLink } from "@/components/jobs/JobsNav";
 
-// The role-aware header (handoff Job 8: the main menu differs by who is
-// logged in). Anonymous visitors get the two start paths and log in; a
-// seeker gets their dashboard; an employer gets theirs. Server-rendered,
-// no client JS.
+// Works out who is looking, then hands a finished set of links to the
+// client menu. Three audiences, three menus, and never more than four
+// everyday links plus the one primary action (INTERFACE-STANDARD.md: no
+// screen presents more than about seven things without grouping, and one
+// action is obviously the main one).
+//
+// Every link is resolved through jobsPath() here, on the server, so the
+// menu is correct on jobs.katisobiz.co.za and on a preview deployment
+// both, and the client component never has to know the hostname rule.
+
 export async function JobsHeader() {
   const supabase = await createServerClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let primary: { href: string; label: string } | null = null;
-  if (user) {
-    const admin = createAdminClient();
-    const { data: employer } = await admin
-      .from("jobs_employers")
-      .select("id")
-      .eq("owner_user_id", user.id)
-      .maybeSingle();
-    primary = employer
-      ? { href: await jobsPath("/employer"), label: "My jobs" }
-      : { href: await jobsPath("/dashboard"), label: "My dashboard" };
+  const [home, vacancies, employers, howItWorks, faq, login, dashboard, myJobs, applicants, findPeople, cv, post] =
+    await Promise.all([
+      jobsPath("/"),
+      jobsPath("/vacancies"),
+      jobsPath("/employers"),
+      jobsPath("/how-it-works"),
+      jobsPath("/faq"),
+      jobsPath("/login"),
+      jobsPath("/dashboard"),
+      jobsPath("/employer"),
+      jobsPath("/employer/applicants"),
+      jobsPath("/find-people"),
+      jobsPath("/cv"),
+      jobsPath("/employer/post"),
+    ]);
+
+  // Not logged in: the two doors from the home page, plus the two pages
+  // that answer "what is this and can I trust it".
+  if (!user) {
+    const links: JobsNavLink[] = [
+      { href: vacancies, label: "Jobs board" },
+      { href: employers, label: "I am hiring" },
+      { href: howItWorks, label: "How it works" },
+      { href: faq, label: "Questions" },
+    ];
+    return (
+      <JobsNav
+        homeHref={home}
+        links={links}
+        primary={{ href: login, label: "Log in" }}
+        loggedIn={false}
+        accountLabel={null}
+      />
+    );
   }
 
-  const [homeHref, loginHref, vacanciesHref] = await Promise.all([
-    jobsPath("/"),
-    jobsPath("/login"),
-    jobsPath("/vacancies"),
+  const admin = createAdminClient();
+  const [{ data: employer }, { data: candidate }] = await Promise.all([
+    admin.from("jobs_employers").select("business_name").eq("owner_user_id", user.id).maybeSingle(),
+    admin
+      .from("jobs_candidates")
+      .select("full_name")
+      .eq("owner_user_id", user.id)
+      .is("deleted_at", null)
+      .maybeSingle(),
   ]);
 
+  if (employer) {
+    const links: JobsNavLink[] = [
+      { href: applicants, label: "Applicants" },
+      { href: post, label: "Post a job" },
+      { href: findPeople, label: "Find people" },
+      { href: faq, label: "Questions" },
+    ];
+    return (
+      <JobsNav
+        homeHref={home}
+        links={links}
+        primary={{ href: myJobs, label: "My jobs" }}
+        loggedIn
+        accountLabel={employer.business_name}
+      />
+    );
+  }
+
+  const links: JobsNavLink[] = [
+    { href: vacancies, label: "Jobs board" },
+    { href: cv, label: "My CV" },
+    { href: howItWorks, label: "How it works" },
+    { href: faq, label: "Questions" },
+  ];
   return (
-    <header className="sticky top-0 z-20 border-b border-neutral-100 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <Link href={homeHref} aria-label="KatisoBiz Jobs home">
-          <JobsMark />
-        </Link>
-        <nav className="flex items-center gap-4 text-sm font-semibold">
-          <Link href={vacanciesHref} className="text-neutral-600 hover:text-neutral-900">
-            Jobs
-          </Link>
-          {primary ? (
-            <Link
-              href={primary.href}
-              className="rounded-full bg-accent px-4 py-2 text-white transition hover:bg-accent-hover"
-            >
-              {primary.label}
-            </Link>
-          ) : (
-            <Link href={loginHref} className="text-neutral-600 hover:text-neutral-900">
-              Log in
-            </Link>
-          )}
-        </nav>
-      </div>
-    </header>
+    <JobsNav
+      homeHref={home}
+      links={links}
+      primary={{ href: dashboard, label: "My dashboard" }}
+      loggedIn
+      accountLabel={candidate?.full_name ?? user.email ?? null}
+    />
   );
 }

@@ -7,6 +7,7 @@ import { loginSchema } from "@/lib/schemas/auth";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { jobsPath } from "@/lib/jobs/host";
 import { hasJobsEmployer } from "@/lib/jobs/employer";
+import { getApplyIntent } from "@/lib/jobs/apply-intent";
 
 type LoginState = { error?: Record<string, string[]> & { _form?: string[] } } | null;
 
@@ -48,5 +49,12 @@ export async function loginToJobs(_prevState: LoginState, formData: FormData): P
   if (await hasJobsEmployer(data.user.id)) {
     redirect(await jobsPath("/employer"));
   }
+
+  // Unless they were sent here from a job advert, in which case the useful
+  // place is that advert, not a dashboard that says nothing about why they
+  // logged in. The dashboard is one tap away from there.
+  const intent = await getApplyIntent();
+  if (intent) redirect(await jobsPath(`/vacancies/${intent}`));
+
   redirect(await jobsPath("/dashboard"));
 }

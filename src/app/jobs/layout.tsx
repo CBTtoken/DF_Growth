@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { JOBS_ORIGIN } from "@/lib/jobs/host";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 
 // KatisoBiz Jobs' own metadata. metadataBase is Jobs' own subdomain, not the
 // current hostname, so every canonical and og:image resolves to
@@ -32,6 +33,17 @@ export const metadata: Metadata = {
   },
 };
 
+// The header is mounted here, not per page. It used to be added by hand and
+// reached five of nineteen pages: every screen behind a login, including
+// both dashboards, had no menu and no way out at all. Dewald, 7 August:
+// "check the menus there are none that make sense, also for the Employer."
+// Mounting it in the layout is what makes that permanently true, including
+// for pages nobody has written yet.
 export default function JobsLayout({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-full flex-1 flex-col bg-white text-neutral-900">{children}</div>;
+  return (
+    <div className="flex min-h-full flex-1 flex-col bg-white text-neutral-900">
+      <JobsHeader />
+      {children}
+    </div>
+  );
 }

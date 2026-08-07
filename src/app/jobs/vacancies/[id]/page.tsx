@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
-import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { ReportListingForm } from "@/components/jobs/ReportListingForm";
 import { reportVacancy } from "@/app/jobs/find-people/actions";
 import { applyToVacancy } from "@/app/jobs/vacancies/actions";
@@ -44,6 +44,152 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
+/**
+ * Three states, because there are exactly three things that can be true of
+ * somebody standing in front of an advert: they can apply right now, they
+ * are logged in but have nothing to send yet, or they are a stranger.
+ */
+type ApplyState =
+  | { kind: "ready"; firstName: string }
+  | { kind: "no_cv" }
+  | { kind: "anonymous" };
+
+async function resolveApplyState(): Promise<ApplyState> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { kind: "anonymous" };
+
+  const admin = createAdminClient();
+  const { data: candidate } = await admin
+    .from("jobs_candidates")
+    .select("full_name")
+    .eq("owner_user_id", user.id)
+    .is("deleted_at", null)
+    .maybeSingle();
+
+  // A name is the one field an application is useless without, and it is
+  // the same test applyToVacancy applies server-side, so the button never
+  // promises something the action will refuse.
+  if (!candidate?.full_name?.trim()) return { kind: "no_cv" };
+  return { kind: "ready", firstName: candidate.full_name.trim().split(" ")[0] };
+}
+
+function ApplyBox({
+  vacancyId,
+  employerName,
+  employerPhone,
+  state,
+  cvHref,
+  loginHref,
+}: {
+  vacancyId: string;
+  employerName: string;
+  employerPhone: string | null;
+  state: ApplyState;
+  cvHref: string;
+  loginHref: string;
+}) {
+  const contactLine = employerPhone ? (
+    <p className="mt-3 text-sm text-neutral-600">
+      Or contact {employerName} on{" "}
+      <a
+        href={`tel:${employerPhone.replace(/\s/g, "")}`}
+        className="font-semibold text-neutral-900 underline-offset-2 hover:underline"
+      >
+        {employerPhone}
+      </a>{" "}
+      and mention you saw the job on KatisoBiz Jobs.
+    </p>
+  ) : null;
+
+  return (
+    <div className="mt-8 rounded-xl border border-neutral-100 bg-neutral-50 p-4">
+      <p className="text-sm font-bold text-neutral-900">How to apply</p>
+
+      {state.kind === "ready" && (
+        <>
+          <p className="mt-1 text-sm text-neutral-700">
+            One tap, free. {employerName} gets your CV and can contact you directly.
+          </p>
+          <form action={applyToVacancy} className="mt-3 flex flex-col gap-3">
+            <input type="hidden" name="vacancyId" value={vacancyId} />
+            <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
+              Anything you want to say to {employerName}? Optional.
+              <textarea
+                name="coverMessage"
+                rows={3}
+                maxLength={600}
+                placeholder="I have five years doing exactly this work and I live ten minutes away."
+                className="rounded-xl border border-neutral-200 bg-white px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+              />
+              <span className="font-normal text-neutral-400">
+                A sentence or two about why this job suits you. Your CV goes either way.
+              </span>
+            </label>
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
+            >
+              Apply with my CV
+            </button>
+          </form>
+        </>
+      )}
+
+      {state.kind === "no_cv" && (
+        <>
+          <p className="mt-1 text-sm text-neutral-700">
+            You need a CV before you can apply. It takes a few minutes on your phone, it is free, and we
+            bring you straight back to this job afterwards.
+          </p>
+          <form action={applyToVacancy} className="mt-3">
+            <input type="hidden" name="vacancyId" value={vacancyId} />
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
+            >
+              Build my CV and apply
+            </button>
+          </form>
+        </>
+      )}
+
+      {state.kind === "anonymous" && (
+        <>
+          <p className="mt-1 text-sm text-neutral-700">
+            Applying is free and takes one tap once you have a CV here. Build one now and we bring you
+            straight back to this job.
+          </p>
+          <form action={applyToVacancy} className="mt-3">
+            <input type="hidden" name="vacancyId" value={vacancyId} />
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
+            >
+              Build a free CV and apply
+            </button>
+          </form>
+          <p className="mt-2 text-center text-sm text-neutral-600">
+            Already have an account?{" "}
+            <Link href={loginHref} className="font-semibold text-neutral-900 underline underline-offset-2">
+              Log in
+            </Link>{" "}
+            or{" "}
+            <Link href={cvHref} className="font-semibold text-neutral-900 underline underline-offset-2">
+              upload a CV you already have
+            </Link>
+            .
+          </p>
+        </>
+      )}
+
+      {contactLine}
+    </div>
+  );
+}
+
 export default async function VacancyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const v = await getVacancy(id);
@@ -52,11 +198,20 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
   const employer = v.jobs_employers as unknown as { business_name: string; phone: string | null } | null;
   const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
   const expired = vacancyIsExpired(v.expires_at);
-  const backHref = await jobsPath("/vacancies");
+  const [backHref, cvHref, loginHref] = await Promise.all([
+    jobsPath("/vacancies"),
+    jobsPath("/cv"),
+    jobsPath("/login"),
+  ]);
+
+  // What the apply box should say depends on what this visitor already
+  // has, and until now it said the same thing to everybody: "Apply with my
+  // CV", which for a logged-out visitor silently meant "start building a
+  // CV and forget this job". Telling somebody what will happen before they
+  // tap is the whole of the fix.
+  const applyState = await resolveApplyState();
 
   return (
-    <>
-      <JobsHeader />
     <main className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
         <Link href={backHref} className="text-sm font-medium text-neutral-500 hover:text-neutral-900">
@@ -94,31 +249,14 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
         </div>
 
         {!expired && employer && (
-          <div className="mt-8 rounded-xl border border-neutral-100 bg-neutral-50 p-4">
-            <p className="text-sm font-bold text-neutral-900">How to apply</p>
-            <p className="mt-1 text-sm text-neutral-700">
-              Apply with your KatisoBiz CV in one tap, free. {employer.business_name} sees your CV and can
-              contact you directly.
-            </p>
-            <form action={applyToVacancy} className="mt-3">
-              <input type="hidden" name="vacancyId" value={id} />
-              <button
-                type="submit"
-                className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
-              >
-                Apply with my CV
-              </button>
-            </form>
-            {employer.phone && (
-              <p className="mt-3 text-sm text-neutral-600">
-                Or contact {employer.business_name} on{" "}
-                <a href={`tel:${employer.phone.replace(/\s/g, "")}`} className="font-semibold text-neutral-900 underline-offset-2 hover:underline">
-                  {employer.phone}
-                </a>{" "}
-                and mention you saw the job on KatisoBiz Jobs.
-              </p>
-            )}
-          </div>
+          <ApplyBox
+            vacancyId={id}
+            employerName={employer.business_name}
+            employerPhone={employer.phone}
+            state={applyState}
+            cvHref={cvHref}
+            loginHref={loginHref}
+          />
         )}
 
         <div className="mt-6 rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-800">
@@ -132,6 +270,5 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
       </section>
       <JobsFooter />
     </main>
-    </>
   );
 }

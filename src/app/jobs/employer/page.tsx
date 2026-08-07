@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getMyJobsEmployer } from "@/lib/jobs/employer";
-import { renewVacancy } from "@/app/jobs/employer/actions";
+import { renewVacancy, updateEmployerDetails } from "@/app/jobs/employer/actions";
 import { publishVacancy, closeVacancy } from "@/app/jobs/employer/post/actions";
 import { vacancyIsExpired, vacancyNearingExpiry } from "@/lib/jobs/entitlements";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
@@ -195,6 +195,62 @@ export default async function EmployerDashboardPage() {
             })}
           </ul>
         )}
+
+        {/* Business details. Behind a tap because changing them is rare
+            and posting is not (INTERFACE-STANDARD.md: show the common
+            thing, hide the rare thing), but reachable, which it was not
+            at all before: the business name is the byline on every advert
+            and the phone number is printed publicly on each one. */}
+        <details className="mt-10 rounded-xl border border-neutral-100 bg-white shadow-sm">
+          <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-bold text-neutral-900">
+            My business details
+            <span className="ml-2 font-normal text-neutral-400">Name, phone and where alerts go</span>
+          </summary>
+          <form action={updateEmployerDetails} className="flex flex-col gap-3 border-t border-neutral-100 p-4">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
+              Business name
+              <input
+                name="businessName"
+                defaultValue={employer.businessName}
+                required
+                className="rounded-xl border border-neutral-200 px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+              />
+              <span className="font-normal text-neutral-400">This is the name on every advert you post.</span>
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
+              Contact number
+              <input
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                defaultValue={employer.phone ?? ""}
+                className="rounded-xl border border-neutral-200 px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+              />
+              <span className="font-normal text-neutral-400">
+                Shown publicly on your adverts so a candidate can call you. Leave it blank to keep it private.
+              </span>
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
+              Where we send application alerts
+              <input
+                name="email"
+                type="email"
+                inputMode="email"
+                defaultValue={employer.email}
+                className="rounded-xl border border-neutral-200 px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+              />
+              <span className="font-normal text-neutral-400">
+                We email you here the moment somebody applies. It is not your login address.
+              </span>
+            </label>
+            <button
+              type="submit"
+              className="self-start rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Save my details
+            </button>
+          </form>
+        </details>
 
         {(savedRows ?? []).length > 0 && (
           <>

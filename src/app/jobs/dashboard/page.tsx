@@ -11,7 +11,7 @@ import {
   experienceLevelLabel,
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
-import { updateAvailability, toggleListed } from "@/app/jobs/dashboard/actions";
+import { updateAvailability, toggleListed, updateMyDetails } from "@/app/jobs/dashboard/actions";
 
 export const metadata: Metadata = {
   title: { absolute: "My dashboard | KatisoBiz Jobs" },
@@ -124,12 +124,14 @@ export default async function SeekerDashboardPage({
       }));
   }
 
-  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix] = await Promise.all([
+  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix, importHref, faqHref] = await Promise.all([
     jobsPath("/cv"),
     jobsPath(`/cv/${candidate.id}/pdf`),
     jobsPath(`/cv/${candidate.id}/docx`),
     jobsPath("/vacancies"),
     jobsPath("/vacancies"),
+    jobsPath("/cv/import"),
+    jobsPath("/faq"),
   ]);
 
   const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === candidate.availability)?.label;
@@ -187,6 +189,17 @@ export default async function SeekerDashboardPage({
                 Download Word
               </a>
             </div>
+            {/* The upload route existed but was reachable only from the
+                home page and the first question of the builder, which is
+                no use to somebody who has already made an account.
+                Dewald: "it is not very clear where they can import their
+                existing CV." */}
+            <Link
+              href={importHref}
+              className="mt-3 inline-block text-sm font-semibold text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
+            >
+              Fill this in from a CV file I already have
+            </Link>
           </div>
 
           {/* Listing */}
@@ -289,16 +302,65 @@ export default async function SeekerDashboardPage({
             )}
           </div>
 
-          {/* Profile */}
+          {/* Profile. This was three lines of read-only text and the
+              instruction "Change anything by editing your CV", which was
+              not true in any useful sense: the builder opened on its last
+              screen and the name and phone questions were ten taps of Back
+              away. It is a form now, and the builder can be jumped into
+              per section as well. */}
           <div className={card}>
             <p className="text-sm font-bold text-neutral-900">My details</p>
-            <p className="mt-1 text-sm text-neutral-600">
-              {[candidate.full_name, candidate.phone, candidate.email ?? user.email]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
             <p className="mt-1 text-xs text-neutral-500">
-              Change anything by editing your CV. We never ask for your ID number or bank details.
+              This is what an employer sees and how they reach you. We never ask for your ID number or
+              bank details.
+            </p>
+            <form action={updateMyDetails} className="mt-3 flex flex-col gap-3">
+              <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
+                Your name
+                <input
+                  name="fullName"
+                  defaultValue={candidate.full_name ?? ""}
+                  required
+                  autoComplete="name"
+                  className="rounded-xl border border-neutral-200 px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
+                Contact number
+                <input
+                  name="phone"
+                  type="tel"
+                  inputMode="tel"
+                  defaultValue={candidate.phone ?? ""}
+                  required
+                  autoComplete="tel"
+                  className="rounded-xl border border-neutral-200 px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+                />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-semibold text-neutral-600">
+                Contact email
+                <input
+                  name="email"
+                  type="email"
+                  inputMode="email"
+                  defaultValue={candidate.email ?? user.email ?? ""}
+                  autoComplete="email"
+                  className="rounded-xl border border-neutral-200 px-3 py-2.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900"
+                />
+              </label>
+              <button
+                type="submit"
+                className="self-start rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
+              >
+                Save my details
+              </button>
+            </form>
+            <p className="mt-3 border-t border-neutral-100 pt-3 text-xs text-neutral-500">
+              You log in with {user.email}. To change that address, send us a message from the{" "}
+              <Link href={faqHref} className="font-semibold text-neutral-700 underline underline-offset-2">
+                questions page
+              </Link>
+              .
             </p>
           </div>
         </div>

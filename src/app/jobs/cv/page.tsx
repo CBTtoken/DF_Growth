@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveCandidateRow } from "@/app/jobs/cv/actions";
 import { CvBuilder } from "@/components/jobs/CvBuilder";
 import { jobsCanonical } from "@/lib/jobs/host";
+import { getApplyIntent } from "@/lib/jobs/apply-intent";
 import type { OccupationPick } from "@/lib/jobs/cv-conversation";
 
 export const metadata: Metadata = {
@@ -13,8 +14,29 @@ export const metadata: Metadata = {
   alternates: { canonical: jobsCanonical("/cv") },
 };
 
-export default async function CvBuilderPage() {
+export default async function CvBuilderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ imported?: string }>;
+}) {
+  const { imported } = await searchParams;
   const candidate = await resolveCandidateRow();
+
+  // Did they come here from a job advert? If so the finished CV should
+  // offer the thing they actually came for, by name, rather than a
+  // dashboard link. Looked up here rather than in the builder so the
+  // client never has to know the vacancy exists.
+  const intentId = await getApplyIntent();
+  let applyIntent: { id: string; title: string } | null = null;
+  if (intentId) {
+    const { data: vacancy } = await createAdminClient()
+      .from("jobs_vacancies")
+      .select("id, title, status")
+      .eq("id", intentId)
+      .eq("status", "published")
+      .maybeSingle();
+    if (vacancy) applyIntent = { id: vacancy.id, title: vacancy.title };
+  }
 
   // The row stores only the primary occupation's code (the secondaries
   // carry their titles in jsonb); resolve the primary's official title here
@@ -34,5 +56,12 @@ export default async function CvBuilderPage() {
     }
   }
 
-  return <CvBuilder initialCandidate={candidate} initialOccupations={initialOccupations} />;
+  return (
+    <CvBuilder
+      initialCandidate={candidate}
+      initialOccupations={initialOccupations}
+      fromImport={imported === "1"}
+      applyIntent={applyIntent}
+    />
+  );
 }

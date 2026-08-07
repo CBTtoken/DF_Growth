@@ -63,7 +63,11 @@ export function CvImport() {
         setError(result.error);
         return;
       }
-      router.push(cvHref);
+      // ?imported=1 is what tells the builder to ask the one question a
+      // file cannot answer (the official occupation) and then go straight
+      // to the finished CV, instead of walking eight more screens the
+      // upload has already filled in.
+      router.push(`${cvHref}?imported=1`);
     });
   }
 

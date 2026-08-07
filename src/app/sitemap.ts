@@ -112,6 +112,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${jobsUrl}/vacancies`, changeFrequency: "daily", priority: 1 },
       { url: `${jobsUrl}/find-people`, changeFrequency: "daily", priority: 0.9 },
       { url: `${jobsUrl}/employers`, changeFrequency: "weekly", priority: 0.8 },
+      // Both added at launch. They are the two pages that answer "what is
+      // this and can I trust it", which is most of what a brand-new jobs
+      // site gets searched for, and the shop taught this estate twice that
+      // a public page missing from the sitemap simply does not get found.
+      { url: `${jobsUrl}/how-it-works`, changeFrequency: "monthly", priority: 0.7 },
+      { url: `${jobsUrl}/faq`, changeFrequency: "monthly", priority: 0.7 },
       { url: `${jobsUrl}/signup`, changeFrequency: "monthly", priority: 0.5 },
       ...(vacancies ?? []).map((v) => ({
         url: `${jobsUrl}/vacancies/${v.id}`,

@@ -43,9 +43,29 @@ const emptyWorkEntry: WorkHistoryEntry = { employer: "", role: "", start: "", en
 export function CvBuilder({
   initialCandidate,
   initialOccupations,
+  fromImport = false,
+  applyIntent = null,
 }: {
   initialCandidate: CvRow | null;
   initialOccupations: OccupationPick[];
+  /**
+   * Arrived here straight from the CV upload. Dewald, 7 August: "there
+   * should also be an option at onboarding to skip all the steps if they
+   * have a ready CV they just want to add." The upload fills everything a
+   * file can carry; the one thing it cannot is the official OFO occupation,
+   * which is what every match and every browse filter runs on. So the
+   * import lands on that single question and then goes straight to the
+   * finished CV, rather than walking the person through eight screens of
+   * answers they have already given.
+   */
+  fromImport?: boolean;
+  /**
+   * The advert they were trying to apply for when we sent them here to
+   * build a CV. Carried so the finished CV can offer that job by name
+   * instead of a dashboard link, which is what closes the loop the
+   * walkthrough found broken.
+   */
+  applyIntent?: { id: string; title: string } | null;
 }) {
   const [candidate, setCandidate] = useState(initialCandidate);
   const [starting, startTransition] = useTransition();
@@ -68,15 +88,26 @@ export function CvBuilder({
     );
   }
 
-  return <CvBuilderScreens candidate={candidate} initialOccupations={initialOccupations} />;
+  return (
+    <CvBuilderScreens
+      candidate={candidate}
+      initialOccupations={initialOccupations}
+      fromImport={fromImport}
+      applyIntent={applyIntent}
+    />
+  );
 }
 
 function CvBuilderScreens({
   candidate,
   initialOccupations,
+  fromImport,
+  applyIntent,
 }: {
   candidate: CvRow;
   initialOccupations: OccupationPick[];
+  fromImport: boolean;
+  applyIntent: { id: string; title: string } | null;
 }) {
   const [id] = useState(candidate.id);
   const [step, setStep] = useState<StepId>(candidate.cv_step ?? "name");
@@ -101,6 +132,7 @@ function CvBuilderScreens({
   const signupHref = useJobsPath("/signup");
   const dashboardHref = useJobsPath("/dashboard");
   const importHref = useJobsPath("/cv/import");
+  const vacancyPrefix = useJobsPath("/vacancies");
 
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -133,7 +165,29 @@ function CvBuilderScreens({
   // No occupations means no branch to scope to; derived, not set in the effect.
   const branchSkills = occupationCodes ? fetchedSkills : [];
 
-  function go(target: StepId, patch: Parameters<typeof saveCvAnswer>[1]) {
+  // Editing an answer on a finished CV, rather than walking the wizard
+  // forward. Dewald, 7 August: "the job seeker can't edit their contact
+  // details, add or edit job history."
+  //
+  // He was right, and the cause was structural rather than a missing
+  // button. The wizard is a straight line, a finished CV opens on the last
+  // screen of it, and the only way back to the name and phone questions was
+  // the Back button pressed ten times. So a jump sets this flag, and the
+  // step it lands on saves and returns straight to the review screen
+  // instead of continuing forward through eight screens the person has
+  // already answered. One mechanism, and the import skip (below) is the
+  // same mechanism pointed at a different starting step.
+  const [returnToReview, setReturnToReview] = useState(fromImport);
+
+  function jumpTo(target: StepId) {
+    setError(null);
+    setNotice(null);
+    setReturnToReview(true);
+    setStep(target);
+  }
+
+  function go(patch: Parameters<typeof saveCvAnswer>[1]) {
+    const target = returnToReview ? "review" : nextStep(step);
     setError(null);
     startSaving(async () => {
       const result = await saveCvAnswer(id, { ...patch, cv_step: target });
@@ -142,17 +196,39 @@ function CvBuilderScreens({
         return;
       }
       setNotice(result.redacted ? "We removed something that looked like an ID or bank number." : null);
+      setReturnToReview(false);
       setStep(target);
     });
   }
+
+  // What the forward button says. On a jump it is going back to the
+  // finished CV, and saying "Continue" there would suggest seven more
+  // screens are coming.
+  const forwardLabel = returnToReview ? "Save and go back" : "Continue";
 
   const idx = stepIndex(step);
   const total = STEP_ORDER.length;
 
   return (
     <main className="flex flex-1 flex-col bg-white">
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-neutral-100 bg-white/95 px-4 py-3 backdrop-blur">
-        {idx > 0 ? (
+      {/* Not sticky any more: the Jobs menu is sticky at the top of every
+          page now, and two bars pinned to the same edge on a phone leaves
+          almost no room for the question itself. */}
+      <div className="flex items-center gap-3 border-b border-neutral-100 bg-white px-4 py-3">
+        {returnToReview ? (
+          // Mid-edit, Back means abandon this edit and return to the CV,
+          // not step backwards into a question nobody asked to see.
+          <button
+            type="button"
+            onClick={() => {
+              setReturnToReview(false);
+              setStep("review");
+            }}
+            className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
+          >
+            &larr; Back to my CV
+          </button>
+        ) : idx > 0 ? (
           <button
             type="button"
             onClick={() => setStep(previousStep(step))}
@@ -165,9 +241,11 @@ function CvBuilderScreens({
             &larr; Home
           </Link>
         )}
-        <div className="ml-auto h-1.5 w-32 overflow-hidden rounded-full bg-neutral-100">
-          <div className="h-full bg-neutral-900 transition-all" style={{ width: `${((idx + 1) / total) * 100}%` }} />
-        </div>
+        {!returnToReview && (
+          <div className="ml-auto h-1.5 w-32 overflow-hidden rounded-full bg-neutral-100">
+            <div className="h-full bg-neutral-900 transition-all" style={{ width: `${((idx + 1) / total) * 100}%` }} />
+          </div>
+        )}
       </div>
 
       {notice && (
@@ -179,23 +257,35 @@ function CvBuilderScreens({
         {step === "name" && (
           <Question title="What's your name?">
             <TextField autoFocus value={fullName} onChange={setFullName} placeholder="Sipho Ndlovu" autoComplete="name" />
-            <Primary disabled={!fullName.trim() || saving} onClick={() => go(nextStep(step), { full_name: fullName })}>
-              Continue
+            <Primary disabled={!fullName.trim() || saving} onClick={() => go({ full_name: fullName })}>
+              {forwardLabel}
             </Primary>
-            <Link
-              href={importHref}
-              className="mt-1 text-center text-sm font-medium text-neutral-500 underline-offset-2 hover:text-neutral-900 hover:underline"
-            >
-              Already have a CV? Upload it instead
-            </Link>
+            {/* Dewald, 7 August: "it is not very clear where they can
+                import their existing CV." It was a grey underlined line
+                under the button, which on a phone reads as small print.
+                It is now the second real choice on the first screen, and
+                it says what it saves you rather than what it does. */}
+            {!returnToReview && (
+              <Link
+                href={importHref}
+                className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-neutral-900 px-6 py-3.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+              >
+                I already have a CV, upload it instead
+              </Link>
+            )}
+            {!returnToReview && (
+              <p className="text-center text-xs text-neutral-500">
+                Upload a PDF or Word CV and we fill this in for you. One question left after that.
+              </p>
+            )}
           </Question>
         )}
 
         {step === "phone" && (
           <Question title="What's the best number to reach you on?">
             <TextField type="tel" value={phone} onChange={setPhone} placeholder="082 555 0134" autoComplete="tel" />
-            <Primary disabled={!phone.trim() || saving} onClick={() => go(nextStep(step), { phone })}>
-              Continue
+            <Primary disabled={!phone.trim() || saving} onClick={() => go({ phone })}>
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -209,6 +299,12 @@ function CvBuilderScreens({
                 : `Start typing and tap the one that fits. You can pick up to ${MAX_ROLES}; the first is your headline.`
             }
           >
+            {fromImport && (
+              <p className="rounded-xl bg-accent-light px-4 py-3 text-sm text-neutral-800">
+                We have everything else from your CV. This is the last question: it is what puts you in
+                front of the right employers.
+              </p>
+            )}
             {occupations.length > 0 && (
               <div className="flex flex-wrap gap-2 rounded-xl bg-neutral-50 p-3">
                 {occupations.map((o) => (
@@ -235,13 +331,13 @@ function CvBuilderScreens({
             <Primary
               disabled={occupations.length === 0 || saving}
               onClick={() =>
-                go(nextStep(step), {
+                go({
                   ofo_occupation_code: occupations[0]?.code ?? null,
                   secondary_ofo_codes: occupations.slice(1),
                 })
               }
             >
-              Continue
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -264,9 +360,9 @@ function CvBuilderScreens({
             />
             <Primary
               disabled={years.trim() === "" || saving}
-              onClick={() => go(nextStep(step), { years_experience: Number(years) })}
+              onClick={() => go({ years_experience: Number(years) })}
             >
-              Continue
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -282,9 +378,9 @@ function CvBuilderScreens({
             </div>
             <Primary
               disabled={!experienceLevel || saving}
-              onClick={() => go(nextStep(step), { experience_level: experienceLevel as ExperienceLevel })}
+              onClick={() => go({ experience_level: experienceLevel as ExperienceLevel })}
             >
-              Continue
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -300,8 +396,8 @@ function CvBuilderScreens({
                 </Chip>
               ))}
             </div>
-            <Primary disabled={!suburb.trim() || !province || saving} onClick={() => go(nextStep(step), { suburb, province })}>
-              Continue
+            <Primary disabled={!suburb.trim() || !province || saving} onClick={() => go({ suburb, province })}>
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -317,9 +413,9 @@ function CvBuilderScreens({
             </div>
             <Primary
               disabled={!availability || saving}
-              onClick={() => go(nextStep(step), { availability: availability as "immediately" | "within_2_weeks" | "flexible" })}
+              onClick={() => go({ availability: availability as "immediately" | "within_2_weeks" | "flexible" })}
             >
-              Continue
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -370,8 +466,8 @@ function CvBuilderScreens({
                 Add
               </button>
             </div>
-            <Primary disabled={saving} onClick={() => go(nextStep(step), { skills })}>
-              Continue
+            <Primary disabled={saving} onClick={() => go({ skills })}>
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -426,8 +522,8 @@ function CvBuilderScreens({
               </button>
             </div>
 
-            <Primary disabled={saving} onClick={() => go(nextStep(step), { work_history: workHistory })}>
-              {workHistory.length > 0 ? "Continue" : "Skip, I have no work history yet"}
+            <Primary disabled={saving} onClick={() => go({ work_history: workHistory })}>
+              {workHistory.length > 0 ? forwardLabel : "Skip, I have no work history yet"}
             </Primary>
           </Question>
         )}
@@ -441,8 +537,8 @@ function CvBuilderScreens({
               placeholder="Hard worker, reliable, good with people..."
               className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-base text-neutral-900 outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10"
             />
-            <Primary disabled={saving} onClick={() => go(nextStep(step), { summary })}>
-              Continue
+            <Primary disabled={saving} onClick={() => go({ summary })}>
+              {forwardLabel}
             </Primary>
           </Question>
         )}
@@ -454,6 +550,11 @@ function CvBuilderScreens({
             signupHref={signupHref}
             homeHref={homeHref}
             dashboardHref={dashboardHref}
+            onEdit={jumpTo}
+            applyIntent={applyIntent}
+            vacancyPrefix={vacancyPrefix}
+            phone={phone}
+            experienceLevel={experienceLevel}
             fullName={fullName}
             roleLabels={occupations.map((o) => o.title)}
             years={years}
@@ -563,12 +664,57 @@ function Primary({ children, onClick, disabled }: { children: React.ReactNode; o
   );
 }
 
+function experienceLevelLabelOf(id: string): string | null {
+  return EXPERIENCE_LEVEL_OPTIONS.find((o) => o.id === id)?.label ?? null;
+}
+
+/**
+ * One line of the finished CV, with the tap that opens the question behind
+ * it. An empty section is never a blank space: it says what is missing,
+ * marked so the eye finds it, with the same Add tap (INTERFACE-STANDARD.md:
+ * an empty state says what will appear here and what to do about it).
+ */
+function ReviewRow({
+  label,
+  children,
+  onEdit,
+  missing,
+}: {
+  label: string;
+  children: React.ReactNode;
+  onEdit: () => void;
+  missing: boolean;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{label}</p>
+        <div className={`mt-0.5 break-words text-sm ${missing ? "text-neutral-400" : "text-neutral-800"}`}>
+          {children}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onEdit}
+        className="shrink-0 rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+      >
+        {missing ? "Add" : "Edit"}
+      </button>
+    </div>
+  );
+}
+
 function ReviewStep({
   candidateId,
   pdfPrefix,
   signupHref,
   homeHref,
   dashboardHref,
+  onEdit,
+  applyIntent,
+  vacancyPrefix,
+  phone,
+  experienceLevel,
   fullName,
   roleLabels,
   years,
@@ -593,6 +739,12 @@ function ReviewStep({
   signupHref: string;
   homeHref: string;
   dashboardHref: string;
+  /** Open one question for editing and come straight back here. */
+  onEdit: (step: StepId) => void;
+  applyIntent: { id: string; title: string } | null;
+  vacancyPrefix: string;
+  phone: string;
+  experienceLevel: string;
   fullName: string;
   roleLabels: string[];
   years: string;
@@ -650,23 +802,57 @@ function ReviewStep({
     <div className="mx-auto flex w-full max-w-md flex-col gap-4">
       <h1 className="text-2xl font-bold text-neutral-900">Your CV, ready</h1>
 
-      <div className="flex flex-col gap-2 rounded-xl border border-neutral-100 bg-neutral-50 p-4 text-sm text-neutral-700">
-        <p><strong>{fullName}</strong></p>
-        <p>{roleLabels.join(", ")}{years ? ` · ${years} years' experience` : ""}</p>
-        <p>{suburb}{province ? `, ${province}` : ""}</p>
-        {availabilityLabel && <p>Available: {availabilityLabel}</p>}
-        {skillLabels.length > 0 && <p>Skills: {skillLabels.join(", ")}</p>}
-        {workHistory.length > 0 && (
-          <div>
-            <p className="mt-2 font-semibold text-neutral-900">Work history</p>
-            {workHistory.map((w, i) => (
-              <p key={i}>
-                {w.role} at {w.employer} ({w.start} to {w.current ? "present" : w.end})
-              </p>
-            ))}
-          </div>
-        )}
-        {summary && <p className="mt-2 italic">&ldquo;{summary}&rdquo;</p>}
+      {/* Every part of the CV, each with its own way in. This replaced one
+          flat grey block of text that could be read and nothing else:
+          "Edit my CV" from the dashboard reopened this same screen, so the
+          only route to the name and phone questions was ten taps of Back.
+          Anything empty says so and offers the same tap to fill it, which
+          is what makes the screen work for somebody who uploaded a CV and
+          skipped the questions. */}
+      <div className="flex flex-col divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-100 bg-white">
+        <ReviewRow label="Your details" onEdit={() => onEdit("name")} missing={!fullName.trim() || !phone.trim()}>
+          {[fullName, phone].filter((v) => v?.trim()).join(" · ") || "No name or number yet"}
+        </ReviewRow>
+
+        <ReviewRow label="The work you do" onEdit={() => onEdit("primary_role")} missing={roleLabels.length === 0}>
+          {roleLabels.join(", ") || "Not chosen yet"}
+        </ReviewRow>
+
+        <ReviewRow
+          label="Experience"
+          onEdit={() => onEdit("years_experience")}
+          missing={!years && !experienceLevel}
+        >
+          {[years ? `${years} years` : null, experienceLevelLabelOf(experienceLevel)]
+            .filter(Boolean)
+            .join(" · ") || "Not said yet"}
+        </ReviewRow>
+
+        <ReviewRow label="Where you are" onEdit={() => onEdit("location")} missing={!suburb || !province}>
+          {[suburb, province].filter(Boolean).join(", ") || "Not said yet"}
+        </ReviewRow>
+
+        <ReviewRow label="When you can start" onEdit={() => onEdit("availability")} missing={!availability}>
+          {availabilityLabel ?? "Not said yet"}
+        </ReviewRow>
+
+        <ReviewRow label="What you can do" onEdit={() => onEdit("skills")} missing={skillLabels.length === 0}>
+          {skillLabels.join(", ") || "No skills added yet"}
+        </ReviewRow>
+
+        <ReviewRow label="Work history" onEdit={() => onEdit("work_history")} missing={workHistory.length === 0}>
+          {workHistory.length === 0
+            ? "Nothing added yet"
+            : workHistory.map((w, i) => (
+                <span key={i} className="block">
+                  {w.role} at {w.employer} ({w.start} to {w.current ? "present" : w.end})
+                </span>
+              ))}
+        </ReviewRow>
+
+        <ReviewRow label="About you" onEdit={() => onEdit("summary")} missing={!summary.trim()}>
+          {summary.trim() || "Nothing written yet"}
+        </ReviewRow>
       </div>
 
       {/* Write with AI: drafts the whole CV's prose from the answers
@@ -837,6 +1023,26 @@ function ReviewStep({
       >
         Download as Word
       </a>
+
+      {/* They came here to apply for one specific job. Offer that job, by
+          name, above everything else: the walkthrough's worst dead end was
+          a person finishing a CV on this screen with no reminder of what
+          they had been trying to do. */}
+      {applyIntent && isLoggedIn && (
+        <Link
+          href={`${vacancyPrefix}/${applyIntent.id}`}
+          className="inline-flex w-full items-center justify-center rounded-full bg-accent px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-accent-hover"
+        >
+          Apply for {applyIntent.title} now
+        </Link>
+      )}
+
+      {applyIntent && !isLoggedIn && (
+        <p className="rounded-xl bg-accent-light px-4 py-3 text-sm text-neutral-800">
+          Save your CV below and we take you straight back to{" "}
+          <strong>{applyIntent.title}</strong> to apply.
+        </p>
+      )}
 
       {isLoggedIn && (
         <Link

@@ -26,6 +26,8 @@ export type JobsLandingData = {
     employers: string;
     login: string;
     vacancyPrefix: string;
+    howItWorks: string;
+    faq: string;
   };
 };
 
@@ -108,6 +110,19 @@ export function JobsLanding({ data }: { data: JobsLandingData }) {
             </p>
           </div>
         </div>
+
+        {/* We are new, said plainly. Dewald: "we are new, should we add
+            something about that because it is all empty once we go
+            public." Two real numbers next to each other with nothing
+            explaining them reads as a failed product rather than a new
+            one, and the numbers are never inflated to fix that
+            (INTERFACE-STANDARD.md: never invent data in an interface). So
+            the numbers stay honest and the sentence does the work. */}
+        <p className="mx-auto mt-5 max-w-xl text-center text-sm leading-relaxed text-neutral-600">
+          <span className="font-semibold text-neutral-ink">We have just opened.</span> The board fills up as
+          employers post, and it is worth building your CV now: it is free, it is yours to download either
+          way, and you are already listed when the right job arrives.
+        </p>
       </section>
 
       {/* The running board: only when there is something real to run. */}
@@ -167,12 +182,70 @@ export function JobsLanding({ data }: { data: JobsLandingData }) {
         </div>
       </section>
 
+      {/* Two ways to find out more before committing to anything. Both
+          pages are public and indexed; this is the internal link that
+          gets them crawled. */}
+      <section className="mx-auto flex w-full max-w-4xl flex-col gap-3 px-4 pb-10 sm:flex-row sm:px-6">
+        <Link
+          href={hrefs.howItWorks}
+          className="flex-1 rounded-2xl border border-neutral-100 bg-white p-4 transition hover:border-neutral-300"
+        >
+          <p className="font-bold text-neutral-ink">How it works</p>
+          <p className="mt-1 text-sm text-neutral-600">
+            Every step, for job seekers and for employers, before you start.
+          </p>
+        </Link>
+        <Link
+          href={hrefs.faq}
+          className="flex-1 rounded-2xl border border-neutral-100 bg-white p-4 transition hover:border-neutral-300"
+        >
+          <p className="font-bold text-neutral-ink">Questions and answers</p>
+          <p className="mt-1 text-sm text-neutral-600">
+            What it costs, who sees your CV, and a place to ask us anything.
+          </p>
+        </Link>
+      </section>
+
       {/* One safety line, because it is the promise the whole product makes. */}
       <section className="bg-accent-light px-4 py-5 text-center sm:px-6">
         <p className="mx-auto max-w-xl text-sm font-semibold text-neutral-ink">
           Applying never costs money, and we never ask for your ID number or bank details. Any post that
           asks a candidate to pay is held before it ever goes live.
         </p>
+      </section>
+
+      {/* Who is behind this. Dewald's ask: say that Jobs is part of the
+          KatisoBiz range and that DigitalFlyer SA owns and runs it, with
+          the tagline and a way through to both. It earns its place at
+          launch: a brand-new jobs site asking for a phone number has to
+          answer "who are you" somewhere on the first screen, and a real
+          registered company behind it is the answer. */}
+      <section className="border-t border-neutral-100 bg-neutral-ink px-4 py-10 text-center sm:px-6">
+        <p className="text-xs font-semibold uppercase tracking-wide text-white/50">
+          Part of the KatisoBiz range
+        </p>
+        <p className="mx-auto mt-3 max-w-lg text-2xl font-extrabold leading-tight text-white">
+          Get found. Get the job. <span className="text-accent">Get paid.</span>
+        </p>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-white/70">
+          KatisoBiz Jobs is built and run by DigitalFlyer SA. KatisoBiz is where a South African business
+          gets a page customers can find, sends quotes and invoices, and keeps its paperwork straight.
+          Jobs is the part that helps you get hired, and helps those businesses hire.
+        </p>
+        <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <a
+            href="https://katisobiz.co.za"
+            className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 sm:w-auto"
+          >
+            See KatisoBiz
+          </a>
+          <a
+            href="https://digitalflyer.co.za"
+            className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-white/30 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/10 sm:w-auto"
+          >
+            See DigitalFlyer SA
+          </a>
+        </div>
       </section>
     </div>
   );
