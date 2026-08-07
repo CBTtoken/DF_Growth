@@ -43,8 +43,15 @@ walking the flows: drafts spending the post allowance, and the free post
 "once ever" resetting every purge cycle (now a durable stamp).
 
 **Deliberately not done:** dropping the dead `jobs_taxonomy` table waited
-for Dewald's word (given later the same day, done in the follow-up);
-friendly names for the 40 OFO sub-major filters await his approval.
+for Dewald's word (given later the same day, done in the follow-up).
+
+**Follow-ups, same day:** `jobs_taxonomy` dropped with its referencing
+columns; the 40 friendly display names for the OFO sub-major browse
+filters shipped after Dewald's approval with his seven corrections
+(`src/lib/jobs/ofo-display.ts`, display only, official titles stay
+authoritative). One naming convention throughout: plain names, no
+colon-plus-examples, which measured 341px against the 273px a closed
+select offers at 375px.
 
 **Reached main?** Yes, all of it, 7 August 2026.
 

@@ -5,6 +5,7 @@ import { AVAILABILITY_OPTIONS } from "@/lib/jobs/cv-conversation";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
+import { ofoGroupDisplayName } from "@/lib/jobs/ofo-display";
 
 export const metadata: Metadata = {
   title: { absolute: "Find people looking for work | KatisoBiz Jobs" },
@@ -77,7 +78,7 @@ export default async function FindPeoplePage({
             >
               <option value="">Any type of work</option>
               {(groups ?? []).map((g) => (
-                <option key={g.code} value={g.code}>{g.label}</option>
+                <option key={g.code} value={g.code}>{ofoGroupDisplayName(g.code, g.label)}</option>
               ))}
             </select>
             <input

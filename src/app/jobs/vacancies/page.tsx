@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
+import { ofoGroupDisplayName } from "@/lib/jobs/ofo-display";
 
 export const metadata: Metadata = {
   title: { absolute: "Jobs near you | KatisoBiz Jobs" },
@@ -81,7 +82,7 @@ export default async function VacanciesPage({
               <option value="">Any type of work</option>
               {(groups ?? []).map((g) => (
                 <option key={g.code} value={g.code}>
-                  {g.label}
+                  {ofoGroupDisplayName(g.code, g.label)}
                 </option>
               ))}
             </select>
