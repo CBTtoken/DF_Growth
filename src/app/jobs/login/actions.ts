@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { loginSchema } from "@/lib/schemas/auth";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
 import { jobsPath } from "@/lib/jobs/host";
+import { hasJobsEmployer } from "@/lib/jobs/employer";
 
 type LoginState = { error?: Record<string, string[]> & { _form?: string[] } } | null;
 
@@ -39,5 +40,12 @@ export async function loginToJobs(_prevState: LoginState, formData: FormData): P
     return { error: { _form: ["Incorrect email or password."] } };
   }
 
+  // Routed by what the login actually owns, the same principle as
+  // resolveLandingPath: an employer account wins (they came to hire), a
+  // candidate lands on their CV. A login with neither is someone brand
+  // new, and their CV page creates itself on arrival.
+  if (await hasJobsEmployer(data.user.id)) {
+    redirect(await jobsPath("/employer"));
+  }
   redirect(await jobsPath("/cv"));
 }

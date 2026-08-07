@@ -17,7 +17,12 @@ export const metadata: Metadata = {
 // Nothing about employers or vacancies exists yet (Sprint 2), so there is
 // deliberately no second call to action competing for the same thumb.
 export default async function JobsHomePage() {
-  const [cvHref, loginHref] = await Promise.all([jobsPath("/cv"), jobsPath("/login")]);
+  const [cvHref, loginHref, vacanciesHref, employersHref] = await Promise.all([
+    jobsPath("/cv"),
+    jobsPath("/login"),
+    jobsPath("/vacancies"),
+    jobsPath("/employers"),
+  ]);
   return (
     <main className="flex flex-1 flex-col">
       <section className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-16 text-center">
@@ -34,12 +39,26 @@ export default async function JobsHomePage() {
         >
           Build my CV
         </Link>
+        <Link
+          href={vacanciesHref}
+          className="inline-flex w-full max-w-xs items-center justify-center rounded-full border border-neutral-200 px-8 py-3.5 text-base font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+        >
+          Browse jobs near you
+        </Link>
         {/* The returning person's way in, quiet so the one primary action
             stays primary (Dewald's walkthrough, point 3). */}
         <Link href={loginHref} className="text-sm font-medium text-neutral-500 underline-offset-2 hover:text-neutral-900 hover:underline">
           Already registered? Log in
         </Link>
         <p className="text-xs text-neutral-400">We never ask for your ID number or bank details.</p>
+      </section>
+      <section className="border-t border-neutral-100 bg-neutral-50 px-6 py-8 text-center">
+        <p className="text-sm text-neutral-600">
+          Hiring?{" "}
+          <Link href={employersHref} className="font-semibold text-neutral-900 hover:underline">
+            Post a job, your first one is free
+          </Link>
+        </p>
       </section>
       <JobsFooter />
     </main>

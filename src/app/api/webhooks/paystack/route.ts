@@ -11,6 +11,7 @@ import { trackBetaEvent } from "@/lib/metrics/track";
 import { recordCommissionIfEligible } from "@/lib/agents/commission";
 import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
 import { handleMoxieEvent } from "@/lib/moxie/webhook";
+import { handleJobsEvent } from "@/lib/jobs/webhook";
 
 // CLAUDE.md Section 2.1. Only charge.success is handled: Paystack also fires
 // subscription.create for the same payment when a plan is attached to
@@ -51,6 +52,17 @@ export async function POST(request: Request) {
   // Moxie's, by metadata on a first payment or by plan code on a renewal,
   // so nothing else changes behaviour.
   if (await handleMoxieEvent(event)) {
+    return NextResponse.json({ received: true });
+  }
+
+  // KatisoBiz Jobs, same first-refusal contract as Moxie above and before
+  // the charge.success filter for the same reason: Jobs needs
+  // subscription.disable (it starts the two-week lapse clock) and those
+  // events would otherwise be dropped two lines from here. The handler
+  // returns true only for events it has positively identified as Jobs',
+  // by metadata on a first payment or by plan code on renewals and
+  // lifecycle events.
+  if (await handleJobsEvent(event)) {
     return NextResponse.json({ received: true });
   }
 

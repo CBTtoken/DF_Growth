@@ -4,8 +4,11 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AVAILABILITY_OPTIONS, type WorkHistoryEntry } from "@/lib/jobs/cv-conversation";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
-import { ReportCandidateForm } from "@/components/jobs/ReportCandidateForm";
+import { ReportListingForm } from "@/components/jobs/ReportListingForm";
+import { reportCandidate } from "@/app/jobs/find-people/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
+import { getMyJobsEmployer } from "@/lib/jobs/employer";
+import { isRateLimited } from "@/lib/rate-limit";
 
 // Only the columns the anonymous layer is allowed to show, named
 // explicitly -- never full_name, phone, email or photo_path, and never a
@@ -113,16 +116,82 @@ export default async function CandidateListingPage({ params }: { params: Promise
           </div>
         )}
 
-        <div className="mt-10 rounded-xl border border-neutral-100 bg-neutral-50 p-4 text-sm text-neutral-600">
-          Full contact details are only shown to logged-in employers, and every view is recorded against the
-          employer account that made it.
-        </div>
+        <FullRecordSection candidateId={id} />
 
         <div className="mt-4">
-          <ReportCandidateForm candidateId={id} />
+          <ReportListingForm targetId={id} action={reportCandidate} />
         </div>
       </section>
       <JobsFooter />
     </main>
+  );
+}
+
+// The gate on full records, and why it exists, said on the page (spec:
+// "The gate on full records exists as a protection control, not a
+// paywall, and it should say so"). For a logged-in employer the full
+// record renders server-side and the view is logged first -- every view,
+// against the account that made it, which is the whole anti-scraping
+// design: you will not stop the first scrape, you will see the account
+// that pulled 400 records in an hour.
+async function FullRecordSection({ candidateId }: { candidateId: string }) {
+  const employer = await getMyJobsEmployer();
+  const employersHref = await jobsPath("/employers");
+
+  if (!employer) {
+    return (
+      <div className="mt-10 rounded-xl border border-neutral-100 bg-neutral-50 p-4 text-sm text-neutral-600">
+        Name and contact details show only to registered employers, and every view is recorded against the
+        employer account that made it. That protects the person listed here, it is not a paywall:
+        registering as an employer is free.{" "}
+        <Link href={employersHref} className="font-semibold text-neutral-900 underline underline-offset-2">
+          Register free
+        </Link>
+      </div>
+    );
+  }
+
+  // Per-account, not per-IP: IPs are free, accounts are not (spec). The
+  // in-memory limiter resets on cold starts, so the durable control is
+  // the view log the admin screen watches.
+  if (isRateLimited(`jobs-views:${employer.id}`, 50, 60 * 60 * 1000)) {
+    return (
+      <div className="mt-10 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        You have viewed a lot of profiles in the last hour. Take a break and try again a bit later. Bulk
+        collection of people&apos;s details ends an employer account.
+      </div>
+    );
+  }
+
+  const admin = createAdminClient();
+
+  // The log comes first: a render that fails after the fetch must still
+  // have been counted, never the other way round.
+  await admin.from("jobs_record_views").insert({ employer_id: employer.id, candidate_id: candidateId });
+
+  const { data: full } = await admin
+    .from("jobs_candidates")
+    .select("full_name, phone, email")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (!full) return null;
+
+  return (
+    <div className="mt-10 rounded-xl border border-neutral-900 bg-white p-4 shadow-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+        Contact details, shown to you as {employer.businessName}
+      </p>
+      <p className="mt-2 font-bold text-neutral-900">{full.full_name ?? "Name not given"}</p>
+      {full.phone && (
+        <a href={`tel:${full.phone.replace(/\s/g, "")}`} className="mt-1 block text-sm text-neutral-700 underline underline-offset-2">
+          {full.phone}
+        </a>
+      )}
+      {full.email && <p className="mt-1 text-sm text-neutral-700">{full.email}</p>}
+      <p className="mt-3 text-xs text-neutral-400">
+        This view has been recorded. Never ask a candidate to pay for anything.
+      </p>
+    </div>
   );
 }

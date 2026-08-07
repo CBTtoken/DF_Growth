@@ -205,3 +205,93 @@ export async function unlistJobsCandidate(reportId: string, candidateId: string)
 
   revalidatePath("/admin/board");
 }
+
+// Sprint 2: the vacancy side of the same queue. Held vacancies are the
+// advance-fee auto-hold's output; a person decides, nothing auto-removes.
+
+export async function restoreHeldVacancy(vacancyId: string): Promise<void> {
+  const admin_ = await requireAdminEmail();
+  if ("error" in admin_) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("jobs_vacancies")
+    .update({ status: "published", held_reason: null, updated_at: new Date().toISOString() })
+    .eq("id", vacancyId)
+    .eq("status", "held");
+
+  await admin.from("jobs_moderation_log").insert({
+    target_type: "vacancy",
+    target_id: vacancyId,
+    action: "restored",
+    rule: "admin decision",
+    actor: `admin:${admin_.email}`,
+    note: "Held vacancy approved and published",
+  });
+
+  revalidatePath("/admin/board");
+}
+
+export async function removeHeldVacancy(vacancyId: string): Promise<void> {
+  const admin_ = await requireAdminEmail();
+  if ("error" in admin_) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("jobs_vacancies")
+    .update({ status: "removed", updated_at: new Date().toISOString() })
+    .eq("id", vacancyId);
+
+  await admin.from("jobs_moderation_log").insert({
+    target_type: "vacancy",
+    target_id: vacancyId,
+    action: "removed",
+    rule: "admin decision",
+    actor: `admin:${admin_.email}`,
+    note: "Vacancy removed by admin",
+  });
+
+  revalidatePath("/admin/board");
+}
+
+export async function dismissVacancyReport(reportId: string, vacancyId: string): Promise<void> {
+  const admin_ = await requireAdminEmail();
+  if ("error" in admin_) return;
+
+  const admin = createAdminClient();
+  await admin.from("jobs_reports").update({ status: "dismissed" }).eq("id", reportId).eq("status", "open");
+
+  await admin.from("jobs_moderation_log").insert({
+    target_type: "vacancy",
+    target_id: vacancyId,
+    action: "restored",
+    rule: "admin decision",
+    actor: `admin:${admin_.email}`,
+    note: "Report dismissed, vacancy left up",
+  });
+
+  revalidatePath("/admin/board");
+}
+
+export async function takeDownReportedVacancy(reportId: string, vacancyId: string): Promise<void> {
+  const admin_ = await requireAdminEmail();
+  if ("error" in admin_) return;
+
+  const admin = createAdminClient();
+  await admin
+    .from("jobs_vacancies")
+    .update({ status: "removed", updated_at: new Date().toISOString() })
+    .eq("id", vacancyId);
+  await admin.from("jobs_reports").update({ status: "dismissed" }).eq("id", reportId).eq("status", "open");
+
+  await admin.from("jobs_moderation_log").insert({
+    target_type: "vacancy",
+    target_id: vacancyId,
+    action: "removed",
+    rule: "admin decision",
+    actor: `admin:${admin_.email}`,
+    note: "Vacancy taken down following a report",
+  });
+
+  revalidatePath("/admin/board");
+}
