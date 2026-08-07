@@ -24,31 +24,34 @@ export default async function FindPeoplePage({
   const { role, area } = await searchParams;
   const admin = createAdminClient();
 
-  const [{ data: taxonomy }, listingsRes] = await Promise.all([
-    admin.from("jobs_taxonomy").select("id, slug, label").order("sort_order"),
+  // Work filter = OFO sub-major group, same reasoning as the vacancies
+  // page: 40 named branches beats a 1,511-row dropdown, and a prefix match
+  // on the 6-digit code covers the whole branch.
+  const roleFilter = /^\d{2}$/.test(role ?? "") ? role : undefined;
+
+  const [{ data: groups }, listingsRes] = await Promise.all([
+    admin.from("jobs_ofo_sub_major_groups").select("code, label").order("code"),
     (async () => {
       let query = admin
         .from("jobs_candidates")
         .select(
-          "id, primary_role_id, years_experience, suburb, province, availability, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)",
+          "id, years_experience, suburb, province, availability, experience_level, jobs_ofo_occupations(title)",
         )
         .eq("listed", true)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false })
         .limit(60);
-      if (role) query = query.eq("primary_role_id", role);
+      if (roleFilter) query = query.like("ofo_occupation_code", `${roleFilter}%`);
       if (area) query = query.ilike("suburb", `%${area}%`);
       return query;
     })(),
   ]);
 
   if (listingsRes.error) {
-    // Found live: a bare jobs_taxonomy(label) embed is ambiguous (two FKs
-    // point at it, primary_role_id and alert_role_id) and PostgREST fails
-    // the query -- which this page previously swallowed into an empty
-    // list rather than a visible error, reading as "nobody has listed
-    // themselves" instead of "the query is broken". Logged now so that
-    // never happens silently again.
+    // A failed query must never read as "nobody has listed themselves":
+    // this page once swallowed a PostgREST embed error into an empty list
+    // (the old taxonomy's ambiguous-FK lesson). Logged so a broken query
+    // is visibly broken.
     console.error("Failed to load jobs_candidates listings", listingsRes.error);
   }
   const listings = listingsRes.data ?? [];
@@ -70,8 +73,8 @@ export default async function FindPeoplePage({
               className="rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900"
             >
               <option value="">Any type of work</option>
-              {(taxonomy ?? []).map((t) => (
-                <option key={t.id} value={t.id}>{t.label}</option>
+              {(groups ?? []).map((g) => (
+                <option key={g.code} value={g.code}>{g.label}</option>
               ))}
             </select>
             <input
@@ -101,7 +104,7 @@ export default async function FindPeoplePage({
         ) : (
           <ul className="flex flex-col gap-3">
             {listings.map((c) => {
-              const roleLabel = (c.jobs_taxonomy as unknown as { label: string } | null)?.label;
+              const roleLabel = (c.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
               const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === c.availability)?.label;
               return (
                 <li key={c.id}>

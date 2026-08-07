@@ -3,7 +3,15 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getDraftCandidateId, setDraftCandidateId } from "@/lib/jobs/draft-session";
-import { sanitizeFreeText, MAX_ROLES, type Availability, type StepId, type WorkHistoryEntry } from "@/lib/jobs/cv-conversation";
+import {
+  sanitizeFreeText,
+  MAX_ROLES,
+  type Availability,
+  type ExperienceLevel,
+  type OccupationPick,
+  type StepId,
+  type WorkHistoryEntry,
+} from "@/lib/jobs/cv-conversation";
 import { AI_POLISH_CAP, polishCvWording } from "@/lib/jobs/ai-polish";
 
 export type CvRow = {
@@ -15,6 +23,9 @@ export type CvRow = {
   primary_role_id: string | null;
   secondary_role_ids: string[];
   other_role_text: string | null;
+  ofo_occupation_code: string | null;
+  secondary_ofo_codes: OccupationPick[];
+  experience_level: ExperienceLevel | null;
   years_experience: number | null;
   suburb: string | null;
   province: string | null;
@@ -30,7 +41,7 @@ export type CvRow = {
 };
 
 const CANDIDATE_COLUMNS =
-  "id, owner_user_id, full_name, phone, email, primary_role_id, secondary_role_ids, other_role_text, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_recommendations";
+  "id, owner_user_id, full_name, phone, email, primary_role_id, secondary_role_ids, other_role_text, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_recommendations";
 
 /**
  * Server-only, read-only: the row this visitor should be editing, if one
@@ -144,6 +155,9 @@ export type CvPatch = Partial<{
   primary_role_id: string | null;
   secondary_role_ids: string[];
   other_role_text: string | null;
+  ofo_occupation_code: string | null;
+  secondary_ofo_codes: OccupationPick[];
+  experience_level: ExperienceLevel;
   years_experience: number;
   suburb: string;
   province: string;
@@ -191,6 +205,23 @@ export async function saveCvAnswer(candidateId: string, patch: CvPatch): Promise
   // choice lives in primary_role_id, so this array holds at most two.
   if (clean.secondary_role_ids) {
     clean.secondary_role_ids = clean.secondary_role_ids.slice(0, MAX_ROLES - 1);
+  }
+  // Same cap for the OFO model, and never trust a client-sent title: the
+  // codes are re-resolved against the official table, so the stored jsonb
+  // can only ever hold real occupations with their official titles.
+  if (clean.secondary_ofo_codes) {
+    const codes = clean.secondary_ofo_codes.map((s) => s.code).slice(0, MAX_ROLES - 1);
+    if (codes.length > 0) {
+      const { data: official } = await admin
+        .from("jobs_ofo_occupations")
+        .select("code, title")
+        .in("code", codes);
+      clean.secondary_ofo_codes = codes
+        .map((code) => official?.find((o) => o.code === code))
+        .filter((o): o is { code: string; title: string } => !!o);
+    } else {
+      clean.secondary_ofo_codes = [];
+    }
   }
 
   const { error } = await admin
@@ -245,14 +276,14 @@ export async function deleteCv(candidateId: string): Promise<{ error?: string }>
 
   const { data: row } = await admin
     .from("jobs_candidates")
-    .select("id, suburb, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)")
+    .select("id, suburb, jobs_ofo_occupations(title)")
     .eq("id", candidateId)
     .eq("owner_user_id", user.id)
     .maybeSingle();
 
   if (!row) return { error: "That CV could not be found." };
 
-  const roleLabel = (row.jobs_taxonomy as unknown as { label: string } | null)?.label ?? null;
+  const roleLabel = (row.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? null;
 
   const { error: deleteError } = await admin.from("jobs_candidates").delete().eq("id", candidateId);
   if (deleteError) {
@@ -286,7 +317,7 @@ export async function polishCv(candidateId: string): Promise<
 
   const { data: row } = await admin
     .from("jobs_candidates")
-    .select("summary, work_history, years_experience, skills, ai_polish_count, primary_role_id, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)")
+    .select("summary, work_history, years_experience, skills, ai_polish_count, jobs_ofo_occupations(title)")
     .eq("id", candidateId)
     .maybeSingle();
 
@@ -304,7 +335,7 @@ export async function polishCv(candidateId: string): Promise<
   const result = await polishCvWording({
     summary: row.summary,
     workHistory,
-    roleLabel: (row.jobs_taxonomy as unknown as { label: string } | null)?.label ?? null,
+    roleLabel: (row.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? null,
     yearsExperience: row.years_experience,
     hasSkills: (row.skills ?? []).length > 0,
   });

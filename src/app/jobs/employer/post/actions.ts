@@ -16,8 +16,12 @@ export type PostVacancyState = {
 } | null;
 
 const vacancySchema = z.object({
-  roleId: z.string().uuid().nullable(),
-  otherRoleText: z.string().trim().max(80).nullable(),
+  ofoCode: z
+    .string()
+    .regex(/^\d{6}$/, "Pick the kind of work from the list"),
+  experienceLevel: z.enum(["new_starter", "experienced", "senior", "management", "executive"], {
+    message: "Pick the level",
+  }),
   title: z.string().trim().min(5, "Give the job a clear title").max(90, "Keep the title under 90 characters"),
   description: z.string().trim().min(30, "Say a bit more about the job, at least a sentence or two").max(3000),
   suburb: z.string().trim().min(2, "Where is the job?"),
@@ -46,8 +50,8 @@ export async function postVacancy(_prev: PostVacancyState, formData: FormData): 
   }
 
   const parsed = vacancySchema.safeParse({
-    roleId: String(formData.get("roleId") ?? "") || null,
-    otherRoleText: String(formData.get("otherRoleText") ?? "").trim() || null,
+    ofoCode: formData.get("ofoCode"),
+    experienceLevel: formData.get("experienceLevel"),
     title: formData.get("title"),
     description: formData.get("description"),
     suburb: formData.get("suburb"),
@@ -57,10 +61,6 @@ export async function postVacancy(_prev: PostVacancyState, formData: FormData): 
   });
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
   const v = parsed.data;
-
-  if (!v.roleId && !v.otherRoleText) {
-    return { error: { _form: ["Pick the kind of work, or type it if it is not listed."] } };
-  }
 
   // Same ID/bank auto-strip the CV builder applies: an employer pasting a
   // description with an ID number in it is protected from themselves too.
@@ -75,8 +75,8 @@ export async function postVacancy(_prev: PostVacancyState, formData: FormData): 
     .from("jobs_vacancies")
     .insert({
       employer_id: employer.id,
-      role_id: v.roleId,
-      other_role_text: v.otherRoleText,
+      ofo_occupation_code: v.ofoCode,
+      experience_level: v.experienceLevel,
       title,
       description,
       suburb: v.suburb,

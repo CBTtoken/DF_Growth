@@ -28,19 +28,25 @@ export default async function VacanciesPage({
   const { role, province } = await searchParams;
   const admin = createAdminClient();
 
-  const [{ data: taxonomy }, vacanciesRes] = await Promise.all([
-    admin.from("jobs_taxonomy").select("id, slug, label").order("sort_order"),
+  // The work filter is the OFO sub-major group: 40 named branches is a
+  // usable dropdown where 1,511 occupations is not, and every vacancy's
+  // 6-digit code starts with its group's 2 digits, so the filter is a
+  // simple prefix match.
+  const roleFilter = /^\d{2}$/.test(role ?? "") ? role : undefined;
+
+  const [{ data: groups }, vacanciesRes] = await Promise.all([
+    admin.from("jobs_ofo_sub_major_groups").select("code, label").order("code"),
     (async () => {
       let query = admin
         .from("jobs_vacancies")
         .select(
-          "id, title, suburb, province, employment_type, pay_text, created_at, jobs_taxonomy!jobs_vacancies_role_id_fkey(label), jobs_employers!inner(business_name)",
+          "id, title, suburb, province, employment_type, pay_text, created_at, jobs_ofo_occupations(title), jobs_employers!inner(business_name)",
         )
         .eq("status", "published")
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
         .limit(60);
-      if (role) query = query.eq("role_id", role);
+      if (roleFilter) query = query.like("ofo_occupation_code", `${roleFilter}%`);
       if (province) query = query.eq("province", province);
       return query;
     })(),
@@ -70,9 +76,9 @@ export default async function VacanciesPage({
               className="rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm text-neutral-900"
             >
               <option value="">Any type of work</option>
-              {(taxonomy ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.label}
+              {(groups ?? []).map((g) => (
+                <option key={g.code} value={g.code}>
+                  {g.label}
                 </option>
               ))}
             </select>
@@ -108,7 +114,7 @@ export default async function VacanciesPage({
         ) : (
           <ul className="flex flex-col gap-3">
             {vacancies.map((v) => {
-              const roleLabel = (v.jobs_taxonomy as unknown as { label: string } | null)?.label;
+              const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
               const employer = (v.jobs_employers as unknown as { business_name: string } | null)?.business_name;
               return (
                 <li key={v.id}>

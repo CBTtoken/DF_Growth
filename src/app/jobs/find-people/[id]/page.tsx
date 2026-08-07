@@ -15,7 +15,7 @@ import { isRateLimited } from "@/lib/rate-limit";
 // bare select("*") that would need updating by hand every time this stays
 // safe by accident rather than by construction.
 const PUBLIC_COLUMNS =
-  "id, years_experience, suburb, province, availability, skills, work_history, summary, listed, deleted_at, secondary_role_ids, other_role_text, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)";
+  "id, years_experience, suburb, province, availability, skills, work_history, summary, listed, deleted_at, secondary_ofo_codes, experience_level, jobs_ofo_occupations(title)";
 
 async function getListing(id: string) {
   const admin = createAdminClient();
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const listing = await getListing(id);
   if (!listing) return { title: { absolute: "Not found | KatisoBiz Jobs" } };
 
-  const roleLabel = (listing.jobs_taxonomy as unknown as { label: string } | null)?.label ?? "Available for work";
+  const roleLabel = (listing.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? "Available for work";
   const title = `${roleLabel}${listing.years_experience != null ? `, ${listing.years_experience} years' experience` : ""}${listing.suburb ? `, ${listing.suburb}` : ""}`;
 
   return {
@@ -44,25 +44,16 @@ export default async function CandidateListingPage({ params }: { params: Promise
   const listing = await getListing(id);
   if (!listing) return notFound();
 
-  const roleLabel = (listing.jobs_taxonomy as unknown as { label: string } | null)?.label ?? "Available for work";
+  const roleLabel = (listing.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? "Available for work";
   const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === listing.availability)?.label;
-  const skillSlugs: string[] = listing.skills ?? [];
-  const admin = createAdminClient();
   const backHref = await jobsPath("/find-people");
 
-  // The second and third positions, still nothing identifying: role names
-  // are exactly the kind of anonymous fact the browse layer exists to show.
-  const secondaryIds = (listing.secondary_role_ids ?? []) as string[];
-  const { data: secondaryRows } = secondaryIds.length
-    ? await admin.from("jobs_taxonomy").select("id, label").in("id", secondaryIds)
-    : { data: [] };
-  const alsoOpenTo = [
-    ...secondaryIds.map((rid) => (secondaryRows ?? []).find((r) => r.id === rid)?.label).filter((l): l is string => !!l),
-    ...(listing.other_role_text ? [listing.other_role_text] : []),
-  ];
-  const { data: skillRows } = skillSlugs.length
-    ? await admin.from("jobs_taxonomy").select("slug, label").in("slug", skillSlugs)
-    : { data: [] };
+  // The second and third positions, still nothing identifying: occupation
+  // titles are exactly the kind of anonymous fact the browse layer exists
+  // to show. Their official titles travel in the jsonb, no extra query.
+  const alsoOpenTo = ((listing.secondary_ofo_codes ?? []) as { title: string }[]).map((s) => s.title);
+  // Skills are stored as display labels since the OFO switch.
+  const skillLabels: string[] = listing.skills ?? [];
   const workHistory = (listing.work_history ?? []) as WorkHistoryEntry[];
 
   return (
@@ -84,13 +75,13 @@ export default async function CandidateListingPage({ params }: { params: Promise
 
         {listing.summary && <p className="mt-6 text-neutral-800">{listing.summary}</p>}
 
-        {(skillRows ?? []).length > 0 && (
+        {skillLabels.length > 0 && (
           <div className="mt-6">
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Skills</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {(skillRows ?? []).map((s) => (
-                <span key={s.slug} className="rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700">
-                  {s.label}
+              {skillLabels.map((s) => (
+                <span key={s} className="rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700">
+                  {s}
                 </span>
               ))}
             </div>

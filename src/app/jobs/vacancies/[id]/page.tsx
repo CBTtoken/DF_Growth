@@ -7,6 +7,7 @@ import { ReportListingForm } from "@/components/jobs/ReportListingForm";
 import { reportVacancy } from "@/app/jobs/find-people/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { vacancyIsExpired } from "@/lib/jobs/entitlements";
+import { experienceLevelLabel } from "@/lib/jobs/cv-conversation";
 
 const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
   full_time: "Full time",
@@ -16,7 +17,7 @@ const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const VACANCY_COLUMNS =
-  "id, title, description, suburb, province, employment_type, pay_text, status, expires_at, created_at, other_role_text, jobs_taxonomy!jobs_vacancies_role_id_fkey(label), jobs_employers!inner(business_name, phone)";
+  "id, title, description, suburb, province, employment_type, pay_text, status, expires_at, created_at, experience_level, jobs_ofo_occupations(title), jobs_employers!inner(business_name, phone)";
 
 // An expired vacancy's permalink stays alive (the Board's own rule: the
 // indexed page survives) but says plainly that it is no longer open, and
@@ -47,7 +48,7 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
   if (!v) return notFound();
 
   const employer = v.jobs_employers as unknown as { business_name: string; phone: string | null } | null;
-  const roleLabel = (v.jobs_taxonomy as unknown as { label: string } | null)?.label ?? v.other_role_text;
+  const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
   const expired = vacancyIsExpired(v.expires_at);
   const backHref = await jobsPath("/vacancies");
 
@@ -66,7 +67,14 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
 
         <h1 className="mt-4 text-2xl font-bold text-neutral-900">{v.title}</h1>
         <p className="mt-1 text-neutral-600">
-          {[employer?.business_name, roleLabel, EMPLOYMENT_TYPE_LABELS[v.employment_type]].filter(Boolean).join(" · ")}
+          {[
+            employer?.business_name,
+            roleLabel,
+            experienceLevelLabel(v.experience_level),
+            EMPLOYMENT_TYPE_LABELS[v.employment_type],
+          ]
+            .filter(Boolean)
+            .join(" · ")}
         </p>
         <p className="mt-1 text-neutral-600">
           {v.suburb}, {v.province}

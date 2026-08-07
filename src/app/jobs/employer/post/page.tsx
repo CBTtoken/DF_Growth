@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getMyJobsEmployer } from "@/lib/jobs/employer";
 import { VacancyComposer } from "@/components/jobs/VacancyComposer";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
@@ -43,9 +42,6 @@ export default async function PostVacancyPage() {
     );
   }
 
-  const admin = createAdminClient();
-  const { data: taxonomy } = await admin.from("jobs_taxonomy").select("id, slug, label, category").order("sort_order");
-
   return (
     <main className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-xl flex-1 px-6 py-10">
@@ -55,7 +51,7 @@ export default async function PostVacancyPage() {
         <h1 className="mt-3 text-2xl font-bold text-neutral-900">Post a job</h1>
         <p className="mt-1 text-sm text-neutral-500">{employer.entitlement.label}</p>
         <div className="mt-6">
-          <VacancyComposer taxonomy={taxonomy ?? []} dashboardHref={dashboardHref} />
+          <VacancyComposer dashboardHref={dashboardHref} />
         </div>
       </section>
       <JobsFooter />

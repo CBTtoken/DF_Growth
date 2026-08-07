@@ -23,6 +23,7 @@ export type StepId =
   | "phone"
   | "primary_role"
   | "years_experience"
+  | "experience_level"
   | "location"
   | "availability"
   | "skills"
@@ -35,6 +36,7 @@ export const STEP_ORDER: StepId[] = [
   "phone",
   "primary_role",
   "years_experience",
+  "experience_level",
   "location",
   "availability",
   "skills",
@@ -69,36 +71,34 @@ export const AVAILABILITY_OPTIONS: { id: Availability; label: string }[] = [
 ];
 
 /**
- * The fields, in display order, for the two-step role question (field
- * first, then position -- Dewald's walkthrough: one long flat list was
- * both incomplete and unscrollable). Labels are what a person calls the
- * work, not internal names. jobs_taxonomy.category is free text curated
- * by us, so an unknown category from the DB falls back to its raw value
- * rather than disappearing.
+ * Experience level, separate from occupation and from years (handoff Job 1):
+ * a single choice, the same five values on both the CV and every vacancy.
  */
-export const ROLE_CATEGORIES: { id: string; label: string }[] = [
-  { id: "trade", label: "Trades" },
-  { id: "construction", label: "Construction" },
-  { id: "driving_logistics", label: "Driving and logistics" },
-  { id: "security", label: "Security" },
-  { id: "hospitality", label: "Hospitality" },
-  { id: "retail", label: "Retail" },
-  { id: "admin_office", label: "Admin and office" },
-  { id: "sales_marketing", label: "Sales and marketing" },
-  { id: "it_tech", label: "IT and technology" },
-  { id: "finance_accounting", label: "Finance and accounting" },
-  { id: "education_training", label: "Education and training" },
-  { id: "beauty_wellness", label: "Beauty and wellness" },
-  { id: "domestic", label: "Domestic work" },
-  { id: "care", label: "Care work" },
-  { id: "agriculture", label: "Farming" },
-  { id: "manufacturing", label: "Factory and manufacturing" },
-  { id: "general_labour", label: "General labour" },
+export type ExperienceLevel =
+  | "new_starter"
+  | "experienced"
+  | "senior"
+  | "management"
+  | "executive";
+
+export const EXPERIENCE_LEVEL_OPTIONS: { id: ExperienceLevel; label: string }[] = [
+  { id: "new_starter", label: "New starter" },
+  { id: "experienced", label: "Experienced" },
+  { id: "senior", label: "Senior" },
+  { id: "management", label: "Management" },
+  { id: "executive", label: "Executive" },
 ];
 
-export function roleCategoryLabel(id: string): string {
-  return ROLE_CATEGORIES.find((c) => c.id === id)?.label ?? id;
+export function experienceLevelLabel(id: string | null | undefined): string | null {
+  return EXPERIENCE_LEVEL_OPTIONS.find((o) => o.id === id)?.label ?? null;
 }
+
+/**
+ * An OFO pick as the client holds it: the 6-digit code plus the official
+ * title, carried together so every screen can render the title without a
+ * lookup round trip. The code alone is what matching ever uses.
+ */
+export type OccupationPick = { code: string; title: string };
 
 /** Up to three positions per candidate: the first is the headline. */
 export const MAX_ROLES = 3;

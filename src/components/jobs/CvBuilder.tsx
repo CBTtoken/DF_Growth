@@ -1,26 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { saveCvAnswer, setListed, deleteCv, polishCv, startDraft, type CvRow } from "@/app/jobs/cv/actions";
 import { CV_TEMPLATES } from "@/lib/jobs/pdf/cv-templates";
 import { useJobsPath } from "@/lib/jobs/use-jobs-path";
+import { OfoPicker } from "@/components/jobs/OfoPicker";
 import {
   STEP_ORDER,
   nextStep,
   previousStep,
   stepIndex,
   AVAILABILITY_OPTIONS,
+  EXPERIENCE_LEVEL_OPTIONS,
   PROVINCE_OPTIONS,
-  ROLE_CATEGORIES,
-  roleCategoryLabel,
   MAX_ROLES,
   AI_POLISH_CAP,
+  type ExperienceLevel,
+  type OccupationPick,
   type StepId,
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
-
-type Taxonomy = { id: string; slug: string; label: string; category: string }[];
 
 const emptyWorkEntry: WorkHistoryEntry = { employer: "", role: "", start: "", end: null, current: true, description: "" };
 
@@ -30,7 +30,13 @@ const emptyWorkEntry: WorkHistoryEntry = { employer: "", role: "", start: "", en
 // Server Action on mount before the actual builder ever renders. Existing
 // visitors (logged in, or resuming a valid draft cookie) skip straight
 // past this with no extra round trip.
-export function CvBuilder({ initialCandidate, taxonomy }: { initialCandidate: CvRow | null; taxonomy: Taxonomy }) {
+export function CvBuilder({
+  initialCandidate,
+  initialOccupations,
+}: {
+  initialCandidate: CvRow | null;
+  initialOccupations: OccupationPick[];
+}) {
   const [candidate, setCandidate] = useState(initialCandidate);
   const [starting, startTransition] = useTransition();
 
@@ -52,23 +58,25 @@ export function CvBuilder({ initialCandidate, taxonomy }: { initialCandidate: Cv
     );
   }
 
-  return <CvBuilderScreens candidate={candidate} taxonomy={taxonomy} />;
+  return <CvBuilderScreens candidate={candidate} initialOccupations={initialOccupations} />;
 }
 
-function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy: Taxonomy }) {
+function CvBuilderScreens({
+  candidate,
+  initialOccupations,
+}: {
+  candidate: CvRow;
+  initialOccupations: OccupationPick[];
+}) {
   const [id] = useState(candidate.id);
   const [step, setStep] = useState<StepId>(candidate.cv_step ?? "name");
   const [fullName, setFullName] = useState(candidate.full_name ?? "");
   const [phone, setPhone] = useState(candidate.phone ?? "");
-  // Up to three positions; the first is the headline. Dewald's walkthrough:
-  // most people can genuinely do more than one kind of work.
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(
-    [candidate.primary_role_id, ...(candidate.secondary_role_ids ?? [])].filter((r): r is string => !!r),
-  );
-  const [otherRoleText, setOtherRoleText] = useState(candidate.other_role_text ?? "");
-  const [showOtherInput, setShowOtherInput] = useState(!!candidate.other_role_text);
-  // Which field's positions are on screen. null = the field list itself.
-  const [roleCategory, setRoleCategory] = useState<string | null>(null);
+  // Up to three occupations from the official OFO list; the first is the
+  // headline. Dewald's walkthrough: most people can genuinely do more than
+  // one kind of work.
+  const [occupations, setOccupations] = useState<OccupationPick[]>(initialOccupations);
+  const [experienceLevel, setExperienceLevel] = useState<string>(candidate.experience_level ?? "");
   const [years, setYears] = useState<string>(candidate.years_experience?.toString() ?? "");
   const [suburb, setSuburb] = useState(candidate.suburb ?? "");
   const [province, setProvince] = useState(candidate.province ?? "");
@@ -86,45 +94,32 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const roleLabel = useMemo(
-    () => taxonomy.find((t) => t.id === selectedRoles[0])?.label ?? (otherRoleText || undefined),
-    [taxonomy, selectedRoles, otherRoleText],
-  );
-  const selectedRoleLabels = useMemo(
-    () => selectedRoles.map((id) => taxonomy.find((t) => t.id === id)?.label).filter((l): l is string => !!l),
-    [taxonomy, selectedRoles],
-  );
-  const grouped = useMemo(() => {
-    const byCategory = new Map<string, Taxonomy>();
-    for (const t of taxonomy) {
-      const list = byCategory.get(t.category) ?? [];
-      list.push(t);
-      byCategory.set(t.category, list);
-    }
-    return byCategory;
-  }, [taxonomy]);
+  const roleLabel = occupations[0]?.title;
+  const roleCapReached = occupations.length >= MAX_ROLES;
 
-  // Fields in the curated display order, but only ones that actually have
-  // positions in the database, so an empty field never renders a dead
-  // screen. Any DB category the curated list doesn't know yet still shows,
-  // at the end, labeled by roleCategoryLabel's fallback.
-  const fieldList = useMemo(() => {
-    const known = ROLE_CATEGORIES.filter((c) => grouped.has(c.id));
-    const unknown = [...grouped.keys()]
-      .filter((id) => !ROLE_CATEGORIES.some((c) => c.id === id))
-      .map((id) => ({ id, label: roleCategoryLabel(id) }));
-    return [...known, ...unknown];
-  }, [grouped]);
-
-  const roleCapReached = selectedRoles.length >= MAX_ROLES;
-
-  function toggleRole(id: string) {
-    setSelectedRoles((list) => {
-      if (list.includes(id)) return list.filter((r) => r !== id);
-      if (list.length >= MAX_ROLES) return list;
-      return [...list, id];
-    });
-  }
+  // The skills step shows only skills from the chosen occupations' own
+  // branches of the OFO hierarchy (handoff Job 1: a bricklaying skill can
+  // never appear under sales, structurally). Fetched when the codes change.
+  const [fetchedSkills, setFetchedSkills] = useState<string[]>([]);
+  const [ownSkillText, setOwnSkillText] = useState("");
+  const occupationCodes = occupations.map((o) => o.code).join(",");
+  useEffect(() => {
+    if (!occupationCodes) return;
+    let cancelled = false;
+    fetch(`/api/jobs/ofo-skills?occupations=${occupationCodes}`)
+      .then((res) => res.json())
+      .then((body: { skills: string[] }) => {
+        if (!cancelled) setFetchedSkills(body.skills ?? []);
+      })
+      .catch(() => {
+        // Keep whatever was last fetched; the step still allows free text.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [occupationCodes]);
+  // No occupations means no branch to scope to; derived, not set in the effect.
+  const branchSkills = occupationCodes ? fetchedSkills : [];
 
   function go(target: StepId, patch: Parameters<typeof saveCvAnswer>[1]) {
     setError(null);
@@ -145,15 +140,10 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
   return (
     <main className="flex flex-1 flex-col bg-white">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-neutral-100 bg-white/95 px-4 py-3 backdrop-blur">
-        {idx > 0 || (step === "primary_role" && roleCategory !== null) ? (
+        {idx > 0 ? (
           <button
             type="button"
-            onClick={() => {
-              // Inside a field's position list, back means the field list,
-              // not the previous question.
-              if (step === "primary_role" && roleCategory !== null) setRoleCategory(null);
-              else setStep(previousStep(step));
-            }}
+            onClick={() => setStep(previousStep(step))}
             className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
           >
             &larr; Back
@@ -192,86 +182,53 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
           </Question>
         )}
 
-        {step === "primary_role" && roleCategory === null && (
+        {step === "primary_role" && (
           <Question
-            title="What kind of work are you looking for?"
-            subtitle={`Pick a field to see the positions in it. You can choose up to ${MAX_ROLES} positions across fields.`}
+            title="What work do you do?"
+            subtitle={
+              roleCapReached
+                ? `You have picked ${MAX_ROLES}. Tap one to remove it if you change your mind.`
+                : `Start typing and tap the one that fits. You can pick up to ${MAX_ROLES}; the first is your headline.`
+            }
           >
-            {(selectedRoleLabels.length > 0 || otherRoleText) && (
+            {occupations.length > 0 && (
               <div className="flex flex-wrap gap-2 rounded-xl bg-neutral-50 p-3">
-                {selectedRoleLabels.map((label, i) => (
-                  <Chip key={label} selected onClick={() => toggleRole(selectedRoles[i])}>
-                    {label} &times;
+                {occupations.map((o) => (
+                  <Chip
+                    key={o.code}
+                    selected
+                    onClick={() => setOccupations((list) => list.filter((x) => x.code !== o.code))}
+                  >
+                    {o.title} &times;
                   </Chip>
                 ))}
-                {otherRoleText && (
-                  <Chip
-                    selected
-                    onClick={() => {
-                      setOtherRoleText("");
-                      setShowOtherInput(false);
-                    }}
-                  >
-                    {otherRoleText} &times;
-                  </Chip>
-                )}
               </div>
             )}
-            <div className="flex max-h-[45vh] flex-wrap gap-2 overflow-y-auto pb-2">
-              {fieldList.map((c) => (
-                <Chip key={c.id} selected={false} onClick={() => setRoleCategory(c.id)}>
-                  {c.label}
-                </Chip>
-              ))}
-              <Chip selected={showOtherInput} onClick={() => setShowOtherInput((v) => !v)}>
-                My work is not listed
-              </Chip>
-            </div>
-            {showOtherInput && (
-              <TextField
-                value={otherRoleText}
-                onChange={setOtherRoleText}
-                placeholder="Type the kind of work you do"
+            {!roleCapReached && (
+              <OfoPicker
+                placeholder={occupations.length === 0 ? "e.g. plumber, cashier, driver..." : "Add another kind of work"}
+                excludeCodes={occupations.map((o) => o.code)}
+                autoFocus={occupations.length === 0}
+                onPick={(pick) =>
+                  setOccupations((list) => (list.length >= MAX_ROLES ? list : [...list, pick]))
+                }
               />
             )}
             <Primary
-              disabled={(selectedRoles.length === 0 && !otherRoleText.trim()) || saving}
+              disabled={occupations.length === 0 || saving}
               onClick={() =>
                 go(nextStep(step), {
-                  primary_role_id: selectedRoles[0] ?? null,
-                  secondary_role_ids: selectedRoles.slice(1),
-                  other_role_text: otherRoleText.trim() || null,
+                  ofo_occupation_code: occupations[0]?.code ?? null,
+                  secondary_ofo_codes: occupations.slice(1),
+                  // The pre-OFO fields die with this save so no CV ever
+                  // carries both models at once.
+                  primary_role_id: null,
+                  secondary_role_ids: [],
+                  other_role_text: null,
                 })
               }
             >
               Continue
-            </Primary>
-          </Question>
-        )}
-
-        {step === "primary_role" && roleCategory !== null && (
-          <Question
-            title={roleCategoryLabel(roleCategory)}
-            subtitle={
-              roleCapReached
-                ? `You have picked ${MAX_ROLES} positions. Unpick one to change your mind.`
-                : "Tap the positions that fit you."
-            }
-          >
-            <div className="flex max-h-[45vh] flex-wrap gap-2 overflow-y-auto pb-2">
-              {(grouped.get(roleCategory) ?? []).map((t) => (
-                <Chip
-                  key={t.id}
-                  selected={selectedRoles.includes(t.id)}
-                  disabled={roleCapReached && !selectedRoles.includes(t.id)}
-                  onClick={() => toggleRole(t.id)}
-                >
-                  {t.label}
-                </Chip>
-              ))}
-            </div>
-            <Primary disabled={saving} onClick={() => setRoleCategory(null)}>
-              Done, back to the fields
             </Primary>
           </Question>
         )}
@@ -295,6 +252,24 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
             <Primary
               disabled={years.trim() === "" || saving}
               onClick={() => go(nextStep(step), { years_experience: Number(years) })}
+            >
+              Continue
+            </Primary>
+          </Question>
+        )}
+
+        {step === "experience_level" && (
+          <Question title="What level are you at?" subtitle="Pick the one that fits best.">
+            <div className="flex flex-col gap-2">
+              {EXPERIENCE_LEVEL_OPTIONS.map((o) => (
+                <Chip key={o.id} full selected={experienceLevel === o.id} onClick={() => setExperienceLevel(o.id)}>
+                  {o.label}
+                </Chip>
+              ))}
+            </div>
+            <Primary
+              disabled={!experienceLevel || saving}
+              onClick={() => go(nextStep(step), { experience_level: experienceLevel as ExperienceLevel })}
             >
               Continue
             </Primary>
@@ -337,24 +312,50 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
         )}
 
         {step === "skills" && (
-          <Question title="What else can you do?" subtitle="Tap anything that applies. This is optional.">
-            <div className="flex max-h-[45vh] flex-col gap-4 overflow-y-auto pb-2">
-              {fieldList.map((c) => (
-                <div key={c.id}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">{c.label}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {(grouped.get(c.id) ?? []).map((t) => (
-                      <Chip
-                        key={t.id}
-                        selected={skills.includes(t.slug)}
-                        onClick={() => setSkills((s) => (s.includes(t.slug) ? s.filter((x) => x !== t.slug) : [...s, t.slug]))}
-                      >
-                        {t.label}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-              ))}
+          <Question
+            title="What can you do?"
+            subtitle="These come from your kind of work. Tap what applies, or add your own. Optional."
+          >
+            {branchSkills.length > 0 && (
+              <div className="flex max-h-[38vh] flex-wrap gap-2 overflow-y-auto pb-2">
+                {branchSkills.map((label) => (
+                  <Chip
+                    key={label}
+                    selected={skills.includes(label)}
+                    onClick={() =>
+                      setSkills((s) => (s.includes(label) ? s.filter((x) => x !== label) : [...s, label]))
+                    }
+                  >
+                    {label}
+                  </Chip>
+                ))}
+              </div>
+            )}
+            {skills.filter((s) => !branchSkills.includes(s)).length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {skills
+                  .filter((s) => !branchSkills.includes(s))
+                  .map((label) => (
+                    <Chip key={label} selected onClick={() => setSkills((s) => s.filter((x) => x !== label))}>
+                      {label} &times;
+                    </Chip>
+                  ))}
+              </div>
+            )}
+            <div className="flex gap-2">
+              <TextField value={ownSkillText} onChange={setOwnSkillText} placeholder="Add your own, e.g. First aid" />
+              <button
+                type="button"
+                disabled={!ownSkillText.trim()}
+                onClick={() => {
+                  const label = ownSkillText.trim().slice(0, 40);
+                  setSkills((s) => (s.includes(label) ? s : [...s, label]));
+                  setOwnSkillText("");
+                }}
+                className="shrink-0 rounded-full border border-neutral-900 px-4 py-2 text-sm font-semibold text-neutral-900 disabled:opacity-40"
+              >
+                Add
+              </button>
             </div>
             <Primary disabled={saving} onClick={() => go(nextStep(step), { skills })}>
               Continue
@@ -440,13 +441,12 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
             signupHref={signupHref}
             homeHref={homeHref}
             fullName={fullName}
-            roleLabels={[...selectedRoleLabels, ...(otherRoleText.trim() ? [otherRoleText.trim()] : [])]}
+            roleLabels={occupations.map((o) => o.title)}
             years={years}
             suburb={suburb}
             province={province}
             availability={availability}
             skills={skills}
-            taxonomy={taxonomy}
             workHistory={workHistory}
             summary={summary}
             onPolished={(s, wh) => {
@@ -560,7 +560,6 @@ function ReviewStep({
   province,
   availability,
   skills,
-  taxonomy,
   workHistory,
   summary,
   onPolished,
@@ -583,7 +582,6 @@ function ReviewStep({
   province: string;
   availability: string;
   skills: string[];
-  taxonomy: Taxonomy;
   workHistory: WorkHistoryEntry[];
   summary: string;
   onPolished: (summary: string | null, workHistory: WorkHistoryEntry[]) => void;
@@ -603,7 +601,9 @@ function ReviewStep({
   const [template, setTemplate] = useState(initialTemplate);
   const [polishCount, setPolishCount] = useState(initialPolishCount);
   const [recommendations, setRecommendations] = useState<string[]>(initialRecommendations);
-  const skillLabels = skills.map((s) => taxonomy.find((t) => t.slug === s)?.label).filter(Boolean);
+  // Skills are stored as their display labels since the OFO switch, so
+  // legacy slug values (lowercase-hyphenated) simply render as they are.
+  const skillLabels = skills;
   const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === availability)?.label;
   const polishRemaining = AI_POLISH_CAP - polishCount;
   const hasPolishableText = summary.trim().length > 0 || workHistory.some((w) => (w.description ?? "").trim());

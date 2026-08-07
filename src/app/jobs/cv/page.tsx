@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { resolveCandidateRow } from "@/app/jobs/cv/actions";
 import { CvBuilder } from "@/components/jobs/CvBuilder";
 import { jobsCanonical } from "@/lib/jobs/host";
+import type { OccupationPick } from "@/lib/jobs/cv-conversation";
 
 export const metadata: Metadata = {
   title: { absolute: "Build your CV | KatisoBiz Jobs" },
@@ -13,10 +14,25 @@ export const metadata: Metadata = {
 };
 
 export default async function CvBuilderPage() {
-  const [candidate, { data: taxonomy }] = await Promise.all([
-    resolveCandidateRow(),
-    createAdminClient().from("jobs_taxonomy").select("id, slug, label, category").order("sort_order"),
-  ]);
+  const candidate = await resolveCandidateRow();
 
-  return <CvBuilder initialCandidate={candidate} taxonomy={taxonomy ?? []} />;
+  // The row stores only the primary occupation's code (the secondaries
+  // carry their titles in jsonb); resolve the primary's official title here
+  // so the builder can render every chip without a client-side lookup.
+  let initialOccupations: OccupationPick[] = [];
+  if (candidate) {
+    const secondaries = candidate.secondary_ofo_codes ?? [];
+    if (candidate.ofo_occupation_code) {
+      const { data: primary } = await createAdminClient()
+        .from("jobs_ofo_occupations")
+        .select("code, title")
+        .eq("code", candidate.ofo_occupation_code)
+        .maybeSingle();
+      initialOccupations = primary ? [primary, ...secondaries] : [...secondaries];
+    } else {
+      initialOccupations = [...secondaries];
+    }
+  }
+
+  return <CvBuilder initialCandidate={candidate} initialOccupations={initialOccupations} />;
 }

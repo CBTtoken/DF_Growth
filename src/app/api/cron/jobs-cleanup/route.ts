@@ -75,11 +75,11 @@ export async function GET(request: Request) {
   // ---- 2. Purge expired and taken-down posts ----
   const { data: dead } = await admin
     .from("jobs_vacancies")
-    .select("id, suburb, province, created_at, status, expires_at, jobs_taxonomy!jobs_vacancies_role_id_fkey(label), other_role_text")
+    .select("id, suburb, province, created_at, status, expires_at, jobs_ofo_occupations(title)")
     .or(`and(status.eq.published,expires_at.lt.${nowIso}),status.eq.removed,status.eq.expired`);
 
   for (const v of dead ?? []) {
-    const roleLabel = (v.jobs_taxonomy as unknown as { label: string } | null)?.label ?? v.other_role_text ?? null;
+    const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? null;
     await admin.from("jobs_vacancy_outcomes").insert({
       role_label: roleLabel,
       area: [v.suburb, v.province].filter(Boolean).join(", "),
@@ -111,12 +111,12 @@ export async function GET(request: Request) {
   for (const employer of lapsedEmployers ?? []) {
     const { data: liveVacancies } = await admin
       .from("jobs_vacancies")
-      .select("id, suburb, province, created_at, jobs_taxonomy!jobs_vacancies_role_id_fkey(label), other_role_text")
+      .select("id, suburb, province, created_at, jobs_ofo_occupations(title)")
       .eq("employer_id", employer.id)
       .eq("status", "published");
 
     for (const v of liveVacancies ?? []) {
-      const roleLabel = (v.jobs_taxonomy as unknown as { label: string } | null)?.label ?? v.other_role_text ?? null;
+      const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? null;
       await admin.from("jobs_vacancy_outcomes").insert({
         role_label: roleLabel,
         area: [v.suburb, v.province].filter(Boolean).join(", "),

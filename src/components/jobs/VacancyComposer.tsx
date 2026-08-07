@@ -1,15 +1,20 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { postVacancy } from "@/app/jobs/employer/post/actions";
-import { ROLE_CATEGORIES, roleCategoryLabel, PROVINCE_OPTIONS } from "@/lib/jobs/cv-conversation";
+import { OfoPicker } from "@/components/jobs/OfoPicker";
+import {
+  EXPERIENCE_LEVEL_OPTIONS,
+  PROVINCE_OPTIONS,
+  type OccupationPick,
+} from "@/lib/jobs/cv-conversation";
 
-type Taxonomy = { id: string; slug: string; label: string; category: string }[];
-
-// One vacancy, one position: the same two-level field-then-position picker
-// the CV builder uses, single-select here because a post is for one job.
-// Everything else is a structural field, not a free text box (spec).
+// One vacancy, one position, chosen from the identical official OFO list
+// the CV builder uses (handoff Job 1: "Do not build two different
+// pickers") -- that shared structure is what makes matching work. Level
+// uses the same five values as the CV. Everything else is a structural
+// field, not a free text box.
 
 const EMPLOYMENT_TYPES: { id: string; label: string }[] = [
   { id: "full_time", label: "Full time" },
@@ -23,34 +28,13 @@ const input =
 const label = "flex flex-col gap-1.5 text-sm font-semibold text-neutral-700";
 const err = "text-xs font-normal text-red-600";
 
-export function VacancyComposer({ taxonomy, dashboardHref }: { taxonomy: Taxonomy; dashboardHref: string }) {
+export function VacancyComposer({ dashboardHref }: { dashboardHref: string }) {
   const [state, action, pending] = useActionState(postVacancy, null);
 
-  const [roleCategory, setRoleCategory] = useState<string | null>(null);
-  const [roleId, setRoleId] = useState<string>("");
-  const [otherRole, setOtherRole] = useState("");
+  const [occupation, setOccupation] = useState<OccupationPick | null>(null);
+  const [experienceLevel, setExperienceLevel] = useState("");
   const [employmentType, setEmploymentType] = useState("full_time");
   const [province, setProvince] = useState("");
-
-  const grouped = useMemo(() => {
-    const byCategory = new Map<string, Taxonomy>();
-    for (const t of taxonomy) {
-      const list = byCategory.get(t.category) ?? [];
-      list.push(t);
-      byCategory.set(t.category, list);
-    }
-    return byCategory;
-  }, [taxonomy]);
-
-  const fieldList = useMemo(() => {
-    const known = ROLE_CATEGORIES.filter((c) => grouped.has(c.id));
-    const unknown = [...grouped.keys()]
-      .filter((id) => !ROLE_CATEGORIES.some((c) => c.id === id))
-      .map((id) => ({ id, label: roleCategoryLabel(id) }));
-    return [...known, ...unknown];
-  }, [grouped]);
-
-  const roleLabel = taxonomy.find((t) => t.id === roleId)?.label ?? otherRole;
 
   if (state?.held) {
     return (
@@ -70,77 +54,51 @@ export function VacancyComposer({ taxonomy, dashboardHref }: { taxonomy: Taxonom
 
   return (
     <form action={action} className="flex flex-col gap-5">
-      <input type="hidden" name="roleId" value={roleId} />
-      <input type="hidden" name="otherRoleText" value={otherRole} />
+      <input type="hidden" name="ofoCode" value={occupation?.code ?? ""} />
+      <input type="hidden" name="experienceLevel" value={experienceLevel} />
       <input type="hidden" name="employmentType" value={employmentType} />
       <input type="hidden" name="province" value={province} />
 
-      {/* The kind of work, field then position. */}
       <div className="flex flex-col gap-2">
         <p className="text-sm font-semibold text-neutral-700">What kind of work is it?</p>
-        {roleLabel ? (
+        {occupation ? (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white">{roleLabel}</span>
+            <span className="rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white">
+              {occupation.title}
+            </span>
             <button
               type="button"
-              onClick={() => {
-                setRoleId("");
-                setOtherRole("");
-                setRoleCategory(null);
-              }}
+              onClick={() => setOccupation(null)}
               className="text-xs font-medium text-neutral-500 underline-offset-2 hover:underline"
             >
               Change
             </button>
           </div>
-        ) : roleCategory === null ? (
-          <div className="flex flex-wrap gap-2">
-            {fieldList.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setRoleCategory(c.id)}
-                className="rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
-              >
-                {c.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setRoleCategory("other")}
-              className="rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
-            >
-              Not listed
-            </button>
-          </div>
-        ) : roleCategory === "other" ? (
-          <input
-            value={otherRole}
-            onChange={(e) => setOtherRole(e.target.value)}
-            placeholder="Type the kind of work"
-            className={input}
-          />
         ) : (
-          <div className="flex flex-wrap gap-2">
-            {(grouped.get(roleCategory) ?? []).map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setRoleId(t.id)}
-                className="rounded-full border border-neutral-200 bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-400"
-              >
-                {t.label}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setRoleCategory(null)}
-              className="rounded-full px-4 py-2.5 text-sm font-medium text-neutral-400"
-            >
-              &larr; Other fields
-            </button>
-          </div>
+          <OfoPicker placeholder="e.g. electrician, cashier, driver..." onPick={setOccupation} />
         )}
+        {state?.error?.ofoCode?.[0] && <span className={err}>{state.error.ofoCode[0]}</span>}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p className="text-sm font-semibold text-neutral-700">What level?</p>
+        <div className="flex flex-wrap gap-2">
+          {EXPERIENCE_LEVEL_OPTIONS.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => setExperienceLevel(o.id)}
+              className={`rounded-full border px-4 py-2.5 text-sm font-medium transition ${
+                experienceLevel === o.id
+                  ? "border-neutral-900 bg-neutral-900 text-white"
+                  : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
+              }`}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {state?.error?.experienceLevel?.[0] && <span className={err}>{state.error.experienceLevel[0]}</span>}
       </div>
 
       <label className={label}>
