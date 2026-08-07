@@ -44,6 +44,7 @@ interface EmployerRow {
   owner_user_id: string;
   plan: JobsPlan;
   plan_lapsed_at: string | null;
+  free_post_used_at: string | null;
 }
 
 /**
@@ -133,10 +134,14 @@ export async function resolveEmployerEntitlement(employer: EmployerRow): Promise
   }
 
   if (employer.plan === "starter" && !lapsed) {
+    // Drafts are free to write; only a post that went live spends the
+    // allowance (the preview-before-publish flow would otherwise charge
+    // for the draft the moment it was saved).
     const { count } = await admin
       .from("jobs_vacancies")
       .select("id", { count: "exact", head: true })
       .eq("employer_id", employer.id)
+      .neq("status", "draft")
       .gte("created_at", startOfMonthIso());
     const used = count ?? 0;
     return {
@@ -160,11 +165,17 @@ export async function resolveEmployerEntitlement(employer: EmployerRow): Promise
   }
 
   // Free: one post, ever.
+  // "Once EVER" is a durable stamp, not a row count: the cleanup cron
+  // purges vacancy rows about 30 days after expiry, so a count would
+  // silently reset and hand out a fresh free post every cycle. The stamp
+  // is set by publishVacancy the first time a free post goes live; the
+  // count remains as a belt-and-braces check for rows not yet purged.
   const { count } = await admin
     .from("jobs_vacancies")
     .select("id", { count: "exact", head: true })
-    .eq("employer_id", employer.id);
-  const used = count ?? 0;
+    .eq("employer_id", employer.id)
+    .neq("status", "draft");
+  const used = employer.free_post_used_at ? FREE_POSTS_EVER : (count ?? 0);
   return {
     source: "free",
     plan: "free",

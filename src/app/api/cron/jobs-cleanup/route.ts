@@ -73,10 +73,15 @@ export async function GET(request: Request) {
   }
 
   // ---- 2. Purge expired and taken-down posts ----
+  // Closed posts (position filled) keep their repost window until their
+  // original term runs out, then purge like anything else; a closed
+  // outcome is the demand-data line worth keeping most.
   const { data: dead } = await admin
     .from("jobs_vacancies")
     .select("id, suburb, province, created_at, status, expires_at, jobs_ofo_occupations(title)")
-    .or(`and(status.eq.published,expires_at.lt.${nowIso}),status.eq.removed,status.eq.expired`);
+    .or(
+      `and(status.eq.published,expires_at.lt.${nowIso}),and(status.eq.closed,expires_at.lt.${nowIso}),status.eq.removed,status.eq.expired`,
+    );
 
   for (const v of dead ?? []) {
     const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? null;
@@ -84,7 +89,7 @@ export async function GET(request: Request) {
       role_label: roleLabel,
       area: [v.suburb, v.province].filter(Boolean).join(", "),
       posted_at: v.created_at,
-      outcome: v.status === "removed" ? "taken_down" : "expired",
+      outcome: v.status === "removed" ? "taken_down" : v.status === "closed" ? "filled" : "expired",
     });
     await admin.from("jobs_vacancies").delete().eq("id", v.id);
     purged++;

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getMyJobsEmployer } from "@/lib/jobs/employer";
-import { renewVacancy, removeMyVacancy } from "@/app/jobs/employer/actions";
+import { renewVacancy } from "@/app/jobs/employer/actions";
+import { publishVacancy, closeVacancy } from "@/app/jobs/employer/post/actions";
 import { vacancyIsExpired, vacancyNearingExpiry } from "@/lib/jobs/entitlements";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { jobsPath } from "@/lib/jobs/host";
@@ -148,7 +149,7 @@ export default async function EmployerDashboardPage() {
                     ) : null}
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {(expired || nearingExpiry) && v.status !== "held" && (
+                    {(expired || nearingExpiry) && v.status === "published" && (
                       <form action={renewVacancy.bind(null, v.id)}>
                         <button
                           type="submit"
@@ -158,14 +159,36 @@ export default async function EmployerDashboardPage() {
                         </button>
                       </form>
                     )}
-                    <form action={removeMyVacancy.bind(null, v.id)}>
-                      <button
-                        type="submit"
-                        className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-500 transition hover:border-red-300 hover:text-red-600"
+                    {(v.status === "closed" || (v.status === "expired" && expired)) && (
+                      <form action={publishVacancy}>
+                        <input type="hidden" name="vacancyId" value={v.id} />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-neutral-900 px-4 py-2 text-xs font-semibold text-neutral-900 transition hover:bg-neutral-50"
+                        >
+                          Repost for 30 days
+                        </button>
+                      </form>
+                    )}
+                    {v.status === "draft" && (
+                      <Link
+                        href={`${postHref}/preview/${v.id}`}
+                        className="rounded-full border border-neutral-900 px-4 py-2 text-xs font-semibold text-neutral-900 transition hover:bg-neutral-50"
                       >
-                        Position filled, take it down
-                      </button>
-                    </form>
+                        Preview and publish
+                      </Link>
+                    )}
+                    {v.status === "published" && (
+                      <form action={closeVacancy}>
+                        <input type="hidden" name="vacancyId" value={v.id} />
+                        <button
+                          type="submit"
+                          className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-500 transition hover:border-red-300 hover:text-red-600"
+                        >
+                          Position filled, close it
+                        </button>
+                      </form>
+                    )}
                   </div>
                 </li>
               );

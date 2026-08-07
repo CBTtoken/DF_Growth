@@ -8,7 +8,7 @@ import { reportVacancy } from "@/app/jobs/find-people/actions";
 import { applyToVacancy } from "@/app/jobs/vacancies/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { vacancyIsExpired } from "@/lib/jobs/entitlements";
-import { experienceLevelLabel } from "@/lib/jobs/cv-conversation";
+import { VacancyAdvert } from "@/components/jobs/VacancyAdvert";
 
 const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
   full_time: "Full time",
@@ -18,7 +18,7 @@ const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const VACANCY_COLUMNS =
-  "id, title, description, suburb, province, employment_type, pay_text, status, expires_at, created_at, experience_level, jobs_ofo_occupations(title), jobs_employers!inner(business_name, phone)";
+  "id, title, description, suburb, province, employment_type, pay_text, salary_public, status, expires_at, created_at, experience_level, starts_text, closing_date, duties, must_have, nice_to_have, qualifications, selection_process, jobs_ofo_occupations(title), jobs_employers!inner(business_name, phone)";
 
 // An expired vacancy's permalink stays alive (the Board's own rule: the
 // indexed page survives) but says plainly that it is no longer open, and
@@ -66,23 +66,29 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
           </p>
         )}
 
-        <h1 className="mt-4 text-2xl font-bold text-neutral-900">{v.title}</h1>
-        <p className="mt-1 text-neutral-600">
-          {[
-            employer?.business_name,
-            roleLabel,
-            experienceLevelLabel(v.experience_level),
-            EMPLOYMENT_TYPE_LABELS[v.employment_type],
-          ]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
-        <p className="mt-1 text-neutral-600">
-          {v.suburb}, {v.province}
-          {v.pay_text ? ` · ${v.pay_text}` : ""}
-        </p>
-
-        <div className="mt-6 whitespace-pre-line text-neutral-800">{v.description}</div>
+        <div className="mt-4">
+          <VacancyAdvert
+            v={{
+              title: v.title,
+              employerName: employer?.business_name ?? null,
+              roleTitle: roleLabel ?? null,
+              experienceLevel: v.experience_level,
+              employmentType: v.employment_type,
+              suburb: v.suburb,
+              province: v.province,
+              startsText: v.starts_text,
+              closingDate: v.closing_date,
+              duties: v.duties,
+              mustHave: v.must_have,
+              niceToHave: v.nice_to_have,
+              qualifications: v.qualifications,
+              selectionProcess: v.selection_process,
+              payText: v.pay_text,
+              salaryPublic: v.salary_public ?? true,
+              description: v.description,
+            }}
+          />
+        </div>
 
         {!expired && employer && (
           <div className="mt-8 rounded-xl border border-neutral-100 bg-neutral-50 p-4">

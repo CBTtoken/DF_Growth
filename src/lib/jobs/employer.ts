@@ -16,7 +16,8 @@ export interface JobsEmployerSummary {
   entitlement: EmployerEntitlement;
 }
 
-const EMPLOYER_COLUMNS = "id, owner_user_id, business_name, phone, email, plan, plan_lapsed_at";
+const EMPLOYER_COLUMNS =
+  "id, owner_user_id, business_name, phone, email, plan, plan_lapsed_at, free_post_used_at";
 
 export async function getMyJobsEmployer(): Promise<JobsEmployerSummary | null> {
   const supabase = await createServerClient();
