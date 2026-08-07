@@ -39,13 +39,13 @@ rotation baked in (the Molotsi sideways-photo lesson), uploaded to his own
 dashboard-managed gallery in a deliberately mixed order, the biscuit bucket
 second so "micro bakery" is visible immediately.
 
-**His account**: status active, three months admin comp to **7 November
-2026** with the note on the record, mirroring the Molotsi cohort
-arrangement. **Dewald to confirm those terms** — the arrangement was
-assumed, not stated. While this build was running the plan changed from
-Foundation to Growth Engine under me (admin action or trigger; not this
-build), which also matches the Molotsi shape. Nothing routes through
-Paystack. **No email was sent to David** so Dewald can send his own note.
+**His account**: status active, one month admin comp to **7 September
+2026** with the note on the record (confirmed by Dewald 7 Aug 2026, after
+the build initially assumed the Molotsi three-month shape). David manages
+his own billing from the dashboard and can renew when the free month ends.
+The Foundation to Growth Engine plan change during the build was Dewald's
+own admin action. Nothing routes through Paystack for the free month.
+**No email was sent to David**; Dewald is speaking with him directly.
 
 **Contact**: hero pushes straight to WhatsApp 079 330 8877 and call
 081 579 5185, both tappable, repeated with email in the hero base strip
