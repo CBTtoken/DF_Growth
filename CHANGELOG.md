@@ -11,6 +11,63 @@ Every future sprint adds its entry here before reporting back, per
 
 ---
 
+## 7 August 2026 — Onboarding two doors, and self-serve quality
+
+**Branch:** `onboarding-self-serve-quality`. Sprint handoff:
+`docs/Sprints/SPRINT-2026-08-07-onboarding-two-doors.md`.
+
+Two halves of one question Dewald asked after seeing Davemarly's page: how
+does a member who signs up on their own get near that quality, and how does
+the done-for-you build become something anyone can buy?
+
+**The self-serve half.** A theme is now recommended from the trade the
+member already gave at step 2 (`src/lib/templates/recommend.ts`), shown
+first with a "Recommended for your trade" badge and preselected; all 60
+industry subcategories map to a real template, plus a keyword fallback for
+free text. Every member photo now gets the treatment the done-for-you
+builds applied by hand (`src/lib/photos-server.ts`): EXIF rotation, so a
+portrait phone photo stops landing sideways on a live page, and a 1600px
+resize, on both the upload and Pexels paths. The photo cap went 10 to 15.
+The wizard now asks which photo belongs on the front page at the moment
+the photos arrive, instead of leaving a dashboard control members never
+found. The AI drafting prompt gained the Build Kit B3 rules it was missing
+(no testimonials in any form, no unsupportable superlatives, no jargon,
+South African English and Rand, headlines short and concrete). A page
+checklist on the dashboard (`src/components/dashboard/PageChecklist.tsx`)
+absorbed the old ProfileCompletenessBanner rather than competing with it.
+
+**The build-order half.** `/pricing/build` is a real door: one Turnstile-
+protected form, one checkout, and `/admin/build-queue` with the three
+working day promise on a visible clock. The single checkout cannot use a
+plan code, verified against Paystack's live docs: a plan code makes
+Paystack charge the plan amount and ignore the amount passed, so R450 plus
+the first period is charged as one plain transaction and the webhook then
+creates the subscription from that charge's authorization with a
+`start_date` one period out. Provisioning stays before payment, against
+the handoff's letter but with the standing principle in
+`src/app/pricing/actions.ts`, so a drop-off at the card screen is a row to
+follow up rather than a silence.
+
+**Also:** `Accommodation & Stays` added to `INDUSTRY_TAXONOMY` (Dewald is
+building a guest house). The Retreat theme had existed since the Falling
+Feather Inn build with nothing in the industry picker leading to it.
+
+**Found while building, all pre-existing except the last two:**
+- `PAYSTACK_PLAN_FOUNDATION_ANNUAL` (PLN_qf1kh46lwn5jxr1) is rejected by
+  Paystack as an invalid plan code on the test key while the other three
+  resolve. Still to check against the live account.
+- A cabinetmaker typing "kitchen cupboards" was matched to the food theme,
+  and "nail bar" matched nothing. Both caught by running all 60 taxonomy
+  strings rather than reading them.
+- A build-order member would have been sent the ordinary "Your page is
+  live!" welcome email linking to a page nobody had built yet. They now get
+  their own email.
+- A Foundation build order would not have fired the Meta conversion, whose
+  condition assumed Foundation never reaches that branch unpaid.
+
+**Still open:** public holidays are not accounted for in the three working
+day promise, only weekends.
+
 ## 7 August 2026 — Kasi Kitchen theme and the Davemarly build
 
 **Branch:** `davemarly-kasi-kitchen`.

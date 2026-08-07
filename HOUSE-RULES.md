@@ -79,14 +79,33 @@ instance's memory and resets on every cold start, so it stops one impatient
 browser tab and nothing else. Keep it, it is useful, but it is not the gate.
 
 The check goes in the server action, verified against Cloudflare, never
-trusted for being present. Growth member signup is the one deliberate
-exception, because an account is only created after a real Paystack payment
-succeeds, which no bot can fake. Anything behind a login is out of scope for
-this rule.
+trusted for being present. Anything behind a login is out of scope for this
+rule.
 
-Spot-checked during this sprint on the Board's comment/like/report actions
-and the Booking hold action: all three verify Turnstile server-side and
-render the widget. Nothing found contradicting this rule.
+Spot-checked during the 3 August sprint on the Board's comment/like/report
+actions and the Booking hold action: all three verify Turnstile server-side
+and render the widget.
+
+**Growth member signup was recorded here as the one deliberate exception,
+"because an account is only created after a real Paystack payment succeeds,
+which no bot can fake". That justification is no longer true and the
+exception needs a decision from Dewald.** Found 7 August 2026 while writing
+the build door.
+
+Combined spec Sec 10 moved payment to the end of the onboarding wizard, so
+`startCheckout` in `src/app/pricing/actions.ts` now calls
+`provisionGrowthClient` before any money exists, for both tiers. That
+creates a `growth_clients` row, creates a Supabase Auth user, and sends a
+real invite email, from an anonymous form whose only protection is
+`isRateLimited`, which this same section says is not the gate. Foundation's
+trial never involves a payment at all.
+
+The build door (`/pricing/build`) does verify Turnstile, both halves, so it
+is not part of this gap. Nothing has been changed on the main signup path
+without Dewald's say-so, because it is the primary revenue route and
+breaking it costs real signups. The fix itself is small: the same
+`verifyTurnstileToken` call every other anonymous action makes, plus
+`<TurnstileWidget />` in the tier card form.
 
 ## The deny list
 

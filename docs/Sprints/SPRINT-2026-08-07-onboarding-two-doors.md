@@ -4,8 +4,97 @@
 by the session that did that build. Decisions below were made by Dewald the
 same day; do not re-ask them.**
 
-Not started. Mark progress at the top of this file as you go, per the
-Sprints folder convention.
+## Progress
+
+**All six items built.** Branch `onboarding-self-serve-quality`, four
+commits, **not merged and not deployed**. The migration has been run on the
+database by Dewald. Nothing has been exercised with a real payment yet.
+
+- **Item 2, theme recommendation: done.** `src/lib/templates/recommend.ts`.
+  All 60 industry subcategories map to a real template, verified by running
+  them. Free-text fallback for "Other" too.
+- **Item 3, photo experience: done.** EXIF rotation and 1600px resize on
+  both upload paths (`src/lib/photos-server.ts`), cap raised to 15, hero
+  chosen inside the wizard, guidance copy on both surfaces.
+- **Item 4, copy quality: done.** Build Kit B3 rules baked into
+  `src/lib/ai/draft-copy.ts`.
+- **Item 5, publish checklist: done.** `src/components/dashboard/PageChecklist.tsx`,
+  which absorbs the old ProfileCompletenessBanner rather than duplicating it.
+- **Item 1, two-door signup: built, needs the migration and real testing.**
+  `/pricing/build`, its Turnstile-protected action, the combined checkout,
+  the webhook half, and `/admin/build-queue` with the clock.
+- **Item 6, how-to and FAQ: done.** A "We Build It For You" category on the
+  FAQ, updated design and photo answers, the two doors stated at the top of
+  How It Works, and the hero image control written out in the guide. Also
+  corrected the two other surfaces still promising the old manual R450
+  arrangement (the admin client page and the KatisoBiz upsell footer).
+- **Extra, not in the handoff: Accommodation & Stays** added to
+  INDUSTRY_TAXONOMY (Dewald asked, 7 Aug, he is building a guest house).
+  The Retreat theme had nothing in the picker leading to it.
+
+Typecheck, lint and production build pass. `/pricing/build` verified
+rendering live with the real total (R630 for Growth monthly) and its
+Turnstile field present. Not yet walked end to end: that needs the
+migration below, plus a member login for the wizard half.
+
+### Before this can be tested: run the migration
+
+`supabase/migrations/20260810100000_build_orders.sql` adds the
+`build_order_*` columns. The code queries them, so it does not work until
+this is run in the Supabase SQL Editor. Nothing else in the sprint depends
+on it.
+
+### Decisions taken, not asked
+
+Both were flagged before building and both had effectively one answer that
+fits what was already specified. Say if either is wrong.
+
+1. **The single checkout is one plain transaction, not a plan-based one.**
+   Verified against Paystack's live docs on 7 Aug: a plan code makes
+   Paystack charge the plan amount and ignore the amount passed, so
+   "R450 + first period" is impossible as one plan transaction. It charges
+   the combined total, then the webhook creates the subscription from that
+   charge's authorization with `start_date` one period out.
+2. **Provision before payment, not on it.** The handoff said on payment;
+   `src/app/pricing/actions.ts` records the opposite as a standing
+   principle so a drop-off at the card screen is visible. Kept the
+   principle; the queue lists unpaid starts separately.
+
+### The one to read first
+
+**The main signup form has no Turnstile check, and the reason recorded for
+that exemption is no longer true.** `HOUSE-RULES.md` said Growth member
+signup was the one deliberate exception "because an account is only created
+after a real Paystack payment succeeds, which no bot can fake". Combined
+spec Sec 10 moved payment to the end of the wizard, so `startCheckout` in
+`src/app/pricing/actions.ts` now provisions before any money exists: a
+`growth_clients` row, a Supabase Auth user, and a real invite email, from an
+anonymous form protected only by the in-memory rate limit that the same
+house rule says is not the gate.
+
+Not fixed here on purpose: it is the primary revenue path, Dewald is testing
+tomorrow, and breaking signup costs real money. The fix is small and
+well-understood, the same `verifyTurnstileToken` call twelve other actions
+already make plus `<TurnstileWidget />` in the tier card. Say the word.
+
+The build door itself does verify Turnstile, both halves, so it is not part
+of this gap. HOUSE-RULES.md has been corrected to state the position
+accurately rather than leave a false justification in place.
+
+### Found along the way, needs Dewald
+
+- **`PAYSTACK_PLAN_FOUNDATION_ANNUAL` (PLN_qf1kh46lwn5jxr1) is rejected by
+  Paystack as an invalid plan code** on the local test key, while the other
+  three plan codes resolve fine. This is pre-existing, not from this sprint,
+  and it may simply be a plan that exists in live but not in test. Worth
+  confirming against the live account, because a Foundation-annual member
+  converting would hit it.
+- **Public holidays are not accounted for** in the three-working-day
+  promise, only weekends. A holiday inside the window makes the promise a
+  day optimistic.
+- **Which tiers the build door should offer** is a guess: it currently
+  offers Foundation and Growth, both intervals. The handoff only said
+  "month-to-month or annual".
 
 ---
 
