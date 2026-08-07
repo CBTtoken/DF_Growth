@@ -42,7 +42,7 @@ const SEEKER_QA: Qa[] = [
   },
   {
     q: "Who can see my CV?",
-    a: "Your name and contact number only ever show to a registered employer who is logged in, and every one of those views is recorded. Anyone browsing without an account sees the kind of work you do, your experience and your area, with no name and no number. You can switch off being found at any time from your dashboard, and you can delete your CV for good.",
+    a: "Your name, your number, where you have worked and what you wrote about yourself show only to a registered employer who is logged in, and every one of those views is recorded. Anyone browsing without an account sees the kind of work you do, how long you have done it, your skills, your area and your job titles with dates, and nothing that identifies you. You can switch off being found at any time from your dashboard, and you can delete your CV for good.",
   },
   {
     q: "How do I apply for a job?",

@@ -43,7 +43,7 @@ const SEEKER_STEPS: Step[] = [
   {
     n: "5",
     title: "Let employers find you",
-    body: "Switch on being found and employers searching for someone like you can reach you. Your name and number show only to registered employers who are logged in, and every one of those views is recorded. Switch it off whenever you like.",
+    body: "Switch on being found and employers searching for someone like you can reach you. Anyone can see the kind of work you do, your skills, your area and your job titles. Your name, your number, where you have worked and what you wrote about yourself stay behind the login, shown only to registered employers, and every one of those views is recorded. Switch it off whenever you like.",
   },
   {
     n: "6",

@@ -207,7 +207,7 @@ export default async function SeekerDashboardPage({
             <p className="text-sm font-bold text-neutral-900">Being found</p>
             <p className="mt-1 text-sm text-neutral-600">
               {candidate.listed
-                ? "Employers searching for someone like you can find your CV. Your name and number only show to logged-in employers."
+                ? "Employers searching for someone like you can find your CV. Anyone can see the work you do, your skills, your area and your job titles. Your name, your number, where you have worked and what you wrote about yourself show only to logged-in employers."
                 : "You are not listed. Employers cannot find you until you switch this on."}
             </p>
             <form action={toggleListed} className="mt-3">

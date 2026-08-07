@@ -64,7 +64,8 @@ export default async function FindPeoplePage({
         <div className="mx-auto max-w-3xl">
           <h1 className="text-2xl font-bold text-neutral-900">Find people looking for work</h1>
           <p className="mt-2 text-sm text-neutral-600">
-            Real people, real skills. No name or contact details until you&apos;re a logged-in employer.
+            Real people, real skills. No name, contact details or past employers until you&apos;re a
+            logged-in employer.
           </p>
 
           <form className="mt-6 flex flex-col gap-3 sm:flex-row" method="get">

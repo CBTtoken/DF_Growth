@@ -158,6 +158,30 @@ These are promises made on the public pages and they constrain the build.
   automatically, with the reason logged.
 - **Uploaded CV files are never stored.** Parsed in request memory and
   discarded. There is no storage call in the import path.
+- **Nothing that identifies a person is ever public.** Confirmed by Dewald,
+  9 August 2026: "all names and personal details are never publicly
+  displayed or available, it remains behind the login wall."
+
+  | Public, indexed by Google | Behind the login, and every view recorded |
+  |---|---|
+  | Occupation, up to three | Full name |
+  | Years of experience, level | Contact number |
+  | Suburb and province | Contact email |
+  | Availability | What they wrote about themselves |
+  | Skills | Where they have worked, by name |
+  | Job titles with dates | What they did in each job |
+
+  The reasoning behind the last two rows, because it is not obvious: a CV
+  with no name on it is not anonymous if it reads "Cashier at Shoprite
+  Boksburg 2019 to 2021, then Supervisor at Boxer Brakpan". In a small town
+  that is one person, findable by anyone, including their current employer
+  discovering they are looking. Titles and dates carry the signal an
+  employer searches on without the trail that identifies.
+
+  Enforced by construction, not by care: the anonymous page selects an
+  explicit column allowlist and there is no `select("*")` anywhere in that
+  path, so a column added later cannot leak by default.
+
 - **Full candidate details show only to a registered employer, logged in,
   and every view is recorded** in `jobs_record_views`. This is why the
   application email carries a link and not the CV: an attachment cannot be
@@ -218,17 +242,46 @@ Applied to the live database and verified before the dependent code shipped.
   the seeker dashboard. Only vacancies expire.
 - **No photo on a CV.** The column exists, nothing displays it.
 
+### 3.6a What gets indexed
+
+Deliberate, and confirmed by Dewald on 9 August 2026: job postings and CVs
+should both be found on Google, with CVs anonymous.
+
+| Indexed | Not indexed |
+|---|---|
+| Home, how it works, questions | Both dashboards |
+| Jobs board and every job advert | The CV builder and CV import |
+| Find people and every candidate listing, anonymous | Applicants list and applicant detail |
+| Employers landing | Vacancy composer, preview, upgrade |
+
+Job adverts carry the whole advert including the business name; the
+employer chose to publish it. Candidate listings carry only the anonymous
+half of the table in 3.3, with a title like "Plumber, 5 years' experience,
+Boksburg".
+
+Both are generated into the sitemap from live data, so they appear as real
+ones arrive. An empty sitemap of detail pages at launch is correct, not a
+fault: there is nothing live to list yet.
+
+**One thing to watch as volume grows.** Anonymous candidate pages are, by
+design, similar to one another: occupation, area, years, skills. At small
+numbers this is fine. At a few hundred, near-duplicate pages can be read by
+Google as thin content and hurt the whole subdomain. Worth reviewing once
+there are real listings, and the fix if it happens is to index the browse
+and filter pages hard and let individual listings ride on those, rather
+than weakening the privacy rule.
+
 ### 3.7 Open items for the analyst
 
-1. **Resend sender domain.** Application alert emails go out through the
-   configured `RESEND_FROM_EMAIL`. Confirm this is the verified custom
-   domain and not the shared test sender, which only delivers to our own
-   verified address. Everything else works regardless; the employer simply
-   would not receive the alert.
-2. **Paystack plan codes.** `PAYSTACK_PLAN_JOBS_STARTER` and
-   `PAYSTACK_PLAN_JOBS_UNLIMITED` must exist in Vercel for the R45 and R69
-   upgrades. Until then the upgrade page fails politely and everything else
-   works, including the free first post.
+Checked on 9 August 2026, and the two flagged as risks in the first draft of
+this document were already done:
+
+1. **Resend sender domain: done.** `notify.digitalflyersa.co.za` is verified
+   in Resend (eu-west-1) and `RESEND_FROM_EMAIL` points at
+   `hello@notify.digitalflyersa.co.za`, not the shared test sender.
+2. **Paystack plan codes: done.** `PAYSTACK_PLAN_JOBS_STARTER` and
+   `PAYSTACK_PLAN_JOBS_UNLIMITED` are set in Vercel for Production and
+   Preview, along with the Jobs Turnstile keys and the Anthropic key.
 3. **The first real end to end test on the live domain** needs a real inbox,
    because signup uses a typed code. Turnstile also only renders on the real
    hostname.
