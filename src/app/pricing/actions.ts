@@ -6,6 +6,7 @@ import { headers, cookies } from "next/headers";
 import { startCheckoutSchema } from "@/lib/schemas/pricing";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { isRateLimited, clientIpFromHeaders } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 import { REFERRAL_COOKIE_NAME } from "@/lib/agents/referral-cookie";
 import { resolveReferralAttribution } from "@/lib/agents/attribution";
 import { sendDigitalFlyerCapiEvent } from "@/lib/meta/digitalflyer-capi";
@@ -71,6 +72,30 @@ export async function startCheckout(
   const ip = clientIpFromHeaders(hdrs);
   if (isRateLimited(`checkout:${ip}`, 5, 10 * 60 * 1000)) {
     return { error: { _form: ["Too many attempts, please wait a few minutes and try again."] } };
+  }
+
+  // HOUSE-RULES.md, absolute rule, closed here 7 August 2026.
+  //
+  // This form was the one recorded exception, on the reasoning that "an
+  // account is only created after a real Paystack payment succeeds, which
+  // no bot can fake". Combined spec Sec 10 moved payment to the end of the
+  // onboarding wizard, and that reasoning went with it: both branches below
+  // now call provisionGrowthClient before any money exists, which creates a
+  // growth_clients row, creates a Supabase Auth user, and sends a real
+  // invite email through Supabase. Foundation's trial never involves a
+  // payment at all.
+  //
+  // The rate limit above is not a substitute and the house rule says so:
+  // isRateLimited lives in one serverless instance's memory and resets on
+  // every cold start. Unchecked, this is an anonymous endpoint that mints
+  // accounts and sends mail on demand, which is also how a sender
+  // reputation gets ruined by bounces.
+  //
+  // Checked before the schema parse, so a bot cannot use validation errors
+  // to probe the form's shape.
+  const human = await verifyTurnstileToken(String(formData.get("turnstileToken") ?? ""), ip);
+  if (!human) {
+    return { error: { _form: ["We could not confirm you are a person. Please try again."] } };
   }
 
   const parsed = startCheckoutSchema.safeParse({

@@ -60,26 +60,28 @@ fits what was already specified. Say if either is wrong.
    principle so a drop-off at the card screen is visible. Kept the
    principle; the queue lists unpaid starts separately.
 
-### The one to read first
+### The one to read first, now fixed
 
-**The main signup form has no Turnstile check, and the reason recorded for
-that exemption is no longer true.** `HOUSE-RULES.md` said Growth member
-signup was the one deliberate exception "because an account is only created
-after a real Paystack payment succeeds, which no bot can fake". Combined
-spec Sec 10 moved payment to the end of the wizard, so `startCheckout` in
-`src/app/pricing/actions.ts` now provisions before any money exists: a
-`growth_clients` row, a Supabase Auth user, and a real invite email, from an
-anonymous form protected only by the in-memory rate limit that the same
-house rule says is not the gate.
+**The main signup form had no Turnstile check, and the reason recorded for
+exempting it had quietly stopped being true.** `HOUSE-RULES.md` said Growth
+member signup was the one deliberate exception "because an account is only
+created after a real Paystack payment succeeds, which no bot can fake".
+Combined spec Sec 10 moved payment to the end of the wizard, so
+`startCheckout` in `src/app/pricing/actions.ts` provisions before any money
+exists: a `growth_clients` row, a Supabase Auth user, and a real invite
+email, from an anonymous form protected only by the in-memory rate limit the
+same house rule says is not the gate.
 
-Not fixed here on purpose: it is the primary revenue path, Dewald is testing
-tomorrow, and breaking signup costs real money. The fix is small and
-well-understood, the same `verifyTurnstileToken` call twelve other actions
-already make plus `<TurnstileWidget />` in the tier card. Say the word.
+Closed 7 August 2026 at Dewald's request: `verifyTurnstileToken` in the
+action before the schema parse, `<TurnstileWidget />` in the tier card form.
+Verified on the rendered page that `/pricing` carries exactly two widgets
+for its two signup forms, so no form is unprotected and none has an orphan
+widget. Both Turnstile env vars were already set and in use by other Growth
+forms, so no Cloudflare configuration was needed.
 
-The build door itself does verify Turnstile, both halves, so it is not part
-of this gap. HOUSE-RULES.md has been corrected to state the position
-accurately rather than leave a false justification in place.
+**Worth testing first thing:** a real signup on `/pricing` for both
+Foundation and Growth. A server check with a broken widget locks real people
+out, which is the one way this change could bite.
 
 ### Found along the way, needs Dewald
 

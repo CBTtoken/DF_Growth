@@ -86,26 +86,31 @@ Spot-checked during the 3 August sprint on the Board's comment/like/report
 actions and the Booking hold action: all three verify Turnstile server-side
 and render the widget.
 
-**Growth member signup was recorded here as the one deliberate exception,
-"because an account is only created after a real Paystack payment succeeds,
-which no bot can fake". That justification is no longer true and the
-exception needs a decision from Dewald.** Found 7 August 2026 while writing
-the build door.
+**There is no longer any exception. Closed 7 August 2026.**
 
-Combined spec Sec 10 moved payment to the end of the onboarding wizard, so
-`startCheckout` in `src/app/pricing/actions.ts` now calls
-`provisionGrowthClient` before any money exists, for both tiers. That
-creates a `growth_clients` row, creates a Supabase Auth user, and sends a
-real invite email, from an anonymous form whose only protection is
-`isRateLimited`, which this same section says is not the gate. Foundation's
-trial never involves a payment at all.
+Growth member signup used to be recorded here as the one deliberate
+exception, "because an account is only created after a real Paystack payment
+succeeds, which no bot can fake". Combined spec Sec 10 moved payment to the
+end of the onboarding wizard and quietly took that justification with it:
+`startCheckout` in `src/app/pricing/actions.ts` calls
+`provisionGrowthClient` before any money exists, for both tiers, creating a
+`growth_clients` row, a Supabase Auth user and a real invite email.
+Foundation's trial never involves a payment at all. For a while the site's
+primary signup form was an anonymous endpoint that minted accounts and sent
+mail on demand, guarded only by `isRateLimited`, which this same section
+says is not the gate.
 
-The build door (`/pricing/build`) does verify Turnstile, both halves, so it
-is not part of this gap. Nothing has been changed on the main signup path
-without Dewald's say-so, because it is the primary revenue route and
-breaking it costs real signups. The fix itself is small: the same
-`verifyTurnstileToken` call every other anonymous action makes, plus
-`<TurnstileWidget />` in the tier card form.
+Both halves are now in place: `verifyTurnstileToken` in the action, before
+the schema parse, and `<TurnstileWidget />` inside the form in
+`src/components/pricing/tier-card.tsx`. Two tier cards render two signup
+forms, so `/pricing` carries two widgets, one per form, verified against
+the rendered page.
+
+**The lesson worth keeping:** the exemption was not wrong when it was
+written. It rotted because a different sprint changed when provisioning
+happens, and nothing linked that change back to the rule that depended on
+it. An exception recorded with its reasoning is only safe while somebody
+rechecks the reasoning.
 
 ## The deny list
 

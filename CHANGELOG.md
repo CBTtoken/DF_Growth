@@ -65,6 +65,15 @@ Feather Inn build with nothing in the industry picker leading to it.
 - A Foundation build order would not have fired the Meta conversion, whose
   condition assumed Foundation never reaches that branch unpaid.
 
+**Closed the same day, outside the sprint's own scope:** the main signup
+form at `/pricing` had no Turnstile check. It had been recorded in
+`HOUSE-RULES.md` as the one deliberate exception "because an account is only
+created after a real Paystack payment succeeds", a justification that
+Combined spec Sec 10 invalidated when it moved payment to the end of the
+wizard. Both halves are now in place. The exemption did not start wrong, it
+rotted, because nothing linked a change in when provisioning happens back to
+the rule that depended on it.
+
 **Still open:** public holidays are not accounted for in the three working
 day promise, only weekends.
 
