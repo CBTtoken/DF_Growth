@@ -10,7 +10,13 @@ import {
   experienceLevelLabel,
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
-import { setApplicationStatus, toggleSavedCandidate } from "@/app/jobs/employer/applicants/actions";
+import {
+  setApplicationStatus,
+  toggleSavedCandidate,
+  sendEmployerMessage,
+} from "@/app/jobs/employer/applicants/actions";
+import { loadThread, markThreadRead, MESSAGE_MAX } from "@/lib/jobs/messages";
+import { MessageThread } from "@/components/jobs/MessageThread";
 
 export const metadata: Metadata = {
   title: { absolute: "Applicant | KatisoBiz Jobs" },
@@ -22,6 +28,7 @@ const STATUS_LABELS: Record<string, string> = {
   reviewing: "Reviewing",
   shortlisted: "Shortlisted",
   declined: "Declined",
+  withdrawn: "Pulled out",
 };
 
 // One applicant's full CV, shown to the employer they applied to.
@@ -57,7 +64,15 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
     .is("deleted_at", null)
     .maybeSingle();
 
-  const backHref = await jobsPath("/employer/applicants");
+  // Opening the applicant is what marks their messages read.
+  await markThreadRead(application.id, "employer");
+  const thread = await loadThread(application.id);
+
+  const [backHref, pdfHref, docxHref] = await Promise.all([
+    jobsPath("/employer/applicants"),
+    jobsPath(`/cv/${application.candidate_id}/pdf`),
+    jobsPath(`/cv/${application.candidate_id}/docx`),
+  ]);
 
   if (!c) {
     return (
@@ -138,8 +153,30 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
             </a>
           )}
           {c.email && <p className="mt-1 text-sm text-neutral-700">{c.email}</p>}
+
+          {/* The CV as a document, so it can be printed, filed or taken
+              into an interview. Every download is recorded against this
+              employer account exactly as the on-screen view is. */}
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-neutral-100 pt-4">
+            <a
+              href={pdfHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
+            >
+              Download CV (PDF)
+            </a>
+            <a
+              href={docxHref}
+              className="inline-flex items-center justify-center rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700"
+            >
+              Download as Word
+            </a>
+          </div>
+
           <p className="mt-3 text-xs text-neutral-400">
-            This view has been recorded. Never ask a candidate to pay for anything.
+            This view has been recorded, and so is every download. Never ask a candidate to pay for
+            anything.
           </p>
         </div>
 
@@ -205,6 +242,27 @@ export default async function ApplicantPage({ params }: { params: Promise<{ id: 
               {saved ? "Saved, tap to unsave" : "Save for later"}
             </button>
           </form>
+        </div>
+
+        {/* Saying something, rather than only changing a status word the
+            applicant has to interpret. Dewald: "ok wait nothing happens,
+            maybe we should enable a messaging option." */}
+        <div className="mt-8 rounded-2xl border border-neutral-100 bg-white p-5 shadow-sm">
+          <p className="text-sm font-bold text-neutral-900">Messages</p>
+          <p className="mt-1 text-xs text-neutral-500">
+            Ask for more detail, arrange an interview, or tell them kindly that it is not a fit. They can
+            reply here. Never ask a candidate to pay for anything.
+          </p>
+          <MessageThread
+            messages={thread}
+            myRole="employer"
+            otherName={c.full_name?.trim().split(" ")[0] ?? "The applicant"}
+            action={sendEmployerMessage}
+            applicationId={application.id}
+            maxLength={MESSAGE_MAX}
+            emptyText="Nothing yet. Anything you write here reaches them by email as well, and they can reply."
+            placeholder="Good day, thank you for applying. Could you tell us..."
+          />
         </div>
       </section>
       <JobsFooter />

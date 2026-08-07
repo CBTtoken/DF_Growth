@@ -388,14 +388,26 @@ function CvBuilderScreens({
         {step === "location" && (
           <Question title="Where are you based?">
             <TextField autoFocus value={suburb} onChange={setSuburb} placeholder="Suburb or town, e.g. Boksburg" />
-            <p className="mb-2 mt-4 text-sm font-semibold text-neutral-700">Province</p>
-            <div className="mb-4 flex flex-wrap gap-2">
-              {PROVINCE_OPTIONS.map((p) => (
-                <Chip key={p} selected={province === p} onClick={() => setProvince(p)}>
-                  {p}
-                </Chip>
-              ))}
-            </div>
+            {/* Nine chips wrapped to four rows on a phone and pushed the
+                Continue button off the screen. Dewald: "The Province,
+                cant we make it a drop down, we have the information?"
+                There are exactly nine, they never change, and a native
+                select is the control a phone already knows how to show. */}
+            <label className="mb-4 mt-4 flex flex-col gap-1.5 text-sm font-semibold text-neutral-700">
+              Province
+              <select
+                value={province}
+                onChange={(e) => setProvince(e.target.value)}
+                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-3.5 text-base font-normal text-neutral-900 outline-none focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10"
+              >
+                <option value="">Choose your province</option>
+                {PROVINCE_OPTIONS.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
+            </label>
             <Primary disabled={!suburb.trim() || !province || saving} onClick={() => go({ suburb, province })}>
               {forwardLabel}
             </Primary>

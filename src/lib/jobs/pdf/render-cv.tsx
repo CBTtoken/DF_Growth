@@ -83,6 +83,21 @@ export async function renderCvPdf(candidateId: string): Promise<Response> {
   });
 }
 
+/**
+ * Who may download this CV.
+ *
+ * The person themselves, always. And, since 9 August 2026, an employer the
+ * person has actually applied to: Dewald, walking the employer side, "I can
+ * see I have 1 applicant but I can't read the CV or download it? There has
+ * to be a way to do that." He is right, and an employer who cannot get the
+ * CV out of the system will ask the candidate to email it, which puts the
+ * document somewhere nobody can log or withdraw.
+ *
+ * The gate is a real application row, not merely being an employer: an
+ * employer can download the CV of somebody who applied to them, and nobody
+ * else's. Applying is the consent, exactly as it is for the on-screen
+ * applicant view, and the download is logged the same way that view is.
+ */
 async function ownsCandidate(candidateId: string): Promise<boolean> {
   const admin = createAdminClient();
   const supabase = await createServerClient();
@@ -96,7 +111,32 @@ async function ownsCandidate(candidateId: string): Promise<boolean> {
       .select("id", { count: "exact", head: true })
       .eq("id", candidateId)
       .eq("owner_user_id", user.id);
-    return (count ?? 0) > 0;
+    if ((count ?? 0) > 0) return true;
+
+    const { data: employer } = await admin
+      .from("jobs_employers")
+      .select("id")
+      .eq("owner_user_id", user.id)
+      .maybeSingle();
+
+    if (employer) {
+      const { count: applications } = await admin
+        .from("jobs_applications")
+        .select("id", { count: "exact", head: true })
+        .eq("employer_id", employer.id)
+        .eq("candidate_id", candidateId);
+
+      if ((applications ?? 0) > 0) {
+        // Logged before the bytes go out, same rule as the on-screen view:
+        // a download that fails after this point must still be counted.
+        await admin
+          .from("jobs_record_views")
+          .insert({ employer_id: employer.id, candidate_id: candidateId });
+        return true;
+      }
+    }
+
+    return false;
   }
 
   const draftId = await getDraftCandidateId();

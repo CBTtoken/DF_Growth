@@ -49,6 +49,14 @@ const SEEKER_QA: Qa[] = [
     a: "Open the job and tap Apply with my CV. Your CV goes to that employer, and you can add a short note saying why the job suits you. You can see what happened to every application on your dashboard: Sent, Being reviewed, Shortlisted, or Not successful this time.",
   },
   {
+    q: "Can I talk to the employer?",
+    a: "Yes, once you have applied. Open that application from your dashboard and you can message them, and they can message you. Both of you get an email when a message arrives. Everything stays on KatisoBiz Jobs so you both have a record of what was said, which protects you as much as it protects them.",
+  },
+  {
+    q: "I got another job. Can I pull out?",
+    a: "Yes. Open that application from your dashboard and tap Pull out of this one. The employer sees that you withdrew rather than being left wondering, and you can change your mind again afterwards. It does not affect any of your other applications.",
+  },
+  {
     q: "Can I change my details after I have finished?",
     a: "Yes. Your name, contact number and contact email are on your dashboard under My details. Everything else, including your work history, is editable section by section from your CV: open it and tap Edit next to the part you want to change.",
   },
@@ -72,7 +80,11 @@ const EMPLOYER_QA: Qa[] = [
   },
   {
     q: "How do I know when somebody applies?",
-    a: "We email you the moment it happens, at whichever address you set on your dashboard, and the applicant appears under Applicants with their full CV. The email carries their note but not the CV itself, because CVs stay behind your login where the view can be recorded.",
+    a: "We email you the moment it happens, at whichever address you set on your dashboard, and the applicant appears under Applicants with their full CV, which you can read on screen or download as PDF or Word. The email carries their note but not the CV itself, because CVs stay behind your login where the view can be recorded.",
+  },
+  {
+    q: "How do I contact an applicant?",
+    a: "Open the applicant and message them. They get an email and can reply, and the whole thread stays on their application so you both have a record. Their phone number and email are on their CV too, but the thread is usually faster and it keeps everything in one place. Your own number is never shown on your advert: applicants come to you through the platform.",
   },
   {
     q: "Can I search for people instead of waiting for applications?",
