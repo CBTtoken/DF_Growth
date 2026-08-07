@@ -9,6 +9,7 @@ import { reportCandidate } from "@/app/jobs/find-people/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { getMyJobsEmployer } from "@/lib/jobs/employer";
 import { isRateLimited } from "@/lib/rate-limit";
+import { toggleSavedCandidate } from "@/app/jobs/employer/applicants/actions";
 
 // Only the columns the anonymous layer is allowed to show, named
 // explicitly -- never full_name, phone, email or photo_path, and never a
@@ -160,11 +161,15 @@ async function FullRecordSection({ candidateId }: { candidateId: string }) {
   // have been counted, never the other way round.
   await admin.from("jobs_record_views").insert({ employer_id: employer.id, candidate_id: candidateId });
 
-  const { data: full } = await admin
-    .from("jobs_candidates")
-    .select("full_name, phone, email")
-    .eq("id", candidateId)
-    .maybeSingle();
+  const [{ data: full }, { data: saved }] = await Promise.all([
+    admin.from("jobs_candidates").select("full_name, phone, email").eq("id", candidateId).maybeSingle(),
+    admin
+      .from("jobs_saved_candidates")
+      .select("id")
+      .eq("employer_id", employer.id)
+      .eq("candidate_id", candidateId)
+      .maybeSingle(),
+  ]);
 
   if (!full) return null;
 
@@ -180,6 +185,15 @@ async function FullRecordSection({ candidateId }: { candidateId: string }) {
         </a>
       )}
       {full.email && <p className="mt-1 text-sm text-neutral-700">{full.email}</p>}
+      <form action={toggleSavedCandidate} className="mt-3">
+        <input type="hidden" name="candidateId" value={candidateId} />
+        <button
+          type="submit"
+          className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-600 hover:border-neutral-400"
+        >
+          {saved ? "Saved, tap to unsave" : "Save for later"}
+        </button>
+      </form>
       <p className="mt-3 text-xs text-neutral-400">
         This view has been recorded. Never ask a candidate to pay for anything.
       </p>

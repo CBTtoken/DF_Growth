@@ -42,10 +42,11 @@ export async function loginToJobs(_prevState: LoginState, formData: FormData): P
 
   // Routed by what the login actually owns, the same principle as
   // resolveLandingPath: an employer account wins (they came to hire), a
-  // candidate lands on their CV. A login with neither is someone brand
-  // new, and their CV page creates itself on arrival.
+  // seeker lands on their dashboard (handoff Job 8: logging in always
+  // lands somewhere useful, never the home page). A login with neither is
+  // someone brand new; the dashboard forwards them into the CV builder.
   if (await hasJobsEmployer(data.user.id)) {
     redirect(await jobsPath("/employer"));
   }
-  redirect(await jobsPath("/cv"));
+  redirect(await jobsPath("/dashboard"));
 }

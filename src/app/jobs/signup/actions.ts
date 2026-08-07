@@ -150,7 +150,10 @@ export async function confirmJobsSignup(_prev: JobsSignupState, formData: FormDa
     await clearDraftCandidateId();
   }
 
-  redirect(await jobsPath("/cv"));
+  // Flow completion lands on the dashboard, never the home page or a
+  // mid-flow screen (handoff Job 8) -- the dashboard shows the saved CV
+  // with its completeness bar as the confirmation of what just happened.
+  redirect(await jobsPath("/dashboard"));
 }
 
 export async function resendJobsCode(_prev: JobsSignupState, formData: FormData): Promise<JobsSignupState> {

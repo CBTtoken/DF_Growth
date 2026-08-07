@@ -89,6 +89,7 @@ function CvBuilderScreens({
   const homeHref = useJobsPath("/");
   const pdfPrefix = useJobsPath("/cv");
   const signupHref = useJobsPath("/signup");
+  const dashboardHref = useJobsPath("/dashboard");
 
   const [saving, startSaving] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -440,6 +441,7 @@ function CvBuilderScreens({
             pdfPrefix={pdfPrefix}
             signupHref={signupHref}
             homeHref={homeHref}
+            dashboardHref={dashboardHref}
             fullName={fullName}
             roleLabels={occupations.map((o) => o.title)}
             years={years}
@@ -553,6 +555,7 @@ function ReviewStep({
   pdfPrefix,
   signupHref,
   homeHref,
+  dashboardHref,
   fullName,
   roleLabels,
   years,
@@ -575,6 +578,7 @@ function ReviewStep({
   pdfPrefix: string;
   signupHref: string;
   homeHref: string;
+  dashboardHref: string;
   fullName: string;
   roleLabels: string[];
   years: string;
@@ -712,6 +716,15 @@ function ReviewStep({
       >
         Download my CV
       </a>
+
+      {isLoggedIn && (
+        <Link
+          href={dashboardHref}
+          className="inline-flex w-full items-center justify-center rounded-full border border-neutral-900 px-6 py-3.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+        >
+          Go to my dashboard
+        </Link>
+      )}
 
       {isLoggedIn ? (
         <button

@@ -22,16 +22,39 @@ export default async function EmployerDashboardPage() {
   if (!employer) redirect(await jobsPath("/employers"));
 
   const admin = createAdminClient();
-  const { data: vacancies } = await admin
-    .from("jobs_vacancies")
-    .select("id, title, suburb, province, status, held_reason, expires_at, created_at")
-    .eq("employer_id", employer.id)
-    .neq("status", "removed")
-    .order("created_at", { ascending: false });
+  const [{ data: vacancies }, { data: applications }, { data: savedRows }] = await Promise.all([
+    admin
+      .from("jobs_vacancies")
+      .select("id, title, suburb, province, status, held_reason, expires_at, created_at")
+      .eq("employer_id", employer.id)
+      .neq("status", "removed")
+      .order("created_at", { ascending: false }),
+    admin
+      .from("jobs_applications")
+      .select("id, vacancy_id, status")
+      .eq("employer_id", employer.id),
+    admin
+      .from("jobs_saved_candidates")
+      .select("candidate_id, jobs_candidates(id, years_experience, suburb, province, jobs_ofo_occupations(title))")
+      .eq("employer_id", employer.id)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
 
-  const [postHref, upgradeHref, browseHref] = await Promise.all([
+  const applicantsByVacancy = new Map<string, number>();
+  let newApplications = 0;
+  for (const a of applications ?? []) {
+    if (a.vacancy_id) {
+      applicantsByVacancy.set(a.vacancy_id, (applicantsByVacancy.get(a.vacancy_id) ?? 0) + 1);
+    }
+    if (a.status === "new") newApplications += 1;
+  }
+
+  const [postHref, upgradeHref, browseHref, applicantsHref, findPeoplePrefix] = await Promise.all([
     jobsPath("/employer/post"),
     jobsPath("/employer/upgrade"),
+    jobsPath("/find-people"),
+    jobsPath("/employer/applicants"),
     jobsPath("/find-people"),
   ]);
 
@@ -71,6 +94,12 @@ export default async function EmployerDashboardPage() {
             </Link>
           )}
           <Link
+            href={applicantsHref}
+            className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200 px-6 py-3.5 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+          >
+            Applicants{newApplications > 0 ? ` (${newApplications} new)` : ""}
+          </Link>
+          <Link
             href={browseHref}
             className="inline-flex flex-1 items-center justify-center rounded-full border border-neutral-200 px-6 py-3.5 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
           >
@@ -99,10 +128,24 @@ export default async function EmployerDashboardPage() {
                   <p className="text-xs text-neutral-500">
                     {v.status === "held"
                       ? "Being reviewed before it goes live"
-                      : expired
-                        ? "Expired"
-                        : `Live until ${new Date(v.expires_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}`}
+                      : v.status === "closed"
+                        ? "Closed"
+                        : expired
+                          ? "Expired"
+                          : `Live until ${new Date(v.expires_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short" })}`}
                     {nearingExpiry && v.status === "published" ? " · expiring soon" : ""}
+                    {applicantsByVacancy.get(v.id) ? (
+                      <>
+                        {" · "}
+                        <Link
+                          href={`${applicantsHref}?vacancy=${v.id}`}
+                          className="font-semibold text-neutral-900 underline-offset-2 hover:underline"
+                        >
+                          {applicantsByVacancy.get(v.id)}{" "}
+                          {applicantsByVacancy.get(v.id) === 1 ? "applicant" : "applicants"}
+                        </Link>
+                      </>
+                    ) : null}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {(expired || nearingExpiry) && v.status !== "held" && (
@@ -128,6 +171,40 @@ export default async function EmployerDashboardPage() {
               );
             })}
           </ul>
+        )}
+
+        {(savedRows ?? []).length > 0 && (
+          <>
+            <h2 className="mt-10 text-sm font-bold text-neutral-900">Saved candidates</h2>
+            <ul className="mt-3 flex flex-col gap-2">
+              {(savedRows ?? []).map((row) => {
+                const c = row.jobs_candidates as unknown as {
+                  id: string;
+                  years_experience: number | null;
+                  suburb: string | null;
+                  province: string | null;
+                  jobs_ofo_occupations: { title: string } | null;
+                } | null;
+                if (!c) return null;
+                return (
+                  <li key={row.candidate_id}>
+                    <Link
+                      href={`${findPeoplePrefix}/${c.id}`}
+                      className="flex flex-col rounded-xl border border-neutral-100 bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <span className="text-sm font-semibold text-neutral-900">
+                        {c.jobs_ofo_occupations?.title ?? "Available for work"}
+                        {c.years_experience != null ? `, ${c.years_experience} years` : ""}
+                      </span>
+                      <span className="text-xs text-neutral-500">
+                        {[c.suburb, c.province].filter(Boolean).join(", ")}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         )}
       </section>
       <JobsFooter />

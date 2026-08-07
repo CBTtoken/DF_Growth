@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
 import { ReportListingForm } from "@/components/jobs/ReportListingForm";
 import { reportVacancy } from "@/app/jobs/find-people/actions";
+import { applyToVacancy } from "@/app/jobs/vacancies/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { vacancyIsExpired } from "@/lib/jobs/entitlements";
 import { experienceLevelLabel } from "@/lib/jobs/cv-conversation";
@@ -87,16 +88,26 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
           <div className="mt-8 rounded-xl border border-neutral-100 bg-neutral-50 p-4">
             <p className="text-sm font-bold text-neutral-900">How to apply</p>
             <p className="mt-1 text-sm text-neutral-700">
-              Contact {employer.business_name}
-              {employer.phone ? ` on ${employer.phone}` : ""} and mention you saw the job on KatisoBiz Jobs.
+              Apply with your KatisoBiz CV in one tap, free. {employer.business_name} sees your CV and can
+              contact you directly.
             </p>
-            {employer.phone && (
-              <a
-                href={`tel:${employer.phone.replace(/\s/g, "")}`}
-                className="mt-3 inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
+            <form action={applyToVacancy} className="mt-3">
+              <input type="hidden" name="vacancyId" value={id} />
+              <button
+                type="submit"
+                className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
               >
-                Call {employer.business_name}
-              </a>
+                Apply with my CV
+              </button>
+            </form>
+            {employer.phone && (
+              <p className="mt-3 text-sm text-neutral-600">
+                Or contact {employer.business_name} on{" "}
+                <a href={`tel:${employer.phone.replace(/\s/g, "")}`} className="font-semibold text-neutral-900 underline-offset-2 hover:underline">
+                  {employer.phone}
+                </a>{" "}
+                and mention you saw the job on KatisoBiz Jobs.
+              </p>
             )}
           </div>
         )}
