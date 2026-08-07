@@ -286,3 +286,41 @@ one person the customer gets to know.
 
 **Reuse it for:** a personal craft shop or class business run by one
 person — pottery studios, art classes, small home-based makers.
+
+### Kasi Kitchen (`kasi-kitchen`)
+
+- **Added:** 7 August 2026, ninth build through the Growth Build Kit
+- **Built for:** Davemarly, kasi food and micro bakery at 1682 Masaleng,
+  Meqheleng, Ficksburg — the second build from the Ficksburg informal
+  market after Molotsi Plumbers, and the platform's first food archetype.
+- **Hero:** `menuboard`
+- **Anchor:** display-condensed headings (shared with Copperline — same
+  market, same phone-in-hand visitor) but nothing else shared: `till-slip`
+  cards (warm paper white with a perforated dashed BOTTOM edge, the slip
+  stapled to the takeaway bag — stitched-edge's dash sits at the top in
+  thread-red), an `order-ticket` eyebrow (mono caps inside a dashed
+  border, the numbered paper ticket on an order), standard spacing, light
+  surface. Packages render as `list-rows` so a future priced menu reads
+  as menu rows rather than pricing tiers.
+
+**What it does that none of the others do.** For food, the member's own
+plate photos ARE the pitch, so this is the one done-for-you hero where the
+photo carries the whole frame **on the phone too**: full-bleed, char-dark
+scrim heaviest at the foot where the words and buttons sit. WhatsApp leads
+in WhatsApp green (the Copperline rule, proven for this market), calling
+is second, and the third button walks the visitor down to the menu
+(#services) because "what do they sell" is the question a hungry visitor
+is actually asking. The menu renders as `menu-board`: the page's single
+dark chalkboard band, dotted menu rules, the flame strip along its top.
+The flame strip (one fixed orange-to-red gradient bar) is this theme's
+material signature, the way Copperline fixes copper and Fieldwork fixes
+steel. The gallery is a `kitchen-pass`: two stacked rows sharing one
+horizontal scroll, every tile the same square, so fifteen plate photos
+read rich rather than long (the filmstrip lesson, doubled). The hero's
+base strip gives Call and WhatsApp separate cells, because a kasi business
+often runs two numbers.
+
+**Reuse it for:** the food businesses of the informal market — kasi
+takeaways, chisa nyama, street kitchens, home bakers, caterers, anyone
+whose photos are plates of their own food and whose orders start on
+WhatsApp.

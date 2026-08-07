@@ -57,7 +57,7 @@ export const HEADING_FONT_CLASS: Record<HeadingFontKey, string> = {
   "mono-technical": "font-[family-name:var(--font-anchor-mono)]",
 };
 
-export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate" | "copper-seam" | "invitation" | "stitched-edge";
+export type CardRecipeId = "flat-border" | "soft-shadow" | "outlined-accent" | "editorial-rule" | "dark-panel" | "steel-plate" | "copper-seam" | "invitation" | "stitched-edge" | "till-slip";
 
 // "soft-shadow" is today's existing default card look, unchanged — every
 // other recipe is a genuinely different container treatment. "dark-panel"
@@ -96,9 +96,16 @@ export const CARD_RECIPE_CLASS: Record<CardRecipeId, string> = {
   // hemmed edge is finished — this theme's own material signature, the
   // same way steel-plate fixes its steel and copper-seam its copper.
   "stitched-edge": "rounded-lg border border-gray-200 border-t-2 border-dashed border-t-[#c76b6b] bg-white shadow-sm",
+  // Kasi Kitchen build: a takeaway till slip — warm paper white with a
+  // perforated (dashed) tear-off bottom edge. The dash sits at the BOTTOM
+  // in neutral grey, where stitched-edge's sits at the top in thread-red:
+  // one reads hemmed fabric, this one reads the slip stapled to the bag.
+  // Neutral like steel-plate's steel; the flame strip elsewhere is this
+  // theme's colour signature, the card stays quiet under the food photos.
+  "till-slip": "rounded-t-lg rounded-b-sm border border-gray-200 border-b-2 border-dashed border-b-gray-300 bg-[#fffdf8] shadow-sm",
 };
 
-export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps" | "stencil-tag" | "junction-tag";
+export type EyebrowStyle = "mono-numbered" | "pill-badge" | "rule-line" | "plain-caps" | "stencil-tag" | "junction-tag" | "order-ticket";
 
 // "mono-numbered" is the exact byte-for-byte class every section component
 // uses today (font-mono text-sm font-semibold uppercase tracking-[0.2em]
@@ -119,6 +126,11 @@ export const EYEBROW_STYLE_CLASS: Record<EyebrowStyle, string> = {
   // hand-made rather than stencilled, which is the whole difference in
   // register between this theme and Fieldwork.
   "junction-tag": "inline-flex items-center gap-2.5 text-sm font-bold uppercase tracking-[0.18em] before:size-3 before:rounded-full before:border-[3px] before:border-current before:content-[''] sm:text-base",
+  // Kasi Kitchen build: the numbered paper ticket stapled to a takeaway
+  // order — mono caps inside a dashed border, sized like a real till tag.
+  // Dashed all round (the tear-off), where stencil-tag is one hard rule
+  // and junction-tag is a ring dot: three trades, three different tags.
+  "order-ticket": "inline-flex items-center rounded-sm border-2 border-dashed border-current px-3 py-1.5 font-mono text-xs font-bold uppercase tracking-[0.18em] sm:text-sm",
 };
 
 export type SpacingDensity = "airy" | "standard" | "tight";
@@ -169,7 +181,7 @@ export interface TemplateAnchor {
   // default JSX shape."
   packagesLayout?: "grid-cards" | "list-rows" | "spotlight-feature" | "ambient-stack" | "concept-grid";
   reviewsLayout?: "list-detail" | "hero-stat";
-  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index" | "junction-line" | "amenity-pills";
+  servicesLayout?: "icon-grid" | "numbered-rows" | "checklist-compact" | "spotlight-tiles" | "work-index" | "junction-line" | "amenity-pills" | "menu-board";
   // Dark Mode pilot rebuild: TrustBadges previously had no layout axis at
   // all (a deliberate earlier decision to keep the axis count bounded) —
   // reversed here because direct client feedback named structural sameness
@@ -184,7 +196,7 @@ export interface TemplateAnchor {
   aboutLayout?: "split-grid" | "statement";
   howItWorksLayout?: "cards" | "jobline";
   locationLayout?: "map-split" | "coverage-panel" | "home-base";
-  galleryLayout?: "square-grid" | "evidence-board" | "job-wall" | "lookbook" | "filmstrip";
+  galleryLayout?: "square-grid" | "evidence-board" | "job-wall" | "lookbook" | "filmstrip" | "kitchen-pass";
   // Marquee build, after Dewald's live review: an events enquiry needs the
   // questions an events business actually asks (event type, date, guests,
   // venue), which the standard four-field form does not carry. All extra
@@ -442,6 +454,30 @@ export const anchors: Record<TemplateId, TemplateAnchor> = {
     spacing: "standard",
     sectionSurface: "light-default",
     galleryLayout: "job-wall",
+  },
+  // Kasi Kitchen: the informal-market food anchor. Shares Copperline's
+  // condensed display face (same market, same phone-in-hand visitor) but
+  // nothing else: till-slip cards against copper seams, an order-ticket
+  // tag against the junction dot, and its own two structural signatures —
+  // the menu as the page's single dark chalkboard band (menu-board), and
+  // the gallery as a two-row kitchen pass rail (kitchen-pass) so a big
+  // plate-photo set reads rich rather than long. About reuses Fieldwork's
+  // "statement" (the cook's own pitch beside a real plate photo) and
+  // location reuses Copperline's warm home-base panel — a kasi kitchen is
+  // a neighbourhood address, not a dispatch board. Packages render as
+  // list-rows so a future priced menu reads as menu rows, not tiers.
+  "kasi-kitchen": {
+    id: "kasi-kitchen",
+    headingFont: "display-condensed",
+    cardRecipe: "till-slip",
+    eyebrowStyle: "order-ticket",
+    spacing: "standard",
+    sectionSurface: "light-default",
+    servicesLayout: "menu-board",
+    galleryLayout: "kitchen-pass",
+    aboutLayout: "statement",
+    locationLayout: "home-base",
+    packagesLayout: "list-rows",
   },
 };
 

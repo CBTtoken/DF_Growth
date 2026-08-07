@@ -11,6 +11,27 @@ Every future sprint adds its entry here before reporting back, per
 
 ---
 
+## 7 August 2026 — Kasi Kitchen theme and the Davemarly build
+
+**Branch:** `davemarly-kasi-kitchen`.
+
+The ninth Growth Build Kit theme and the platform's first food archetype:
+`kasi-kitchen`, built for Davemarly (kasi food and micro bakery, Meqheleng,
+Ficksburg — davidmolotsi04@gmail.com's self-signup of 6 August, upgraded to
+a done-for-you build). New `menuboard` hero (the member's own food photo
+full-bleed, on the phone too; WhatsApp-first CTA; Call and WhatsApp as
+separate base-strip cells), `menu-board` services layout (the page's single
+dark chalkboard band with the theme's fixed flame strip), `kitchen-pass`
+gallery layout (two-row horizontal rail of square tiles), `till-slip` card
+recipe and `order-ticket` eyebrow style. About reuses `statement` with
+kitchen wording; location reuses `home-base`. Fifteen member photos
+processed (1600px, q82, EXIF baked) and uploaded; page published at
+`/davemarly` with three months admin comp mirroring the Molotsi cohort
+arrangement, flagged for Dewald to confirm. Full entry in
+`docs/Theme_Library.md`, build report in `docs/Report_Davemarly.md`.
+
+---
+
 ## 7 August 2026 — KatisoBiz Jobs: Sprints 1 and 2, then the pre-launch rebuild
 
 **Branches:** `jobs-sprint-1-job-seekers` and `jobs-sprint-2-employers`

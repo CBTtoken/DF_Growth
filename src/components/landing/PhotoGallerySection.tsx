@@ -10,7 +10,7 @@ import Image from "next/image";
 // how many more there are.
 const LOOKBOOK_PREVIEW_COUNT = 7;
 import type { TemplateAnchor } from "@/lib/templates/anchors";
-import { EYEBROW_STYLE_CLASS, SPACING_CLASS, SURFACE_SECTION_CLASS, SURFACE_BORDER_CLASS } from "@/lib/templates/anchors";
+import { HEADING_FONT_CLASS, EYEBROW_STYLE_CLASS, SPACING_CLASS, SURFACE_SECTION_CLASS, SURFACE_BORDER_CLASS } from "@/lib/templates/anchors";
 
 type Photo = { id: string; storage_path: string };
 
@@ -282,6 +282,59 @@ export function PhotoGallerySection({
             onClose={() => setOpenIndex(null)}
             onNavigate={setOpenIndex}
             altText="Event photo, enlarged"
+          />
+        )}
+      </section>
+    );
+  }
+
+  if (anchor.galleryLayout === "kitchen-pass") {
+    // Kasi Kitchen anchor: the pass — the counter where plates land ready
+    // to go out. Two stacked rows share one horizontal scroll, every tile
+    // the same square, so a big set of plate photos reads rich rather than
+    // long (the filmstrip lesson, doubled — twice the food per swipe).
+    // Food photography needs no frames: tight gaps, no borders, warm paper
+    // behind, the plates carry it.
+    return (
+      <section className={`border-b ${SURFACE_BORDER_CLASS[anchor.sectionSurface]} bg-[#fbf6ee]`}>
+        <div className={`mx-auto max-w-5xl ${SPACING_CLASS[anchor.spacing]}`}>
+          <div className="px-4 sm:px-8">
+            <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
+              {eyebrowNumber} · From the pass
+            </p>
+            <h2 className={`mt-4 max-w-2xl text-2xl font-bold leading-tight tracking-tight text-gray-900 sm:text-3xl ${HEADING_FONT_CLASS[anchor.headingFont]}`}>
+              Our food, photographed by us.
+            </h2>
+          </div>
+          <div className="mt-8 grid snap-x grid-flow-col grid-rows-2 gap-2 overflow-x-auto px-4 pb-2 sm:gap-2.5 sm:px-8 [scrollbar-width:thin]">
+            {photos.map((photo, i) => (
+              <button
+                key={photo.id}
+                type="button"
+                onClick={() => setOpenIndex(i)}
+                className="group relative aspect-square w-[150px] snap-start overflow-hidden rounded-md sm:w-[210px]"
+              >
+                <Image
+                  src={`${storageBase}/${photo.storage_path}`}
+                  alt="A plate from our kitchen"
+                  fill
+                  sizes="(min-width: 640px) 210px, 150px"
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.05]"
+                />
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 px-4 text-xs text-gray-400 sm:px-8">Scroll for more →</p>
+        </div>
+
+        {openIndex !== null && (
+          <Lightbox
+            photos={photos}
+            storageBase={storageBase}
+            openIndex={openIndex}
+            onClose={() => setOpenIndex(null)}
+            onNavigate={setOpenIndex}
+            altText="A plate from our kitchen, enlarged"
           />
         )}
       </section>

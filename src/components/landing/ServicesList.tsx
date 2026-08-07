@@ -70,6 +70,47 @@ export function ServicesList({
   const cardBorder = isDark ? "border-gray-700" : "border-gray-200";
   const layout = anchor.servicesLayout ?? "icon-grid";
 
+  if (layout === "menu-board") {
+    // Kasi Kitchen anchor: the menu as a chalkboard — the page's single
+    // dark band (the coverage-panel precedent: fixed dark colours here
+    // regardless of the anchor's light section surface). The flame strip
+    // along the top is the theme's fixed material signature, the way
+    // steel-plate fixes steel and copper-seam fixes copper. Items read as
+    // menu lines in chalk white over dotted rules; the member's own
+    // accent colour carries the ticket and the markers.
+    return (
+      <section id="services" className="border-b border-gray-900 bg-[#211a14]">
+        <div
+          aria-hidden
+          className="h-1.5 w-full"
+          style={{ background: "linear-gradient(90deg, #ff8a00, #ff3d00 45%, #ffb400)" }}
+        />
+        <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
+          <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
+            {eyebrowNumber} · The menu
+          </p>
+          <h2 className={`mt-4 max-w-2xl text-3xl font-bold leading-tight tracking-tight text-white sm:text-4xl ${HEADING_FONT_CLASS[anchor.headingFont]}`}>
+            What&apos;s cooking.
+          </h2>
+          <ul className="mt-8 grid gap-x-14 sm:grid-cols-2">
+            {services.map((service, i) => (
+              <li
+                key={i}
+                className="flex items-baseline gap-3.5 border-b border-dotted border-white/20 py-4"
+              >
+                <span aria-hidden className="size-2 shrink-0 rotate-45" style={{ backgroundColor: accentColor }} />
+                <span className="text-base font-semibold leading-snug text-[#f6efe4] sm:text-lg">{service}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-8 text-sm leading-relaxed text-white/60">
+            WhatsApp us with what you feel like and we will tell you what is fresh today.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
   let body: ReactNode;
 
   if (layout === "numbered-rows") {

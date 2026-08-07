@@ -36,6 +36,7 @@ import { RetreatHero } from "@/components/landing/heroes/RetreatHero";
 import { ProgrammeHero } from "@/components/landing/heroes/ProgrammeHero";
 import { AtelierHero } from "@/components/landing/heroes/AtelierHero";
 import { WorkroomHero } from "@/components/landing/heroes/WorkroomHero";
+import { MenuboardHero } from "@/components/landing/heroes/MenuboardHero";
 import { ensureContrast } from "@/lib/color";
 import { getTemplate, type SectionKey } from "@/lib/templates/registry";
 import { getAnchor, HEADING_FONT_VARIABLE } from "@/lib/templates/anchors";
@@ -357,7 +358,8 @@ export async function ClientLandingPageView({
     template.hero === "retreat" ||
     template.hero === "programme" ||
     template.hero === "atelier" ||
-    template.hero === "workroom"
+    template.hero === "workroom" ||
+    template.hero === "menuboard"
   ) {
     // Combined spec Sec 7: uploading a gallery photo must not silently make
     // it the hero background — only an explicit hero_photo_id selection
@@ -594,6 +596,19 @@ export async function ClientLandingPageView({
       {template.hero === "programme" && <ProgrammeHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
       {template.hero === "atelier" && <AtelierHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
       {template.hero === "workroom" && <WorkroomHero {...heroProps} tagline={client.tagline} photoUrl={photoUrl} />}
+      {template.hero === "menuboard" && (
+        <MenuboardHero
+          {...heroProps}
+          tagline={client.tagline}
+          callPhone={client.call_phone}
+          whatsappPhone={client.whatsapp_phone || client.call_phone}
+          contactEmail={client.contact_email}
+          city={client.city}
+          photoUrl={photoUrl}
+          photoIsOwn={photoIsOwn}
+          ctaHref={template.ctaHref}
+        />
+      )}
       {/* Combined spec Sec 19: templates don't share a fixed section order
           (About isn't always first), so this goes right after the hero
           instead — the other position the spec allows for. */}

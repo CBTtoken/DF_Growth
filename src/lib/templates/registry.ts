@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench, Droplets, PartyPopper, Palmtree, GraduationCap, Hammer, Scissors } from "lucide-react";
+import { Sparkles, Columns3, Grid3x3, BookOpen, Moon, Star, ListChecks, Shapes, ShoppingBag, MonitorSmartphone, Handshake, Wrench, Droplets, PartyPopper, Palmtree, GraduationCap, Hammer, Scissors, Flame } from "lucide-react";
 
 // Every "section" a template can arrange, beyond the hero (always first)
 // and the lead form (always last, since #lead-form is the CTA anchor every
@@ -37,7 +37,8 @@ export type TemplateId =
   | "retreat"
   | "programme"
   | "atelier"
-  | "workroom";
+  | "workroom"
+  | "kasi-kitchen";
 
 export type HeroVariant =
   | "default"
@@ -58,7 +59,8 @@ export type HeroVariant =
   | "retreat"
   | "programme"
   | "atelier"
-  | "workroom";
+  | "workroom"
+  | "menuboard";
 
 export interface TemplateMeta {
   id: TemplateId;
@@ -335,6 +337,30 @@ export const templates: TemplateMeta[] = [
     icon: Scissors,
     hero: "workroom",
     sections: ["about", "gallery", "services", "packages", "story", "trust", "location", "reviews"],
+  },
+  // Built for the ninth done-for-you client build (Davemarly, kasi food and
+  // micro bakery in Meqheleng, Ficksburg) and the platform's first food
+  // archetype. Same informal market as Copperline — the customer is a
+  // neighbour on a phone and orders start on WhatsApp — but the trust
+  // signal is different: for food, the member's own plate photos ARE the
+  // pitch, so the photography leads everywhere, including on the phone
+  // (the one done-for-you hero where the photo shows below lg). The menu
+  // is the page's spine: the CTA points at #services, which renders as
+  // the page's single dark chalkboard band.
+  {
+    id: "kasi-kitchen",
+    name: "Kasi Kitchen",
+    archetype: "Food · appetite-led · WhatsApp orders",
+    description:
+      "For kasi food businesses and home bakers. The member's own food photos carry the page, the menu reads as a chalkboard, and orders start on WhatsApp.",
+    icon: Flame,
+    hero: "menuboard",
+    // Appetite-led sequencing: what's cooking (menu) first, then the food
+    // itself (gallery), then who is cooking. No howItWorks — ordering food
+    // needs no three-step explainer, and every screen has to earn its
+    // scroll (the Marquee lesson).
+    sections: ["services", "gallery", "about", "story", "packages", "trust", "location", "reviews"],
+    ctaHref: "#services",
   },
 ];
 

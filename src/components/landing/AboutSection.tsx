@@ -77,7 +77,7 @@ export function AboutSection({
         <div className={`mx-auto max-w-5xl px-4 sm:px-8 ${SPACING_CLASS[anchor.spacing]}`}>
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <p className={EYEBROW_STYLE_CLASS[anchor.eyebrowStyle]} style={{ color: accentColor }}>
-              {eyebrowNumber} · Who you are dealing with
+              {eyebrowNumber} · {anchor.id === "kasi-kitchen" ? "Who is cooking" : "Who you are dealing with"}
             </p>
           </div>
           <div className={`mt-8 grid gap-10 ${photoUrl ? "md:grid-cols-[1.05fr_0.95fr] md:items-center" : ""}`}>
@@ -112,7 +112,9 @@ export function AboutSection({
                   className="mt-1.5 font-mono text-[0.6rem] font-bold uppercase tracking-[0.25em]"
                   style={{ color: accentColor }}
                 >
-                  On site
+                  {/* Same per-anchor wording pattern as the lookbook heading:
+                      a kitchen's photo is a plate, not a site visit. */}
+                  {anchor.id === "kasi-kitchen" ? "From our kitchen" : "On site"}
                 </figcaption>
               </figure>
             )}
