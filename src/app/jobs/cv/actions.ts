@@ -13,6 +13,8 @@ import {
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
 import { AI_POLISH_CAP, polishCvWording } from "@/lib/jobs/ai-polish";
+import { writeCvFromFacts, type WriteCvOutput } from "@/lib/jobs/ai-write";
+import { AI_WRITE_CAP, EXPERIENCE_LEVEL_OPTIONS, AVAILABILITY_OPTIONS } from "@/lib/jobs/cv-conversation";
 
 export type CvRow = {
   id: string;
@@ -37,11 +39,12 @@ export type CvRow = {
   cv_step: StepId;
   cv_template: string;
   ai_polish_count: number;
+  ai_write_count: number;
   ai_recommendations: string[] | null;
 };
 
 const CANDIDATE_COLUMNS =
-  "id, owner_user_id, full_name, phone, email, primary_role_id, secondary_role_ids, other_role_text, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_recommendations";
+  "id, owner_user_id, full_name, phone, email, primary_role_id, secondary_role_ids, other_role_text, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_write_count, ai_recommendations";
 
 /**
  * Server-only, read-only: the row this visitor should be editing, if one
@@ -370,4 +373,136 @@ export async function polishCv(candidateId: string): Promise<
     recommendations: result.recommendations,
     remaining: AI_POLISH_CAP - row.ai_polish_count - 1,
   };
+}
+
+/**
+ * Write with AI (handoff Job 3): drafts the whole CV's prose from the
+ * structured facts. NOTHING is applied here -- the draft is stored (so
+ * redisplay never re-runs the model) and returned for the person to read,
+ * edit and explicitly accept via acceptWrittenCv, or discard. Only a
+ * successful generation spends the cap.
+ */
+export async function writeCv(candidateId: string): Promise<
+  { draft: WriteCvOutput; remaining: number } | { error: string }
+> {
+  const admin = createAdminClient();
+  if (!(await assertOwnership(admin, candidateId))) {
+    return { error: "That CV could not be found." };
+  }
+
+  const { data: row } = await admin
+    .from("jobs_candidates")
+    .select(
+      "summary, work_history, years_experience, experience_level, suburb, province, availability, skills, ai_write_count, ai_written_draft, secondary_ofo_codes, jobs_ofo_occupations(title)",
+    )
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (!row) return { error: "That CV could not be found." };
+  if (row.ai_write_count >= AI_WRITE_CAP) {
+    // The stored draft is still theirs to reuse; only fresh generations
+    // are capped.
+    if (row.ai_written_draft) {
+      return { draft: row.ai_written_draft as WriteCvOutput, remaining: 0 };
+    }
+    return { error: "You have used all your AI writing turns for this CV." };
+  }
+
+  const primaryTitle = (row.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
+  const roleTitles = [
+    ...(primaryTitle ? [primaryTitle] : []),
+    ...((row.secondary_ofo_codes ?? []) as { title: string }[]).map((s) => s.title),
+  ];
+
+  if (roleTitles.length === 0) {
+    return { error: "Pick the work you do first, then I can write your CV from your answers." };
+  }
+
+  const workHistory = (row.work_history ?? []) as WorkHistoryEntry[];
+  const result = await writeCvFromFacts({
+    roleTitles,
+    experienceLevelLabel:
+      EXPERIENCE_LEVEL_OPTIONS.find((o) => o.id === row.experience_level)?.label ?? null,
+    yearsExperience: row.years_experience,
+    suburb: row.suburb,
+    province: row.province,
+    availabilityLabel: AVAILABILITY_OPTIONS.find((a) => a.id === row.availability)?.label ?? null,
+    skills: (row.skills ?? []) as string[],
+    workHistory,
+    typedSummary: row.summary,
+  });
+
+  if (!result) {
+    return { error: "The writing did not work this time. Please try again in a moment." };
+  }
+
+  const { error } = await admin
+    .from("jobs_candidates")
+    .update({
+      ai_written_draft: result,
+      ai_write_count: row.ai_write_count + 1,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", candidateId);
+  if (error) {
+    console.error("Failed to store written draft", error);
+    return { error: "Could not save the draft. Please try again." };
+  }
+
+  return { draft: result, remaining: AI_WRITE_CAP - row.ai_write_count - 1 };
+}
+
+/**
+ * The explicit acceptance step: the person saw the draft, possibly edited
+ * it, and chose to use it. The edited text is sanitised exactly like
+ * anything typed by hand, and the stored draft is cleared either way
+ * (discarding also calls this with apply=false).
+ */
+export async function acceptWrittenCv(
+  candidateId: string,
+  accepted: { summary: string; workDescriptions: string[] } | null,
+): Promise<{ summary: string | null; workHistory: WorkHistoryEntry[] } | { error: string }> {
+  const admin = createAdminClient();
+  if (!(await assertOwnership(admin, candidateId))) {
+    return { error: "That CV could not be found." };
+  }
+
+  const { data: row } = await admin
+    .from("jobs_candidates")
+    .select("summary, work_history")
+    .eq("id", candidateId)
+    .maybeSingle();
+  if (!row) return { error: "That CV could not be found." };
+
+  const currentHistory = (row.work_history ?? []) as WorkHistoryEntry[];
+
+  if (!accepted) {
+    await admin
+      .from("jobs_candidates")
+      .update({ ai_written_draft: null, updated_at: new Date().toISOString() })
+      .eq("id", candidateId);
+    return { summary: row.summary, workHistory: currentHistory };
+  }
+
+  const cleanSummary = sanitizeFreeText(accepted.summary).text.slice(0, 600);
+  const newHistory = currentHistory.map((entry, i) => ({
+    ...entry,
+    description: sanitizeFreeText(accepted.workDescriptions[i] ?? entry.description ?? "").text.slice(0, 400),
+  }));
+
+  const { error } = await admin
+    .from("jobs_candidates")
+    .update({
+      summary: cleanSummary,
+      work_history: newHistory,
+      ai_written_draft: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", candidateId);
+  if (error) {
+    console.error("Failed to accept written CV", error);
+    return { error: "Could not save that. Please try again." };
+  }
+
+  return { summary: cleanSummary, workHistory: newHistory };
 }

@@ -110,6 +110,13 @@ export const MAX_ROLES = 3;
  */
 export const AI_POLISH_CAP = 3;
 
+/**
+ * Full CV drafts per CV (Write with AI). Separate budget from the polish
+ * pass; the handoff's warning is the same for both: this cost scales with
+ * unemployment, not revenue, so an uncapped button is a real exposure.
+ */
+export const AI_WRITE_CAP = 3;
+
 export const PROVINCE_OPTIONS = [
   "Eastern Cape",
   "Free State",

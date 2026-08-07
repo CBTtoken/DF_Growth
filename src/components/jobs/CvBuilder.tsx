@@ -2,7 +2,16 @@
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { saveCvAnswer, setListed, deleteCv, polishCv, startDraft, type CvRow } from "@/app/jobs/cv/actions";
+import {
+  saveCvAnswer,
+  setListed,
+  deleteCv,
+  polishCv,
+  writeCv,
+  acceptWrittenCv,
+  startDraft,
+  type CvRow,
+} from "@/app/jobs/cv/actions";
 import { CV_TEMPLATES } from "@/lib/jobs/pdf/cv-templates";
 import { useJobsPath } from "@/lib/jobs/use-jobs-path";
 import { OfoPicker } from "@/components/jobs/OfoPicker";
@@ -16,6 +25,7 @@ import {
   PROVINCE_OPTIONS,
   MAX_ROLES,
   AI_POLISH_CAP,
+  AI_WRITE_CAP,
   type ExperienceLevel,
   type OccupationPick,
   type StepId,
@@ -457,6 +467,7 @@ function CvBuilderScreens({
             }}
             initialTemplate={candidate.cv_template}
             initialPolishCount={candidate.ai_polish_count}
+            initialWriteCount={candidate.ai_write_count}
             initialRecommendations={candidate.ai_recommendations ?? []}
             listed={listed}
             onListedChange={setListedState}
@@ -568,6 +579,7 @@ function ReviewStep({
   onPolished,
   initialTemplate,
   initialPolishCount,
+  initialWriteCount,
   initialRecommendations,
   listed,
   onListedChange,
@@ -591,6 +603,7 @@ function ReviewStep({
   onPolished: (summary: string | null, workHistory: WorkHistoryEntry[]) => void;
   initialTemplate: string;
   initialPolishCount: number;
+  initialWriteCount: number;
   initialRecommendations: string[];
   listed: boolean;
   onListedChange: (v: boolean) => void;
@@ -600,10 +613,17 @@ function ReviewStep({
   const [toggling, startToggling] = useTransition();
   const [deleting, startDeleting] = useTransition();
   const [polishing, startPolishing] = useTransition();
+  const [writing, startWriting] = useTransition();
+  const [accepting, startAccepting] = useTransition();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
   const [template, setTemplate] = useState(initialTemplate);
   const [polishCount, setPolishCount] = useState(initialPolishCount);
+  const [writeCount, setWriteCount] = useState(initialWriteCount);
+  // The AI-written draft under review: nothing in it is saved to the CV
+  // until the person explicitly accepts it, and every part stays editable
+  // in place first (handoff Job 3).
+  const [draft, setDraft] = useState<{ summary: string; workDescriptions: string[] } | null>(null);
   const [recommendations, setRecommendations] = useState<string[]>(initialRecommendations);
   // Skills are stored as their display labels since the OFO switch, so
   // legacy slug values (lowercase-hyphenated) simply render as they are.
@@ -646,6 +666,99 @@ function ReviewStep({
         )}
         {summary && <p className="mt-2 italic">&ldquo;{summary}&rdquo;</p>}
       </div>
+
+      {/* Write with AI: drafts the whole CV's prose from the answers
+          already given, restating only supplied facts. Shown for review
+          and editing, applied only on explicit acceptance. Capped. */}
+      {!draft && AI_WRITE_CAP - writeCount > 0 && (
+        <button
+          type="button"
+          disabled={writing}
+          onClick={() =>
+            startWriting(async () => {
+              setError(null);
+              const result = await writeCv(candidateId);
+              if ("error" in result) {
+                setError(result.error);
+                return;
+              }
+              setDraft(result.draft);
+              setWriteCount(AI_WRITE_CAP - result.remaining);
+            })
+          }
+          className="w-full rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50"
+        >
+          {writing
+            ? "Writing your CV..."
+            : `Write my CV with AI (${AI_WRITE_CAP - writeCount} ${AI_WRITE_CAP - writeCount === 1 ? "turn" : "turns"} left)`}
+        </button>
+      )}
+
+      {draft && (
+        <div className="flex flex-col gap-3 rounded-xl border border-neutral-900 bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+            Written from your answers. Change anything, then choose.
+          </p>
+          <textarea
+            value={draft.summary}
+            onChange={(e) => setDraft({ ...draft, summary: e.target.value })}
+            rows={3}
+            className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900"
+          />
+          {draft.workDescriptions.map((d, i) => (
+            <div key={i}>
+              <p className="mb-1 text-xs text-neutral-500">
+                {workHistory[i] ? `${workHistory[i].role} at ${workHistory[i].employer}` : `Job ${i + 1}`}
+              </p>
+              <textarea
+                value={d}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    workDescriptions: draft.workDescriptions.map((x, j) => (j === i ? e.target.value : x)),
+                  })
+                }
+                rows={2}
+                className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm text-neutral-900 outline-none focus:border-neutral-900"
+              />
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              disabled={accepting}
+              onClick={() =>
+                startAccepting(async () => {
+                  setError(null);
+                  const result = await acceptWrittenCv(candidateId, draft);
+                  if ("error" in result) {
+                    setError(result.error);
+                    return;
+                  }
+                  onPolished(result.summary, result.workHistory);
+                  setDraft(null);
+                })
+              }
+              className="rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+            >
+              {accepting ? "Saving..." : "Use this wording"}
+            </button>
+            <button
+              type="button"
+              disabled={accepting}
+              onClick={() =>
+                startAccepting(async () => {
+                  await acceptWrittenCv(candidateId, null);
+                  setDraft(null);
+                })
+              }
+              className="rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-medium text-neutral-600"
+            >
+              Keep mine as it was
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* The AI wording pass. Fixes grammar and wording, never invents
           facts, and gives a short improvement list. Capped per CV (spec:
