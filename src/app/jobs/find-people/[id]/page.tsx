@@ -12,7 +12,7 @@ import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 // bare select("*") that would need updating by hand every time this stays
 // safe by accident rather than by construction.
 const PUBLIC_COLUMNS =
-  "id, years_experience, suburb, province, availability, skills, work_history, summary, listed, deleted_at, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)";
+  "id, years_experience, suburb, province, availability, skills, work_history, summary, listed, deleted_at, secondary_role_ids, other_role_text, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)";
 
 async function getListing(id: string) {
   const admin = createAdminClient();
@@ -46,6 +46,17 @@ export default async function CandidateListingPage({ params }: { params: Promise
   const skillSlugs: string[] = listing.skills ?? [];
   const admin = createAdminClient();
   const backHref = await jobsPath("/find-people");
+
+  // The second and third positions, still nothing identifying: role names
+  // are exactly the kind of anonymous fact the browse layer exists to show.
+  const secondaryIds = (listing.secondary_role_ids ?? []) as string[];
+  const { data: secondaryRows } = secondaryIds.length
+    ? await admin.from("jobs_taxonomy").select("id, label").in("id", secondaryIds)
+    : { data: [] };
+  const alsoOpenTo = [
+    ...secondaryIds.map((rid) => (secondaryRows ?? []).find((r) => r.id === rid)?.label).filter((l): l is string => !!l),
+    ...(listing.other_role_text ? [listing.other_role_text] : []),
+  ];
   const { data: skillRows } = skillSlugs.length
     ? await admin.from("jobs_taxonomy").select("slug, label").in("slug", skillSlugs)
     : { data: [] };
@@ -66,6 +77,7 @@ export default async function CandidateListingPage({ params }: { params: Promise
           {[listing.suburb, listing.province].filter(Boolean).join(", ")}
           {availabilityLabel ? ` · Available: ${availabilityLabel}` : ""}
         </p>
+        {alsoOpenTo.length > 0 && <p className="mt-1 text-sm text-neutral-500">Also open to: {alsoOpenTo.join(", ")}</p>}
 
         {listing.summary && <p className="mt-6 text-neutral-800">{listing.summary}</p>}
 

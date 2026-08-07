@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { saveCvAnswer, setListed, deleteCv, startDraft, type CvRow } from "@/app/jobs/cv/actions";
+import { saveCvAnswer, setListed, deleteCv, polishCv, startDraft, type CvRow } from "@/app/jobs/cv/actions";
+import { CV_TEMPLATES } from "@/lib/jobs/pdf/cv-templates";
 import { useJobsPath } from "@/lib/jobs/use-jobs-path";
 import {
   STEP_ORDER,
@@ -11,23 +12,15 @@ import {
   stepIndex,
   AVAILABILITY_OPTIONS,
   PROVINCE_OPTIONS,
+  ROLE_CATEGORIES,
+  roleCategoryLabel,
+  MAX_ROLES,
+  AI_POLISH_CAP,
   type StepId,
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
 
 type Taxonomy = { id: string; slug: string; label: string; category: string }[];
-
-const CATEGORY_LABELS: Record<string, string> = {
-  trade: "Trades",
-  driving_logistics: "Driving & logistics",
-  security: "Security",
-  hospitality: "Hospitality",
-  retail: "Retail",
-  admin_office: "Admin & office",
-  domestic: "Domestic & care",
-  care: "Domestic & care",
-  general_labour: "General labour",
-};
 
 const emptyWorkEntry: WorkHistoryEntry = { employer: "", role: "", start: "", end: null, current: true, description: "" };
 
@@ -67,7 +60,15 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
   const [step, setStep] = useState<StepId>(candidate.cv_step ?? "name");
   const [fullName, setFullName] = useState(candidate.full_name ?? "");
   const [phone, setPhone] = useState(candidate.phone ?? "");
-  const [primaryRoleId, setPrimaryRoleId] = useState(candidate.primary_role_id ?? "");
+  // Up to three positions; the first is the headline. Dewald's walkthrough:
+  // most people can genuinely do more than one kind of work.
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(
+    [candidate.primary_role_id, ...(candidate.secondary_role_ids ?? [])].filter((r): r is string => !!r),
+  );
+  const [otherRoleText, setOtherRoleText] = useState(candidate.other_role_text ?? "");
+  const [showOtherInput, setShowOtherInput] = useState(!!candidate.other_role_text);
+  // Which field's positions are on screen. null = the field list itself.
+  const [roleCategory, setRoleCategory] = useState<string | null>(null);
   const [years, setYears] = useState<string>(candidate.years_experience?.toString() ?? "");
   const [suburb, setSuburb] = useState(candidate.suburb ?? "");
   const [province, setProvince] = useState(candidate.province ?? "");
@@ -85,7 +86,14 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const roleLabel = useMemo(() => taxonomy.find((t) => t.id === primaryRoleId)?.label, [taxonomy, primaryRoleId]);
+  const roleLabel = useMemo(
+    () => taxonomy.find((t) => t.id === selectedRoles[0])?.label ?? (otherRoleText || undefined),
+    [taxonomy, selectedRoles, otherRoleText],
+  );
+  const selectedRoleLabels = useMemo(
+    () => selectedRoles.map((id) => taxonomy.find((t) => t.id === id)?.label).filter((l): l is string => !!l),
+    [taxonomy, selectedRoles],
+  );
   const grouped = useMemo(() => {
     const byCategory = new Map<string, Taxonomy>();
     for (const t of taxonomy) {
@@ -95,6 +103,28 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
     }
     return byCategory;
   }, [taxonomy]);
+
+  // Fields in the curated display order, but only ones that actually have
+  // positions in the database, so an empty field never renders a dead
+  // screen. Any DB category the curated list doesn't know yet still shows,
+  // at the end, labeled by roleCategoryLabel's fallback.
+  const fieldList = useMemo(() => {
+    const known = ROLE_CATEGORIES.filter((c) => grouped.has(c.id));
+    const unknown = [...grouped.keys()]
+      .filter((id) => !ROLE_CATEGORIES.some((c) => c.id === id))
+      .map((id) => ({ id, label: roleCategoryLabel(id) }));
+    return [...known, ...unknown];
+  }, [grouped]);
+
+  const roleCapReached = selectedRoles.length >= MAX_ROLES;
+
+  function toggleRole(id: string) {
+    setSelectedRoles((list) => {
+      if (list.includes(id)) return list.filter((r) => r !== id);
+      if (list.length >= MAX_ROLES) return list;
+      return [...list, id];
+    });
+  }
 
   function go(target: StepId, patch: Parameters<typeof saveCvAnswer>[1]) {
     setError(null);
@@ -115,10 +145,15 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
   return (
     <main className="flex flex-1 flex-col bg-white">
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-neutral-100 bg-white/95 px-4 py-3 backdrop-blur">
-        {idx > 0 ? (
+        {idx > 0 || (step === "primary_role" && roleCategory !== null) ? (
           <button
             type="button"
-            onClick={() => setStep(previousStep(step))}
+            onClick={() => {
+              // Inside a field's position list, back means the field list,
+              // not the previous question.
+              if (step === "primary_role" && roleCategory !== null) setRoleCategory(null);
+              else setStep(previousStep(step));
+            }}
             className="text-sm font-medium text-neutral-500 hover:text-neutral-900"
           >
             &larr; Back
@@ -157,26 +192,86 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
           </Question>
         )}
 
-        {step === "primary_role" && (
-          <Question title="What kind of work are you looking for?">
-            <div className="flex max-h-[50vh] flex-col gap-4 overflow-y-auto pb-2">
-              {[...grouped.entries()].map(([category, items]) => (
-                <div key={category}>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">
-                    {CATEGORY_LABELS[category] ?? category}
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {items.map((t) => (
-                      <Chip key={t.id} selected={primaryRoleId === t.id} onClick={() => setPrimaryRoleId(t.id)}>
-                        {t.label}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
+        {step === "primary_role" && roleCategory === null && (
+          <Question
+            title="What kind of work are you looking for?"
+            subtitle={`Pick a field to see the positions in it. You can choose up to ${MAX_ROLES} positions across fields.`}
+          >
+            {(selectedRoleLabels.length > 0 || otherRoleText) && (
+              <div className="flex flex-wrap gap-2 rounded-xl bg-neutral-50 p-3">
+                {selectedRoleLabels.map((label, i) => (
+                  <Chip key={label} selected onClick={() => toggleRole(selectedRoles[i])}>
+                    {label} &times;
+                  </Chip>
+                ))}
+                {otherRoleText && (
+                  <Chip
+                    selected
+                    onClick={() => {
+                      setOtherRoleText("");
+                      setShowOtherInput(false);
+                    }}
+                  >
+                    {otherRoleText} &times;
+                  </Chip>
+                )}
+              </div>
+            )}
+            <div className="flex max-h-[45vh] flex-wrap gap-2 overflow-y-auto pb-2">
+              {fieldList.map((c) => (
+                <Chip key={c.id} selected={false} onClick={() => setRoleCategory(c.id)}>
+                  {c.label}
+                </Chip>
+              ))}
+              <Chip selected={showOtherInput} onClick={() => setShowOtherInput((v) => !v)}>
+                My work is not listed
+              </Chip>
+            </div>
+            {showOtherInput && (
+              <TextField
+                value={otherRoleText}
+                onChange={setOtherRoleText}
+                placeholder="Type the kind of work you do"
+              />
+            )}
+            <Primary
+              disabled={(selectedRoles.length === 0 && !otherRoleText.trim()) || saving}
+              onClick={() =>
+                go(nextStep(step), {
+                  primary_role_id: selectedRoles[0] ?? null,
+                  secondary_role_ids: selectedRoles.slice(1),
+                  other_role_text: otherRoleText.trim() || null,
+                })
+              }
+            >
+              Continue
+            </Primary>
+          </Question>
+        )}
+
+        {step === "primary_role" && roleCategory !== null && (
+          <Question
+            title={roleCategoryLabel(roleCategory)}
+            subtitle={
+              roleCapReached
+                ? `You have picked ${MAX_ROLES} positions. Unpick one to change your mind.`
+                : "Tap the positions that fit you."
+            }
+          >
+            <div className="flex max-h-[45vh] flex-wrap gap-2 overflow-y-auto pb-2">
+              {(grouped.get(roleCategory) ?? []).map((t) => (
+                <Chip
+                  key={t.id}
+                  selected={selectedRoles.includes(t.id)}
+                  disabled={roleCapReached && !selectedRoles.includes(t.id)}
+                  onClick={() => toggleRole(t.id)}
+                >
+                  {t.label}
+                </Chip>
               ))}
             </div>
-            <Primary disabled={!primaryRoleId || saving} onClick={() => go(nextStep(step), { primary_role_id: primaryRoleId })}>
-              Continue
+            <Primary disabled={saving} onClick={() => setRoleCategory(null)}>
+              Done, back to the fields
             </Primary>
           </Question>
         )}
@@ -243,15 +338,22 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
 
         {step === "skills" && (
           <Question title="What else can you do?" subtitle="Tap anything that applies. This is optional.">
-            <div className="flex max-h-[45vh] flex-wrap gap-2 overflow-y-auto pb-2">
-              {taxonomy.map((t) => (
-                <Chip
-                  key={t.id}
-                  selected={skills.includes(t.slug)}
-                  onClick={() => setSkills((s) => (s.includes(t.slug) ? s.filter((x) => x !== t.slug) : [...s, t.slug]))}
-                >
-                  {t.label}
-                </Chip>
+            <div className="flex max-h-[45vh] flex-col gap-4 overflow-y-auto pb-2">
+              {fieldList.map((c) => (
+                <div key={c.id}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-400">{c.label}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(grouped.get(c.id) ?? []).map((t) => (
+                      <Chip
+                        key={t.id}
+                        selected={skills.includes(t.slug)}
+                        onClick={() => setSkills((s) => (s.includes(t.slug) ? s.filter((x) => x !== t.slug) : [...s, t.slug]))}
+                      >
+                        {t.label}
+                      </Chip>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
             <Primary disabled={saving} onClick={() => go(nextStep(step), { skills })}>
@@ -338,7 +440,7 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
             signupHref={signupHref}
             homeHref={homeHref}
             fullName={fullName}
-            roleLabel={roleLabel}
+            roleLabels={[...selectedRoleLabels, ...(otherRoleText.trim() ? [otherRoleText.trim()] : [])]}
             years={years}
             suburb={suburb}
             province={province}
@@ -347,6 +449,13 @@ function CvBuilderScreens({ candidate, taxonomy }: { candidate: CvRow; taxonomy:
             taxonomy={taxonomy}
             workHistory={workHistory}
             summary={summary}
+            onPolished={(s, wh) => {
+              setSummary(s ?? "");
+              setWorkHistory(wh);
+            }}
+            initialTemplate={candidate.cv_template}
+            initialPolishCount={candidate.ai_polish_count}
+            initialRecommendations={candidate.ai_recommendations ?? []}
             listed={listed}
             onListedChange={setListedState}
             isLoggedIn={!!candidate.owner_user_id}
@@ -399,12 +508,25 @@ function TextField({
   );
 }
 
-function Chip({ children, selected, onClick, full }: { children: React.ReactNode; selected: boolean; onClick: () => void; full?: boolean }) {
+function Chip({
+  children,
+  selected,
+  onClick,
+  full,
+  disabled,
+}: {
+  children: React.ReactNode;
+  selected: boolean;
+  onClick: () => void;
+  full?: boolean;
+  disabled?: boolean;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`${full ? "w-full text-left" : ""} rounded-full border px-4 py-2.5 text-sm font-medium transition ${
+      disabled={disabled}
+      className={`${full ? "w-full text-left" : ""} rounded-full border px-4 py-2.5 text-sm font-medium transition disabled:opacity-40 ${
         selected ? "border-neutral-900 bg-neutral-900 text-white" : "border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400"
       }`}
     >
@@ -432,7 +554,7 @@ function ReviewStep({
   signupHref,
   homeHref,
   fullName,
-  roleLabel,
+  roleLabels,
   years,
   suburb,
   province,
@@ -441,6 +563,10 @@ function ReviewStep({
   taxonomy,
   workHistory,
   summary,
+  onPolished,
+  initialTemplate,
+  initialPolishCount,
+  initialRecommendations,
   listed,
   onListedChange,
   isLoggedIn,
@@ -451,7 +577,7 @@ function ReviewStep({
   signupHref: string;
   homeHref: string;
   fullName: string;
-  roleLabel: string | undefined;
+  roleLabels: string[];
   years: string;
   suburb: string;
   province: string;
@@ -460,6 +586,10 @@ function ReviewStep({
   taxonomy: Taxonomy;
   workHistory: WorkHistoryEntry[];
   summary: string;
+  onPolished: (summary: string | null, workHistory: WorkHistoryEntry[]) => void;
+  initialTemplate: string;
+  initialPolishCount: number;
+  initialRecommendations: string[];
   listed: boolean;
   onListedChange: (v: boolean) => void;
   isLoggedIn: boolean;
@@ -467,10 +597,16 @@ function ReviewStep({
 }) {
   const [toggling, startToggling] = useTransition();
   const [deleting, startDeleting] = useTransition();
+  const [polishing, startPolishing] = useTransition();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
+  const [template, setTemplate] = useState(initialTemplate);
+  const [polishCount, setPolishCount] = useState(initialPolishCount);
+  const [recommendations, setRecommendations] = useState<string[]>(initialRecommendations);
   const skillLabels = skills.map((s) => taxonomy.find((t) => t.slug === s)?.label).filter(Boolean);
   const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === availability)?.label;
+  const polishRemaining = AI_POLISH_CAP - polishCount;
+  const hasPolishableText = summary.trim().length > 0 || workHistory.some((w) => (w.description ?? "").trim());
 
   if (deleted) {
     return (
@@ -490,7 +626,7 @@ function ReviewStep({
 
       <div className="flex flex-col gap-2 rounded-xl border border-neutral-100 bg-neutral-50 p-4 text-sm text-neutral-700">
         <p><strong>{fullName}</strong></p>
-        <p>{roleLabel}{years ? ` · ${years} years' experience` : ""}</p>
+        <p>{roleLabels.join(", ")}{years ? ` · ${years} years' experience` : ""}</p>
         <p>{suburb}{province ? `, ${province}` : ""}</p>
         {availabilityLabel && <p>Available: {availabilityLabel}</p>}
         {skillLabels.length > 0 && <p>Skills: {skillLabels.join(", ")}</p>}
@@ -507,8 +643,71 @@ function ReviewStep({
         {summary && <p className="mt-2 italic">&ldquo;{summary}&rdquo;</p>}
       </div>
 
+      {/* The AI wording pass. Fixes grammar and wording, never invents
+          facts, and gives a short improvement list. Capped per CV (spec:
+          AI cost scales with unemployment, not revenue). */}
+      {hasPolishableText && polishRemaining > 0 && (
+        <button
+          type="button"
+          disabled={polishing}
+          onClick={() =>
+            startPolishing(async () => {
+              setError(null);
+              const result = await polishCv(candidateId);
+              if ("error" in result) {
+                setError(result.error);
+                return;
+              }
+              onPolished(result.summary, result.workHistory);
+              setRecommendations(result.recommendations);
+              setPolishCount(AI_POLISH_CAP - result.remaining);
+            })
+          }
+          className="w-full rounded-full border border-neutral-900 px-6 py-3.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 disabled:opacity-50"
+        >
+          {polishing
+            ? "Checking your wording..."
+            : `Check my spelling and wording (${polishRemaining} ${polishRemaining === 1 ? "check" : "checks"} left)`}
+        </button>
+      )}
+
+      {recommendations.length > 0 && (
+        <div className="flex flex-col gap-1.5 rounded-xl border border-neutral-100 bg-white p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+            Ways to make your CV stronger
+          </p>
+          {recommendations.map((r, i) => (
+            <p key={i} className="text-sm text-neutral-700">
+              {r}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* Three looks over the same content, same structural idea as
+          KatisoBiz's document templates. */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Choose a look</p>
+        <div className="flex gap-2">
+          {CV_TEMPLATES.map((t) => (
+            <Chip
+              key={t.id}
+              selected={template === t.id}
+              onClick={() => {
+                setTemplate(t.id);
+                void saveCvAnswer(candidateId, { cv_template: t.id });
+              }}
+            >
+              {t.label}
+            </Chip>
+          ))}
+        </div>
+      </div>
+
       <a
         href={`${pdfPrefix}/${candidateId}/pdf`}
+        target="_blank"
+        rel="noopener noreferrer"
         className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
       >
         Download my CV

@@ -3,7 +3,8 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getDraftCandidateId, setDraftCandidateId } from "@/lib/jobs/draft-session";
-import { sanitizeFreeText, type StepId, type WorkHistoryEntry } from "@/lib/jobs/cv-conversation";
+import { sanitizeFreeText, MAX_ROLES, type Availability, type StepId, type WorkHistoryEntry } from "@/lib/jobs/cv-conversation";
+import { AI_POLISH_CAP, polishCvWording } from "@/lib/jobs/ai-polish";
 
 export type CvRow = {
   id: string;
@@ -12,19 +13,24 @@ export type CvRow = {
   phone: string | null;
   email: string | null;
   primary_role_id: string | null;
+  secondary_role_ids: string[];
+  other_role_text: string | null;
   years_experience: number | null;
   suburb: string | null;
   province: string | null;
-  availability: "immediately" | "within_2_weeks" | "flexible" | null;
+  availability: Availability | null;
   skills: string[];
   work_history: WorkHistoryEntry[];
   summary: string | null;
   listed: boolean;
   cv_step: StepId;
+  cv_template: string;
+  ai_polish_count: number;
+  ai_recommendations: string[] | null;
 };
 
 const CANDIDATE_COLUMNS =
-  "id, owner_user_id, full_name, phone, email, primary_role_id, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step";
+  "id, owner_user_id, full_name, phone, email, primary_role_id, secondary_role_ids, other_role_text, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_recommendations";
 
 /**
  * Server-only, read-only: the row this visitor should be editing, if one
@@ -135,15 +141,18 @@ async function assertOwnership(admin: ReturnType<typeof createAdminClient>, cand
 export type CvPatch = Partial<{
   full_name: string;
   phone: string;
-  primary_role_id: string;
+  primary_role_id: string | null;
+  secondary_role_ids: string[];
+  other_role_text: string | null;
   years_experience: number;
   suburb: string;
   province: string;
-  availability: "immediately" | "within_2_weeks" | "flexible";
+  availability: Availability;
   skills: string[];
   work_history: WorkHistoryEntry[];
   summary: string;
   cv_step: StepId;
+  cv_template: string;
 }>;
 
 /**
@@ -172,6 +181,16 @@ export async function saveCvAnswer(candidateId: string, patch: CvPatch): Promise
       if (r.wasRedacted) redacted = true;
       return { ...entry, description: r.text };
     });
+  }
+  if (typeof clean.other_role_text === "string") {
+    const r = sanitizeFreeText(clean.other_role_text);
+    clean.other_role_text = r.text.slice(0, 80) || null;
+    redacted = redacted || r.wasRedacted;
+  }
+  // Three positions, never more, whatever the client sends: the first
+  // choice lives in primary_role_id, so this array holds at most two.
+  if (clean.secondary_role_ids) {
+    clean.secondary_role_ids = clean.secondary_role_ids.slice(0, MAX_ROLES - 1);
   }
 
   const { error } = await admin
@@ -248,4 +267,76 @@ export async function deleteCv(candidateId: string): Promise<{ error?: string }>
   });
 
   return {};
+}
+
+/**
+ * The AI wording pass, capped per CV (spec: "Cap regenerations per CV.
+ * Never re-run a model to display something already generated"). Applies
+ * the polished text straight into the row and stores the recommendations,
+ * so displaying them later never costs another call.
+ */
+export async function polishCv(candidateId: string): Promise<
+  | { summary: string | null; workHistory: WorkHistoryEntry[]; recommendations: string[]; remaining: number }
+  | { error: string }
+> {
+  const admin = createAdminClient();
+  if (!(await assertOwnership(admin, candidateId))) {
+    return { error: "That CV could not be found." };
+  }
+
+  const { data: row } = await admin
+    .from("jobs_candidates")
+    .select("summary, work_history, years_experience, skills, ai_polish_count, primary_role_id, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)")
+    .eq("id", candidateId)
+    .maybeSingle();
+
+  if (!row) return { error: "That CV could not be found." };
+  if (row.ai_polish_count >= AI_POLISH_CAP) {
+    return { error: "You have used all your wording checks for this CV." };
+  }
+
+  const workHistory = (row.work_history ?? []) as WorkHistoryEntry[];
+  const hasText = (row.summary ?? "").trim().length > 0 || workHistory.some((w) => (w.description ?? "").trim());
+  if (!hasText && workHistory.length === 0) {
+    return { error: "Write a summary or add some work history first, then I can help with the wording." };
+  }
+
+  const result = await polishCvWording({
+    summary: row.summary,
+    workHistory,
+    roleLabel: (row.jobs_taxonomy as unknown as { label: string } | null)?.label ?? null,
+    yearsExperience: row.years_experience,
+    hasSkills: (row.skills ?? []).length > 0,
+  });
+
+  if (!result) {
+    // The attempt still counts against the cap only when it succeeded;
+    // a failed call costs the person nothing.
+    return { error: "The wording check did not work this time. Please try again in a moment." };
+  }
+
+  const polishedHistory = workHistory.map((w, i) => ({ ...w, description: result.workDescriptions[i] ?? w.description }));
+
+  const { error } = await admin
+    .from("jobs_candidates")
+    .update({
+      summary: result.summary ?? row.summary,
+      work_history: polishedHistory,
+      ai_recommendations: result.recommendations,
+      ai_polish_count: row.ai_polish_count + 1,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", candidateId);
+
+  if (error) {
+    console.error("Failed to save polished CV", error);
+    return { error: "Could not save the improved wording. Please try again." };
+  }
+
+  return {
+    summary: result.summary ?? row.summary,
+    workHistory: polishedHistory,
+    recommendations: result.recommendations,
+    remaining: AI_POLISH_CAP - row.ai_polish_count - 1,
+  };
 }

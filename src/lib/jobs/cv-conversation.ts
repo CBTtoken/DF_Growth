@@ -57,11 +57,58 @@ export function stepIndex(current: StepId): number {
   return STEP_ORDER.indexOf(current);
 }
 
-export const AVAILABILITY_OPTIONS: { id: "immediately" | "within_2_weeks" | "flexible"; label: string }[] = [
+export type Availability = "immediately" | "within_2_weeks" | "one_month_notice" | "flexible";
+
+export const AVAILABILITY_OPTIONS: { id: Availability; label: string }[] = [
   { id: "immediately", label: "Immediately" },
   { id: "within_2_weeks", label: "Within two weeks" },
+  // Dewald, 7 August walkthrough: "many have to give a 1 month's notice."
+  // The most common real answer for anyone currently employed.
+  { id: "one_month_notice", label: "One month's notice" },
   { id: "flexible", label: "I can be flexible" },
 ];
+
+/**
+ * The fields, in display order, for the two-step role question (field
+ * first, then position -- Dewald's walkthrough: one long flat list was
+ * both incomplete and unscrollable). Labels are what a person calls the
+ * work, not internal names. jobs_taxonomy.category is free text curated
+ * by us, so an unknown category from the DB falls back to its raw value
+ * rather than disappearing.
+ */
+export const ROLE_CATEGORIES: { id: string; label: string }[] = [
+  { id: "trade", label: "Trades" },
+  { id: "construction", label: "Construction" },
+  { id: "driving_logistics", label: "Driving and logistics" },
+  { id: "security", label: "Security" },
+  { id: "hospitality", label: "Hospitality" },
+  { id: "retail", label: "Retail" },
+  { id: "admin_office", label: "Admin and office" },
+  { id: "sales_marketing", label: "Sales and marketing" },
+  { id: "it_tech", label: "IT and technology" },
+  { id: "finance_accounting", label: "Finance and accounting" },
+  { id: "education_training", label: "Education and training" },
+  { id: "beauty_wellness", label: "Beauty and wellness" },
+  { id: "domestic", label: "Domestic work" },
+  { id: "care", label: "Care work" },
+  { id: "agriculture", label: "Farming" },
+  { id: "manufacturing", label: "Factory and manufacturing" },
+  { id: "general_labour", label: "General labour" },
+];
+
+export function roleCategoryLabel(id: string): string {
+  return ROLE_CATEGORIES.find((c) => c.id === id)?.label ?? id;
+}
+
+/** Up to three positions per candidate: the first is the headline. */
+export const MAX_ROLES = 3;
+
+/**
+ * Wording checks per CV. Lives here rather than in lib/jobs/ai-polish.ts
+ * because the review screen needs the number too, and importing it from
+ * there would pull the Anthropic SDK into the client bundle.
+ */
+export const AI_POLISH_CAP = 3;
 
 export const PROVINCE_OPTIONS = [
   "Eastern Cape",

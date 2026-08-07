@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 // Nothing about employers or vacancies exists yet (Sprint 2), so there is
 // deliberately no second call to action competing for the same thumb.
 export default async function JobsHomePage() {
-  const cvHref = await jobsPath("/cv");
+  const [cvHref, loginHref] = await Promise.all([jobsPath("/cv"), jobsPath("/login")]);
   return (
     <main className="flex flex-1 flex-col">
       <section className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-16 text-center">
@@ -25,14 +25,19 @@ export default async function JobsHomePage() {
           Build a real CV, free, on your phone
         </h1>
         <p className="max-w-sm text-base text-neutral-600">
-          A few minutes of questions, tap to answer. No forms, no file uploads. Download it whether or not you
-          want employers to find you.
+          A few minutes of questions, tap to answer. Already have a CV? Type from it and get back something
+          structured and better looking. No file uploads needed.
         </p>
         <Link
           href={cvHref}
           className="mt-2 inline-flex w-full max-w-xs items-center justify-center rounded-full bg-neutral-900 px-8 py-4 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
         >
           Build my CV
+        </Link>
+        {/* The returning person's way in, quiet so the one primary action
+            stays primary (Dewald's walkthrough, point 3). */}
+        <Link href={loginHref} className="text-sm font-medium text-neutral-500 underline-offset-2 hover:text-neutral-900 hover:underline">
+          Already registered? Log in
         </Link>
         <p className="text-xs text-neutral-400">We never ask for your ID number or bank details.</p>
       </section>
