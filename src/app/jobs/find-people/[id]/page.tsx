@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AVAILABILITY_OPTIONS, type WorkHistoryEntry } from "@/lib/jobs/cv-conversation";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { ReportListingForm } from "@/components/jobs/ReportListingForm";
 import { reportCandidate } from "@/app/jobs/find-people/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
@@ -58,6 +59,8 @@ export default async function CandidateListingPage({ params }: { params: Promise
   const workHistory = (listing.work_history ?? []) as WorkHistoryEntry[];
 
   return (
+    <>
+      <JobsHeader />
     <main className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
         <Link href={backHref} className="text-sm font-medium text-neutral-500 hover:text-neutral-900">
@@ -116,6 +119,7 @@ export default async function CandidateListingPage({ params }: { params: Promise
       </section>
       <JobsFooter />
     </main>
+    </>
   );
 }
 

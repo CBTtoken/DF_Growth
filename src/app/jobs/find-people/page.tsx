@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AVAILABILITY_OPTIONS } from "@/lib/jobs/cv-conversation";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 
 export const metadata: Metadata = {
@@ -58,6 +59,8 @@ export default async function FindPeoplePage({
   const findPeoplePrefix = await jobsPath("/find-people");
 
   return (
+    <>
+      <JobsHeader />
     <main className="flex flex-1 flex-col">
       <section className="border-b border-neutral-100 bg-neutral-50 px-6 py-10">
         <div className="mx-auto max-w-3xl">
@@ -129,5 +132,6 @@ export default async function FindPeoplePage({
       </section>
       <JobsFooter />
     </main>
+    </>
   );
 }

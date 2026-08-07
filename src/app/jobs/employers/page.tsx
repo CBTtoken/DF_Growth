@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 
 export const metadata: Metadata = {
@@ -17,6 +18,8 @@ export default async function EmployersLandingPage() {
   const [signupHref, browseHref] = await Promise.all([jobsPath("/employers/signup"), jobsPath("/find-people")]);
 
   return (
+    <>
+      <JobsHeader />
     <main className="flex flex-1 flex-col">
       <section className="flex flex-col items-center gap-6 px-6 py-16 text-center">
         <h1 className="max-w-md text-3xl font-bold tracking-tight text-neutral-900">
@@ -69,5 +72,6 @@ export default async function EmployersLandingPage() {
       </section>
       <JobsFooter />
     </main>
+    </>
   );
 }

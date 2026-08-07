@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { ReportListingForm } from "@/components/jobs/ReportListingForm";
 import { reportVacancy } from "@/app/jobs/find-people/actions";
 import { applyToVacancy } from "@/app/jobs/vacancies/actions";
@@ -54,6 +55,8 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
   const backHref = await jobsPath("/vacancies");
 
   return (
+    <>
+      <JobsHeader />
     <main className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
         <Link href={backHref} className="text-sm font-medium text-neutral-500 hover:text-neutral-900">
@@ -129,5 +132,6 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
       </section>
       <JobsFooter />
     </main>
+    </>
   );
 }
