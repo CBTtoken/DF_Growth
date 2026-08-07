@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isKatisoBizHost } from "@/lib/bizup/product";
 import { isMoxieHost } from "@/lib/moxie/host";
+import { isJobsHost } from "@/lib/jobs/host";
 import { listAreas, listPostSlugsForSitemap } from "@/lib/board/queries";
 import { BOARD_CATEGORIES } from "@/lib/board/categories";
 import { isBoardPublic } from "@/lib/board/visibility";
@@ -81,6 +82,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: `${moxieUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
       { url: `${moxieUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
       { url: `${moxieUrl}/paia`, changeFrequency: "yearly", priority: 0.2 },
+    ];
+  }
+
+  // KatisoBiz Jobs, same reasoning as the two branches above: its own
+  // domain gets its own list, since listing Growth's client pages under
+  // jobs.katisobiz.co.za would tell a crawler pages exist on a domain
+  // where they don't. Every listed candidate's own card is the real
+  // indexable content here (the spec's whole reason for the anonymous
+  // layer existing), so each one is listed individually, the same way
+  // Board lists every real post rather than just its hub page.
+  if (isJobsHost(host)) {
+    const jobsUrl = `https://${bare}`;
+    const admin = createAdminClient();
+    const { data: listed } = await admin
+      .from("jobs_candidates")
+      .select("id, updated_at")
+      .eq("listed", true)
+      .is("deleted_at", null);
+
+    return [
+      { url: jobsUrl, changeFrequency: "weekly", priority: 1 },
+      { url: `${jobsUrl}/find-people`, changeFrequency: "daily", priority: 0.9 },
+      { url: `${jobsUrl}/signup`, changeFrequency: "monthly", priority: 0.5 },
+      ...(listed ?? []).map((c) => ({
+        url: `${jobsUrl}/find-people/${c.id}`,
+        lastModified: c.updated_at ?? undefined,
+        changeFrequency: "weekly" as const,
+        priority: 0.7,
+      })),
+      { url: `${jobsUrl}/terms`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${jobsUrl}/privacy`, changeFrequency: "yearly", priority: 0.3 },
+      { url: `${jobsUrl}/paia`, changeFrequency: "yearly", priority: 0.2 },
     ];
   }
 
