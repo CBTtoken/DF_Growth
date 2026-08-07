@@ -83,6 +83,38 @@ forms, so no Cloudflare configuration was needed.
 Foundation and Growth. A server check with a broken widget locks real people
 out, which is the one way this change could bite.
 
+**It bit immediately, on preview only. Start here in the morning.** Dewald
+could not get past Turnstile on the preview deployment, 7 August. The cause
+is the hostname lock that `src/components/reviews/TurnstileWidget.tsx`
+already documents: a Turnstile widget only works on the hostnames allowed
+for it in Cloudflare. Growth's widget is allowed on
+`growth.digitalflyersa.co.za`, and a Vercel preview is served from
+`df-growth-<hash>-digital-flyer.vercel.app`, which is not a subdomain of
+anything allowlisted, so the widget refuses.
+
+This is not specific to this sprint's change. It applies to every Turnstile
+form on every preview deployment and always has, which is why it was never
+noticed: nobody had tried to test a Turnstile form on a preview before.
+
+The fix is configuration, not code, and it should be Preview-scoped env vars
+in Vercel using Cloudflare's official testing keys, verified against
+Cloudflare's docs on 7 August:
+
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = `1x00000000000000000000AA` (always
+  passes, works from any domain including localhost)
+- `TURNSTILE_SECRET_KEY` = `1x0000000000000000000000000000000AA` (always
+  passes, and only accepts the dummy token, never a real one)
+
+Scoped to Preview only, never Production. That leaves preview without real
+bot protection, which is fine because preview sits behind Vercel SSO and is
+not publicly reachable. It also unblocks every other Turnstile form for
+future preview testing, not just signup.
+
+Deliberately NOT solved with a code-level bypass such as skipping
+verification when `VERCEL_ENV === "preview"`. A bypass branch inside the
+function that just closed a security hole is one bad merge away from
+disabling the gate in production.
+
 ### Found along the way, needs Dewald
 
 - **`PAYSTACK_PLAN_FOUNDATION_ANNUAL` (PLN_qf1kh46lwn5jxr1) is rejected by
