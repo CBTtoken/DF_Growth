@@ -74,6 +74,15 @@ BizUp.
 **Bob Go** research is in `BobGo/`, which is **gitignored**. See the warning
 below.
 
+**KatisoBiz Jobs** (`jobs.katisobiz.co.za`) lives in `docs/`. Read them in
+this order: `SPEC-katisobiz-jobs-public-launch.md` is the current one, the
+full flow map and functional spec as the product stands at launch, written
+for business analyst review. `REPORT-jobs-prelaunch.md` and
+`REPORT-katisobiz-jobs-sprints-1-2.md` are the two builds before it and are
+still accurate about how the taxonomy, entitlements and moderation work.
+The original build spec and the pre-launch handoff are in `scripts/`
+(`spec-katisobiz-jobs.md`, `handoff-jobs-pre-launch-improvements.md`).
+
 **The agent programme** lives in `docs/`: `agent-programme-build-spec.md`,
 `agent-page-v3-final.md`, `agent-terms-and-faq-v2.md` and the copy files.
 
