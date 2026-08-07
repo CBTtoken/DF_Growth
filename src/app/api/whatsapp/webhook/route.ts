@@ -1,12 +1,25 @@
 import { NextResponse, after } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { isValidWhatsAppSignature } from "@/lib/whatsapp/signature";
-import { parseWhatsAppWebhook } from "@/lib/whatsapp/parse-webhook";
-import { handleIncomingWhatsAppMessage } from "@/lib/whatsapp/handle-message";
+import { isValidWebhookSignature } from "@/lib/wa-inbox/signature";
+import { parseWebhook } from "@/lib/wa-inbox/parse";
+import { handleInbound } from "@/lib/wa-inbox/flow";
+import { applyStatusUpdate } from "@/lib/wa-inbox/statuses";
 
-// Combined spec Sec 32.1: Meta's one-time webhook verification handshake,
-// done once when the webhook URL is registered in the Meta App dashboard.
-// hub.challenge must be echoed back verbatim as plain text, not JSON.
+// The WhatsApp inbox webhook (scripts/handoff-whatsapp-inbox.md). This
+// route previously fed the July onboarding bot (lib/whatsapp/*); the inbox
+// build supersedes that flow entirely — every inbound message now lands in
+// wa_conversations and is answered through the three doors or by Dewald in
+// /admin/whatsapp. The old bot's code and table are left in place, not
+// deleted, pending Dewald's say-so.
+//
+// On a preview deployment Meta cannot pass Vercel's deployment protection,
+// so the webhook URL registered with Meta must carry the protection bypass
+// query (?x-vercel-protection-bypass=...&x-vercel-set-bypass-cookie=true).
+// This has caught us before (handoff section 1).
+
+// Meta's one-time verification handshake when the webhook URL is registered
+// in the App dashboard. hub.challenge is echoed back verbatim as plain
+// text, not JSON.
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mode = searchParams.get("hub.mode");
@@ -20,18 +33,15 @@ export async function GET(request: Request) {
   return NextResponse.json({ error: "Verification failed" }, { status: 403 });
 }
 
-// Combined spec Sec 32.1: "respond 200 within 5 seconds, process
-// afterward" — signature validation and parsing happen inline (fast,
-// no I/O), but Supabase/Graph API work happens inside after() so Meta's
-// 5-second window is never at risk of a slow downstream call, matching
-// the reference standalone bot's own async processing pattern. after()
-// is Next.js's own Vercel-native background-work primitive, no separate
-// queue/worker needed for this scale.
+// Meta wants a 200 within 5 seconds. Signature validation and parsing are
+// fast and happen inline; all Supabase and Graph API work runs inside
+// after(), Next's Vercel-native background primitive, so a slow downstream
+// call can never make Meta retry (and duplicate) the delivery.
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = request.headers.get("x-hub-signature-256");
 
-  if (!isValidWhatsAppSignature(rawBody, signature)) {
+  if (!isValidWebhookSignature(rawBody, signature)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
 
@@ -42,20 +52,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const messages = parseWhatsAppWebhook(payload);
+  const { messages, statuses } = parseWebhook(payload);
 
   after(async () => {
+    // Statuses first: a "failed" receipt for an earlier send should be on
+    // the conversation before a new inbound message re-renders it.
+    for (const status of statuses) {
+      try {
+        await applyStatusUpdate(status);
+      } catch (err) {
+        console.error("WhatsApp status handling failed", status.wamid, err);
+        // after() runs once the response is gone, so Next's automatic
+        // error instrumentation never sees this — explicit capture only.
+        Sentry.captureException(err, { extra: { wamid: status.wamid } });
+      }
+    }
     for (const message of messages) {
       try {
-        await handleIncomingWhatsAppMessage(message);
+        await handleInbound(message);
       } catch (err) {
-        console.error("WhatsApp message handling failed", message.bsuid, err);
-        // Errors thrown inside after() run after the response is already
-        // sent, so Next's automatic onRequestError instrumentation never
-        // sees them — explicit capture is the only way this reaches
-        // Sentry, which is exactly why the sprint spec calls this handler
-        // out by name.
-        Sentry.captureException(err, { extra: { bsuid: message.bsuid } });
+        console.error("WhatsApp message handling failed", message.wamid, err);
+        Sentry.captureException(err, { extra: { wamid: message.wamid } });
       }
     }
   });

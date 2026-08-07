@@ -100,6 +100,15 @@ export default async function AdminPage() {
     .select("id", { count: "exact", head: true })
     .eq("status", "pending_approval");
 
+  // WhatsApp inbox (scripts/handoff-whatsapp-inbox.md): conversations the
+  // scripted doors have handed over and Dewald has not answered yet. Count
+  // only, /admin/whatsapp owns the list.
+  const { count: whatsappNeedsCount } = await admin
+    .from("wa_conversations")
+    .select("id", { count: "exact", head: true })
+    .is("outcome", null)
+    .eq("needs_human", true);
+
   return (
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
@@ -118,6 +127,14 @@ export default async function AdminPage() {
               {!!unreadSupportCount && (
                 <span className="rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {unreadSupportCount}
+                </span>
+              )}
+            </LinkButton>
+            <LinkButton href="/admin/whatsapp" variant="secondary" lift>
+              WhatsApp
+              {!!whatsappNeedsCount && (
+                <span className="rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {whatsappNeedsCount}
                 </span>
               )}
             </LinkButton>
