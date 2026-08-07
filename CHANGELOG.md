@@ -30,6 +30,20 @@ processed (1600px, q82, EXIF baked) and uploaded; page published at
 arrangement, flagged for Dewald to confirm. Full entry in
 `docs/Theme_Library.md`, build report in `docs/Report_Davemarly.md`.
 
+**Same-day follow-up, from a real Facebook share Dewald posted:** a member
+with no logo and no stored fallback photo fell through to
+`/brand/logo-blue.png` as their link-preview image, which a 1.91:1 preview
+crops into half a DigitalFlyer mark. Their own hero photo was ranked below
+an ambient stock image, which was backwards. The share-image chain in
+`src/app/[clientSlug]/page.tsx` is now logo, own hero photo, stock,
+platform mark, and the hero branch serves a composed 1200x630 through
+Supabase image transforms (a phone photo is portrait; a raw crop cuts the
+subject in half). Three live members gained a real share image; members
+with a logo are untouched. Two members still land on the platform mark
+because they have neither a logo nor a photo, which is what the publish
+checklist in `docs/Sprints/SPRINT-2026-08-07-onboarding-two-doors.md`
+exists to catch.
+
 ---
 
 ## 7 August 2026 — KatisoBiz Jobs: Sprints 1 and 2, then the pre-launch rebuild

@@ -163,7 +163,7 @@ export async function generateMetadata({
   // beats a generic platform mark (platform queue item 1's image-SEO
   // ride-along).
   //
-  // The hero-photo step was added 8 August 2026, after Dewald saw a real
+  // The hero-photo step was added 7 August 2026, after Dewald saw a real
   // Facebook share of a member page: a member with no logo AND no stored
   // fallback (anyone who never finished the wizard, e.g. a done-for-you
   // build) fell all the way through to the platform logo, which a
