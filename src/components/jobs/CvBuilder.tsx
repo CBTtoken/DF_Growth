@@ -714,7 +714,13 @@ function ReviewStep({
         rel="noopener noreferrer"
         className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
       >
-        Download my CV
+        Download my CV (PDF)
+      </a>
+      <a
+        href={`${pdfPrefix}/${candidateId}/docx`}
+        className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-6 py-3.5 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+      >
+        Download as Word
       </a>
 
       {isLoggedIn && (

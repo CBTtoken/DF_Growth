@@ -124,9 +124,10 @@ export default async function SeekerDashboardPage({
       }));
   }
 
-  const [cvHref, pdfHref, vacanciesHref, vacancyPrefix] = await Promise.all([
+  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix] = await Promise.all([
     jobsPath("/cv"),
     jobsPath(`/cv/${candidate.id}/pdf`),
+    jobsPath(`/cv/${candidate.id}/docx`),
     jobsPath("/vacancies"),
     jobsPath("/vacancies"),
   ]);
@@ -178,6 +179,12 @@ export default async function SeekerDashboardPage({
                 className="inline-flex items-center justify-center rounded-full border border-neutral-900 px-5 py-2.5 text-sm font-semibold text-neutral-900"
               >
                 Download PDF
+              </a>
+              <a
+                href={docxHref}
+                className="inline-flex items-center justify-center rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700"
+              >
+                Download Word
               </a>
             </div>
           </div>
