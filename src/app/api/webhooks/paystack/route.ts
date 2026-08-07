@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { TOPUP_DOCUMENTS } from "@/lib/bizup/billing";
 import { provisionGrowthClient } from "@/lib/growth-client/provision";
 import { sendWelcomeEmail } from "@/lib/email/welcome";
+import { sendBuildOrderEmail } from "@/lib/email/build-order";
 import { sendBookOrderConfirmationEmail } from "@/lib/email/book-order";
 import { buildBookShopOrder } from "@/lib/orders/book-order-row";
 import { trackBetaEvent } from "@/lib/metrics/track";
@@ -453,6 +454,11 @@ export async function POST(request: Request) {
     // payment exists to convert).
     const isFirstPaymentForPendingSignup = existingClient?.status === "pending_intake";
 
+    // Sprint "Onboarding two doors" item 1: read once, up here, because it
+    // changes which email this member gets further down as well as what
+    // happens in the build-order block at the end.
+    const isBuildOrder = metadata?.build_order === "true";
+
     // Founding-member eligibility used to only be computed for a brand-new
     // signup's very first charge.success (below) — Sec 10 means that same
     // moment can now arrive here instead, for a Growth-annual client whose
@@ -518,12 +524,24 @@ export async function POST(request: Request) {
       // Mirrors exactly what saveStep7 (Meta Connect) used to do
       // unconditionally at the old finish line, before Sec 10 moved
       // payment to be the real last step.
-      await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", trialClientId);
-      await sendWelcomeEmail({
-        businessName: existingClient.business_name,
-        contactEmail: existingClient.contact_email,
-        slug: existingClient.slug,
-      });
+      //
+      // Sprint "Onboarding two doors" item 1: everything except these two
+      // lines applies to a build order exactly as it does to an ordinary
+      // signup, the conversion tracking below very much included, since a
+      // build order is the largest single sale on the platform. What does
+      // not apply is publishing and the welcome email: a build-order
+      // member has paid but nobody has built their page yet, there is no
+      // landing_pages row to publish, and the welcome email's "Your page
+      // is live!" would link to a 404. They get sendBuildOrderEmail from
+      // the build-order block below instead.
+      if (!isBuildOrder) {
+        await admin.from("landing_pages").update({ published: true }).eq("growth_client_id", trialClientId);
+        await sendWelcomeEmail({
+          businessName: existingClient.business_name,
+          contactEmail: existingClient.contact_email,
+          slug: existingClient.slug,
+        });
+      }
       // Public Beta Polish Sprint Sec 13.6: Foundation's first real payment
       // is a genuine trial-to-paid conversion (they've been live on a free
       // trial already); Growth/Enterprise never had a trial, so their
@@ -542,7 +560,15 @@ export async function POST(request: Request) {
       // event_id is the Paystack reference, which /pricing/success reads
       // back out of its own callback URL and gives the browser pixel too,
       // so Meta dedupes the two into one sale rather than counting it twice.
-      if (existingClient.plan !== "foundation") {
+      //
+      // Sprint "Onboarding two doors" item 1: the "Foundation never reaches
+      // this branch with pending_intake" reasoning above stopped being true
+      // when the build door shipped. A Foundation build order pays R450 plus
+      // the first month immediately, with no trial in between, so it lands
+      // here as pending_intake on plan "foundation" and the old condition
+      // would have silently dropped the largest kind of Foundation sale from
+      // Meta's numbers. Build orders are tracked whatever tier they are on.
+      if (existingClient.plan !== "foundation" || isBuildOrder) {
         await sendDigitalFlyerCapiEvent({
           eventName: "Subscribe",
           email: existingClient.contact_email,
@@ -564,7 +590,7 @@ export async function POST(request: Request) {
     // queue first, because that is what Dewald has been paid to do, and the
     // subscription is created second, because a failure there is a billing
     // problem to chase rather than a reason to lose the order.
-    if (!error && metadata?.build_order === "true") {
+    if (!error && isBuildOrder) {
       const paidAt = new Date();
       const dueAt = buildOrderDueAt(paidAt);
 
@@ -576,6 +602,17 @@ export async function POST(request: Request) {
           build_order_due_at: dueAt.toISOString(),
         })
         .eq("id", trialClientId);
+
+      // The one email these members get. Deliberately not the ordinary
+      // welcome email, which would tell somebody who has just paid that a
+      // page nobody has built yet is live.
+      if (existingClient && isFirstPaymentForPendingSignup) {
+        await sendBuildOrderEmail({
+          businessName: existingClient.business_name,
+          contactEmail: existingClient.contact_email,
+          dueAt,
+        });
+      }
 
       if (buildError) {
         // Money has been taken for a build that is now not in the queue.
