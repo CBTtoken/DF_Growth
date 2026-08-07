@@ -4,18 +4,20 @@ import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { AVAILABILITY_OPTIONS, type WorkHistoryEntry } from "@/lib/jobs/cv-conversation";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { ReportListingForm } from "@/components/jobs/ReportListingForm";
 import { reportCandidate } from "@/app/jobs/find-people/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { getMyJobsEmployer } from "@/lib/jobs/employer";
 import { isRateLimited } from "@/lib/rate-limit";
+import { toggleSavedCandidate } from "@/app/jobs/employer/applicants/actions";
 
 // Only the columns the anonymous layer is allowed to show, named
 // explicitly -- never full_name, phone, email or photo_path, and never a
 // bare select("*") that would need updating by hand every time this stays
 // safe by accident rather than by construction.
 const PUBLIC_COLUMNS =
-  "id, years_experience, suburb, province, availability, skills, work_history, summary, listed, deleted_at, secondary_role_ids, other_role_text, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)";
+  "id, years_experience, suburb, province, availability, skills, work_history, summary, listed, deleted_at, secondary_ofo_codes, experience_level, jobs_ofo_occupations(title)";
 
 async function getListing(id: string) {
   const admin = createAdminClient();
@@ -29,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const listing = await getListing(id);
   if (!listing) return { title: { absolute: "Not found | KatisoBiz Jobs" } };
 
-  const roleLabel = (listing.jobs_taxonomy as unknown as { label: string } | null)?.label ?? "Available for work";
+  const roleLabel = (listing.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? "Available for work";
   const title = `${roleLabel}${listing.years_experience != null ? `, ${listing.years_experience} years' experience` : ""}${listing.suburb ? `, ${listing.suburb}` : ""}`;
 
   return {
@@ -44,28 +46,21 @@ export default async function CandidateListingPage({ params }: { params: Promise
   const listing = await getListing(id);
   if (!listing) return notFound();
 
-  const roleLabel = (listing.jobs_taxonomy as unknown as { label: string } | null)?.label ?? "Available for work";
+  const roleLabel = (listing.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? "Available for work";
   const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === listing.availability)?.label;
-  const skillSlugs: string[] = listing.skills ?? [];
-  const admin = createAdminClient();
   const backHref = await jobsPath("/find-people");
 
-  // The second and third positions, still nothing identifying: role names
-  // are exactly the kind of anonymous fact the browse layer exists to show.
-  const secondaryIds = (listing.secondary_role_ids ?? []) as string[];
-  const { data: secondaryRows } = secondaryIds.length
-    ? await admin.from("jobs_taxonomy").select("id, label").in("id", secondaryIds)
-    : { data: [] };
-  const alsoOpenTo = [
-    ...secondaryIds.map((rid) => (secondaryRows ?? []).find((r) => r.id === rid)?.label).filter((l): l is string => !!l),
-    ...(listing.other_role_text ? [listing.other_role_text] : []),
-  ];
-  const { data: skillRows } = skillSlugs.length
-    ? await admin.from("jobs_taxonomy").select("slug, label").in("slug", skillSlugs)
-    : { data: [] };
+  // The second and third positions, still nothing identifying: occupation
+  // titles are exactly the kind of anonymous fact the browse layer exists
+  // to show. Their official titles travel in the jsonb, no extra query.
+  const alsoOpenTo = ((listing.secondary_ofo_codes ?? []) as { title: string }[]).map((s) => s.title);
+  // Skills are stored as display labels since the OFO switch.
+  const skillLabels: string[] = listing.skills ?? [];
   const workHistory = (listing.work_history ?? []) as WorkHistoryEntry[];
 
   return (
+    <>
+      <JobsHeader />
     <main className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
         <Link href={backHref} className="text-sm font-medium text-neutral-500 hover:text-neutral-900">
@@ -84,13 +79,13 @@ export default async function CandidateListingPage({ params }: { params: Promise
 
         {listing.summary && <p className="mt-6 text-neutral-800">{listing.summary}</p>}
 
-        {(skillRows ?? []).length > 0 && (
+        {skillLabels.length > 0 && (
           <div className="mt-6">
             <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Skills</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {(skillRows ?? []).map((s) => (
-                <span key={s.slug} className="rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700">
-                  {s.label}
+              {skillLabels.map((s) => (
+                <span key={s} className="rounded-full bg-neutral-100 px-3 py-1 text-sm text-neutral-700">
+                  {s}
                 </span>
               ))}
             </div>
@@ -124,6 +119,7 @@ export default async function CandidateListingPage({ params }: { params: Promise
       </section>
       <JobsFooter />
     </main>
+    </>
   );
 }
 
@@ -169,11 +165,15 @@ async function FullRecordSection({ candidateId }: { candidateId: string }) {
   // have been counted, never the other way round.
   await admin.from("jobs_record_views").insert({ employer_id: employer.id, candidate_id: candidateId });
 
-  const { data: full } = await admin
-    .from("jobs_candidates")
-    .select("full_name, phone, email")
-    .eq("id", candidateId)
-    .maybeSingle();
+  const [{ data: full }, { data: saved }] = await Promise.all([
+    admin.from("jobs_candidates").select("full_name, phone, email").eq("id", candidateId).maybeSingle(),
+    admin
+      .from("jobs_saved_candidates")
+      .select("id")
+      .eq("employer_id", employer.id)
+      .eq("candidate_id", candidateId)
+      .maybeSingle(),
+  ]);
 
   if (!full) return null;
 
@@ -189,6 +189,15 @@ async function FullRecordSection({ candidateId }: { candidateId: string }) {
         </a>
       )}
       {full.email && <p className="mt-1 text-sm text-neutral-700">{full.email}</p>}
+      <form action={toggleSavedCandidate} className="mt-3">
+        <input type="hidden" name="candidateId" value={candidateId} />
+        <button
+          type="submit"
+          className="rounded-full border border-neutral-200 px-4 py-2 text-xs font-medium text-neutral-600 hover:border-neutral-400"
+        >
+          {saved ? "Saved, tap to unsave" : "Save for later"}
+        </button>
+      </form>
       <p className="mt-3 text-xs text-neutral-400">
         This view has been recorded. Never ask a candidate to pay for anything.
       </p>

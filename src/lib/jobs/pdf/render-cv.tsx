@@ -13,37 +13,37 @@ import { CvDocument, type CvPdfData } from "@/lib/jobs/pdf/cv-document";
  * doesn't own it), same ownership re-check rather than trusting the id
  * blindly.
  */
-export async function renderCvPdf(candidateId: string): Promise<Response> {
+/**
+ * Ownership check + data assembly shared by the PDF and Word exports.
+ * Returns null (the caller 404s) when the visitor doesn't own the CV or
+ * the row is gone -- the same never-confirm-existence posture as before.
+ */
+export async function loadOwnedCvData(
+  candidateId: string,
+): Promise<{ data: CvPdfData; templateId: string; filenameBase: string } | null> {
   const admin = createAdminClient();
 
   const owns = await ownsCandidate(candidateId);
-  if (!owns) return new Response("Not found", { status: 404 });
+  if (!owns) return null;
 
   const { data: c } = await admin
     .from("jobs_candidates")
     .select(
-      "full_name, phone, email, years_experience, suburb, province, availability, skills, work_history, summary, primary_role_id, secondary_role_ids, other_role_text, cv_template, deleted_at",
+      "full_name, phone, email, years_experience, suburb, province, availability, skills, work_history, summary, secondary_ofo_codes, cv_template, deleted_at, jobs_ofo_occupations(title)",
     )
     .eq("id", candidateId)
     .maybeSingle();
 
-  if (!c || c.deleted_at) return new Response("Not found", { status: 404 });
+  if (!c || c.deleted_at) return null;
 
-  // Up to three chosen positions plus the free-typed one, in the order
-  // they were picked (the first is the headline everywhere else too).
-  const roleIds: string[] = [c.primary_role_id, ...((c.secondary_role_ids ?? []) as string[])].filter(Boolean);
-  const { data: roleRows } = roleIds.length
-    ? await admin.from("jobs_taxonomy").select("id, label").in("id", roleIds)
-    : { data: [] };
-  const roleLabels = roleIds
-    .map((id) => (roleRows ?? []).find((r) => r.id === id)?.label)
-    .filter((l): l is string => !!l);
-  if (c.other_role_text) roleLabels.push(c.other_role_text);
-
-  const skillSlugs: string[] = c.skills ?? [];
-  const { data: skillRows } = skillSlugs.length
-    ? await admin.from("jobs_taxonomy").select("slug, label").in("slug", skillSlugs)
-    : { data: [] };
+  // Up to three chosen occupations, in the order they were picked (the
+  // first is the headline everywhere else too). The primary's official
+  // title comes from the join; the secondaries carry theirs in the jsonb.
+  const primaryTitle = (c.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
+  const roleLabels = [
+    ...(primaryTitle ? [primaryTitle] : []),
+    ...((c.secondary_ofo_codes ?? []) as { title: string }[]).map((s) => s.title),
+  ];
 
   const data: CvPdfData = {
     fullName: c.full_name || "My CV",
@@ -54,17 +54,29 @@ export async function renderCvPdf(candidateId: string): Promise<Response> {
     suburb: c.suburb,
     province: c.province,
     availabilityLabel: AVAILABILITY_OPTIONS.find((a) => a.id === c.availability)?.label ?? null,
-    skillLabels: (skillRows ?? []).map((s) => s.label),
+    // Skills are stored as display labels since the OFO switch.
+    skillLabels: (c.skills ?? []) as string[],
     workHistory: (c.work_history ?? []) as WorkHistoryEntry[],
     summary: c.summary,
   };
 
-  const buffer = await renderToBuffer(<CvDocument data={data} templateId={c.cv_template} />);
+  return {
+    data,
+    templateId: c.cv_template,
+    filenameBase: (c.full_name || "cv").replace(/[^a-z0-9]+/gi, "-"),
+  };
+}
+
+export async function renderCvPdf(candidateId: string): Promise<Response> {
+  const loaded = await loadOwnedCvData(candidateId);
+  if (!loaded) return new Response("Not found", { status: 404 });
+
+  const buffer = await renderToBuffer(<CvDocument data={loaded.data} templateId={loaded.templateId} />);
 
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${(c.full_name || "cv").replace(/[^a-z0-9]+/gi, "-")}.pdf"`,
+      "Content-Disposition": `inline; filename="${loaded.filenameBase}.pdf"`,
       "Cache-Control": "private, no-store",
       "X-Robots-Tag": "noindex",
     },

@@ -73,18 +73,23 @@ export async function GET(request: Request) {
   }
 
   // ---- 2. Purge expired and taken-down posts ----
+  // Closed posts (position filled) keep their repost window until their
+  // original term runs out, then purge like anything else; a closed
+  // outcome is the demand-data line worth keeping most.
   const { data: dead } = await admin
     .from("jobs_vacancies")
-    .select("id, suburb, province, created_at, status, expires_at, jobs_taxonomy!jobs_vacancies_role_id_fkey(label), other_role_text")
-    .or(`and(status.eq.published,expires_at.lt.${nowIso}),status.eq.removed,status.eq.expired`);
+    .select("id, suburb, province, created_at, status, expires_at, jobs_ofo_occupations(title)")
+    .or(
+      `and(status.eq.published,expires_at.lt.${nowIso}),and(status.eq.closed,expires_at.lt.${nowIso}),status.eq.removed,status.eq.expired`,
+    );
 
   for (const v of dead ?? []) {
-    const roleLabel = (v.jobs_taxonomy as unknown as { label: string } | null)?.label ?? v.other_role_text ?? null;
+    const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? null;
     await admin.from("jobs_vacancy_outcomes").insert({
       role_label: roleLabel,
       area: [v.suburb, v.province].filter(Boolean).join(", "),
       posted_at: v.created_at,
-      outcome: v.status === "removed" ? "taken_down" : "expired",
+      outcome: v.status === "removed" ? "taken_down" : v.status === "closed" ? "filled" : "expired",
     });
     await admin.from("jobs_vacancies").delete().eq("id", v.id);
     purged++;
@@ -111,12 +116,12 @@ export async function GET(request: Request) {
   for (const employer of lapsedEmployers ?? []) {
     const { data: liveVacancies } = await admin
       .from("jobs_vacancies")
-      .select("id, suburb, province, created_at, jobs_taxonomy!jobs_vacancies_role_id_fkey(label), other_role_text")
+      .select("id, suburb, province, created_at, jobs_ofo_occupations(title)")
       .eq("employer_id", employer.id)
       .eq("status", "published");
 
     for (const v of liveVacancies ?? []) {
-      const roleLabel = (v.jobs_taxonomy as unknown as { label: string } | null)?.label ?? v.other_role_text ?? null;
+      const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title ?? null;
       await admin.from("jobs_vacancy_outcomes").insert({
         role_label: roleLabel,
         area: [v.suburb, v.province].filter(Boolean).join(", "),

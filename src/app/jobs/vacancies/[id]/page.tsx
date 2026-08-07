@@ -3,10 +3,13 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { JobsFooter } from "@/components/jobs/JobsFooter";
+import { JobsHeader } from "@/components/jobs/JobsHeader";
 import { ReportListingForm } from "@/components/jobs/ReportListingForm";
 import { reportVacancy } from "@/app/jobs/find-people/actions";
+import { applyToVacancy } from "@/app/jobs/vacancies/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { vacancyIsExpired } from "@/lib/jobs/entitlements";
+import { VacancyAdvert } from "@/components/jobs/VacancyAdvert";
 
 const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
   full_time: "Full time",
@@ -16,7 +19,7 @@ const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
 };
 
 const VACANCY_COLUMNS =
-  "id, title, description, suburb, province, employment_type, pay_text, status, expires_at, created_at, other_role_text, jobs_taxonomy!jobs_vacancies_role_id_fkey(label), jobs_employers!inner(business_name, phone)";
+  "id, title, description, suburb, province, employment_type, pay_text, salary_public, status, expires_at, created_at, experience_level, starts_text, closing_date, duties, must_have, nice_to_have, qualifications, selection_process, jobs_ofo_occupations(title), jobs_employers!inner(business_name, phone)";
 
 // An expired vacancy's permalink stays alive (the Board's own rule: the
 // indexed page survives) but says plainly that it is no longer open, and
@@ -47,11 +50,13 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
   if (!v) return notFound();
 
   const employer = v.jobs_employers as unknown as { business_name: string; phone: string | null } | null;
-  const roleLabel = (v.jobs_taxonomy as unknown as { label: string } | null)?.label ?? v.other_role_text;
+  const roleLabel = (v.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
   const expired = vacancyIsExpired(v.expires_at);
   const backHref = await jobsPath("/vacancies");
 
   return (
+    <>
+      <JobsHeader />
     <main className="flex flex-1 flex-col">
       <section className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
         <Link href={backHref} className="text-sm font-medium text-neutral-500 hover:text-neutral-900">
@@ -64,31 +69,54 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
           </p>
         )}
 
-        <h1 className="mt-4 text-2xl font-bold text-neutral-900">{v.title}</h1>
-        <p className="mt-1 text-neutral-600">
-          {[employer?.business_name, roleLabel, EMPLOYMENT_TYPE_LABELS[v.employment_type]].filter(Boolean).join(" · ")}
-        </p>
-        <p className="mt-1 text-neutral-600">
-          {v.suburb}, {v.province}
-          {v.pay_text ? ` · ${v.pay_text}` : ""}
-        </p>
-
-        <div className="mt-6 whitespace-pre-line text-neutral-800">{v.description}</div>
+        <div className="mt-4">
+          <VacancyAdvert
+            v={{
+              title: v.title,
+              employerName: employer?.business_name ?? null,
+              roleTitle: roleLabel ?? null,
+              experienceLevel: v.experience_level,
+              employmentType: v.employment_type,
+              suburb: v.suburb,
+              province: v.province,
+              startsText: v.starts_text,
+              closingDate: v.closing_date,
+              duties: v.duties,
+              mustHave: v.must_have,
+              niceToHave: v.nice_to_have,
+              qualifications: v.qualifications,
+              selectionProcess: v.selection_process,
+              payText: v.pay_text,
+              salaryPublic: v.salary_public ?? true,
+              description: v.description,
+            }}
+          />
+        </div>
 
         {!expired && employer && (
           <div className="mt-8 rounded-xl border border-neutral-100 bg-neutral-50 p-4">
             <p className="text-sm font-bold text-neutral-900">How to apply</p>
             <p className="mt-1 text-sm text-neutral-700">
-              Contact {employer.business_name}
-              {employer.phone ? ` on ${employer.phone}` : ""} and mention you saw the job on KatisoBiz Jobs.
+              Apply with your KatisoBiz CV in one tap, free. {employer.business_name} sees your CV and can
+              contact you directly.
             </p>
-            {employer.phone && (
-              <a
-                href={`tel:${employer.phone.replace(/\s/g, "")}`}
-                className="mt-3 inline-flex items-center justify-center rounded-full bg-neutral-900 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
+            <form action={applyToVacancy} className="mt-3">
+              <input type="hidden" name="vacancyId" value={id} />
+              <button
+                type="submit"
+                className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
               >
-                Call {employer.business_name}
-              </a>
+                Apply with my CV
+              </button>
+            </form>
+            {employer.phone && (
+              <p className="mt-3 text-sm text-neutral-600">
+                Or contact {employer.business_name} on{" "}
+                <a href={`tel:${employer.phone.replace(/\s/g, "")}`} className="font-semibold text-neutral-900 underline-offset-2 hover:underline">
+                  {employer.phone}
+                </a>{" "}
+                and mention you saw the job on KatisoBiz Jobs.
+              </p>
             )}
           </div>
         )}
@@ -104,5 +132,6 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
       </section>
       <JobsFooter />
     </main>
+    </>
   );
 }

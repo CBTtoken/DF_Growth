@@ -150,9 +150,9 @@ export default async function AdminBoardPage() {
   const { data: reportedCandidates } = jobsReportedIds.length
     ? await admin
         .from("jobs_candidates")
-        .select("id, full_name, suburb, years_experience, listed, jobs_taxonomy!jobs_candidates_primary_role_id_fkey(label)")
+        .select("id, full_name, suburb, years_experience, listed, jobs_ofo_occupations(title)")
         .in("id", jobsReportedIds)
-    : { data: [] as { id: string; full_name: string | null; suburb: string | null; years_experience: number | null; listed: boolean; jobs_taxonomy: { label: string } | null }[] };
+    : { data: [] as { id: string; full_name: string | null; suburb: string | null; years_experience: number | null; listed: boolean; jobs_ofo_occupations: { title: string } | null }[] };
   const candidateById = new Map((reportedCandidates ?? []).map((c) => [c.id, c]));
 
   // Reported vacancies, one query for the lot (the post-reports pattern).
@@ -432,7 +432,7 @@ export default async function AdminBoardPage() {
           ) : (
             (jobsReports ?? []).map((report) => {
               const candidate = candidateById.get(report.target_id);
-              const roleLabel = (candidate?.jobs_taxonomy as unknown as { label: string } | null)?.label;
+              const roleLabel = (candidate?.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
               return (
                 <div key={report.id} className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
                   <p className="text-sm font-semibold text-ink">

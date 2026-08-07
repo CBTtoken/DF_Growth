@@ -35,23 +35,6 @@ export async function renewVacancy(vacancyId: string): Promise<void> {
   revalidatePath("/jobs/employer");
 }
 
-/**
- * Taking a filled or withdrawn post down early. Removed, not deleted: the
- * row survives until the cron purges expired/removed posts with a demand
- * line, so the record-keeping stays in one place.
- */
-export async function removeMyVacancy(vacancyId: string): Promise<void> {
-  const employer = await getMyJobsEmployer();
-  if (!employer) return;
-
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("jobs_vacancies")
-    .update({ status: "removed", updated_at: new Date().toISOString() })
-    .eq("id", vacancyId)
-    .eq("employer_id", employer.id);
-
-  if (error) console.error("Failed to remove vacancy", error);
-
-  revalidatePath("/jobs/employer");
-}
+// removeMyVacancy was replaced by closeVacancy in post/actions.ts when the
+// draft/closed lifecycle landed: closing keeps the post repostable, where
+// "removed" is now reserved for moderation takedowns.
