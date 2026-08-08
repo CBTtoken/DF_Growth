@@ -45,8 +45,11 @@ export function pageReadiness(input: ReadinessInput): ReadinessItem[] {
     items.push({
       key: "hero",
       label: "Choose your front-page photo",
-      hint: "Your page style shows one big photo at the top. Pick the one you want there.",
-      href: "/dashboard",
+      hint: 'Your page style shows one big photo at the top. Tap "Front page" on the one you want there.',
+      // Dewald, 8 August 2026: tapping an item dropped him at the top of
+      // the dashboard with no clue where to go next. These anchor straight
+      // at the section that fixes them.
+      href: "/dashboard#photos",
       done: Boolean(input.heroPhotoId),
     });
   }
@@ -55,7 +58,7 @@ export function pageReadiness(input: ReadinessInput): ReadinessItem[] {
     key: "photos",
     label: `Add at least ${GOOD_PHOTO_COUNT} photos`,
     hint: "Real photos of your work are what make a customer believe you before they read a word.",
-    href: "/dashboard",
+    href: "/dashboard#photos",
     done: input.photoCount >= GOOD_PHOTO_COUNT,
   });
 

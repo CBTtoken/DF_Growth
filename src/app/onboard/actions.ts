@@ -1,6 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+// Every save in this file also revalidates /dashboard, not just /onboard.
+// Dewald, 8 August 2026, walking the real flow: "I did add a tag line but
+// shows I didn't, same with your story." The tagline was saved correctly.
+// What he was reading was a cached dashboard rendered before he typed it,
+// because onboarding only ever invalidated its own route and the public
+// page. The page checklist then reported as missing the exact things he had
+// just filled in, which is worse than having no checklist at all. It also
+// explains why the first click through felt slow: that was the rebuild.
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { requireGrowthClientId } from "@/lib/auth/require-growth-client";
@@ -139,6 +147,7 @@ export async function saveStep1(_prevState: OnboardState, formData: FormData): P
   }
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
@@ -239,6 +248,7 @@ export async function saveStep2(_prevState: OnboardState, formData: FormData): P
   }
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   if (growthClient.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
@@ -293,6 +303,7 @@ export async function saveStep3(_prevState: OnboardState, formData: FormData): P
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   if (growthClient?.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
@@ -326,6 +337,7 @@ export async function saveStepTemplate(_prevState: OnboardState, formData: FormD
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -384,6 +396,7 @@ export async function saveStep5(_prevState: OnboardState, formData: FormData): P
   if (landingPageError) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   if (growthClient.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
@@ -488,6 +501,7 @@ export async function saveStep6(_prevState: OnboardState, formData: FormData): P
   }
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   if (growthClient.slug) revalidatePath(`/${growthClient.slug}`);
   return { success: true };
 }
@@ -540,6 +554,7 @@ export async function saveStep7(_prevState: OnboardState, formData: FormData): P
   if (error) return { error: { _form: ["Could not save, please try again."] } };
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   return { success: true };
 }
 
@@ -558,15 +573,32 @@ export async function switchToAnnual(): Promise<{ error?: string; success?: bool
   if (client.error) return { error: client.error };
 
   const admin = createAdminClient();
-  const { error } = await admin
+  // .select() is not decoration here, it is the whole fix. A Supabase
+  // update whose filters match no rows returns error: null, exactly like a
+  // successful one. This action carries three filters, so a client who is
+  // already active, or not on growth_engine, silently changed nothing while
+  // this returned success. StepPayment then set its own local state to
+  // "annual" and displayed R1,199/year, while /api/checkout/finish read the
+  // untouched billing_cycle and sent the member to Paystack for R180. The
+  // member confirmed a yearly price on screen and was charged monthly.
+  //
+  // Asking for the changed rows back turns "matched nothing" into a real
+  // failure. Safe with the admin client, which bypasses RLS, so this is not
+  // the "RETURNING needs a SELECT policy" trap.
+  const { data, error } = await admin
     .from("growth_clients")
     .update({ billing_cycle: "annual" })
     .eq("id", client.id)
     .eq("status", "pending_intake")
-    .eq("plan", "growth_engine");
+    .eq("plan", "growth_engine")
+    .select("id, billing_cycle");
 
-  if (error) return { error: "Could not switch, please try again." };
+  if (error || !data || data.length === 0) {
+    console.error("switchToAnnual changed no rows", { clientId: client.id, error });
+    return { error: "Could not switch to yearly, please try again or contact us." };
+  }
 
   revalidatePath("/onboard");
+  revalidatePath("/dashboard");
   return { success: true };
 }

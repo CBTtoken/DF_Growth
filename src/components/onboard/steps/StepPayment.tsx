@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { TIERS, type Tier, type BillingInterval } from "@/lib/paystack/plans";
 import { switchToAnnual } from "@/app/onboard/actions";
 
@@ -19,17 +20,36 @@ export function StepPayment({ tier, billingCycle }: { tier: Tier; billingCycle: 
   // got a second look at annual before actually paying, even though it's a
   // genuine ~R960/year saving — worth one clear, dismissible offer right
   // here rather than assuming they already made up their mind on /pricing.
-  const [cycle, setCycle] = useState(billingCycle);
   const [dismissed, setDismissed] = useState(false);
+  const [switchError, setSwitchError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  // Deliberately not local state any more. This used to hold its own copy
+  // of the cycle and flip it optimistically after switchToAnnual returned,
+  // which meant the price on screen came from the browser's guess while the
+  // price Paystack charged came from the database. When the update silently
+  // matched no rows those two disagreed, and the member confirmed
+  // R1,199/year then got billed R180. The billingCycle prop comes from the
+  // server on every render, so this is now the same value
+  // /api/checkout/finish will read when it builds the checkout.
+  const cycle: BillingInterval = billingCycle;
 
   const priceLabel =
     tier === "growth_engine" ? (cycle === "annual" ? "R1,199/year" : "R180/month") : (plan?.priceLabel ?? "");
 
   function confirmAnnual() {
+    setSwitchError(null);
     startTransition(async () => {
       const result = await switchToAnnual();
-      if (!result.error) setCycle("annual");
+      if (result.error) {
+        setSwitchError(result.error);
+        return;
+      }
+      // Pull the saved value back rather than assuming it. If the write did
+      // not happen, the price below stays monthly and says so, instead of
+      // showing a yearly price nobody is going to be charged.
+      router.refresh();
     });
   }
 
@@ -72,6 +92,7 @@ export function StepPayment({ tier, billingCycle }: { tier: Tier; billingCycle: 
               Stay monthly
             </button>
           </div>
+          {switchError && <p className="text-xs text-red-600">{switchError}</p>}
         </div>
       )}
 
