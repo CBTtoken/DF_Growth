@@ -9,7 +9,8 @@
     "lint": "eslint",
     "check:style": "node scripts/check-house-style.mjs",
     "check:layout": "node --experimental-strip-types --no-warnings scripts/check-layout.mjs",
-    "check": "npm run check:style && npm run check:layout",
+    "check:docs": "node scripts/check-docs-present.mjs",
+    "check": "npm run check:style && npm run check:layout && npm run check:docs",
     "check:pack": "node --experimental-strip-types --no-warnings scripts/check-pack.mjs"
   },
   "dependencies": {

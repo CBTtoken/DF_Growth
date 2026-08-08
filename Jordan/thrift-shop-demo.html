@@ -1,0 +1,800 @@
+<!--
+  ============================================================
+  THRIFT SHOP DEMO  |  built for Dewald, to hand to his brother
+  ============================================================
+  TO MAKE IT HIS:
+  1. Shop name       -> click the logo on the page and type. Or edit SHOP.name below.
+  2. Products        -> replace the ITEMS array below. Keep the shape.
+  3. Photos          -> each item has photo: null. Put an image URL there and it replaces the drawing.
+  4. Market dates    -> MARKETS array below.
+  5. Paystack        -> live keys go server-side, never in this file. See notes in chat.
+  ============================================================
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;700;900&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap');
+
+  .thrift {
+    --indigo:  #1A222D;
+    --indigo2: #232E3B;
+    --calico:  #E3DAC5;
+    --chalk:   #F6F3EB;
+    --fluoro:  #FF4A0F;
+    --wash:    #7C93A8;
+    --card:    #DFD4BC;
+    --line:    rgba(246,243,235,.16);
+
+    --disp: 'Big Shoulders Display','Oswald','Arial Narrow',sans-serif;
+    --mono: 'DM Mono',ui-monospace,Menlo,monospace;
+    --body: 'Instrument Sans',system-ui,-apple-system,sans-serif;
+
+    background: var(--indigo);
+    color: var(--chalk);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    position: relative;
+    overflow-x: hidden;
+  }
+  .thrift *, .thrift *::before, .thrift *::after { box-sizing: border-box; }
+  .thrift p, .thrift h1, .thrift h2, .thrift h3, .thrift ul, .thrift figure { margin: 0; padding: 0; }
+  .thrift ul { list-style: none; }
+  .thrift button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  .thrift :focus-visible { outline: 2px solid var(--fluoro); outline-offset: 3px; }
+
+  .t-wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- status strip ---------- */
+  .t-strip {
+    background: var(--fluoro); color: #14100C;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+    text-transform: uppercase; padding: 7px 0; overflow: hidden; white-space: nowrap;
+  }
+  .t-strip-track { display: inline-block; animation: t-slide 34s linear infinite; }
+  .t-strip-track span { padding: 0 22px; }
+  @keyframes t-slide { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+  /* ---------- header ---------- */
+  .t-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 16px; padding: 22px 0 18px; flex-wrap: wrap;
+  }
+  .t-logo {
+    font-family: var(--disp); font-weight: 900; font-size: clamp(26px,4vw,40px);
+    letter-spacing: .01em; text-transform: uppercase; line-height: .9;
+    border-bottom: 2px dashed transparent; padding-bottom: 2px; min-width: 4ch;
+  }
+  .t-logo:hover, .t-logo:focus { border-bottom-color: var(--fluoro); }
+  .t-logo-hint {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--fluoro); display: block; margin-bottom: 5px;
+  }
+  .t-nav { display: flex; align-items: center; gap: 8px; }
+  .t-nav a {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--wash); text-decoration: none; padding: 6px 8px;
+  }
+  .t-nav a:hover { color: var(--chalk); }
+  .t-bagbtn {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    border: 1px solid var(--chalk); padding: 8px 14px; border-radius: 999px;
+  }
+  .t-bagbtn[data-full="1"] { background: var(--fluoro); border-color: var(--fluoro); color: #14100C; }
+
+  /* ---------- hero ---------- */
+  .t-hero { padding: 26px 0 8px; }
+  .t-hero h1 {
+    font-family: var(--disp); font-weight: 900; text-transform: uppercase;
+    font-size: clamp(64px,17vw,210px); line-height: .78; letter-spacing: -.015em;
+  }
+  .t-hero h1 em { font-style: normal; color: var(--fluoro); }
+  .t-hero-sub {
+    display: flex; gap: 26px; flex-wrap: wrap; align-items: flex-start;
+    border-top: 1px solid var(--line); margin-top: 18px; padding-top: 14px;
+  }
+  .t-hero-sub p { max-width: 34ch; color: #C6CFD8; }
+  .t-facts { display: flex; gap: 22px; flex-wrap: wrap; margin-left: auto; }
+  .t-fact { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--wash); }
+  .t-fact b { display: block; font-family: var(--disp); font-weight: 700; font-size: 30px; color: var(--chalk); letter-spacing: 0; }
+
+  /* ---------- the hanging rail ---------- */
+  .t-railwrap { margin: 30px 0 0; position: relative; }
+  .t-railbar { height: 3px; background: linear-gradient(90deg,#59636D,#AEB8C0,#59636D); border-radius: 3px; }
+  .t-rail {
+    display: flex; gap: 16px; overflow-x: auto; padding: 0 4px 28px;
+    scroll-snap-type: x mandatory; scrollbar-width: thin;
+  }
+  .t-rail::-webkit-scrollbar { height: 6px; }
+  .t-rail::-webkit-scrollbar-thumb { background: var(--indigo2); border-radius: 6px; }
+
+  /* ---------- swing ticket ---------- */
+  .t-tick {
+    position: relative; flex: 0 0 218px; scroll-snap-align: start;
+    background: var(--card); color: #191510; text-align: left;
+    border-radius: 3px 3px 10px 10px; padding: 26px 14px 14px;
+    transform-origin: 50% 0;
+    transition: transform .25s cubic-bezier(.2,.9,.3,1.2);
+    display: block; width: 100%;
+  }
+  .t-rail .t-tick { margin-top: 30px; }
+  .t-tick::before {
+    content: ""; position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--indigo); box-shadow: inset 0 1px 2px rgba(0,0,0,.6);
+  }
+  .t-rail .t-tick::after {
+    content: ""; position: absolute; top: -30px; left: 50%;
+    width: 2px; height: 36px; background: #A6ADB4; transform: translateX(-50%) rotate(4deg);
+    transform-origin: top center;
+  }
+  .t-tick:hover, .t-tick:focus-visible { transform: rotate(-1.6deg) translateY(-3px); }
+  .t-tick[data-sold="1"] { filter: saturate(.25); }
+  .t-tick[data-sold="1"]:hover { transform: none; }
+
+  .t-photo {
+    aspect-ratio: 4/5; border-radius: 2px; display: grid; place-items: center;
+    position: relative; overflow: hidden; margin-bottom: 10px;
+  }
+  .t-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .t-photo svg { width: 72%; height: 72%; }
+  .t-photoflag {
+    position: absolute; right: 5px; bottom: 5px;
+    font-family: var(--mono); font-size: 8px; letter-spacing: .12em; text-transform: uppercase;
+    background: rgba(25,21,16,.62); color: #EDE6D6; padding: 2px 5px; border-radius: 2px;
+  }
+  .t-no { font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: #6E6455; }
+  .t-name {
+    font-family: var(--disp); font-weight: 700; text-transform: uppercase;
+    font-size: 21px; line-height: .96; margin: 3px 0 7px;
+  }
+  .t-meta {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    border-top: 1px dashed #A79C86; padding-top: 8px;
+  }
+  .t-size { font-family: var(--mono); font-size: 11px; color: #5E5545; letter-spacing: .06em; }
+  .t-price { font-family: var(--disp); font-weight: 900; font-size: 27px; line-height: 1; }
+  .t-soldstamp {
+    position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+  }
+  .t-soldstamp span {
+    font-family: var(--disp); font-weight: 900; font-size: 40px; letter-spacing: .1em;
+    color: rgba(255,74,15,.9); border: 3px solid rgba(255,74,15,.9); padding: 2px 12px;
+    transform: rotate(-11deg); border-radius: 4px;
+  }
+  .t-held {
+    position: absolute; top: 26px; left: 0; right: 0;
+    font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    background: var(--fluoro); color: #14100C; text-align: center; padding: 3px 0;
+  }
+
+  /* ---------- how it works ---------- */
+  .t-how { margin: 46px 0 10px; border-top: 1px solid var(--line); padding-top: 26px; }
+  .t-eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .2em; text-transform: uppercase;
+    color: var(--fluoro); margin-bottom: 14px;
+  }
+  .t-howgrid { display: grid; gap: 1px; grid-template-columns: repeat(auto-fit,minmax(215px,1fr)); background: var(--line); }
+  .t-howcell { background: var(--indigo); padding: 20px 18px; }
+  .t-howcell h3 { font-family: var(--disp); font-weight: 700; text-transform: uppercase; font-size: 22px; line-height: 1; margin-bottom: 7px; }
+  .t-howcell p { color: #B3BEC9; font-size: 14px; }
+
+  /* ---------- shop grid ---------- */
+  .t-shop { margin: 52px 0 0; }
+  .t-shophead { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; flex-wrap: wrap; margin-bottom: 16px; }
+  .t-shophead h2 { font-family: var(--disp); font-weight: 900; text-transform: uppercase; font-size: clamp(38px,7vw,72px); line-height: .85; }
+  .t-filters { display: flex; gap: 7px; flex-wrap: wrap; }
+  .t-filters button {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    border: 1px solid var(--line); padding: 6px 12px; border-radius: 999px; color: var(--wash);
+  }
+  .t-filters button[aria-pressed="true"] { background: var(--chalk); color: var(--indigo); border-color: var(--chalk); }
+  .t-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill,minmax(210px,1fr)); }
+  .t-grid .t-tick { padding-top: 24px; }
+
+  /* ---------- markets ---------- */
+  .t-markets { margin: 58px 0 0; border-top: 1px solid var(--line); padding-top: 26px; }
+  .t-marketrow {
+    display: flex; gap: 18px; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--line); padding: 14px 0; flex-wrap: wrap;
+  }
+  .t-marketrow h3 { font-family: var(--disp); font-weight: 700; text-transform: uppercase; font-size: 26px; line-height: 1; }
+  .t-marketrow .t-when { font-family: var(--mono); font-size: 12px; color: var(--wash); }
+  .t-marketrow p { color: #B3BEC9; font-size: 14px; flex: 1 1 240px; }
+
+  /* ---------- footer ---------- */
+  .t-foot {
+    margin-top: 58px; border-top: 1px solid var(--line); padding: 24px 0 60px;
+    display: flex; justify-content: space-between; gap: 18px; flex-wrap: wrap;
+    font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--wash);
+  }
+
+  /* ---------- drawer ---------- */
+  .t-scrim {
+    position: fixed; inset: 0; background: rgba(10,14,19,.72); z-index: 40;
+    opacity: 0; pointer-events: none; transition: opacity .22s;
+  }
+  .t-scrim[data-open="1"] { opacity: 1; pointer-events: auto; }
+  .t-drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(440px,100%); z-index: 41;
+    background: var(--indigo2); border-left: 1px solid var(--line);
+    transform: translateX(102%); transition: transform .3s cubic-bezier(.3,.8,.3,1);
+    display: flex; flex-direction: column;
+  }
+  .t-drawer[data-open="1"] { transform: none; }
+  .t-drawerhead {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--line); flex: 0 0 auto;
+  }
+  .t-drawerhead h2 { font-family: var(--disp); font-weight: 900; text-transform: uppercase; font-size: 26px; line-height: 1; }
+  .t-close { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--wash); }
+  .t-drawerbody { overflow-y: auto; padding: 20px; flex: 1 1 auto; }
+  .t-drawerfoot { border-top: 1px solid var(--line); padding: 16px 20px; flex: 0 0 auto; background: var(--indigo2); }
+
+  .t-cta {
+    display: block; width: 100%; text-align: center; background: var(--fluoro); color: #14100C;
+    font-family: var(--disp); font-weight: 900; text-transform: uppercase; font-size: 22px;
+    letter-spacing: .03em; padding: 13px; border-radius: 3px;
+  }
+  .t-cta[disabled] { opacity: .4; cursor: not-allowed; }
+  .t-ghost {
+    display: block; width: 100%; text-align: center; border: 1px solid var(--line);
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+    padding: 10px; border-radius: 3px; margin-top: 8px; color: var(--wash);
+  }
+
+  /* care label block */
+  .t-care { border: 1px solid var(--line); border-radius: 3px; margin-top: 16px; }
+  .t-carerow { display: flex; justify-content: space-between; gap: 14px; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+  .t-carerow:last-child { border-bottom: 0; }
+  .t-carerow dt { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--wash); }
+  .t-carerow dd { margin: 0; font-size: 14px; text-align: right; }
+  .t-grade { display: inline-block; font-family: var(--mono); font-size: 11px; letter-spacing: .1em; padding: 2px 7px; border-radius: 2px; background: var(--fluoro); color: #14100C; }
+
+  /* bag lines */
+  .t-line { display: flex; gap: 12px; align-items: flex-start; border-bottom: 1px solid var(--line); padding: 12px 0; }
+  .t-linethumb { flex: 0 0 54px; aspect-ratio: 4/5; border-radius: 2px; display: grid; place-items: center; overflow: hidden; }
+  .t-linethumb svg { width: 74%; height: 74%; }
+  .t-linethumb img { width: 100%; height: 100%; object-fit: cover; }
+  .t-linebody { flex: 1; }
+  .t-linebody h3 { font-family: var(--disp); font-weight: 700; text-transform: uppercase; font-size: 18px; line-height: 1; }
+  .t-linebody small { font-family: var(--mono); font-size: 11px; color: var(--wash); }
+  .t-remove { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--fluoro); }
+  .t-timer { font-family: var(--mono); font-size: 11px; color: var(--fluoro); }
+
+  .t-empty { text-align: center; padding: 46px 10px; color: var(--wash); }
+  .t-empty strong { display: block; font-family: var(--disp); font-weight: 900; font-size: 30px; text-transform: uppercase; color: var(--chalk); margin-bottom: 6px; }
+
+  /* delivery options */
+  .t-opt { display: block; border: 1px solid var(--line); border-radius: 3px; padding: 13px; margin-bottom: 9px; cursor: pointer; }
+  .t-opt[data-sel="1"] { border-color: var(--fluoro); background: rgba(255,74,15,.07); }
+  .t-opt h3 { font-family: var(--disp); font-weight: 700; text-transform: uppercase; font-size: 19px; line-height: 1; }
+  .t-opt small { display: block; color: var(--wash); font-size: 13px; margin-top: 3px; }
+  .t-opt .t-optprice { float: right; font-family: var(--disp); font-weight: 900; font-size: 21px; }
+  .t-opt input { position: absolute; opacity: 0; pointer-events: none; }
+
+  .t-field { margin-bottom: 11px; }
+  .t-field label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .13em; text-transform: uppercase; color: var(--wash); margin-bottom: 5px; }
+  .t-field input, .t-field select {
+    width: 100%; background: var(--indigo); border: 1px solid var(--line); color: var(--chalk);
+    padding: 10px 11px; border-radius: 3px; font: inherit; font-size: 14px;
+  }
+  .t-totals { border-top: 1px dashed var(--line); margin-top: 14px; padding-top: 12px; }
+  .t-totrow { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 13px; padding: 3px 0; color: var(--wash); }
+  .t-totrow.t-big { color: var(--chalk); font-family: var(--disp); font-weight: 900; font-size: 27px; padding-top: 8px; }
+
+  /* paystack mock */
+  .t-pay { position: fixed; inset: 0; z-index: 60; display: none; place-items: center; padding: 18px; background: rgba(8,11,15,.8); }
+  .t-pay[data-open="1"] { display: grid; }
+  .t-paycard { background: #fff; color: #12161C; border-radius: 10px; width: min(390px,100%); overflow: hidden; font-family: var(--body); }
+  .t-payhead { background: #011B33; color: #fff; padding: 16px 18px; }
+  .t-payhead b { font-size: 15px; }
+  .t-payhead small { display: block; opacity: .7; font-size: 12px; }
+  .t-paybody { padding: 18px; }
+  .t-paybody .t-field label { color: #5A6672; }
+  .t-paybody .t-field input { background: #F4F6F8; border: 1px solid #D8DEE4; color: #12161C; }
+  .t-testnote { background: #FFF4E5; border: 1px solid #F0D8AE; color: #6B4A12; font-size: 12.5px; padding: 9px 11px; border-radius: 5px; margin-bottom: 14px; }
+  .t-paybtn { display: block; width: 100%; background: #0BA4DB; color: #fff; font-weight: 600; padding: 12px; border-radius: 5px; font-size: 15px; }
+
+  /* demo badge */
+  .t-demo {
+    position: fixed; left: 12px; bottom: 12px; z-index: 70;
+    background: var(--chalk); color: var(--indigo); border-radius: 4px;
+    font-family: var(--mono); font-size: 11px; padding: 8px 11px; max-width: 280px; line-height: 1.4;
+    box-shadow: 0 6px 24px rgba(0,0,0,.4);
+  }
+  .t-demo button { float: right; margin-left: 10px; color: var(--fluoro); font-size: 14px; line-height: 1; }
+
+  @media (max-width: 620px) {
+    .t-drawer { width: 100%; }
+    .t-facts { margin-left: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .thrift *, .thrift *::before, .thrift *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="thrift">
+  <div class="t-strip"><div class="t-strip-track" id="tStrip"></div></div>
+
+  <div class="t-wrap">
+    <header class="t-head">
+      <div>
+        <span class="t-logo-hint">Click and type your shop name</span>
+        <h1 class="t-logo" id="tLogo" contenteditable="true" spellcheck="false" role="textbox" aria-label="Shop name"></h1>
+      </div>
+      <nav class="t-nav">
+        <a href="#tShop">The rail</a>
+        <a href="#tMarkets">Markets</a>
+        <button class="t-bagbtn" id="tBagBtn">Bag (0)</button>
+      </nav>
+    </header>
+
+    <section class="t-hero">
+      <h1>One<br>of<br><em>one</em></h1>
+      <div class="t-hero-sub">
+        <p>Every piece here is a single item. When it sells it is gone, and the ticket stays on the rail so you can see what went.</p>
+        <div class="t-facts">
+          <div class="t-fact"><b id="tCountLive">0</b>on the rail now</div>
+          <div class="t-fact"><b id="tCountGone">0</b>gone this drop</div>
+          <div class="t-fact"><b>15</b>minute hold in your bag</div>
+        </div>
+      </div>
+      <div class="t-railwrap">
+        <div class="t-railbar"></div>
+        <div class="t-rail" id="tRail"></div>
+      </div>
+    </section>
+
+    <section class="t-how">
+      <p class="t-eyebrow">How this works</p>
+      <div class="t-howgrid">
+        <div class="t-howcell">
+          <h3>Measured, not sized</h3>
+          <p>Old sizing lies. Every ticket carries real measurements in centimetres so you can check against something you already own.</p>
+        </div>
+        <div class="t-howcell">
+          <h3>Graded honestly</h3>
+          <p>A means barely worn. B means worn with no flaws. C means worn with a flaw, and the flaw is written on the ticket.</p>
+        </div>
+        <div class="t-howcell">
+          <h3>Held for 15 minutes</h3>
+          <p>Adding to your bag takes the piece off the rail while you decide. Nobody else can buy it. Let it lapse and it goes back up.</p>
+        </div>
+        <div class="t-howcell">
+          <h3>Collect at the market, free</h3>
+          <p>Buy online, choose the next market at checkout, and pick it up at the stall. No courier fee and you can try it on there.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="t-shop" id="tShop">
+      <div class="t-shophead">
+        <h2>The rail</h2>
+        <div class="t-filters" id="tFilters"></div>
+      </div>
+      <div class="t-grid" id="tGrid"></div>
+    </section>
+
+    <section class="t-markets" id="tMarkets">
+      <p class="t-eyebrow">Where to find the stall</p>
+      <div id="tMarketList"></div>
+    </section>
+
+    <footer class="t-foot">
+      <span id="tFootName"></span>
+      <span>Prices in Rand, VAT not applicable</span>
+      <span>Demo build, no real orders</span>
+    </footer>
+  </div>
+
+  <div class="t-scrim" id="tScrim"></div>
+
+  <aside class="t-drawer" id="tDrawer" role="dialog" aria-modal="true" aria-labelledby="tDrawerTitle">
+    <div class="t-drawerhead">
+      <h2 id="tDrawerTitle">Bag</h2>
+      <button class="t-close" id="tClose">Close</button>
+    </div>
+    <div class="t-drawerbody" id="tDrawerBody"></div>
+    <div class="t-drawerfoot" id="tDrawerFoot"></div>
+  </aside>
+
+  <div class="t-pay" id="tPay" role="dialog" aria-modal="true" aria-label="Paystack test checkout">
+    <div class="t-paycard">
+      <div class="t-payhead">
+        <b>Paystack</b>
+        <small id="tPayAmt"></small>
+      </div>
+      <div class="t-paybody">
+        <div class="t-testnote"><b>Test mode.</b> No money moves. Use card 4084 0840 8408 4081, any future expiry, CVV 408.</div>
+        <div class="t-field"><label>Card number</label><input id="tPayCard" inputmode="numeric" placeholder="4084 0840 8408 4081"></div>
+        <div class="t-field"><label>Expiry and CVV</label><input id="tPayExp" placeholder="12/30    408"></div>
+        <button class="t-paybtn" id="tPayGo">Pay now</button>
+        <button class="t-ghost" id="tPayCancel" style="color:#5A6672;border-color:#D8DEE4">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="t-demo" id="tDemo">
+    <button id="tDemoX" aria-label="Hide notice">&times;</button>
+    Demo. Products and photos are placeholders. Paystack and Bob Go are shown in test mode only.
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============ EDIT FROM HERE ============ */
+
+  var SHOP = { name: "OLD GOOD", city: "Gqeberha" };
+
+  var MARKETS = [
+    { name: "Saturday morning market", when: "Sat 08:00 to 13:00", where: "Church Square", note: "Every Saturday. Reserve online and collect at the stall, or just come and dig through the rail." },
+    { name: "First Thursday night market", when: "Thu 17:00 to 21:00", where: "Baakens Valley", note: "Once a month. Smaller rail, better pieces, card and cash both taken at the stall." },
+    { name: "Vintage fair", when: "Sun 09:00 to 15:00", where: "Walmer town hall", note: "Quarterly. Watch the drop alerts for the date." }
+  ];
+
+  // grade: A barely worn, B worn no flaws, C worn with a flaw
+  // shape: top, pants, dress, boot, belt, cap
+  // photo: null draws a placeholder. Put an image URL in to replace it.
+  var ITEMS = [
+    { id:"001", name:"Heavy denim trucker jacket", price:480, cat:"Outer", size:"L",  shape:"top",   grade:"B", flaw:"", fabric:"100% cotton denim", era:"1990s", kg:1.1, ink:"#3E5A78", bg:"#C6C0AE", photo:null,
+      m:[["Chest, pit to pit","57 cm"],["Length, collar to hem","67 cm"],["Sleeve","62 cm"]] },
+    { id:"002", name:"Faded black band tee", price:160, cat:"Tops", size:"M", shape:"top", grade:"C", flaw:"Small hole near the left hem, about 4 mm.", fabric:"Cotton", era:"2000s", kg:0.25, ink:"#2B2B2E", bg:"#CFC8B6", photo:null,
+      m:[["Chest, pit to pit","52 cm"],["Length","70 cm"]] },
+    { id:"003", name:"Corduroy wide leg trousers", price:320, cat:"Bottoms", size:"32", shape:"pants", grade:"A", flaw:"", fabric:"Cotton corduroy", era:"1970s", kg:0.7, ink:"#8A5A2B", bg:"#D3C8AE", photo:null,
+      m:[["Waist flat","41 cm"],["Inseam","78 cm"],["Rise","31 cm"]] },
+    { id:"004", name:"Cable knit wool jumper", price:380, cat:"Knits", size:"XL", shape:"top", grade:"B", flaw:"", fabric:"Lambswool blend", era:"1980s", kg:0.9, ink:"#D8CDB4", bg:"#B9BCAE", photo:null,
+      m:[["Chest, pit to pit","62 cm"],["Length","70 cm"]] },
+    { id:"005", name:"Oxblood leather ankle boots", price:650, cat:"Shoes", size:"8", shape:"boot", grade:"B", flaw:"", fabric:"Leather upper, rubber sole", era:"Unknown", kg:1.4, ink:"#6E2A28", bg:"#C9C2AE", photo:null,
+      m:[["Insole length","26.5 cm"],["Heel","3 cm"]] },
+    { id:"006", name:"Floral tea dress", price:240, cat:"Dresses", size:"S", shape:"dress", grade:"A", flaw:"", fabric:"Viscose", era:"1990s", kg:0.4, ink:"#9E5C6E", bg:"#D6CDB6", photo:null,
+      m:[["Bust flat","44 cm"],["Waist flat","36 cm"],["Length","104 cm"]] },
+    { id:"007", name:"Olive canvas work shirt", price:290, cat:"Tops", size:"L", shape:"top", grade:"B", flaw:"", fabric:"Cotton canvas", era:"1990s", kg:0.5, ink:"#5C6340", bg:"#CCC6B2", photo:null,
+      m:[["Chest, pit to pit","58 cm"],["Length","76 cm"],["Sleeve","61 cm"]] },
+    { id:"008", name:"Tan leather belt", price:120, cat:"Bits", size:"90 cm", shape:"belt", grade:"B", flaw:"", fabric:"Full grain leather", era:"Unknown", kg:0.2, ink:"#9A6B3A", bg:"#D5CBB4", photo:null,
+      m:[["Total length","104 cm"],["Width","3.5 cm"]] },
+    { id:"009", name:"Teal nylon windbreaker", price:340, cat:"Outer", size:"M", shape:"top", grade:"A", flaw:"", fabric:"Nylon shell", era:"1990s", kg:0.5, ink:"#1F7A82", bg:"#C8C4B2", photo:null,
+      m:[["Chest, pit to pit","59 cm"],["Length","69 cm"]] },
+    { id:"010", name:"Corduroy bucket hat", price:150, cat:"Bits", size:"One size", shape:"cap", grade:"A", flaw:"", fabric:"Cotton corduroy", era:"Recent", kg:0.15, ink:"#A5732F", bg:"#CFC7B0", photo:null,
+      m:[["Inner circumference","58 cm"],["Brim","6 cm"]] },
+    { id:"011", name:"Charcoal wool overcoat", price:890, cat:"Outer", size:"L", shape:"top", grade:"A", flaw:"", fabric:"Wool blend", era:"1980s", kg:1.8, ink:"#4A4E55", bg:"#C4C0B0", photo:null, sold:true,
+      m:[["Chest, pit to pit","61 cm"],["Length","112 cm"]] },
+    { id:"012", name:"Pleated midi skirt", price:210, cat:"Bottoms", size:"M", shape:"dress", grade:"B", flaw:"", fabric:"Polyester", era:"1990s", kg:0.35, ink:"#6A5F86", bg:"#D2C9B2", photo:null, sold:true,
+      m:[["Waist flat","34 cm"],["Length","78 cm"]] }
+  ];
+
+  // Rates below are published 2026 figures, not live quotes. Verify before launch. Couriers reprice regularly.
+  // PUDO and PAXI are flat rate, so they need no API at all. Door to door needs a Bob Go account and key.
+  var DELIVERY = [
+    { id:"pudo",   label:"PUDO locker to locker", note:"Around R60 nationwide, 1 to 3 days. Collect from a locker any time of day with a PIN.", price:60 },
+    { id:"paxi",   label:"PAXI, PEP store to PEP store", note:"Around R60, 7 to 9 days. Over 2,500 PEP stores, so it reaches almost anywhere.", price:60 },
+    { id:"door",   label:"Courier to your door", note:"From about R109 nationwide. Rate confirmed by Bob Go at checkout.", price:109 },
+    { id:"market", label:"Collect at the market, free", note:"Pick it up at the stall and try it on before you take it.", price:0 }
+  ];
+  var FREE_OVER = 750;
+
+  /* ============ EDIT TO HERE ============ */
+
+  var HOLD_MS = 15 * 60 * 1000;
+  var bag = [];
+  var holds = {};
+  var filter = "All";
+  var delivery = "pudo";
+  var view = "bag";
+  var activeItem = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+  var rand = function (n) { return "R" + Math.round(n).toLocaleString("en-ZA"); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" })[c]; }); };
+
+  /* ---- garment drawings ---- */
+  var SHAPES = {
+    top:   "M31,20 L22,28 L13,52 L25,59 L30,45 L30,106 L70,106 L70,45 L75,59 L87,52 L78,28 L69,20 L50,31 Z M41,23 L50,31 L59,23",
+    pants: "M31,18 L69,18 L69,48 L63,110 L53,110 L50,60 L47,110 L37,110 L31,48 Z",
+    dress: "M35,20 L27,31 L20,45 L29,50 L34,40 L26,106 L74,106 L66,40 L71,50 L80,45 L73,31 L65,20 L50,29 Z",
+    boot:  "M35,16 L57,16 L57,56 C57,70 64,74 74,81 L79,91 L79,99 L29,99 L29,60 L35,60 Z",
+    belt:  "M12,52 L70,52 L70,66 L12,66 Z M70,49 L92,49 L92,69 L70,69 Z M76,55 L88,55 L88,63 L76,63 Z",
+    cap:   "M22,70 C22,38 78,38 78,70 Z M12,70 L88,70 L88,79 L12,79 Z"
+  };
+  function drawing(it, mini) {
+    if (it.photo) { return '<img src="' + esc(it.photo) + '" alt="' + esc(it.name) + '">'; }
+    var d = SHAPES[it.shape] || SHAPES.top;
+    return '<svg viewBox="0 0 100 120" aria-hidden="true"><path d="' + d + '" fill="none" stroke="' + it.ink +
+      '" stroke-width="' + (mini ? 4 : 3) + '" stroke-linejoin="round" stroke-linecap="round"/></svg>' +
+      (mini ? "" : '<span class="t-photoflag">Photo slot</span>');
+  }
+
+  /* ---- state helpers ---- */
+  function byId(id) { for (var i = 0; i < ITEMS.length; i++) { if (ITEMS[i].id === id) return ITEMS[i]; } return null; }
+  function held(id) { return holds[id] && holds[id] > Date.now(); }
+  function available(it) { return !it.sold && (!held(it.id) || bag.indexOf(it.id) > -1); }
+  function subtotal() { var s = 0; bag.forEach(function (id) { var it = byId(id); if (it) s += it.price; }); return s; }
+  function deliveryCost() {
+    var opt = DELIVERY.filter(function (d) { return d.id === delivery; })[0] || DELIVERY[0];
+    if (opt.id !== "market" && subtotal() >= FREE_OVER) return 0;
+    return opt.price;
+  }
+
+  /* ---- ticket markup ---- */
+  function ticket(it) {
+    var sold = it.sold ? 1 : 0;
+    var isHeld = !sold && held(it.id) && bag.indexOf(it.id) === -1;
+    return '<button class="t-tick" data-sold="' + sold + '" data-id="' + it.id + '" ' +
+      (sold ? 'aria-label="' + esc(it.name) + ', sold"' : '') + '>' +
+      (isHeld ? '<span class="t-held">Held by someone</span>' : '') +
+      '<figure class="t-photo" style="background:' + it.bg + '">' + drawing(it) + '</figure>' +
+      '<span class="t-no">No. ' + it.id + ' / ' + esc(it.cat) + '</span>' +
+      '<h3 class="t-name">' + esc(it.name) + '</h3>' +
+      '<div class="t-meta"><span class="t-size">Size ' + esc(it.size) + ' / grade ' + it.grade + '</span>' +
+      '<span class="t-price">' + rand(it.price) + '</span></div>' +
+      (sold ? '<span class="t-soldstamp"><span>Sold</span></span>' : '') +
+      '</button>';
+  }
+
+  /* ---- render ---- */
+  function renderStrip() {
+    var bits = ["Next drop Friday 19:00", SHOP.city + " based", "Every piece is one of one",
+                "Free courier over " + rand(FREE_OVER), "Collect at the market for free", "Held 15 minutes in your bag"];
+    var run = bits.map(function (b) { return "<span>" + esc(b) + "</span>"; }).join("");
+    $("tStrip").innerHTML = run + run;
+  }
+
+  function renderFilters() {
+    var cats = ["All"];
+    ITEMS.forEach(function (i) { if (cats.indexOf(i.cat) === -1) cats.push(i.cat); });
+    $("tFilters").innerHTML = cats.map(function (c) {
+      return '<button data-cat="' + esc(c) + '" aria-pressed="' + (c === filter) + '">' + esc(c) + "</button>";
+    }).join("");
+  }
+
+  function render() {
+    var live = ITEMS.filter(function (i) { return !i.sold; });
+    var gone = ITEMS.filter(function (i) { return i.sold; });
+    $("tCountLive").textContent = live.length;
+    $("tCountGone").textContent = gone.length;
+
+    $("tRail").innerHTML = live.slice(0, 8).map(ticket).join("");
+
+    var shown = ITEMS.filter(function (i) { return filter === "All" || i.cat === filter; });
+    shown.sort(function (a, b) { return (a.sold ? 1 : 0) - (b.sold ? 1 : 0); });
+    $("tGrid").innerHTML = shown.length ? shown.map(ticket).join("")
+      : '<div class="t-empty"><strong>Nothing here yet</strong>Try another rail, or wait for Friday.</div>';
+
+    var n = bag.length;
+    var b = $("tBagBtn");
+    b.textContent = "Bag (" + n + ")";
+    b.setAttribute("data-full", n ? "1" : "0");
+    $("tFootName").textContent = (SHOP.name || "Your shop") + ", " + SHOP.city;
+
+    if ($("tScrim").getAttribute("data-open") === "1") renderDrawer();
+  }
+
+  function renderMarkets() {
+    $("tMarketList").innerHTML = MARKETS.map(function (m) {
+      return '<div class="t-marketrow"><div><h3>' + esc(m.name) + '</h3>' +
+        '<span class="t-when">' + esc(m.when) + " / " + esc(m.where) + "</span></div>" +
+        "<p>" + esc(m.note) + "</p></div>";
+    }).join("");
+  }
+
+  /* ---- drawer ---- */
+  function openDrawer(which, item) {
+    view = which; activeItem = item || null;
+    $("tScrim").setAttribute("data-open", "1");
+    $("tDrawer").setAttribute("data-open", "1");
+    renderDrawer();
+    $("tClose").focus();
+  }
+  function closeDrawer() {
+    $("tScrim").setAttribute("data-open", "0");
+    $("tDrawer").setAttribute("data-open", "0");
+  }
+
+  function renderDrawer() {
+    var body = $("tDrawerBody"), foot = $("tDrawerFoot"), title = $("tDrawerTitle");
+
+    if (view === "item" && activeItem) {
+      var it = activeItem;
+      title.textContent = "No. " + it.id;
+      body.innerHTML =
+        '<figure class="t-photo" style="background:' + it.bg + ';aspect-ratio:1/1">' + drawing(it) + "</figure>" +
+        '<h3 class="t-name" style="font-size:34px;margin-top:14px">' + esc(it.name) + "</h3>" +
+        '<p style="color:#B3BEC9;margin-top:6px">' + esc(it.era) + " / " + esc(it.fabric) + "</p>" +
+        '<div class="t-care"><dl>' +
+          '<div class="t-carerow"><dt>Price</dt><dd>' + rand(it.price) + "</dd></div>" +
+          '<div class="t-carerow"><dt>Marked size</dt><dd>' + esc(it.size) + "</dd></div>" +
+          it.m.map(function (r) { return '<div class="t-carerow"><dt>' + esc(r[0]) + "</dt><dd>" + esc(r[1]) + "</dd></div>"; }).join("") +
+          '<div class="t-carerow"><dt>Condition</dt><dd><span class="t-grade">Grade ' + it.grade + "</span></dd></div>" +
+          (it.flaw ? '<div class="t-carerow"><dt>The flaw</dt><dd>' + esc(it.flaw) + "</dd></div>" : "") +
+          '<div class="t-carerow"><dt>Parcel weight</dt><dd>' + it.kg + " kg</dd></div>" +
+        "</dl></div>" +
+        '<p style="color:#7C93A8;font-size:13px;margin-top:14px">There is one of this. Adding it to your bag holds it for 15 minutes.</p>';
+      var inBag = bag.indexOf(it.id) > -1;
+      foot.innerHTML = it.sold
+        ? '<button class="t-cta" disabled>Sold</button>'
+        : (inBag ? '<button class="t-cta" data-act="tobag">In your bag, go to bag</button>'
+                 : '<button class="t-cta" data-act="add" data-id="' + it.id + '">Add to bag, ' + rand(it.price) + "</button>");
+      return;
+    }
+
+    if (view === "bag") {
+      title.textContent = "Bag";
+      if (!bag.length) {
+        body.innerHTML = '<div class="t-empty"><strong>Bag is empty</strong>Pick something off the rail. It holds for 15 minutes once it is in here.</div>';
+        foot.innerHTML = '<button class="t-ghost" data-act="close">Back to the rail</button>';
+        return;
+      }
+      body.innerHTML = bag.map(function (id) {
+        var it = byId(id);
+        var left = Math.max(0, (holds[id] || 0) - Date.now());
+        var mm = Math.floor(left / 60000), ss = Math.floor((left % 60000) / 1000);
+        return '<div class="t-line">' +
+          '<figure class="t-linethumb" style="background:' + it.bg + '">' + drawing(it, true) + "</figure>" +
+          '<div class="t-linebody"><h3>' + esc(it.name) + "</h3>" +
+          "<small>No. " + it.id + " / size " + esc(it.size) + " / grade " + it.grade + "</small><br>" +
+          '<span class="t-timer">Held ' + mm + ":" + (ss < 10 ? "0" : "") + ss + "</span></div>" +
+          '<div style="text-align:right"><div class="t-price" style="font-family:var(--disp);font-weight:900;font-size:20px">' + rand(it.price) + "</div>" +
+          '<button class="t-remove" data-act="remove" data-id="' + it.id + '">Remove</button></div></div>';
+      }).join("") +
+      '<div class="t-totals"><div class="t-totrow"><span>Subtotal</span><span>' + rand(subtotal()) + "</span></div></div>";
+      foot.innerHTML = '<button class="t-cta" data-act="todelivery">Choose delivery</button>';
+      return;
+    }
+
+    if (view === "delivery") {
+      title.textContent = "Delivery";
+      body.innerHTML =
+        '<p style="color:#B3BEC9;margin-bottom:14px">Lockers and PEP stores are the cheapest way to get it to you. Door to door costs more and gets there sooner.</p>' +
+        DELIVERY.map(function (d) {
+          var free = d.id !== "market" && subtotal() >= FREE_OVER;
+          var price = d.id === "market" ? "Free" : (free ? "Free" : rand(d.price));
+          return '<label class="t-opt" data-sel="' + (delivery === d.id ? 1 : 0) + '">' +
+            '<span class="t-optprice">' + price + "</span>" +
+            '<input type="radio" name="tdel" value="' + d.id + '"' + (delivery === d.id ? " checked" : "") + ">" +
+            "<h3>" + esc(d.label) + "</h3><small>" + esc(d.note) + "</small></label>";
+        }).join("") +
+        (subtotal() >= FREE_OVER ? '<p style="color:#FF4A0F;font-family:var(--mono);font-size:12px">Order is over ' + rand(FREE_OVER) + ", courier is on the shop.</p>" : "") +
+        '<div class="t-totals">' +
+          '<div class="t-totrow"><span>Subtotal</span><span>' + rand(subtotal()) + "</span></div>" +
+          '<div class="t-totrow"><span>Delivery</span><span>' + rand(deliveryCost()) + "</span></div>" +
+          '<div class="t-totrow t-big"><span>Total</span><span>' + rand(subtotal() + deliveryCost()) + "</span></div>" +
+        "</div>";
+      foot.innerHTML = '<button class="t-cta" data-act="todetails">Continue</button>' +
+        '<button class="t-ghost" data-act="tobag">Back to bag</button>';
+      return;
+    }
+
+    if (view === "details") {
+      title.textContent = "Your details";
+      body.innerHTML =
+        '<div class="t-field"><label>Name</label><input id="tfName" placeholder="Thandi Nkosi"></div>' +
+        '<div class="t-field"><label>WhatsApp number</label><input id="tfPhone" inputmode="tel" placeholder="082 000 0000"></div>' +
+        '<div class="t-field"><label>Email</label><input id="tfMail" inputmode="email" placeholder="you@example.co.za"></div>' +
+        (delivery === "market"
+          ? '<div class="t-field"><label>Which market</label><select id="tfMarket">' +
+              MARKETS.map(function (m) { return "<option>" + esc(m.name) + " / " + esc(m.when) + "</option>"; }).join("") +
+            "</select></div>"
+          : '<div class="t-field"><label>Street address</label><input id="tfAddr" placeholder="12 Main Street"></div>' +
+            '<div class="t-field"><label>Suburb and city</label><input id="tfCity" placeholder="Newton Park, Gqeberha"></div>' +
+            '<div class="t-field"><label>Postal code</label><input id="tfZip" inputmode="numeric" placeholder="6045"></div>') +
+        '<div class="t-totals"><div class="t-totrow t-big"><span>To pay</span><span>' + rand(subtotal() + deliveryCost()) + "</span></div></div>";
+      foot.innerHTML = '<button class="t-cta" data-act="pay">Pay with Paystack</button>' +
+        '<button class="t-ghost" data-act="todelivery">Back to delivery</button>';
+      return;
+    }
+
+    if (view === "done") {
+      var ref = "TS" + String(Date.now()).slice(-6);
+      title.textContent = "Paid";
+      body.innerHTML =
+        '<div class="t-empty" style="padding-top:20px"><strong>Order ' + ref + "</strong>" +
+        "Good day, thank you. Your order is paid and the pieces are off the rail.</div>" +
+        '<div class="t-care"><dl>' +
+          '<div class="t-carerow"><dt>Payment</dt><dd>Paystack, test mode</dd></div>' +
+          '<div class="t-carerow"><dt>Delivery</dt><dd>' + esc((DELIVERY.filter(function (d) { return d.id === delivery; })[0] || {}).label || "") + "</dd></div>" +
+          (delivery === "market"
+            ? '<div class="t-carerow"><dt>Collect</dt><dd>At the stall, bring this number</dd></div>'
+            : '<div class="t-carerow"><dt>Tracking</dt><dd>TR' + String(Date.now()).slice(-9) + " (test)</dd></div>") +
+        "</dl></div>" +
+        '<p style="color:#7C93A8;font-size:13px;margin-top:14px">In the real shop this is where the WhatsApp confirmation goes out and the Bob Go waybill prints.</p>';
+      foot.innerHTML = '<button class="t-cta" data-act="reset">Back to the rail</button>';
+      return;
+    }
+  }
+
+  /* ---- events ---- */
+  function addToBag(id) {
+    var it = byId(id);
+    if (!it || it.sold || bag.indexOf(id) > -1) return;
+    if (held(id)) return;
+    bag.push(id);
+    holds[id] = Date.now() + HOLD_MS;
+    view = "bag";
+    render();
+    openDrawer("bag");
+  }
+  function removeFromBag(id) {
+    bag = bag.filter(function (x) { return x !== id; });
+    delete holds[id];
+    render();
+  }
+
+  document.addEventListener("click", function (e) {
+    var tick = e.target.closest ? e.target.closest(".t-tick") : null;
+    if (tick && document.querySelector(".thrift").contains(tick)) {
+      var it = byId(tick.getAttribute("data-id"));
+      if (it) openDrawer("item", it);
+      return;
+    }
+    var act = e.target.closest ? e.target.closest("[data-act]") : null;
+    if (act) {
+      var a = act.getAttribute("data-act"), id = act.getAttribute("data-id");
+      if (a === "add") addToBag(id);
+      if (a === "remove") removeFromBag(id);
+      if (a === "tobag") { view = "bag"; renderDrawer(); }
+      if (a === "todelivery") { view = "delivery"; renderDrawer(); }
+      if (a === "todetails") { view = "details"; renderDrawer(); }
+      if (a === "close") closeDrawer();
+      if (a === "pay") {
+        $("tPayAmt").textContent = "Pay " + rand(subtotal() + deliveryCost());
+        $("tPay").setAttribute("data-open", "1");
+        $("tPayCard").focus();
+      }
+      if (a === "reset") {
+        bag.forEach(function (x) { var i = byId(x); if (i) i.sold = true; });
+        bag = []; holds = {}; closeDrawer(); render();
+      }
+      return;
+    }
+    var cat = e.target.closest ? e.target.closest("[data-cat]") : null;
+    if (cat) { filter = cat.getAttribute("data-cat"); renderFilters(); render(); return; }
+  });
+
+  $("tBagBtn").addEventListener("click", function () { openDrawer("bag"); });
+  $("tClose").addEventListener("click", closeDrawer);
+  $("tScrim").addEventListener("click", closeDrawer);
+  $("tDemoX").addEventListener("click", function () { $("tDemo").style.display = "none"; });
+
+  $("tDrawerBody").addEventListener("change", function (e) {
+    if (e.target.name === "tdel") { delivery = e.target.value; renderDrawer(); }
+  });
+
+  $("tPayCancel").addEventListener("click", function () { $("tPay").setAttribute("data-open", "0"); });
+  $("tPayGo").addEventListener("click", function () {
+    $("tPay").setAttribute("data-open", "0");
+    view = "done"; renderDrawer();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if ($("tPay").getAttribute("data-open") === "1") { $("tPay").setAttribute("data-open", "0"); return; }
+    closeDrawer();
+  });
+
+  var logo = $("tLogo");
+  logo.textContent = SHOP.name;
+  logo.addEventListener("input", function () { SHOP.name = logo.textContent.trim() || "Your shop"; render(); });
+  logo.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); logo.blur(); } });
+  logo.addEventListener("focus", function () {
+    if (logo.textContent.trim() === "OLD GOOD") {
+      logo.textContent = "";
+    }
+  });
+
+  setInterval(function () {
+    var changed = false;
+    Object.keys(holds).forEach(function (id) {
+      if (holds[id] <= Date.now()) { delete holds[id]; bag = bag.filter(function (x) { return x !== id; }); changed = true; }
+    });
+    if (changed) render();
+    else if ($("tScrim").getAttribute("data-open") === "1" && view === "bag" && bag.length) renderDrawer();
+  }, 1000);
+
+  renderStrip();
+  renderFilters();
+  renderMarkets();
+  render();
+})();
+</script>

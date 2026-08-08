@@ -65,6 +65,28 @@ file exists to catch before it ships.
 - No load shedding references. It ended in May 2026.
 - Member greetings open **"Good day {name},"**, never "Hi there."
 
+## A document this repository cites lives in this repository
+
+Dewald, 8 August 2026, on finding the interface standard was not in git:
+**"that should not happen, that should be always available."**
+
+If a handoff, specification or report is worked from, cited in a doc, or
+named in a source comment, it gets added and committed. Not later, in the
+same session it is first cited. A document that exists only on one machine
+is one laptop away from gone, and handoffs have briefly vanished here once
+already.
+
+Enforced by `scripts/check-docs-present.mjs` (`npm run check:docs`, part of
+`npm run check`). It fails when a `.md`, `.html` or `.txt` file is present
+in the working tree, cited by something tracked, and untracked itself.
+Twenty documents were in that state when the check was written, including
+INTERFACE-STANDARD.md and eight of the files DOCUMENT_INDEX.md maps.
+
+Images, spreadsheets and PDFs are deliberately out of scope: they are
+usually source material and they are heavy, so adding one stays a human
+decision. Genuine cross-repository references belong in `ESTATE.md`, cited
+as external, rather than being added here.
+
 ## Every anonymous form gets a Turnstile check. No exceptions.
 
 Dewald, 3 August 2026: blocking bots, scammers and automated abuse is a core
