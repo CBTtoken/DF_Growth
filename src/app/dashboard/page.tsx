@@ -262,9 +262,10 @@ export default async function DashboardPage({
     admin
       .from("shop_products")
       .select(
-        "id, slug, title, sku, description, base_price_cents, image_paths, is_featured, track_stock, weight_kg, length_cm, width_cm, height_cm, status, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
+        "id, slug, title, sku, description, collection, base_price_cents, image_paths, is_featured, track_stock, weight_kg, length_cm, width_cm, height_cm, status, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)"
       )
       .eq("growth_client_id", client.id)
+      .order("collection_position", { ascending: true })
       .order("position", { ascending: true }),
     admin
       .from("shop_coupons")

@@ -5,6 +5,7 @@ import {
   fromPriceCents,
   hasChoices,
   isSoldOut,
+  optionSummary,
   shopImageUrl,
   PRICE_ON_REQUEST,
   type StorefrontProduct,
@@ -41,6 +42,7 @@ export function ProductCard({
   const soldOut = isSoldOut(product);
   const from = fromPriceCents(product);
   const accent = supportingAccent(primaryColor);
+  const options = optionSummary(product);
 
   return (
     <Link
@@ -86,6 +88,10 @@ export function ProductCard({
 
       <div className="flex flex-1 flex-col gap-1 border-t border-gray-100 p-3.5">
         <p className="line-clamp-2 text-sm font-semibold leading-snug text-gray-900">{product.title}</p>
+        {/* "51 fragrances" is the single most useful thing a card can add
+            here. Without it a tile selling one bottle and a tile selling the
+            whole range look identical, and the buyer has to open both. */}
+        {options && <p className="text-xs text-gray-500">{options} to choose from</p>}
         {product.price_pending ? (
           // Never a zero. The stand-in figure in the database is not a price
           // and must never be shown to a buyer as one. Set in the supporting

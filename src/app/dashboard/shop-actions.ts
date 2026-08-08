@@ -239,6 +239,7 @@ export async function saveProduct(
     title: formData.get("title"),
     sku: formData.get("sku") || undefined,
     description: formData.get("description") || undefined,
+    collection: formData.get("collection") || undefined,
     basePrice: formData.get("basePrice"),
     weightKg: formData.get("weightKg") || 0,
     lengthCm: formData.get("lengthCm") || 0,
@@ -254,6 +255,10 @@ export async function saveProduct(
     growth_client_id: client.id,
     title: parsed.data.title,
     description: parsed.data.description || null,
+    // Blank clears the grouping rather than storing an empty string, so a
+    // member who empties the box drops back into the ungrouped grid instead
+    // of getting a section with no heading on it.
+    collection: parsed.data.collection || null,
     base_price_cents: Math.round(parsed.data.basePrice * 100),
     weight_kg: parsed.data.weightKg,
     length_cm: parsed.data.lengthCm,
