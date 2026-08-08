@@ -11,6 +11,60 @@ Every future sprint adds its entry here before reporting back, per
 
 ---
 
+## 8 August 2026 — Stays and Tours, and Mila's Place on it
+
+**Branch:** `stays-and-tours-phase1`. Handoff:
+`scripts/handoff-stays-and-tours-phase1.md`. Report:
+`docs/REPORT-stays-and-tours-phase1.md`.
+
+A new Growth member runs a guesthouse and a tour company from one brand.
+Neither existing module fitted him: Booking is slot-based with opening
+hours and buffers, built for appointments rather than nights, and Events is
+a free community board anybody can post to, which is the wrong home for a
+paid trip with seats and money attached. So Stays and Tours is its own
+module, and nothing in it is bespoke to him.
+
+**Schema** (`20260812100000_stays_and_tours.sql`): `stays_properties`,
+`stays_room_types`, `stays_bookings`, `stays_blocks`, `tours`,
+`tours_bookings`, `tours_waitlist`, plus `stays_units_taken` and the two
+hold functions. Room TYPES, never individual rooms: four Standard Doubles
+is one row with four as the count, and room assignment is deliberately not
+built.
+
+**The hold gets its own cron.** `/api/cron/expire-stay-holds`, every
+minute, its own entry in `vercel.json` rather than a slot in the daily run.
+A room held at 11pm by an abandoned checkout has to be free at 11:05pm, not
+at 6am, and the existing appointment module's release-on-page-load approach
+cannot do that for a business nobody visits overnight.
+
+**Money never moves through DigitalFlyer.** The deposit is taken on the
+member's own gateway through the existing `src/lib/shop/gateway.ts`, and
+the balance becomes an ordinary KatisoBiz invoice with the deposit recorded
+as an ordinary part payment. Nothing new was built for either, and nothing
+chases the balance: the member sends the existing reminder themselves.
+
+**One real bug found by walking the flow rather than reading it.**
+`resolveVisitor` keys a board identity on email and overwrites its
+`display_name`. Correct on the Board; wrong for a booking form, where the
+name is whatever a guest typed into a hotel form. During this sprint's own
+testing it renamed a live identity carrying two published Board posts.
+Stays and Tours now has its own `guestIdentity` helper that reuses an
+existing identity untouched, and the renamed row was restored.
+
+**Mila's Place** rebuilt on it: thirteen of his own photographs uploaded
+(replacing a stock Pexels image that was standing in as his link preview),
+his page copy rewritten from his own words including the three house rules
+that a guest needs before booking rather than after, his industry corrected
+from House Sitting to Guest Houses and B&Bs, and three room types set up
+with no rates. The module is switched OFF for him on purpose: a date picker
+over unpriced rooms answers every search with "nothing available", which is
+worse than not being there.
+
+FAQ gained a Stays and Tours category, `/guide` gained "Rooms, nights and
+trips", and every published tour is now in the sitemap.
+
+---
+
 ## 8 August 2026 — WeCare's shop, and what twenty-two products broke
 
 **Branch:** `wecare-shop-and-page`. Reports:

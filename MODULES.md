@@ -382,23 +382,63 @@ listed, not added (module out of scope for fixes this sprint).
 
 ## Stays and Tours
 
-**What it is:** Planned accommodation module. **Not found anywhere in the
-code** — no `stays_*` or `tours_*` tables, no matching routes. The handoff
-(`scripts/handoff-stays-and-tours-phase1.md`) exists only on Dewald's
-machine, uncommitted.
+**What it is:** Accommodation and paid trips, for guesthouses, farm
+cottages and self-catering places. A guest picks dates and a party size,
+sees only what physically fits and is genuinely free across every night of
+the range with a real rate and a real total, and books and pays a deposit
+without the member being asked anything. The member owns their own
+calendar: room types, rates, deposits, amenities, terms, tours, blocked
+dates and the waiting lists, all from `/dashboard/stays`.
 
-**What it is not:** Not the same as Booking (appointments), which is a
-different, already-live module — see Naming in `HOUSE-RULES.md`.
+Tables: `stays_properties` (one row per member, `growth_client_id` is the
+primary key), `stays_room_types`, `stays_bookings`, `stays_blocks`,
+`tours`, `tours_bookings`, `tours_waitlist`. Two SQL functions carry the
+logic that must not be reimplemented in TypeScript: `stays_units_taken`
+(availability, counting bookings and blocks in one sum across the tightest
+night) and `stays_create_hold` / `tours_create_hold` (the hold, taken
+inside one transaction that has already row-locked the room type or tour,
+so two simultaneous guests cannot both take the last one).
 
-**Status:** Specced only. Not built.
+Public surfaces: two sections on the member's page (`Stay with us` and
+`Explore with us`), a search results page at `/[clientSlug]/stay`
+(noindex, one visitor's own answer), an indexable page per tour at
+`/[clientSlug]/tours/[tourSlug]`, and a guest's own booking at
+`/[clientSlug]/confirmation/[token]` behind a 48-character token.
 
-**Who for:** N/A yet.
+**What it is not:** Not Booking (appointments), which is slot-based with
+opening hours and buffers, still live and untouched. Not a channel
+manager: no iCal sync, no seasonal or per-person rates, no minimum-night
+rules, no room assignment, no refund processing, and no half-built hooks
+for any of them. Not a place money passes through: the deposit is taken on
+the member's own Paystack or Bob Pay via `src/lib/shop/gateway.ts`, and a
+refund is something the member does themselves and merely records here.
 
-**Spec:** `scripts/handoff-stays-and-tours-phase1.md` (not in git).
+**Status:** Built 8 August 2026. Live once merged. Mila's Place is the
+first member set up on it, with photos, copy and room types in place and
+the module deliberately switched off until his rates arrive.
 
-**Known gaps:** N/A — nothing built yet to have gaps.
+**Who for:** Public (search, book, message after booking), member
+(`/dashboard/stays`, reached from the Selling tab).
 
-**Last updated:** 6 August 2026 (confirmed absent from code).
+**Spec:** `scripts/handoff-stays-and-tours-phase1.md`. End-of-sprint report
+at `docs/REPORT-stays-and-tours-phase1.md`.
+
+**Known gaps:**
+- Availability is computed in TypeScript for search
+  (`searchAvailability` in `src/lib/stays/queries.ts`) and in SQL for the
+  hold. Both read the same two tables the same way, but they are two
+  implementations of one rule and a future change has to touch both.
+- `searchAvailability` fetches every overlapping booking and block for the
+  searched range and folds them per night in memory. Bounded by the range,
+  not by the member's history, so it stays small; it would want moving into
+  SQL if a member ever had hundreds of room types.
+- One booking sells one unit of one room type. A guest wanting two rooms
+  books twice.
+- The deposit and the balance are the member's own money throughout. There
+  is no reconciliation between what KatisoBiz says is owing and what the
+  member was actually paid in cash on arrival.
+
+**Last updated:** 8 August 2026 (built).
 
 ---
 

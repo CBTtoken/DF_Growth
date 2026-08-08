@@ -198,6 +198,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ];
     });
 
+  // Stays and Tours. A tour's own page is the indexable unit of that
+  // module, the same way a product page is the shop's ("this is what Google
+  // finds and what the member shares"), so every published, still-upcoming
+  // tour is listed individually. The shop taught this estate twice that a
+  // public page missing from the sitemap simply does not get found.
+  //
+  // The search results page (/[clientSlug]/stay) is deliberately excluded
+  // and carries its own noindex: it is one visitor's answer to one
+  // question, it changes the moment somebody books, and inviting a crawler
+  // to it would mean inviting it to a different page every time.
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Africa/Johannesburg" });
+  const { data: tours } = await admin
+    .from("tours")
+    .select("slug, updated_at, growth_clients!inner(slug, status, unlisted)")
+    .eq("is_published", true)
+    .gte("departure_date", today)
+    .eq("growth_clients.status", "active")
+    .eq("growth_clients.unlisted", false);
+
+  const tourEntries: MetadataRoute.Sitemap = (tours ?? []).map((tour) => {
+    const client = tour.growth_clients as unknown as { slug: string };
+    return {
+      url: `${siteUrl}/${client.slug}/tours/${tour.slug}`,
+      lastModified: tour.updated_at ?? undefined,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    };
+  });
+
   // List Your Event Sec 5: "built to be found on Google the same way every
   // other part of Growth is" — every published, still-upcoming event gets
   // listed the same way an active client page does, since an individual
@@ -333,6 +362,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
     ...clientEntries,
     ...shopEntries,
+    ...tourEntries,
     ...eventEntries,
     ...boardEntries,
   ];

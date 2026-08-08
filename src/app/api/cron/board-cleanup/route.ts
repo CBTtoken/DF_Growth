@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendEmail } from "@/lib/email/resend";
+import { bookingChatThreadIds } from "@/lib/stays/retention";
 
 // The ten day clear-out, which Dewald asked for to keep the board and the
 // servers clean.
@@ -38,11 +39,20 @@ export async function GET(request: Request) {
   // Messages older than ten days. The thread survives if it has newer
   // messages in it, and a thread left with nothing goes with them, because
   // an empty conversation in a list is worse than no conversation.
-  const { data: oldMessages } = await admin
-    .from("board_messages")
-    .delete()
-    .lt("created_at", cutoff)
-    .select("thread_id");
+  //
+  // Except a conversation attached to a Stays and Tours booking, which is
+  // on its own clock. Found 8 August 2026 while building that module: a
+  // guest who books in June for December writes in June, and under this
+  // ten day rule the arrival time and the dietary request would have been
+  // deleted in July while the booking was still five months away. Those
+  // threads are kept until ninety days after the guest leaves and are
+  // deleted by src/lib/stays/retention.ts instead.
+  const protectedThreads = await bookingChatThreadIds();
+  let messageQuery = admin.from("board_messages").delete().lt("created_at", cutoff);
+  if (protectedThreads.length > 0) {
+    messageQuery = messageQuery.not("thread_id", "in", `(${protectedThreads.join(",")})`);
+  }
+  const { data: oldMessages } = await messageQuery.select("thread_id");
 
   let emptiedThreads = 0;
   const touched = [...new Set((oldMessages ?? []).map((m) => m.thread_id))];
