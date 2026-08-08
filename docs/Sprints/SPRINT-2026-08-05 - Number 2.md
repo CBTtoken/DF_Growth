@@ -1,5 +1,19 @@
 # Sprint handoff: tracking and measurement audit
 
+**DONE, both parts.** Marked 8 August 2026 by the session that added this
+file to git.
+
+Part 1, the audit, is written up in `docs/Report_TrackingAudit.md`, read
+against main as deployed rather than against a branch, as this handoff
+required. Part 2, the fixes it found, needed Dewald's specific go-ahead and
+got it: GA4 cross-domain linking was applied, and the Growth `Subscribe`
+gap is closed, with the Paystack webhook now sending Meta a server-side
+`Subscribe` keyed on the Paystack reference and `/pricing/success` giving
+the browser pixel the same id, so a sale counts once instead of twice.
+
+One item in the report is Dewald's alone and cannot be done from here:
+confirming both domains are verified properties in Search Console.
+
 **For Claude Code. Start only when the 5 August sprint is complete and
 reported.**
 
