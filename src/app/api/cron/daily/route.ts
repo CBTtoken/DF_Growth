@@ -11,6 +11,7 @@ import { GET as boardCleanup } from "../board-cleanup/route";
 import { GET as jobsCleanup } from "../jobs-cleanup/route";
 import { GET as pagePosterGenerate } from "../page-poster-generate/route";
 import { runHealthChecks } from "@/lib/desk/health/run";
+import { purgeExpiredGuestChats } from "@/lib/stays/retention";
 
 // Every scheduled job shares one invocation instead of the separate
 // function budgets they had as individual endpoints, and several of them
@@ -98,6 +99,17 @@ export async function GET(request: Request) {
   } catch (err) {
     console.error("Daily cron job healthChecks threw", err);
     results["healthChecks"] = { status: 500, error: String(err) };
+  }
+
+  // Stays and Tours guest chat retention: ninety days after the guest
+  // leaves, the conversation and everything in it goes. Not a route handler
+  // like the others, so it runs directly. Idempotent, and deletes nothing a
+  // second time.
+  try {
+    results["guestChatRetention"] = { status: 200, body: await purgeExpiredGuestChats() };
+  } catch (err) {
+    console.error("Daily cron job guestChatRetention threw", err);
+    results["guestChatRetention"] = { status: 500, error: String(err) };
   }
 
   for (const [name, handler] of jobs) {

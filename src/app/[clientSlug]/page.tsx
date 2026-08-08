@@ -10,6 +10,10 @@ import type { PublicShopProduct } from "@/components/landing/ShopSection";
 import { shapeShopProduct } from "@/lib/shop/queries";
 import type { PublicReview } from "@/components/reviews/ReviewsSection";
 import { truncateOnWord } from "@/lib/text";
+import { StaySection } from "@/components/stays/StaySection";
+import { ToursSection } from "@/components/stays/ToursSection";
+import { getStaysOwner, listPublishedTours, photoUrlsByIds } from "@/lib/stays/queries";
+import { todayInSA } from "@/lib/stays/money";
 import { getLiveAgentPage, getAgentSocialProof, getProofPages, getAgentPageByFormerSlug } from "@/lib/agent-page/data";
 import { AgentPageView } from "@/components/agent-page/AgentPageView";
 import { agentPageMetadata } from "@/lib/agent-page/og";
@@ -347,6 +351,14 @@ export default async function ClientLandingPage({
 
   if (!landingPage) return notFound();
 
+  // Stays and Tours. Fetched separately rather than folded into the big
+  // embedded query above, because most members do not have it switched on
+  // and getStaysOwner returns null for all of them after one cheap indexed
+  // lookup. Deliberately the gateway-free version: the page only renders a
+  // picker and a row of cards, and answering "can this member take a card"
+  // decrypts a stored key, which has no business happening on every visit.
+  const staysSections = await buildStaysSections(clientSlug, client.brand_primary_color ?? "#1081b8", client.business_name);
+
   // STANDING365_LANDING_BUILD_SPEC_CLAUDE.md Sec 2/4: everything above came
   // back in the same single embedded query regardless of which branch this
   // takes (the query doesn't know in advance), so branching here costs
@@ -397,8 +409,62 @@ export default async function ClientLandingPage({
         bookingRules={bookingRules}
         shopProducts={shopProducts}
         reviews={reviews}
+        staysSections={staysSections}
         clientSlug={clientSlug}
         mode="live"
+      />
+    </>
+  );
+}
+
+/**
+ * The two Stays and Tours sections, or nothing at all.
+ *
+ * Nothing at all is the answer for almost every member, and it costs one
+ * indexed lookup to find out. A guesthouse gets "Stay with us" and, if they
+ * run trips, "Explore with us" underneath it.
+ *
+ * Room types are deliberately not fetched here. They must not appear before
+ * dates are chosen (acceptance criterion 16), so the page has no use for
+ * them and does not ask.
+ */
+async function buildStaysSections(
+  clientSlug: string,
+  accentColor: string,
+  businessName: string
+) {
+  const owner = await getStaysOwner(clientSlug);
+  if (!owner) return null;
+
+  const tours = await listPublishedTours(owner.id, todayInSA());
+  const tourPhotoIds = tours.map((tour) => tour.photoIds[0]).filter((id): id is string => Boolean(id));
+  const propertyPhotos = await photoUrlsByIds(owner.id, tourPhotoIds);
+
+  const { data: photoRows } = await createAdminClient()
+    .from("client_photos")
+    .select("storage_path")
+    .eq("growth_client_id", owner.id)
+    .order("position", { ascending: true })
+    .limit(3);
+
+  const heroUrls = (photoRows ?? []).map(
+    (row) => `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-photos/${row.storage_path}`
+  );
+
+  return (
+    <>
+      <StaySection
+        clientSlug={clientSlug}
+        property={owner.property}
+        photoUrls={heroUrls}
+        accentColor={accentColor}
+        businessName={businessName}
+      />
+      <ToursSection
+        clientSlug={clientSlug}
+        tours={tours}
+        accentColor={accentColor}
+        photoUrls={propertyPhotos}
       />
     </>
   );

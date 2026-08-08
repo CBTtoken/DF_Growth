@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { OwnerBarGate } from "@/components/landing/OwnerBarGate";
 import { PixelConsentGate } from "@/components/landing/PixelConsentGate";
@@ -103,6 +104,7 @@ export async function ClientLandingPageView({
   bookingRules = null,
   shopProducts = [],
   reviews = [],
+  staysSections = null,
   clientSlug,
   mode,
   templateOverride,
@@ -119,6 +121,18 @@ export async function ClientLandingPageView({
   // the point there). The real public route always passes the client's
   // actual published reviews.
   reviews?: PublicReview[];
+  /**
+   * Stays and Tours, already built by the route.
+   *
+   * Passed in as ready-made nodes rather than as data, unlike everything
+   * above it. The module owns two whole sections of its own and its data
+   * is nothing like a testimonial or a product, so threading half a dozen
+   * more props through here (and through /dashboard/preview, and through
+   * the marketplace sample) to reassemble them inside would be more
+   * plumbing than the sections are worth. The route that has the data
+   * builds them; this decides where they sit.
+   */
+  staysSections?: ReactNode;
   clientSlug: string;
   mode: "live" | "preview";
   // Sec 6 / Sec 9: lets the template picker preview "what would my own page
@@ -323,6 +337,7 @@ export async function ClientLandingPageView({
         <ScrollReveal>
           <ReviewsSection businessId={client.id} reviews={reviews} accentColor={accentColor} eyebrowNumber={reviewsNumber} />
         </ScrollReveal>
+        {staysSections}
         {bookingSection}
         {shopSection}
         <ScrollReveal>
@@ -620,6 +635,7 @@ export async function ClientLandingPageView({
         <ScrollReveal key={key}>{renderSection(key)}</ScrollReveal>
       ))}
 
+      {staysSections}
       {bookingSection}
       {shopSection}
       <ScrollReveal>

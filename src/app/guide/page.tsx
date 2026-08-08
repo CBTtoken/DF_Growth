@@ -178,6 +178,86 @@ const SECTIONS: Section[] = [
     ],
   },
   {
+    id: "stays",
+    title: "Rooms, nights and trips",
+    blurb:
+      "For a guest house, a farm cottage or a self catering place. Guests pick their dates and book, and your calendar looks after itself.",
+    tasks: [
+      {
+        title: "Find it",
+        steps: ["Click the Selling tab.", "Click Open Stays and Tours."],
+      },
+      {
+        title: "Add your rooms",
+        steps: [
+          "Open Rooms and rates and click Add a room.",
+          "Add one entry for each KIND of room, not one for each door.",
+          "Say how many of that kind you have, and how many adults and children fit.",
+          "Give it a price for one night.",
+        ],
+        note: "Four rooms that are all the same is one entry with four as the number you have. A room with no price is never shown to a guest, so you can describe it now and price it later.",
+      },
+      {
+        title: "Decide what you take up front",
+        steps: [
+          "On each room, choose a share of the total or a set amount in Rand.",
+          "Under Your details, set how many days before arrival the rest is due.",
+        ],
+        note: "The deposit lands in your own account. You only see this choice once you have connected Paystack or Bob Pay.",
+      },
+      {
+        title: "Say what the place has",
+        steps: [
+          "Open Your details.",
+          "Tick everything that applies: WiFi, parking, breakfast, garden, and the rest.",
+          "Write a few lines about staying there, and your own cancellation terms.",
+        ],
+      },
+      {
+        title: "Put it on your page",
+        steps: [
+          "Once at least one room has a price, click Switch on at the top.",
+          "Your page gets a Stay with us section with a date picker.",
+        ],
+        note: "Rooms only appear after a guest has chosen dates. That is on purpose: a room we cannot promise is a room we do not show.",
+      },
+      {
+        title: "Block nights you have sold somewhere else",
+        steps: [
+          "Open Blocked dates.",
+          "Choose the room, the first night and the last night, and how many of them.",
+        ],
+        note: "A blocked night behaves exactly like a booked one. Nobody can take it.",
+      },
+      {
+        title: "Add a trip",
+        steps: [
+          "Open Tours and click Add a trip.",
+          "Give it a title, a date, a price a person and how many seats.",
+          "Write what you do and the plan for the day, and tick your photos.",
+          "Tick Show this on my page when it is ready.",
+        ],
+        note: "Each trip gets its own page with its own link. That is the one to send on WhatsApp and the one Google finds.",
+      },
+      {
+        title: "See who is coming",
+        steps: [
+          "Coming up shows arrivals and departures for the next two weeks.",
+          "Bookings shows everything, with what is still owed.",
+        ],
+      },
+      {
+        title: "Cancel a booking",
+        steps: [
+          "Open Bookings, find it, and click Cancel this booking.",
+          "Say why, for your own records.",
+          "If you refunded the guest in your own Paystack, tick the box to note it.",
+        ],
+        note: "The dates go back into your calendar straight away. Your guest is not told automatically, so phone them.",
+      },
+    ],
+  },
+  {
     id: "orders",
     title: "Orders and getting paid",
     blurb: "An order reaches you by email the moment it is placed, and it waits for you in your dashboard.",

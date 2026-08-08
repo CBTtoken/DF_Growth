@@ -247,6 +247,77 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       },
     ],
   },
+  // Stays and Tours, added with the module, 8 August 2026. Its own category
+  // rather than questions folded into Booking & Shop: a guesthouse owner
+  // searching for "take bookings for my guest house" must not land on an
+  // answer about appointment slots, which is a different module that does
+  // not fit them at all.
+  {
+    id: "stays-and-tours",
+    title: "Stays and Tours",
+    items: [
+      {
+        question: "I run a guest house. Can I take bookings on my page?",
+        answer:
+          "Yes. Stays and Tours is built for guest houses, farm cottages and self catering places. A guest picks their dates and the number of people, sees what is actually free with real prices, and books and pays a deposit without you being asked anything.",
+      },
+      {
+        question: "How is this different from Booking?",
+        answer:
+          "Booking is for appointments: an hour on a Tuesday, with opening times and gaps between jobs. Stays and Tours is for nights: a range of dates across the rooms you have. If you rent a bed by the night, this is the one you want.",
+      },
+      {
+        question: "Do I have to load every room separately?",
+        answer:
+          "No, and you should not. You load one entry for each kind of room and say how many of them you have. Four rooms that are all the same is one entry with four as the number. Which actual room a guest ends up in stays your decision on the day, the way it always was.",
+      },
+      {
+        question: "Can two guests book my last room at the same time?",
+        answer:
+          "No. When somebody chooses to pay, that room is held for five minutes and nobody else can take it. If they do not pay, it is free again within five minutes, on its own, without anybody visiting your page.",
+      },
+      {
+        question: "How much deposit do I take?",
+        answer:
+          "Whatever you decide, and you can set it differently for each room. A share of the total, say half, or a set amount in Rand. You can also set how many days before arrival the rest is due.",
+      },
+      {
+        question: "Where does the deposit money go?",
+        answer:
+          "Straight into your own account. You connect your own Paystack or Bob Pay and the money never passes through DigitalFlyer. If you have not connected one, bookings still come through as requests and you arrange payment yourself.",
+      },
+      {
+        question: "What happens to the balance the guest still owes?",
+        answer:
+          "It becomes an invoice in KatisoBiz with the deposit already recorded against it, so it shows as partly paid with the right amount still owing. The reminder is there for you to send when you are ready. Nothing goes out to your guest automatically.",
+      },
+      {
+        question: "I sell some nights on another site. Can I block them?",
+        answer:
+          "Yes. Block any nights on any room and they behave exactly like a booked night: nobody can book them and they never show as free. Same for a room being painted.",
+      },
+      {
+        question: "Can I cancel a booking?",
+        answer:
+          "Yes. Cancelling puts those dates straight back into your calendar and records why. If you refunded the guest, you do that in your own Paystack and tick a box here to note it. We never move money in either direction.",
+      },
+      {
+        question: "I also run day trips. Can I sell seats?",
+        answer:
+          "Yes. Each trip gets its own page with its own photos and itinerary, which is the page Google finds and the link you send on WhatsApp. Seats count down as people book, and when it is full the page collects names for the next date instead of showing a dead end.",
+      },
+      {
+        question: "How do guests reach me before they arrive?",
+        answer:
+          "Through the messages you already have in your dashboard. The link appears on their booking confirmation after they book, you get an email when they write, and you reply in the same place. There is nothing to set up and no separate WhatsApp number to buy.",
+      },
+      {
+        question: "Can I write my own cancellation terms?",
+        answer:
+          "Yes, in your own words. Guests see them before they pay and again on their confirmation.",
+      },
+    ],
+  },
   {
     id: "getting-found",
     title: "Getting Found Online",

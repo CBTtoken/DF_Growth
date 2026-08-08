@@ -832,6 +832,26 @@ export default async function DashboardPage({
           label: "Selling",
           content: (
             <>
+              {/* Stays and Tours lives on its own route rather than inside
+                  this tab. It is six panels of its own and a guesthouse
+                  owner opens it every morning, so it gets a destination
+                  rather than a fold inside a tab that already holds two
+                  other products. This card is how they find it. */}
+              <section className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+                <div>
+                  <h2 className="text-lg font-bold tracking-tight text-ink">Stays and Tours</h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    For a guest house, a farm cottage or a self catering place: rooms and rates, a real calendar,
+                    deposits into your own account, and the trips you run.
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/stays"
+                  className="w-fit rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-dark"
+                >
+                  Open Stays and Tours
+                </Link>
+              </section>
               <BookingSection
                 bookingEnabled={growthClient?.booking_enabled ?? false}
                 units={bookableUnits ?? []}

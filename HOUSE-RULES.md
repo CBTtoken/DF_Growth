@@ -20,7 +20,7 @@ both standing.
 |---|---|---|
 | BizUp | **KatisoBiz** | Renamed 27 July 2026. Public URLs moved off `/bizup/` onto `katisobiz.co.za` (`src/proxy.ts` rewrites the KatisoBiz hostname to the `/bizup` route internally). The route folder is still `src/app/bizup/*` and internal identifiers (table prefix `bizup_*`, code comments citing `BizUp/docs/...`) still say BizUp — that is deliberate, not a leftover, because those paths are cited from source comments (see `docs/DOCUMENT_INDEX.md`). A member never sees the word BizUp. |
 | RE:Biz | *(retired, no replacement in this codebase)* | Referenced in old docs as a predecessor concept. Don't build against it. |
-| Bookings (as a name for accommodation) | **Stays and Tours** | Booking already exists as the slot-based appointment module (`bookable_units`, `reservations` tables, live). Stays and Tours is a separate, not-yet-built accommodation module — its handoff exists on Dewald's machine only, not yet in this repo. Do not call either one "Bookings" alone; say which one. |
+| Bookings (as a name for accommodation) | **Stays and Tours** | Booking already exists as the slot-based appointment module (`bookable_units`, `reservations` tables, live). Stays and Tours is a separate accommodation module, built 8 August 2026 (`stays_*` and `tours_*` tables), and its handoff is committed at `scripts/handoff-stays-and-tours-phase1.md`. Do not call either one "Bookings" alone; say which one. In interface copy Stays and Tours never says "reservation", "inventory" or "unit" either: a member has rooms and nights, and a guest books a room. |
 | "Unlimited" (KatisoBiz R89 plan) | **Unlimited Documents** | The plan is unlimited on document count, not on everything. Never shorten it. |
 | "Directory" / "listing" (for the marketplace) | **Marketplace** | Standing rule, not just a naming note — see Terminology below. |
 | "Booking & Shop" (the dashboard tab) | **Selling** | Renamed 8 August 2026 with Dewald. The two modules keep their own names everywhere else; this is the tab a member taps. The tab id is still `booking-shop`, so existing `?tab=` links keep working. |
@@ -206,6 +206,42 @@ branch holds them, stop and tell Dewald rather than writing the entries
 into a report. The Jobs pre-launch sprint hit exactly this: the three
 documents lived on the unmerged `codebase-health-audit` branch, its entries
 went into a report instead, and this rule exists so that never repeats.
+
+## Stays and Tours (added 8 August 2026)
+
+- **Model room types, never individual rooms.** A guesthouse has four
+  Standard Doubles, not Room 3 and Room 4. Availability is arithmetic on a
+  count. Room assignment and moving a guest between rooms are not built and
+  must not be: they need individual rooms and bring every hard problem in
+  hotel software with them at a size where none of it pays.
+- **A hold is released by a scheduled job, never by a page load.** The
+  appointment Booking module releases its holds inside the read path, which
+  works for a business whose page is looked at all day and fails completely
+  for a guesthouse whose page nobody opens overnight. Stays and Tours has
+  its own Vercel Cron entry running every minute
+  (`/api/cron/expire-stay-holds`), and availability additionally ignores an
+  expired hold on sight so correctness never waits for a schedule.
+- **A room with no rate is never offered.** Null means the member has not
+  priced it yet. It is described in their dashboard, invisible to guests,
+  and there is no "from" price and no "enquire" fallback. A price we do not
+  know is not a price we may guess at.
+- **Room types are not visible before dates are chosen.** Not collapsed,
+  not greyed out, not "from R950". A room shown before dates are chosen is
+  a room nobody can promise.
+- **A booking never renames a person.** `resolveVisitor` in
+  `src/lib/board/visitor.ts` keys on email and overwrites `display_name`,
+  which is right on the Board and wrong for a booking form. Stays and Tours
+  uses its own `guestIdentity` helper that reuses an existing identity
+  untouched. Found live during this sprint's own testing, on an identity
+  with two published Board posts against it.
+- Tours reuse the Events module's card *shape* and none of its tables,
+  routes or rules. Events is free, public and open to submission by
+  non-members; a paid trip with seats and money attached must never sit on
+  a surface a stranger can post to.
+- The balance owing goes into KatisoBiz as an ordinary invoice with the
+  deposit recorded as an ordinary part payment. Nothing new was built for
+  it and nothing chases it: the member sends the existing reminder
+  themselves.
 
 ## Jobs (added 7 August 2026)
 
