@@ -11,6 +11,46 @@ Every future sprint adds its entry here before reporting back, per
 
 ---
 
+## 8 August 2026 — WeCare's shop, and what twenty-two products broke
+
+**Branch:** `wecare-shop-and-page`. Reports:
+`docs/Report_WeCare_Products_v2.md`, `docs/WeCare_Client_Email_v2.md`.
+
+Elize sent her price lists and her suppliers' product photography, which the
+first WeCare build (2 August) had asked for and could not proceed without.
+Her shop went from six products, five of them unpriced and none photographed,
+to twenty-two priced products with photographs on eighteen.
+
+Two things in the shop did not survive that jump, and both were fixed for
+every member rather than for her.
+
+**Collections.** `shop_products.collection` and `collection_position`
+(migration `20260811100000`). The storefront groups by collection and puts
+counted jump links above the grid. A shop with one collection or none renders
+exactly as before, so nothing changed for any existing shop. Members set it
+from the product form, with their own existing names offered back as
+suggestions so one range cannot split into two headings on a typo.
+
+**A searchable option picker** (`src/components/shop/OptionPicker.tsx`).
+Above twelve options the pills become a searchable list, grouped by the first
+descriptor key when that key varies. Fifty-one fragrances rendered as pills
+is not a choice, it is a paragraph of nouns. Below twelve, unchanged.
+
+Product cards now name the choice: "51 fragrances to choose from".
+
+**On the perfumes.** Roughly 130 "inspired by" listings became two indexed
+product pages, one for her and one for him, with the fragrance as a variant.
+The designer names appear only inside the picker, never as a page title or in
+structured data. That was the first report's recommendation, now built.
+
+**Health claims stayed out**, unchanged from the first build. One new product
+(Just Heal It wound spray) is listed at price-on-request with its description
+cut back to the manufacturer's own intended-use statement, and flagged for a
+conversation before it goes further.
+
+Her page gained six of her own event photographs, a rewritten About built on
+her own stated goal, and a story section that no longer repeats it.
+
 ## 8 August 2026 — The member dashboard, on a phone
 
 **Branch:** `member-dashboard-navigation`. Sprint handoff:

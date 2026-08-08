@@ -102,6 +102,15 @@ bug that was already fixed once (Standing 365 was appearing twice).
 shipped 5 Aug 2026. Bob Go waybills/tracking and Bob Pay sandbox
 end-to-end are the known open pieces (per `docs/Handoff_Growth_Shop_and_Payments.md`).
 
+**Ranges, added 8 Aug 2026.** A product can carry a `collection` (plus
+`collection_position`), which the storefront turns into headed sections with
+counted jump links. A shop with one collection or none renders exactly as it
+always did. Above twelve variant options the pill picker becomes a searchable,
+grouped list (`src/components/shop/OptionPicker.tsx`). Both came out of WeCare
+Products going to twenty-two products and a 51-fragrance perfume; see
+`docs/Report_WeCare_Products_v2.md`. Known gap: collections are free text and
+their order is not editable from the dashboard yet.
+
 **Who for:** Public (browse/buy), member (manage products), admin.
 
 **Spec:** `docs/Handoff_Growth_Shop_and_Payments.md`,
