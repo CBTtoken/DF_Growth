@@ -452,47 +452,30 @@ export default async function SeekerDashboardPage({
 
         <div className="mt-3 flex flex-col gap-4">
           <div className={card}>
+            {/* A summary and one way in, not a second CV screen.
+
+                This card used to carry its own copy of the check plus
+                Edit, Download PDF and Download Word, and "Edit my CV"
+                opened the review screen which has every one of those
+                again. Two screens both claiming to be your CV, with no
+                way to tell which was the real one. The review screen is
+                the real one; this says how it is doing and takes you
+                there. Dewald, 10 August, on the duplication. */}
             <p className="text-sm font-bold text-neutral-900">
               {outstanding === 0 ? "Your CV is ready to send" : "Your CV"}
             </p>
-            {/* The whole check, not a bar. Each line names the thing to
-                do; tapping Edit my CV opens the screen that fixes it. A
-                progress bar was the wrong shape of feedback here: it
-                measured how much was typed, not whether the document
-                would get read. */}
-            {outstanding > 0 && (
-              <ul className="mt-2 flex flex-col gap-1.5">
-                {checkItems
-                  .filter((i) => !i.done)
-                  .map((i) => (
-                    <li key={i.id} className="flex items-start gap-2 text-xs text-neutral-600">
-                      <span aria-hidden className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
-                      <span className="min-w-0">{i.message}</span>
-                    </li>
-                  ))}
-              </ul>
-            )}
-            <div className="mt-4 flex flex-wrap gap-2">
+            <p className="mt-1 text-xs text-neutral-500">
+              {outstanding === 0
+                ? "Everything checks out. Open it to download it or aim it at a job."
+                : `${outstanding} ${outstanding === 1 ? "thing" : "things"} would make it stronger: ${topFix}.`}
+            </p>
+            <div className="mt-4">
               <Link
                 href={cvHref}
                 className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
               >
-                Edit my CV
+                {outstanding === 0 ? "Open my CV" : "Open my CV and fix it"}
               </Link>
-              <a
-                href={pdfHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-neutral-900 px-5 py-2.5 text-sm font-semibold text-neutral-900"
-              >
-                Download PDF
-              </a>
-              <a
-                href={docxHref}
-                className="inline-flex items-center justify-center rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700"
-              >
-                Download Word
-              </a>
             </div>
             {/* The upload route existed but was reachable only from the
                 home page and the first question of the builder, which is

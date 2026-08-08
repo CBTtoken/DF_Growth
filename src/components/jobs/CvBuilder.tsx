@@ -20,7 +20,7 @@ import { impactExamplesFor } from "@/lib/jobs/impact-examples";
 import { CvCheckList } from "@/components/jobs/CvCheckList";
 import { CvDownloadPanel } from "@/components/jobs/CvDownloadPanel";
 import { CvAimPanel, type TailoredSummary } from "@/components/jobs/CvAimPanel";
-import { runCvCheck, type CvCheckItem } from "@/lib/jobs/cv-check";
+import { runCvCheck, outstandingCount, type CvCheckItem } from "@/lib/jobs/cv-check";
 import { assembleCv } from "@/lib/jobs/cv-assembly";
 import { AI_POLISH_CAP, CREDITS_PER_PURCHASE, CREDIT_PURCHASE_RANDS } from "@/lib/jobs/cv-conversation";
 import {
@@ -1060,6 +1060,73 @@ function Chip({
   );
 }
 
+/**
+ * One collapsible section of the finished CV screen.
+ *
+ * Dewald, 10 August: "can't it be put on sections, so the user reviews
+ * one section, closes it, then clicks on the next one and it expands."
+ *
+ * He is right, and the reason is measurable rather than aesthetic: that
+ * screen had eight review rows, a thirteen-line check, two AI buttons,
+ * a three-way question, five templates, two download buttons, the aim
+ * panel, a listing toggle and a delete link, all stacked. On a 375px
+ * phone that is roughly six screens of scrolling with four different
+ * kinds of decision in it, and no way to tell where one job ends and
+ * the next begins.
+ *
+ * One open at a time, so the screen is always about one thing. The
+ * header carries its own status, so a person can see what is left
+ * without opening anything.
+ */
+function Section({
+  title,
+  status,
+  attention,
+  open,
+  onToggle,
+  children,
+}: {
+  title: string;
+  /** A word or two on the right: "2 to fix", "Clean", "5 left". */
+  status?: string;
+  /** Draws the eye to the header when something genuinely needs doing. */
+  attention?: boolean;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`overflow-hidden rounded-xl border ${attention ? "border-accent" : "border-neutral-200"}`}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 bg-white px-4 py-3.5 text-left transition hover:bg-neutral-50"
+      >
+        <span className="min-w-0 text-sm font-bold text-neutral-900">{title}</span>
+        <span className="flex shrink-0 items-center gap-2">
+          {status && (
+            <span
+              className={`text-xs font-semibold ${attention ? "text-accent" : "text-neutral-400"}`}
+            >
+              {status}
+            </span>
+          )}
+          {/* A chevron drawn in CSS, not an icon font: it renders the
+              same on every phone in the country. */}
+          <span
+            aria-hidden
+            className={`h-2 w-2 shrink-0 rotate-45 border-b-2 border-r-2 border-neutral-400 transition-transform ${
+              open ? "-translate-y-0.5 -rotate-[135deg]" : ""
+            }`}
+          />
+        </span>
+      </button>
+      {open && <div className="border-t border-neutral-100 px-4 py-4">{children}</div>}
+    </div>
+  );
+}
+
 function Primary({ children, onClick, disabled }: { children: React.ReactNode; onClick: () => void; disabled?: boolean }) {
   return (
     <button
@@ -1200,6 +1267,16 @@ function ReviewStep({
   const [writing, startWriting] = useTransition();
   const [accepting, startAccepting] = useTransition();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  /**
+   * Which section is open. One at a time, so the screen is always about
+   * one thing. Tapping the open one closes it, which is what makes
+   * "review it, close it, open the next" work as a rhythm.
+   */
+  type SectionId = "cv" | "check" | "ai" | "download" | "aim" | "settings";
+  const [openSection, setOpenSection] = useState<SectionId | null>("cv");
+  function toggleSection(id: SectionId) {
+    setOpenSection((current) => (current === id ? null : id));
+  }
   const [deleted, setDeleted] = useState(false);
   const [polishCount, setPolishCount] = useState(initialPolishCount);
   const [writesLeft, setWritesLeft] = useState(freeWritesLeft);
@@ -1250,6 +1327,7 @@ function ReviewStep({
     certifications,
     assembly,
   });
+  const outstanding = outstandingCount(checkItems);
 
   if (deleted) {
     return (
@@ -1264,16 +1342,27 @@ function ReviewStep({
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-3">
       <h1 className="text-2xl font-bold text-neutral-900">Your CV, ready</h1>
+      <p className="-mt-2 text-sm text-neutral-500">
+        {outstanding === 0
+          ? "Everything checks out. Download it below, or aim it at a job."
+          : `Open each part below. ${outstanding} ${outstanding === 1 ? "thing" : "things"} would make it stronger.`}
+      </p>
 
+      <Section
+        title="What your CV says"
+        status="Check and edit"
+        open={openSection === "cv"}
+        onToggle={() => toggleSection("cv")}
+      >
       {/* Every part of the CV, each with its own way in. This replaced one
           flat grey block of text that could be read and nothing else:
           "Edit my CV" from the dashboard reopened this same screen, so the
           only route to the name and phone questions was ten taps of Back.
-          Anything empty says so and offers the same tap to fill it, which
-          is what makes the screen work for somebody who uploaded a CV and
-          skipped the questions. */}
+          Anything empty offers the same tap to fill it, which is what
+          makes the screen work for somebody who uploaded a CV and skipped
+          the questions. */}
       <div className="flex flex-col divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-100 bg-white">
         <ReviewRow label="Your details" onEdit={() => onEdit("name")} missing={!fullName.trim() || !phone.trim()}>
           {[fullName, phone].filter((v) => v?.trim()).join(" · ")}
@@ -1327,11 +1416,27 @@ function ReviewStep({
           {summary.trim()}
         </ReviewRow>
       </div>
+      </Section>
 
       {/* The CV check. Replaces a percentage that told somebody they were
           70% done and nothing about which 30% mattered. Every outstanding
           item is a tap straight to the screen that fixes it. */}
-      <CvCheckList items={checkItems} onFix={onEdit} />
+      <Section
+        title="What would make it stronger"
+        status={outstanding === 0 ? "All done" : `${outstanding} to fix`}
+        attention={outstanding > 0}
+        open={openSection === "check"}
+        onToggle={() => toggleSection("check")}
+      >
+        <CvCheckList items={checkItems} onFix={onEdit} />
+      </Section>
+
+      <Section
+        title="Help me with the writing"
+        status={writesLeft > 0 ? `${writesLeft} free` : credits > 0 ? `${credits} left` : "Free check"}
+        open={openSection === "ai"}
+        onToggle={() => toggleSection("ai")}
+      >
 
       {/* Write with AI: drafts the whole CV's prose from the answers
           already given, restating only supplied facts. Shown for review
@@ -1498,26 +1603,42 @@ function ReviewStep({
         </div>
       )}
 
+      </Section>
+
       {/* Where it is going, which look, and both formats. Five templates,
           all free, and the recommendation is a nudge rather than a lock. */}
-      <CvDownloadPanel
-        candidateId={candidateId}
-        pdfPrefix={pdfPrefix}
-        initialTemplate={initialTemplate}
-        initialPurpose={initialPurpose}
-        overflowingSection={assembly.fit.overflowing ? assembly.fit.longestSection : null}
-      />
+      <Section
+        title="Download it"
+        status="PDF or Word"
+        open={openSection === "download"}
+        onToggle={() => toggleSection("download")}
+      >
+        <CvDownloadPanel
+          candidateId={candidateId}
+          pdfPrefix={pdfPrefix}
+          initialTemplate={initialTemplate}
+          initialPurpose={initialPurpose}
+          overflowingSection={assembly.fit.overflowing ? assembly.fit.longestSection : null}
+        />
+      </Section>
 
       {/* Aim it at one job. The reason somebody buys rebuilds, explained
           before the paywall rather than at it. */}
-      <CvAimPanel
-        candidateId={candidateId}
-        pdfPrefix={pdfPrefix}
-        balance={credits}
-        tailored={tailored}
-        isLoggedIn={isLoggedIn}
-        signupHref={signupHref}
-      />
+      <Section
+        title="Aim it at a job"
+        status={tailored.length > 0 ? `${tailored.length} saved` : credits > 0 ? `${credits} left` : undefined}
+        open={openSection === "aim"}
+        onToggle={() => toggleSection("aim")}
+      >
+        <CvAimPanel
+          candidateId={candidateId}
+          pdfPrefix={pdfPrefix}
+          balance={credits}
+          tailored={tailored}
+          isLoggedIn={isLoggedIn}
+          signupHref={signupHref}
+        />
+      </Section>
 
       {/* They came here to apply for one specific job. Offer that job, by
           name, above everything else: the walkthrough's worst dead end was
@@ -1549,20 +1670,28 @@ function ReviewStep({
       )}
 
       {isLoggedIn ? (
-        <button
-          type="button"
-          disabled={toggling}
-          onClick={() =>
-            startToggling(async () => {
-              const result = await setListed(candidateId, !listed);
-              if (result.error) setError(result.error);
-              else onListedChange(!listed);
-            })
-          }
-          className="w-full rounded-full border border-neutral-900 px-6 py-3.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 disabled:opacity-50"
+        <Section
+          title="Being found by employers"
+          status={listed ? "Listed" : "Not listed"}
+          attention={!listed}
+          open={openSection === "settings"}
+          onToggle={() => toggleSection("settings")}
         >
-          {listed ? "Employers can find you, tap to stop" : "Let employers looking for someone like you find you"}
-        </button>
+          <button
+            type="button"
+            disabled={toggling}
+            onClick={() =>
+              startToggling(async () => {
+                const result = await setListed(candidateId, !listed);
+                if (result.error) setError(result.error);
+                else onListedChange(!listed);
+              })
+            }
+            className="w-full rounded-full border border-neutral-900 px-6 py-3.5 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 disabled:opacity-50"
+          >
+            {listed ? "Employers can find you, tap to stop" : "Let employers looking for someone like you find you"}
+          </button>
+        </Section>
       ) : (
         <>
           <Link
