@@ -148,9 +148,13 @@ export function memberWelcomeEmail(welcome: MemberWelcome): { subject: string; h
     </p>
     ${steps}
 
-    <h2 style="font-size:17px;margin:24px 0 10px;">To finish your setup, we need this from you</h2>
+    <h2 style="font-size:17px;margin:24px 0 10px;">To finish your setup, we still need this</h2>
+    <p style="margin:0 0 12px;">
+      This is the same list as above, seen from the other side. <strong>Do it yourself with the steps above, or
+      reply to this email and we will put it on for you.</strong> Same result either way, so pick whichever
+      suits you, and you do not have to do it all at once.
+    </p>
     ${list(welcome.weNeed)}
-    <p style="margin:0 0 24px;">Reply to this email with whatever you have and we will put it on for you. You do not have to do it all at once.</p>
 
     ${welcome.closing ? `<p>${inline(welcome.closing)}</p>` : ""}
 

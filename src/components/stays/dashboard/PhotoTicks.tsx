@@ -44,7 +44,17 @@ export function PhotoTicks({ photos, selected }: { photos: PhotoOption[]; select
           </label>
         ))}
       </div>
-      <p className="mt-2 text-xs text-gray-500">The first one you tick is the picture guests see first.</p>
+      {/* Truthfully worded. This used to say "the first one you tick",
+          which is wrong: a form returns its checkboxes in the order they
+          are drawn, not the order somebody clicked them, so ticking the
+          fourth photo and then the first still makes the first the main
+          picture. Telling a member their clicks are remembered in order,
+          when they are not, is exactly the kind of small lie that makes
+          somebody stop trusting a screen. */}
+      <p className="mt-2 text-xs text-gray-500">
+        The main picture is whichever ticked photo comes first here, reading left to right. Reorder them under
+        Your page if you want a different one.
+      </p>
     </fieldset>
   );
 }

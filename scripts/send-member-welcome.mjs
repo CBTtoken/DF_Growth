@@ -88,7 +88,14 @@ const MEMBERS = {
         "**Your three house rules, before booking rather than after.** No smoking or alcohol, only married couples share a room, and Saturday check in between 19:00 and 21:00. They are the reason the right kind of guest chooses you, so they belong up front",
         "**A room booking system** built for a guest house: a guest picks their dates and how many people, and sees only what actually fits and is genuinely free",
         "**Your three room types** loaded and ready: the two with their own bathroom, the two sharing, and the family room",
-        "**A page on Google** with your business name, your town and your trade on it, which it did not have before",
+        // Careful wording, and worth copying. It is tempting to write "you
+        // are on Google now", and it would not be true: Google decides when
+        // it crawls and what it ranks, and we control neither. What we
+        // actually did is make the page say the right things about him, and
+        // that is what this claims. Dewald asked what the earlier, vaguer
+        // version of this line meant, which is a fair sign it was claiming
+        // more than it could back up.
+        "**Your page now tells Google the right things about you.** Its title reads \"Mila's Place, Guest Houses and B&Bs in Somerset West\" instead of House Sitting and Property Maintenance, which is what it said before, and it is listed in the site map we hand to search engines. Getting found takes a few weeks and reviews help it along",
         "**Your listing on our marketplace**, where people browse South African businesses",
       ],
       canDo: [

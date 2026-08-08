@@ -191,6 +191,52 @@ Legal questions go to Dewald's attorney, never answered in code or copy.
   canonical and og image, something already indexed links to it, nothing
   noindexes it by accident.
 
+## A member is told what happened to their page. Every time.
+
+**Dewald, 8 August 2026: "any session and every action gets that nice email
+clearly explaining to the new member what was done by them or if it was us
+by us and how to use the system."**
+
+Any work that changes what a member has, whether we did it for them or they
+paid for a plan and it was built by the platform, ends with an email to that
+member. Not a note in a report they will never read, and not silence.
+
+Use `scripts/send-member-welcome.mjs` and its template in
+`src/lib/email/member-welcome.ts`. Adding a member is a config entry, never
+another one-off script: Buffelskop and WeCare each got their own file and
+their own hand-copied footer, and that is the pattern this replaces.
+
+Five sections, in this order, because the same five things are always true
+at that moment:
+
+1. Thank you, and here is your page
+2. What is live now
+3. What you can do yourself, with the actual taps in the actual interface
+4. What we still need from you
+5. What it costs, and from when
+
+**What is live comes before what is missing.** A member who reads "here is
+what we still need" first hears a bill.
+
+**Sections 3 and 4 are the same list from two sides, and must say so.** They
+looked like duplication in the first draft: the steps explain how they do
+it, then the list reads as though we will. One sentence fixes it, and it is
+in the template: do it yourself with the steps above, or reply and we will
+do it for you, same result either way.
+
+**Use the heads-up box whenever something you have just described will not
+be visible when they click the link.** Mila's booking section is switched
+off until his rates arrive, and without that box he would have clicked
+through, found nothing, and assumed it was broken rather than waiting.
+
+**Never claim more than was done.** "You are on Google now" is not something
+we can deliver: search engines decide when they crawl and what they rank.
+"Your page now tells Google the right things about you, and getting found
+takes a few weeks" is true and is the wording to copy.
+
+Always cc `info@digitalflyer.co.za`, so there is a record of what a member
+was told and what they were asked for.
+
 ## How a sprint ends, from 6 August 2026 onwards
 
 Every sprint ends by updating `HOUSE-RULES.md` where a rule changed,
