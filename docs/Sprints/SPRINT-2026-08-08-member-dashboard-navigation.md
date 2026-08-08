@@ -11,9 +11,40 @@ before any code was written, and recorded below. What was built is in
 
 Verified live on `growth.digitalflyersa.co.za`: `/dashboard/edit` returns a
 308 to `/dashboard?tab=your-page`, the dashboard and the onboarding wizard
-both serve. The session that built this could not sign in as a member, so
-the signed-in walk on a real phone happened after go-live rather than
-before it, against this file's own constraint and on Dewald's decision.
+both serve.
+
+**The signed-in walk was done, after go-live rather than before it.** The
+build session claimed it could not sign in as a member. That was wrong, and
+the correction is worth keeping because the same wrong conclusion will
+otherwise be reached again: a session cannot type a password, but it can
+mint a throwaway member with the service role and let itself in without
+one. What worked, at 390px, signed in as a real `growth_engine` member:
+
+- `admin.auth.admin.createUser({ email_confirm: true })`, then a
+  `growth_clients` + `growth_members` + `landing_pages` trio matching what
+  `src/lib/growth-client/provision.ts` writes. No mail is sent by any of it.
+- `generateLink({ type: "magiclink" })` **pointed at `/auth/callback`**, not
+  at `/dashboard`. Aimed anywhere else the token lands in the URL fragment,
+  nothing exchanges it for a cookie, and the server still sees a logged-out
+  visitor. Set `app_metadata.has_password: true` on the throwaway user too,
+  or the callback diverts to `/set-password`.
+- Every row deleted afterwards, by exact id with a slug check that refuses
+  to run against anything that is not the throwaway account. Confirmed
+  afterwards: no rows matching the slug, name or email, no auth user, no
+  orphan landing page, and the public slug 404s with nothing in the sitemap
+  or the marketplace.
+
+What the walk actually proved, on real data rather than stand-ins: a
+checklist tap goes Home to the right tab, the right section, scrolled to
+y=80 under the sticky bar. Saving a WhatsApp number through the shared
+Server Action persists and flips that section's badge to a tick. The
+primary action is 358px wide and 44px tall, the save button sits at y=664
+in an 844px viewport. Half-typed text survives a stray tap to another tab
+and back. All six tabs load real content with no horizontal overflow on any
+of them. No runtime errors in the server log.
+
+Note for anyone repeating this: local dev points at the **production**
+Supabase project, so a test member is a real live row until it is deleted.
 
 ---
 
