@@ -87,6 +87,10 @@ usually source material and they are heavy, so adding one stays a human
 decision. Genuine cross-repository references belong in `ESTATE.md`, cited
 as external, rather than being added here.
 
+Unlike the em dash check, this one cannot live in CI: a CI checkout has no
+untracked files, so it would pass every time and prove nothing. Run
+`npm run check` on the machine the document arrived on, before pushing.
+
 ## Every anonymous form gets a Turnstile check. No exceptions.
 
 Dewald, 3 August 2026: blocking bots, scammers and automated abuse is a core

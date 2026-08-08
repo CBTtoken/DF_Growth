@@ -19,6 +19,15 @@
 // check that cries wolf gets switched off within a week. Starting from the
 // untracked files instead means every hit is real: the file is here, the
 // repository talks about it, and a clone would not get it.
+//
+// **This cannot run in CI, and putting it there would be worse than not
+// having it.** It compares the working tree against the index, and a CI
+// checkout has no untracked files at all, so it would pass every time and
+// look like proof while proving nothing. It belongs where the untracked
+// file actually exists, which is the machine the document arrived on: run
+// it before pushing, via `npm run check`. The em dash check is in CI
+// because the thing it looks for is committed; this one looks for the
+// absence of a commit, which CI cannot see.
 import { execFileSync } from "node:child_process";
 
 function git(args) {
