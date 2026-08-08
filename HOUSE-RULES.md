@@ -79,14 +79,38 @@ instance's memory and resets on every cold start, so it stops one impatient
 browser tab and nothing else. Keep it, it is useful, but it is not the gate.
 
 The check goes in the server action, verified against Cloudflare, never
-trusted for being present. Growth member signup is the one deliberate
-exception, because an account is only created after a real Paystack payment
-succeeds, which no bot can fake. Anything behind a login is out of scope for
-this rule.
+trusted for being present. Anything behind a login is out of scope for this
+rule.
 
-Spot-checked during this sprint on the Board's comment/like/report actions
-and the Booking hold action: all three verify Turnstile server-side and
-render the widget. Nothing found contradicting this rule.
+Spot-checked during the 3 August sprint on the Board's comment/like/report
+actions and the Booking hold action: all three verify Turnstile server-side
+and render the widget.
+
+**There is no longer any exception. Closed 7 August 2026.**
+
+Growth member signup used to be recorded here as the one deliberate
+exception, "because an account is only created after a real Paystack payment
+succeeds, which no bot can fake". Combined spec Sec 10 moved payment to the
+end of the onboarding wizard and quietly took that justification with it:
+`startCheckout` in `src/app/pricing/actions.ts` calls
+`provisionGrowthClient` before any money exists, for both tiers, creating a
+`growth_clients` row, a Supabase Auth user and a real invite email.
+Foundation's trial never involves a payment at all. For a while the site's
+primary signup form was an anonymous endpoint that minted accounts and sent
+mail on demand, guarded only by `isRateLimited`, which this same section
+says is not the gate.
+
+Both halves are now in place: `verifyTurnstileToken` in the action, before
+the schema parse, and `<TurnstileWidget />` inside the form in
+`src/components/pricing/tier-card.tsx`. Two tier cards render two signup
+forms, so `/pricing` carries two widgets, one per form, verified against
+the rendered page.
+
+**The lesson worth keeping:** the exemption was not wrong when it was
+written. It rotted because a different sprint changed when provisioning
+happens, and nothing linked that change back to the rule that depended on
+it. An exception recorded with its reasoning is only safe while somebody
+rechecks the reasoning.
 
 ## The deny list
 

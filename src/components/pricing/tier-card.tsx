@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { startCheckout } from "@/app/pricing/actions";
+import { TurnstileWidget } from "@/components/reviews/TurnstileWidget";
 import type { Tier, BillingInterval } from "@/lib/paystack/plans";
 import { REFERRAL_COOKIE_NAME } from "@/lib/agents/referral-cookie";
 
@@ -294,6 +295,15 @@ export function TierCard({
             <input type="checkbox" name="marketingConsent" className="mt-0.5" />
             <span>Yes, send me occasional updates via email or WhatsApp.</span>
           </label>
+          {/* HOUSE-RULES.md, absolute: every anonymous form gets a
+              Turnstile check, both halves. This form was exempted on the
+              basis that "an account is only created after a real Paystack
+              payment succeeds", which stopped being true when Combined
+              spec Sec 10 moved payment to the end of the wizard. It now
+              creates a growth_clients row, a Supabase Auth user and a real
+              invite email before any money exists, so it needs the same
+              gate as every other public form. */}
+          <TurnstileWidget />
           {state?.error?._form && <p className="text-xs text-red-600">{state.error._form[0]}</p>}
           <button
             type="submit"

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { templates } from "@/lib/templates/registry";
 
 // Exported so the WhatsApp onboarding conversation (lib/whatsapp/
 // conversation.ts) can validate against the exact same canonical list
@@ -64,25 +65,28 @@ export const step3Schema = z.object({
 
 // "conversion" is the original hand-built layout (growth_clients.template
 // stored as this literal string, not left null) — see src/lib/templates/
-// registry.ts, whose 10 real archetypes are the other allowed values. Null
-// is reserved for clients who existed before this step did and never saw a
+// registry.ts, whose archetypes are the other allowed values. Null is
+// reserved for clients who existed before this step did and never saw a
 // picker; onboard/page.tsx's resume logic relies on that distinction, so a
 // client who deliberately picks the classic layout still needs a real,
 // non-null value written here.
+//
+// Derived from the registry rather than typed out. It used to be a
+// hardcoded list of eleven strings, frozen when the registry held ten
+// templates, and every theme added afterwards was missing from it:
+// dual-offer, fieldwork, copperline, marquee, retreat, programme, atelier,
+// workroom and kasi-kitchen. A member who picked any of those nine in the
+// wizard got "Invalid enum value" and could not get past the step at all.
+// The done-for-you builds never hit it because those set the template
+// directly in the database, so it sat there from the moment dual-offer
+// shipped until a guest house tried to choose Retreat.
+//
+// Reading the registry means the two cannot drift again: add a template,
+// and it is selectable the same day.
+const TEMPLATE_IDS = ["conversion", ...templates.map((t) => t.id)] as [string, ...string[]];
+
 export const templateSchema = z.object({
-  template: z.enum([
-    "conversion",
-    "single-action",
-    "left-split",
-    "feature-grid",
-    "storyteller",
-    "dark-mode",
-    "social-proof",
-    "step-by-step",
-    "vibrant-geo",
-    "multi-product",
-    "app-dashboard",
-  ]),
+  template: z.enum(TEMPLATE_IDS),
 });
 
 export const step5Schema = z.object({

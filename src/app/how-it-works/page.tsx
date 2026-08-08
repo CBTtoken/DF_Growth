@@ -81,17 +81,22 @@ const STEPS: Step[] = [
     screenshotSrc: `${SHOT}/step-04-brand-kit.png`,
     screenshotAlt: "The brand kit step showing colour pickers and a live preview",
   },
+  // Sprint "Onboarding two doors" item 3. NOTE for whoever next touches
+  // this page: step-05-photos.png and step-06-template.png are now older
+  // than the screens they show. Step 5 gained the "choose your front page
+  // photo" moment and step 6 gained the recommended-for-your-trade badge.
+  // The words below are correct; the two images need recapturing.
   {
     number: "5",
     title: "Add Your Photos",
-    body: "Real photos of your business help customers trust you faster. Upload your own, or search thousands of free stock photos right there if you don't have any yet, either way works.",
+    body: "Real photos of your own work help customers trust you faster, and this is the part that makes the biggest difference to how your page looks. Add up to 15, and we straighten and resize every one for you, so a photo taken sideways on your phone still appears the right way up. No photos yet? Search thousands of free stock ones right there. Then pick which photo belongs at the top of your page, and you can change that whenever you like.",
     screenshotSrc: `${SHOT}/step-05-photos.png`,
     screenshotAlt: "The photo upload step with a stock photo search option",
   },
   {
     number: "6",
     title: "Choose Your Page Style",
-    body: "Browse real, ready-made designs, already using your own colours and logo, and tap the one you like. Change your mind later any time from your dashboard.",
+    body: "We put the design built for your trade first, already selected and marked \"Recommended for your trade\", so you can simply carry on. Every other design sits right below it, shown as a real preview already using your own colours and logo. Tap whichever you prefer, and change your mind later any time from your dashboard.",
     screenshotSrc: `${SHOT}/step-06-template.png`,
     screenshotAlt: "The template picker showing a real live design preview",
   },
@@ -171,6 +176,29 @@ export default function HowItWorksPage() {
             <span>💳 No card needed to start</span>
             <span>↩️ Stop and come back any time</span>
           </div>
+        </div>
+      </section>
+
+      {/* Sprint "Onboarding two doors" item 6: this page walks through
+          doing it yourself, which is now one of two ways in. Saying so at
+          the top costs one short paragraph and stops the other door being
+          a surprise discovered halfway down a pricing page. */}
+      <section className="border-b border-gray-100 bg-white px-4 py-10 sm:px-6">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-gray-100 bg-gray-50 p-6 text-center shadow-sm">
+          <h2 className="font-display text-lg uppercase tracking-wide text-ink">
+            Or we can do all of this for you
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-gray-600">
+            Everything below is the do-it-yourself way, and most people find it genuinely easy. If
+            you would rather hand it over, we build the whole page for you for a once-off R450 on
+            top of any plan, live within 3 working days.
+          </p>
+          <Link
+            href="/pricing/build"
+            className="mt-4 inline-flex items-center justify-center rounded-full bg-brand px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
+          >
+            See what we build for you →
+          </Link>
         </div>
       </section>
 

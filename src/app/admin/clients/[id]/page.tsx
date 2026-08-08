@@ -116,6 +116,25 @@ export default async function AdminClientDetailPage({ params }: { params: Promis
               Make contact, arrange the R450, and run the Growth Build Kit. The signup promise is
               contact within a day.
             </p>
+            {/* Sprint "Onboarding two doors", 7 Aug 2026: two different
+                things now set this flag. A tick inside the wizard is an
+                unpaid request and still needs the manual contact above. An
+                order through /pricing/build is already paid and sits in
+                the queue on its own clock, so this says which one it is
+                rather than sending Dewald to chase money he already has. */}
+            {client.build_order_status ? (
+              <p className="mt-2 text-sm font-semibold text-amber-900">
+                Already paid through the build door.{" "}
+                <Link href="/admin/build-queue" className="underline underline-offset-2">
+                  Open the build queue
+                </Link>{" "}
+                for the clock on this one, no payment to arrange.
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-amber-800">
+                Ticked inside the wizard, so nothing has been paid yet.
+              </p>
+            )}
           </div>
         )}
 

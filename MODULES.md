@@ -519,6 +519,51 @@ against `src/lib/templates/registry.ts` if the count matters.
 
 ---
 
+## Done-for-you build orders (the R450 door)
+
+**What it is:** The second way into Growth. A stranger fills in one short
+Turnstile-protected form at `/pricing/build`, pays R450 plus their first
+subscription period in a single Paystack transaction, and their build lands
+in `/admin/build-queue` with a three working day clock. Dewald (or a Build
+Kit session) fulfils it using `DigitalFlyer/Clients/Growth_Build_Kit_v1.md`,
+which lives outside this repo.
+
+Key files: `src/app/pricing/build/`, `src/lib/growth-client/build-order.ts`
+(amount, promise, working-day maths), `src/lib/paystack/checkout.ts`
+(`initializeBuildOrderCheckout`), `src/lib/paystack/subscriptions.ts`
+(`createSubscriptionFromAuthorization`, `nextPeriodStart`),
+`src/lib/email/build-order.ts`, and the build-order block in
+`src/app/api/webhooks/paystack/route.ts`. State lives on `growth_clients`
+in the `build_order_*` columns.
+
+**What it is not:** Not a separate product or tenant. A build-order member
+is an ordinary Growth member whose page someone else filled in, with the
+same dashboard and the same ability to change every word of it. That is the
+Build Kit's own B1 test.
+
+**The one thing to know before changing it:** the combined checkout cannot
+use a Paystack plan code. A plan code makes Paystack charge the plan amount
+and ignore the amount passed, so attaching one silently drops the R450.
+The charge is a plain transaction and the subscription is created afterwards
+from its authorization, dated a period out. Both halves are commented at
+length in the two files above.
+
+**Status:** Built 7 August 2026, on branch `onboarding-self-serve-quality`,
+not yet merged and not yet exercised with a real payment.
+
+**Spec:** `docs/Sprints/SPRINT-2026-08-07-onboarding-two-doors.md`.
+
+**Known gaps:** The three working day promise skips weekends but not South
+African public holidays, so a holiday in the window makes it a day
+optimistic. The build form does not collect photos; members are asked for
+them by email and on WhatsApp afterwards. A tick inside the onboarding
+wizard still sets `setup_service_requested_at` without payment, which is a
+separate, unpaid intent signal, not a build order.
+
+**Last updated:** 7 August 2026.
+
+---
+
 ## Page Poster
 
 **What it is:** A queue of social content Dewald approves before it posts,

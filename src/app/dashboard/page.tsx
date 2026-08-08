@@ -23,7 +23,7 @@ import { PhotoGallery } from "@/components/dashboard/PhotoGallery";
 import { AssetStyleSection } from "@/components/dashboard/AssetStyleSection";
 import { SocialAssetGenerator } from "@/components/dashboard/SocialAssetGenerator";
 import { DomainVerificationForm } from "@/components/dashboard/DomainVerificationForm";
-import { ProfileCompletenessBanner } from "@/components/dashboard/ProfileCompletenessBanner";
+import { PageChecklist } from "@/components/dashboard/PageChecklist";
 import { SpotlightBanner } from "@/components/dashboard/SpotlightBanner";
 import { OrdersSection, type SellerOrder } from "@/components/dashboard/OrdersSection";
 import { PageViewsCard } from "@/components/dashboard/PageViewsCard";
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_delivery_mode, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error"
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, tagline, whatsapp_phone, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_delivery_mode, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error"
       )
       .eq("id", client.id)
       .single(),
@@ -368,10 +368,14 @@ export default async function DashboardPage() {
             />
           )}
 
-          <ProfileCompletenessBanner
-            hasBusinessDescription={Boolean(growthClient?.business_description)}
-            hasBusinessAddress={Boolean(growthClient?.business_address)}
+          <PageChecklist
+            template={growthClient?.template ?? null}
+            heroPhotoId={growthClient?.hero_photo_id ?? null}
             photoCount={photos?.length ?? 0}
+            whatsappPhone={growthClient?.whatsapp_phone ?? null}
+            businessAddress={growthClient?.business_address ?? null}
+            tagline={growthClient?.tagline ?? null}
+            businessDescription={growthClient?.business_description ?? null}
           />
 
           <PageViewsCard totalViews={totalPageViews ?? 0} recentViews={recentPageViews ?? []} />

@@ -74,7 +74,7 @@ export default async function HomePage() {
       <PlansTeaser />
       <section className="bg-white py-10 lg:py-14 border-b border-neutral-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <BuildItForMe href="/pricing#pricing" />
+          <BuildItForMe />
         </div>
       </section>
       <MostVisitedPages screenshots={screenshots} ctaHref="/pricing#pricing" />

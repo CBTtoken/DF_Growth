@@ -4,8 +4,131 @@
 by the session that did that build. Decisions below were made by Dewald the
 same day; do not re-ask them.**
 
-Not started. Mark progress at the top of this file as you go, per the
-Sprints folder convention.
+## Progress
+
+**All six items built.** Branch `onboarding-self-serve-quality`, four
+commits, **not merged and not deployed**. The migration has been run on the
+database by Dewald. Nothing has been exercised with a real payment yet.
+
+- **Item 2, theme recommendation: done.** `src/lib/templates/recommend.ts`.
+  All 60 industry subcategories map to a real template, verified by running
+  them. Free-text fallback for "Other" too.
+- **Item 3, photo experience: done.** EXIF rotation and 1600px resize on
+  both upload paths (`src/lib/photos-server.ts`), cap raised to 15, hero
+  chosen inside the wizard, guidance copy on both surfaces.
+- **Item 4, copy quality: done.** Build Kit B3 rules baked into
+  `src/lib/ai/draft-copy.ts`.
+- **Item 5, publish checklist: done.** `src/components/dashboard/PageChecklist.tsx`,
+  which absorbs the old ProfileCompletenessBanner rather than duplicating it.
+- **Item 1, two-door signup: built, needs the migration and real testing.**
+  `/pricing/build`, its Turnstile-protected action, the combined checkout,
+  the webhook half, and `/admin/build-queue` with the clock.
+- **Item 6, how-to and FAQ: done.** A "We Build It For You" category on the
+  FAQ, updated design and photo answers, the two doors stated at the top of
+  How It Works, and the hero image control written out in the guide. Also
+  corrected the two other surfaces still promising the old manual R450
+  arrangement (the admin client page and the KatisoBiz upsell footer).
+- **Extra, not in the handoff: Accommodation & Stays** added to
+  INDUSTRY_TAXONOMY (Dewald asked, 7 Aug, he is building a guest house).
+  The Retreat theme had nothing in the picker leading to it.
+
+Typecheck, lint and production build pass. `/pricing/build` verified
+rendering live with the real total (R630 for Growth monthly) and its
+Turnstile field present. Not yet walked end to end: that needs the
+migration below, plus a member login for the wizard half.
+
+### Before this can be tested: run the migration
+
+`supabase/migrations/20260810100000_build_orders.sql` adds the
+`build_order_*` columns. The code queries them, so it does not work until
+this is run in the Supabase SQL Editor. Nothing else in the sprint depends
+on it.
+
+### Decisions taken, not asked
+
+Both were flagged before building and both had effectively one answer that
+fits what was already specified. Say if either is wrong.
+
+1. **The single checkout is one plain transaction, not a plan-based one.**
+   Verified against Paystack's live docs on 7 Aug: a plan code makes
+   Paystack charge the plan amount and ignore the amount passed, so
+   "R450 + first period" is impossible as one plan transaction. It charges
+   the combined total, then the webhook creates the subscription from that
+   charge's authorization with `start_date` one period out.
+2. **Provision before payment, not on it.** The handoff said on payment;
+   `src/app/pricing/actions.ts` records the opposite as a standing
+   principle so a drop-off at the card screen is visible. Kept the
+   principle; the queue lists unpaid starts separately.
+
+### The one to read first, now fixed
+
+**The main signup form had no Turnstile check, and the reason recorded for
+exempting it had quietly stopped being true.** `HOUSE-RULES.md` said Growth
+member signup was the one deliberate exception "because an account is only
+created after a real Paystack payment succeeds, which no bot can fake".
+Combined spec Sec 10 moved payment to the end of the wizard, so
+`startCheckout` in `src/app/pricing/actions.ts` provisions before any money
+exists: a `growth_clients` row, a Supabase Auth user, and a real invite
+email, from an anonymous form protected only by the in-memory rate limit the
+same house rule says is not the gate.
+
+Closed 7 August 2026 at Dewald's request: `verifyTurnstileToken` in the
+action before the schema parse, `<TurnstileWidget />` in the tier card form.
+Verified on the rendered page that `/pricing` carries exactly two widgets
+for its two signup forms, so no form is unprotected and none has an orphan
+widget. Both Turnstile env vars were already set and in use by other Growth
+forms, so no Cloudflare configuration was needed.
+
+**Worth testing first thing:** a real signup on `/pricing` for both
+Foundation and Growth. A server check with a broken widget locks real people
+out, which is the one way this change could bite.
+
+**It bit immediately, on preview only. Start here in the morning.** Dewald
+could not get past Turnstile on the preview deployment, 7 August. The cause
+is the hostname lock that `src/components/reviews/TurnstileWidget.tsx`
+already documents: a Turnstile widget only works on the hostnames allowed
+for it in Cloudflare. Growth's widget is allowed on
+`growth.digitalflyersa.co.za`, and a Vercel preview is served from
+`df-growth-<hash>-digital-flyer.vercel.app`, which is not a subdomain of
+anything allowlisted, so the widget refuses.
+
+This is not specific to this sprint's change. It applies to every Turnstile
+form on every preview deployment and always has, which is why it was never
+noticed: nobody had tried to test a Turnstile form on a preview before.
+
+The fix is configuration, not code, and it should be Preview-scoped env vars
+in Vercel using Cloudflare's official testing keys, verified against
+Cloudflare's docs on 7 August:
+
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` = `1x00000000000000000000AA` (always
+  passes, works from any domain including localhost)
+- `TURNSTILE_SECRET_KEY` = `1x0000000000000000000000000000000AA` (always
+  passes, and only accepts the dummy token, never a real one)
+
+Scoped to Preview only, never Production. That leaves preview without real
+bot protection, which is fine because preview sits behind Vercel SSO and is
+not publicly reachable. It also unblocks every other Turnstile form for
+future preview testing, not just signup.
+
+Deliberately NOT solved with a code-level bypass such as skipping
+verification when `VERCEL_ENV === "preview"`. A bypass branch inside the
+function that just closed a security hole is one bad merge away from
+disabling the gate in production.
+
+### Found along the way, needs Dewald
+
+- **`PAYSTACK_PLAN_FOUNDATION_ANNUAL` (PLN_qf1kh46lwn5jxr1) is rejected by
+  Paystack as an invalid plan code** on the local test key, while the other
+  three plan codes resolve fine. This is pre-existing, not from this sprint,
+  and it may simply be a plan that exists in live but not in test. Worth
+  confirming against the live account, because a Foundation-annual member
+  converting would hit it.
+- **Public holidays are not accounted for** in the three-working-day
+  promise, only weekends. A holiday inside the window makes the promise a
+  day optimistic.
+- **Which tiers the build door should offer** is a guess: it currently
+  offers Foundation and Growth, both intervals. The handoff only said
+  "month-to-month or annual".
 
 ---
 

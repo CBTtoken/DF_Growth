@@ -58,6 +58,15 @@ export default async function AdminPage() {
     .select("id", { count: "exact", head: true })
     .eq("read", false);
 
+  // Sprint "Onboarding two doors" item 1: paid builds still owed to
+  // someone. Count only, same reasoning as the badges around it. This is
+  // the one badge on this page that represents a promise with money behind
+  // it, so it is worth seeing without opening anything.
+  const { count: openBuildOrderCount } = await admin
+    .from("growth_clients")
+    .select("id", { count: "exact", head: true })
+    .in("build_order_status", ["paid", "in_progress"]);
+
   // Rate & Review Sprint 2, Sec 3: count only, same reasoning as the
   // support inbox badge above — the queue page itself owns the actual list.
   const { count: flaggedReviewCount } = await admin
@@ -109,6 +118,14 @@ export default async function AdminPage() {
           <div className="flex flex-wrap items-center gap-3">
             <LinkButton href="/admin/clients/new" lift>
               + New Client
+            </LinkButton>
+            <LinkButton href="/admin/build-queue" variant="secondary" lift>
+              Build queue
+              {!!openBuildOrderCount && (
+                <span className="rounded-full bg-brand px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {openBuildOrderCount}
+                </span>
+              )}
             </LinkButton>
             <LinkButton href="/admin/reactivation" variant="secondary" lift>
               Reactivation Batch

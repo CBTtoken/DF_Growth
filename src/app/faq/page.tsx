@@ -45,6 +45,47 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       },
     ],
   },
+  // Sprint "Onboarding two doors" item 6. Its own category rather than a
+  // question buried inside Plans & Billing: for a time-poor operator this
+  // is the strongest offer on the site, and somebody searching for
+  // "someone to build my business page" should find a page that answers it
+  // rather than a pricing table they have to interpret.
+  {
+    id: "we-build-it",
+    title: "We Build It For You",
+    items: [
+      {
+        question: "Can you just build my page for me?",
+        answer:
+          "Yes. That is the second door at signup. Fill in one short form, pay once, and we build the whole page for you. It is R450 once-off on top of whichever plan you choose, and your page is live within 3 working days.",
+      },
+      {
+        question: "What does the R450 actually include?",
+        answer:
+          "A page style chosen for your trade rather than a blank template, your photos straightened, resized and picked properly, your own words turned into real page copy, and your best photo set as the front-page image. It does not include logo design or loading products into your shop. Both are things we can help with separately, just ask once you are set up.",
+      },
+      {
+        question: "What exactly do I pay, and when?",
+        answer:
+          "One payment at signup: the R450 for the build plus your first month or year of membership, shown as a single total in Rand before you enter any card details. After that you pay only your normal plan fee, starting a month or a year later depending on what you chose. The R450 is charged once and never again.",
+      },
+      {
+        question: "How do I get my photos to you?",
+        answer:
+          "As soon as you have paid, you get a login to your own dashboard, and you can upload your photos there yourself. If that is a hassle, send them to us on WhatsApp instead and we will load them for you. Either way the 3 working days start once we have what we need to build with.",
+      },
+      {
+        question: "Can I still change things myself afterwards?",
+        answer:
+          "Yes, all of it. You get exactly the same dashboard as every other member: every word, every photo, your prices, your products, your front-page image. Nothing about a page we build is locked, and we send you a short guide so running it yourself is easy.",
+      },
+      {
+        question: "Should I do it myself or have it built?",
+        answer:
+          "Do it yourself if you have your photos ready and half an hour to spare, it is genuinely straightforward and it costs nothing extra. Have it built if you would rather hand over the whole thing, or if you want the extra creative touch of someone designing it around your trade. The end result is the same platform either way.",
+      },
+    ],
+  },
   {
     id: "plans-billing",
     title: "Plans & Billing",
@@ -91,6 +132,12 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
         answer:
           "Yes. Browse real, ready-made designs, already using your own colours and logo, and pick the one you like during signup.",
       },
+      // Sprint "Onboarding two doors" item 2.
+      {
+        question: "How do I know which design suits my business?",
+        answer:
+          "We choose one for you as a starting point. Tell us your trade at the start of signup and the design built for that kind of business is put first, marked \"Recommended for your trade\", and already selected. A food business gets the one built around food photography, a plumber gets the one built for neighbourhood trades, a guest house gets the one built around the property itself. You are never stuck with it, every other design stays one tap away.",
+      },
       {
         question: "Can I change my design later?",
         answer: "Yes, any time, at no extra cost, directly from your dashboard.",
@@ -98,7 +145,26 @@ const FAQ_CATEGORIES: { id: string; title: string; items: { question: string; an
       {
         question: "Do I need my own photos?",
         answer:
-          "No. Upload your own if you have them, or search thousands of free stock photos right there in the signup, either works.",
+          "Your own are always better, and it is worth taking a few on your phone in daylight before you start. A slightly imperfect real photo of your own work beats a perfect stock one. If you do not have any yet, search thousands of free stock photos right there in signup to set the mood while you gather your own. We never present a stock photo as your work: stock images never carry your name or a caption claiming they are yours.",
+      },
+      // Sprint "Onboarding two doors" item 3: the feature existed the whole
+      // time and members did not know it was there, which is why it earns
+      // its own question rather than a clause inside another answer.
+      {
+        question: "How do I choose the big photo at the top of my page?",
+        answer:
+          "Some designs show one large photo across the top, and signup asks you to pick which one it should be as soon as you have added your photos. If you skip it, we use a relevant stock image so your page still looks finished. You can change it whenever you like: go to your photos in your dashboard and choose \"Use as hero image\" on any photo.",
+      },
+      {
+        question: "How many photos can I add?",
+        answer:
+          "Up to 15. Five or more is where a page starts looking properly filled in rather than sparse. Every photo you upload is straightened and resized for you automatically, so a photo taken sideways on your phone still appears the right way up on your page.",
+      },
+      // Sprint "Onboarding two doors" item 5.
+      {
+        question: "How do I know my page is ready?",
+        answer:
+          "Your dashboard shows a short checklist of the things that make the biggest difference to whether a visitor gets in touch: your front-page photo, five or more photos, your WhatsApp number, where you work, a tagline and a description. It ticks each one off as you go and disappears once you are done. None of it blocks your page from being live, it is a nudge, not a gate.",
       },
       {
         question: "Do I need a logo?",

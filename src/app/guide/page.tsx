@@ -71,6 +71,16 @@ const SECTIONS: Section[] = [
         title: "See your page the way a customer sees it",
         steps: ["Click View your page at the top of the dashboard.", "That is the real thing, exactly as a visitor gets it."],
       },
+      // Sprint "Onboarding two doors" item 5.
+      {
+        title: "Work through your page checklist",
+        steps: [
+          "Look at the top of your dashboard for the checklist.",
+          "It lists the handful of things that most affect whether a visitor gets in touch, and ticks them off as you do them.",
+          "Tap any unticked one and it takes you to the right place to fix it.",
+        ],
+        note: "None of it holds your page back, it is already live. Once everything is ticked the checklist disappears on its own.",
+      },
       {
         title: "Change your colours or your logo",
         steps: ["Click the Your Page tab.", "Update your brand colours or upload a logo.", "Click Save."],
@@ -87,10 +97,34 @@ const SECTIONS: Section[] = [
         title: "Add photos of your work",
         steps: [
           "Go to the Your Page tab and find the photo section.",
-          "Upload up to ten. Two or more makes a gallery appear on your page.",
-          "Pick one as your main picture if you want it in the header.",
+          "Upload up to fifteen. Two or more makes a gallery appear on your page, and five or more is where it starts looking properly filled in.",
+          "That is it. We straighten and resize each one for you, so a photo taken sideways on your phone still comes out the right way up.",
         ],
         note: "Phone photos are fine. Good light and a plain background beat an expensive camera every time.",
+      },
+      // Sprint "Onboarding two doors" item 3: this control has existed on
+      // the dashboard the whole time and members did not know, so their
+      // best photo sat in position four while a stock image filled the
+      // front page. Written out as its own task with the exact words on
+      // the button, because that is what makes it findable.
+      {
+        title: "Change the big photo at the top of your page",
+        steps: [
+          "Go to the Your Page tab and find the photo section.",
+          "Hover over the photo you want up there, or tap it on a phone.",
+          "Choose \"Use as hero image\". The one currently up there is marked \"Hero image\".",
+          "To go back to no chosen photo, choose \"Unset hero image\" on the current one.",
+        ],
+        note: "Only some page styles show one big photo at the top. If yours does not, this makes no visible difference. Change it as often as you like, nothing else on your page moves.",
+      },
+      {
+        title: "Use a stock photo until you have your own",
+        steps: [
+          "In the same photo section, use the stock photo search. It is already filled in with your trade.",
+          "Pick one and it is added exactly like a photo of your own.",
+          "Replace it with your own work when you have it. Your own always sells better.",
+        ],
+        note: "We never present a stock photo as your work. Stock images never carry your name or a caption claiming they are yours, so nobody is misled and neither are you.",
       },
     ],
   },
