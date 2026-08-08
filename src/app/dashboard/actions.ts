@@ -493,6 +493,7 @@ export async function uploadClientPhoto(_prevState: DashboardState, formData: Fo
 
   const toUpload = files.slice(0, room);
   let failed = 0;
+  let firstInsertedId: string | null = null;
 
   for (const photo of toUpload) {
     // Sprint "Onboarding two doors" item 3: every member photo now gets
@@ -511,15 +512,46 @@ export async function uploadClientPhoto(_prevState: DashboardState, formData: Fo
       continue;
     }
 
-    const { error: insertError } = await admin
+    const { data: insertedPhoto, error: insertError } = await admin
       .from("client_photos")
-      .insert({ growth_client_id: client.id, storage_path: path, position: nextPosition });
+      .insert({ growth_client_id: client.id, storage_path: path, position: nextPosition })
+      .select("id")
+      .single();
 
     if (insertError) {
       failed++;
       continue;
     }
+    if (!firstInsertedId && insertedPhoto?.id) firstInsertedId = insertedPhoto.id;
     nextPosition++;
+  }
+
+  // Dewald, 8 August 2026, comparing his own self-serve test against the
+  // done-for-you builds: same theme, same number of photos, and his page
+  // still "looks like a standard template". The only difference was this
+  // one field. Every done-for-you build has a hero set; neither of his
+  // self-serve tests did, so a photo-led theme fell back to a generic
+  // industry stock image on the front page.
+  //
+  // So the first photo becomes the hero rather than waiting to be asked
+  // for. The member is still asked, and can change it whenever they like,
+  // but nobody ends up with six good photos of their guest house and a
+  // stock image at the top.
+  //
+  // Deliberately only when they had no photos at all before this upload.
+  // The sprint's own constraint is "no change in behaviour for existing
+  // members' live pages", and a member with a gallery already has made
+  // their choices, including the choice not to set one.
+  if (firstInsertedId && (count ?? 0) === 0) {
+    const { data: current } = await admin
+      .from("growth_clients")
+      .select("hero_photo_id")
+      .eq("id", client.id)
+      .single();
+
+    if (!current?.hero_photo_id) {
+      await admin.from("growth_clients").update({ hero_photo_id: firstInsertedId }).eq("id", client.id);
+    }
   }
 
   revalidatePath("/dashboard");

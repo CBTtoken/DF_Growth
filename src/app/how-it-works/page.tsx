@@ -48,6 +48,14 @@ type Step = {
   // See ScreenshotFrame for the placeholder shown until then.
   screenshotSrc: string | null;
   screenshotAlt: string;
+  // Sprint "Onboarding two doors", 8 August 2026: the photo and template
+  // steps changed enough that their captured screenshots now show a screen
+  // that no longer exists. Dewald: "for time being just use text and
+  // buttons." So those two render a small honest mock of the real thing
+  // instead, built from the same words and buttons the member will see.
+  // Better than a stale photograph, and it cannot silently rot the way an
+  // image does. Replace with a real capture when one is taken.
+  mock?: "photos" | "template";
 };
 
 const SHOT = "/how-it-works-screenshots";
@@ -90,15 +98,17 @@ const STEPS: Step[] = [
     number: "5",
     title: "Add Your Photos",
     body: "Real photos of your own work help customers trust you faster, and this is the part that makes the biggest difference to how your page looks. Add up to 15, and we straighten and resize every one for you, so a photo taken sideways on your phone still appears the right way up. No photos yet? Search thousands of free stock ones right there. Then pick which photo belongs at the top of your page, and you can change that whenever you like.",
-    screenshotSrc: `${SHOT}/step-05-photos.png`,
+    screenshotSrc: null,
     screenshotAlt: "The photo upload step with a stock photo search option",
+    mock: "photos",
   },
   {
     number: "6",
     title: "Choose Your Page Style",
     body: "We put the design built for your trade first, already selected and marked \"Recommended for your trade\", so you can simply carry on. Every other design sits right below it, shown as a real preview already using your own colours and logo. Tap whichever you prefer, and change your mind later any time from your dashboard.",
-    screenshotSrc: `${SHOT}/step-06-template.png`,
+    screenshotSrc: null,
     screenshotAlt: "The template picker showing a real live design preview",
+    mock: "template",
   },
   {
     number: "7",
@@ -144,6 +154,56 @@ function ScreenshotFrame({ step }: { step: Step }) {
       {step.screenshotSrc ? (
         // eslint-disable-next-line @next/next/no-img-element -- real screenshots vary in aspect ratio; intrinsic sizing over a fixed next/image box.
         <img src={step.screenshotSrc} alt={step.screenshotAlt} className="w-full" />
+      ) : step.mock === "photos" ? (
+        <div className="flex flex-col gap-3 bg-white p-5">
+          <div className="rounded-lg border border-brand/30 bg-brand/5 px-3 py-2">
+            <p className="text-sm font-bold text-ink">Five or more works best.</p>
+            <p className="text-xs text-gray-500">You can add up to 15.</p>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {["Front page", "", ""].map((label, i) => (
+              <div key={i} className={`overflow-hidden rounded-lg border-2 ${i === 0 ? "border-brand" : "border-gray-100"}`}>
+                <div className="aspect-square bg-gray-100" />
+                <div className="flex justify-center bg-white py-1">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                      i === 0 ? "bg-brand/10 text-brand" : "text-gray-400"
+                    }`}
+                  >
+                    {label || "Front page"}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-gray-400">
+            Tap <span className="font-semibold text-gray-600">Front page</span> on the photo you
+            want across the top.
+          </p>
+        </div>
+      ) : step.mock === "template" ? (
+        <div className="flex flex-col gap-3 bg-white p-5">
+          <div className="overflow-hidden rounded-lg border-2 border-brand">
+            <div className="flex items-center justify-between bg-brand px-3 py-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-white">
+                We recommend this for your trade
+              </span>
+              <span className="rounded-full bg-white/20 px-1.5 py-0.5 text-[9px] font-bold text-white">
+                Selected
+              </span>
+            </div>
+            <div className="aspect-[16/9] bg-gray-100" />
+            <div className="bg-white px-3 py-2">
+              <p className="text-xs font-semibold text-gray-900">Retreat</p>
+              <p className="text-[10px] text-gray-500">
+                For guest houses, B&amp;Bs and lodges. The property fills the hero.
+              </p>
+            </div>
+          </div>
+          <p className="text-xs font-semibold text-brand">
+            Happy with this one? Just continue. Or show the other 19 styles
+          </p>
+        </div>
       ) : (
         <div className="flex aspect-[16/10] w-full flex-col items-center justify-center gap-2 bg-gray-50 px-6 text-center">
           <span className="text-3xl" aria-hidden>
