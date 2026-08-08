@@ -38,7 +38,19 @@ const DASH = /[–—]|&mdash;|&ndash;|&#8212;|&#8211;|&#x201[34];|\\u201[34]/i;
 
 // lib/text.ts converts em dashes to commas on the way in, so it has to be
 // able to name the character it is removing.
-const ALLOWED = new Set(["src/lib/text.ts", "scripts/check-house-style.mjs"]);
+//
+// lib/jobs/cv-format.ts is the same case: its STRAY_BULLETS pattern has to
+// MATCH the en and em dashes that arrive at the start of a line when
+// somebody pastes a bulleted list out of Word, so it can strip them before
+// the CV renderer adds its own bullet. Escaping them as – and —
+// does not help, since this check deliberately catches those too (they
+// reach the screen identically). The file contains no reader-facing copy
+// at all, only pure formatting functions.
+const ALLOWED = new Set([
+  "src/lib/text.ts",
+  "src/lib/jobs/cv-format.ts",
+  "scripts/check-house-style.mjs",
+]);
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {

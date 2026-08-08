@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { jobsPlanForCode, JOBS_PRODUCT_TAG, type JobsPaidPlan } from "@/lib/jobs/billing";
+import { creditPurchase } from "@/lib/jobs/credits";
 
 // Jobs' slice of the one shared Paystack webhook, the same first-refusal
 // shape as handleMoxieEvent: returns true only for an event it has
@@ -20,7 +21,16 @@ export async function handleJobsEvent(event: {
   data?: {
     reference?: string;
     amount?: number;
-    metadata?: { product?: string; jobs_employer_id?: string; jobs_plan?: string } | number | null;
+    metadata?:
+      | {
+          product?: string;
+          kind?: string;
+          jobs_employer_id?: string;
+          jobs_plan?: string;
+          jobs_seeker_user_id?: string;
+        }
+      | number
+      | null;
     plan?: { plan_code?: string };
     subscription?: { subscription_code?: string; plan?: { plan_code?: string } };
     customer?: { email?: string };
@@ -32,6 +42,24 @@ export async function handleJobsEvent(event: {
   const isJobsMetadata = metadata?.product === JOBS_PRODUCT_TAG;
 
   if (event.event === "charge.success") {
+    // A job seeker buying rebuild credits. One-off, no subscription, and
+    // checked before the employer branch because both carry the same
+    // product tag and only the kind tells them apart.
+    if (isJobsMetadata && metadata?.kind === "seeker_credits") {
+      const userId = metadata?.jobs_seeker_user_id;
+      const reference = data.reference;
+      if (!userId || !reference) {
+        Sentry.captureMessage("Jobs credit purchase missing user id or reference", {
+          extra: { reference },
+        });
+        return true;
+      }
+      // Idempotent on the reference inside creditPurchase: a redelivered
+      // event loses the unique insert and credits nothing.
+      await creditPurchase(userId, reference);
+      return true;
+    }
+
     // First payment or upgrade: identified by the metadata bag set at
     // transaction/initialize.
     if (isJobsMetadata) {

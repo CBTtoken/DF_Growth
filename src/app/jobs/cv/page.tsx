@@ -6,6 +6,7 @@ import { resolveCandidateRow } from "@/app/jobs/cv/actions";
 import { CvBuilder } from "@/components/jobs/CvBuilder";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { getLiveApplyIntent } from "@/lib/jobs/apply-intent";
+import { getSeekerCredits } from "@/lib/jobs/credits";
 import type { OccupationPick } from "@/lib/jobs/cv-conversation";
 
 export const metadata: Metadata = {
@@ -86,12 +87,31 @@ export default async function CvBuilderPage({
     }
   }
 
+  // The credit standing and the aimed copies, read here so the builder
+  // never queries them itself. Both are cheap and both are needed the
+  // moment the review screen renders.
+  const credits = await getSeekerCredits(user.id);
+  const { data: tailoredRows } = await createAdminClient()
+    .from("jobs_cv_tailored")
+    .select("id, name, created_at, summary")
+    .eq("owner_user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
   return (
     <CvBuilder
       initialCandidate={candidate}
       initialOccupations={initialOccupations}
       fromImport={imported === "1"}
       applyIntent={applyIntent}
+      creditBalance={credits.balance}
+      freeWritesLeft={credits.freeWritesLeft}
+      tailored={(tailoredRows ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        createdAt: t.created_at,
+        summary: t.summary,
+      }))}
     />
   );
 }

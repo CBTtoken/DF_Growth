@@ -1,14 +1,19 @@
 import { loadOwnedCvData } from "@/lib/jobs/pdf/render-cv";
 import { buildCvDocx } from "@/lib/jobs/word/cv-docx";
 
-// The Word twin of ../pdf/route.tsx: same ownership gate, same data, a
+// The Word twin of ../pdf/route.tsx: same ownership gate, same assembly, a
 // .docx download the person can keep editing in Word or Google Docs.
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
+//
+// ?aimed=<id> renders a named, aimed version instead of the base CV. Same
+// ownership gate either way, because loadOwnedCvData checks the candidate
+// and the overlay is scoped to it.
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const loaded = await loadOwnedCvData(id);
+  const aimed = new URL(request.url).searchParams.get("aimed");
+  const loaded = await loadOwnedCvData(id, aimed);
   if (!loaded) return new Response("Not found", { status: 404 });
 
-  const buffer = await buildCvDocx(loaded.data);
+  const buffer = await buildCvDocx(loaded.assembly, loaded.templateId);
 
   return new Response(new Uint8Array(buffer), {
     headers: {

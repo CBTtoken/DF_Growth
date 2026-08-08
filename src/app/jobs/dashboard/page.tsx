@@ -9,8 +9,15 @@ import { hasJobsEmployer } from "@/lib/jobs/employer";
 import {
   AVAILABILITY_OPTIONS,
   experienceLevelLabel,
+  type CertificationEntry,
+  type EducationEntry,
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
+import { assembleCv } from "@/lib/jobs/cv-assembly";
+import { titleCase } from "@/lib/jobs/cv-format";
+import { runCvCheck, outstandingCount } from "@/lib/jobs/cv-check";
+import { getSeekerCredits, getLedger } from "@/lib/jobs/credits";
+import { CreditLedger } from "@/components/jobs/CreditLedger";
 import {
   updateAvailability,
   toggleListed,
@@ -54,7 +61,7 @@ export default async function SeekerDashboardPage({
   const { data: candidate } = await admin
     .from("jobs_candidates")
     .select(
-      "id, full_name, phone, email, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, summary, listed, jobs_ofo_occupations(title)",
+      "id, full_name, phone, email, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, education, certifications, summary, listed, jobs_ofo_occupations(title)",
     )
     .eq("owner_user_id", user.id)
     .is("deleted_at", null)
@@ -76,22 +83,52 @@ export default async function SeekerDashboardPage({
     ...((candidate.secondary_ofo_codes ?? []) as { code: string }[]).map((s) => s.code),
   ].filter((c): c is string => !!c);
 
-  // Completeness: the fields an employer actually reads, each with a plain
-  // description of what is missing. Percentages motivate; lists direct.
-  const checks: { label: string; done: boolean }[] = [
-    { label: "Your name", done: !!candidate.full_name?.trim() },
-    { label: "A contact number", done: !!candidate.phone?.trim() },
-    { label: "The work you do", done: occupationCodes.length > 0 },
-    { label: "Your experience level", done: !!candidate.experience_level },
-    { label: "Where you are", done: !!candidate.suburb && !!candidate.province },
-    { label: "When you can start", done: !!candidate.availability },
-    { label: "At least one skill", done: (candidate.skills ?? []).length > 0 },
-    { label: "Work history", done: ((candidate.work_history ?? []) as WorkHistoryEntry[]).length > 0 },
-    { label: "A short summary", done: !!candidate.summary?.trim() },
-  ];
-  const doneCount = checks.filter((c) => c.done).length;
-  const completeness = Math.round((doneCount / checks.length) * 100);
-  const missing = checks.filter((c) => !c.done).map((c) => c.label);
+  // The CV check (handoff Job 2), replacing a completeness percentage.
+  //
+  // A percentage told somebody they were 70% done and nothing at all
+  // about which 30% mattered: a missing phone number and a missing
+  // availability date counted the same, when one of them means no
+  // employer can reach you. The check says what to fix, in the order
+  // that matters, in words that name their own job.
+  //
+  // It checks a DOCUMENT, not a person. It is never shown to an employer,
+  // never stored on the row, and never used to order anyone. See
+  // lib/jobs/cv-check.ts.
+  const workHistory = (candidate.work_history ?? []) as WorkHistoryEntry[];
+  const cvAssembly = assembleCv({
+    fullName: candidate.full_name,
+    phone: candidate.phone,
+    email: candidate.email,
+    primaryRole: primaryTitle ?? null,
+    otherRoles: secondaryTitles,
+    yearsExperience: candidate.years_experience,
+    suburb: candidate.suburb,
+    province: candidate.province,
+    availabilityLabel: null,
+    skills: (candidate.skills ?? []) as string[],
+    workHistory,
+    education: (candidate.education ?? []) as EducationEntry[],
+    certifications: (candidate.certifications ?? []) as CertificationEntry[],
+    summary: candidate.summary,
+  });
+
+  const checkItems = runCvCheck({
+    fullName: candidate.full_name,
+    phone: candidate.phone,
+    primaryRole: primaryTitle ?? null,
+    suburb: candidate.suburb,
+    province: candidate.province,
+    summary: candidate.summary,
+    skills: (candidate.skills ?? []) as string[],
+    workHistory,
+    education: (candidate.education ?? []) as EducationEntry[],
+    certifications: (candidate.certifications ?? []) as CertificationEntry[],
+    assembly: cvAssembly,
+  });
+  const outstanding = outstandingCount(checkItems);
+  // The single most useful thing to say in one line, rather than a list
+  // of everything at once.
+  const topFix = checkItems.find((i) => !i.done)?.message ?? null;
 
   // Applications, newest first, snapshots surviving purged vacancies.
   const { data: applications } = await admin
@@ -133,16 +170,33 @@ export default async function SeekerDashboardPage({
       }));
   }
 
-  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix, importHref, faqHref, applicationPrefix] = await Promise.all([
-    jobsPath("/cv"),
-    jobsPath(`/cv/${candidate.id}/pdf`),
-    jobsPath(`/cv/${candidate.id}/docx`),
-    jobsPath("/vacancies"),
-    jobsPath("/vacancies"),
-    jobsPath("/cv/import"),
-    jobsPath("/faq"),
-    jobsPath("/dashboard/applications"),
+  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix, importHref, faqHref, applicationPrefix, cvFilePrefix] =
+    await Promise.all([
+      jobsPath("/cv"),
+      jobsPath(`/cv/${candidate.id}/pdf`),
+      jobsPath(`/cv/${candidate.id}/docx`),
+      jobsPath("/vacancies"),
+      jobsPath("/vacancies"),
+      jobsPath("/cv/import"),
+      jobsPath("/faq"),
+      jobsPath("/dashboard/applications"),
+      jobsPath("/cv"),
+    ]);
+
+  // Rebuild credits, the ledger behind them, and the aimed copies. All
+  // three were written in the credits sprint and none of them was ever
+  // shown to the person who paid for them.
+  const seekerCredits = await getSeekerCredits(user.id);
+  const [ledger, tailoredRows] = await Promise.all([
+    getLedger(user.id),
+    admin
+      .from("jobs_cv_tailored")
+      .select("id, name, created_at")
+      .eq("owner_user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
+  const tailored = (tailoredRows.data ?? []) as { id: string; name: string; created_at: string }[];
 
   // Unread messages per application, so the dashboard can point straight at
   // the one that needs an answer.
@@ -203,7 +257,13 @@ export default async function SeekerDashboardPage({
         )}
 
         <h1 className="text-2xl font-bold text-neutral-900">
-          {candidate.full_name ? `Good day, ${candidate.full_name.trim().split(" ")[0]}` : "My dashboard"}
+          {/* Cased, because a great many people type their name with caps
+              lock on and "Good day, SIPHO" reads as being shouted at by
+              your own dashboard. Same function the CV renderer uses, so a
+              name already typed in mixed case is left exactly alone. */}
+          {candidate.full_name
+            ? `Good day, ${titleCase(candidate.full_name).split(" ")[0]}`
+            : "My dashboard"}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">
           {[primaryTitle, ...secondaryTitles].filter(Boolean).join(", ") || "Your CV is waiting to be finished"}
@@ -217,7 +277,7 @@ export default async function SeekerDashboardPage({
             which means nothing was. This strip appears only when there is
             genuinely something to do, and it is the only thing above the
             fold when there is. */}
-        {(totalUnread > 0 || missing.length > 0 || !candidate.listed) && (
+        {(totalUnread > 0 || outstanding > 0 || !candidate.listed) && (
           <div className="mt-6 rounded-2xl border border-accent bg-accent-light p-5">
             <p className="text-sm font-extrabold uppercase tracking-wide text-neutral-ink">
               Worth doing now
@@ -232,11 +292,11 @@ export default async function SeekerDashboardPage({
                   Jobs I applied for below.
                 </li>
               )}
-              {missing.length > 0 && (
+              {topFix && (
                 <li className="text-sm text-neutral-800">
-                  <strong>Your CV is {completeness}% done.</strong> Still missing: {missing.join(", ")}.{" "}
+                  <strong>{topFix}.</strong>{" "}
                   <Link href={cvHref} className="font-semibold underline underline-offset-2">
-                    Finish it
+                    {outstanding > 1 ? `Fix this and ${outstanding - 1} more` : "Fix it"}
                   </Link>
                 </li>
               )}
@@ -392,45 +452,70 @@ export default async function SeekerDashboardPage({
 
         <div className="mt-3 flex flex-col gap-4">
           <div className={card}>
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-bold text-neutral-900">
-                {completeness === 100 ? "Your CV is complete" : "Your CV"}
-              </p>
-              <span className="text-xs font-semibold text-neutral-500">{completeness}% complete</span>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-neutral-100">
-              <div className="h-full rounded-full bg-neutral-900" style={{ width: `${completeness}%` }} />
-            </div>
-            {missing.length > 0 && (
-              <p className="mt-2 text-xs text-neutral-500">Still missing: {missing.join(", ")}</p>
-            )}
-            <div className="mt-4 flex flex-wrap gap-2">
+            {/* A summary and one way in, not a second CV screen.
+
+                This card used to carry its own copy of the check plus
+                Edit, Download PDF and Download Word, and "Edit my CV"
+                opened the review screen which has every one of those
+                again. Two screens both claiming to be your CV, with no
+                way to tell which was the real one. The review screen is
+                the real one; this says how it is doing and takes you
+                there. Dewald, 10 August, on the duplication. */}
+            <p className="text-sm font-bold text-neutral-900">
+              {outstanding === 0 ? "Your CV is ready to send" : "Your CV"}
+            </p>
+            <p className="mt-1 text-xs text-neutral-500">
+              {outstanding === 0
+                ? "Everything checks out. Open it to download it or aim it at a job."
+                : `${outstanding} ${outstanding === 1 ? "thing" : "things"} would make it stronger: ${topFix}.`}
+            </p>
+            <div className="mt-4">
               <Link
                 href={cvHref}
                 className="inline-flex items-center justify-center rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white"
               >
-                Edit my CV
+                {outstanding === 0 ? "Open my CV" : "Open my CV and fix it"}
               </Link>
-              <a
-                href={pdfHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center rounded-full border border-neutral-900 px-5 py-2.5 text-sm font-semibold text-neutral-900"
-              >
-                Download PDF
-              </a>
-              <a
-                href={docxHref}
-                className="inline-flex items-center justify-center rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-700"
-              >
-                Download Word
-              </a>
             </div>
             {/* The upload route existed but was reachable only from the
                 home page and the first question of the builder, which is
                 no use to somebody who has already made an account.
                 Dewald: "it is not very clear where they can import their
                 existing CV." */}
+            {/* The aimed copies, so somebody who paid for one can find it
+                from the dashboard rather than only from the screen they
+                happened to make it on. */}
+            {tailored.length > 0 && (
+              <div className="mt-4 border-t border-neutral-100 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Aimed at a job
+                </p>
+                <ul className="mt-2 flex flex-col gap-1.5">
+                  {tailored.map((t) => (
+                    <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 break-words text-neutral-800">{t.name}</span>
+                      <span className="flex shrink-0 gap-3">
+                        <a
+                          href={`${cvFilePrefix}/${candidate.id}/pdf?aimed=${t.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-neutral-700 underline underline-offset-2"
+                        >
+                          PDF
+                        </a>
+                        <a
+                          href={`${cvFilePrefix}/${candidate.id}/docx?aimed=${t.id}`}
+                          className="text-xs font-semibold text-neutral-700 underline underline-offset-2"
+                        >
+                          Word
+                        </a>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <Link
               href={importHref}
               className="mt-3 inline-block text-sm font-semibold text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
@@ -438,6 +523,11 @@ export default async function SeekerDashboardPage({
               Fill this in from a CV file I already have
             </Link>
           </div>
+
+          {/* Renders nothing at all for the great majority who have never
+              bought a rewrite, so it does not become one more card on a
+              dashboard that already has too many. */}
+          <CreditLedger balance={seekerCredits.balance} entries={ledger} />
 
           {/* Profile. This was three lines of read-only text and the
               instruction "Change anything by editing your CV", which was
