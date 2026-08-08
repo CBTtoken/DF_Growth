@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { templates } from "@/lib/templates/registry";
 
 const CLASSIC = {
@@ -9,6 +10,8 @@ const CLASSIC = {
 };
 
 export const TEMPLATE_OPTIONS = [CLASSIC, ...templates.map((t) => ({ id: t.id, name: t.name, description: t.description }))];
+
+type TemplateOption = { id: string; name: string; description: string };
 
 const PREVIEW_WIDTH = 1200;
 const PREVIEW_HEIGHT = 760;
@@ -26,6 +29,72 @@ const PREVIEW_HEIGHT = 760;
 // entirely, leaving only the text row (exactly what showed up in
 // testing: a list of text pills with no preview image at all). Now a
 // plain div with a click/keyboard handler instead of a real button.
+function TemplateCard({
+  option,
+  isSelected,
+  onSelect,
+}: {
+  option: TemplateOption;
+  isSelected: boolean;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={() => onSelect(option.id)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect(option.id);
+        }
+      }}
+      className={`flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border-2 text-left transition-colors ${
+        isSelected ? "border-brand" : "border-gray-200 hover:border-gray-300"
+      }`}
+    >
+      {/* Combined spec Sec 8: without shrink-0 here and on the wrapper
+          above, these cards are flex items with Tailwind's default
+          flex-shrink:1 inside the scrollable list — once the cards'
+          combined height exceeds its max height, the browser squeezes
+          every card down to a ~33px sliver instead of letting the list
+          scroll, collapsing the preview to nothing and clipping the text.
+          That was the real cause of the "misaligned, off-center" report. */}
+      <div
+        className="relative w-full shrink-0 overflow-hidden bg-gray-50 [container-type:inline-size]"
+        style={{ aspectRatio: `${PREVIEW_WIDTH} / ${PREVIEW_HEIGHT}` }}
+      >
+        <iframe
+          src={`/preview/${option.id}`}
+          title={`${option.name} preview`}
+          loading="lazy"
+          tabIndex={-1}
+          style={{
+            width: PREVIEW_WIDTH,
+            height: PREVIEW_HEIGHT,
+            // Combined spec Sec 9: scales to the card's real rendered width
+            // via CSS container query units rather than a fixed constant,
+            // which clipped badly on mobile.
+            transform: `scale(calc(100cqw / ${PREVIEW_WIDTH}px))`,
+            transformOrigin: "top left",
+            pointerEvents: "none",
+            border: 0,
+          }}
+        />
+        {isSelected && (
+          <span className="absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-brand text-xs font-bold text-white shadow">
+            ✓
+          </span>
+        )}
+      </div>
+      <div className="flex flex-col gap-1 border-t border-gray-100 bg-white px-4 py-3.5">
+        <p className="text-sm font-semibold leading-snug text-gray-900">{option.name}</p>
+        <p className="text-xs leading-relaxed text-gray-500">{option.description}</p>
+      </div>
+    </div>
+  );
+}
+
 export function TemplateGallery({
   selected,
   onSelect,
@@ -34,97 +103,75 @@ export function TemplateGallery({
   selected: string;
   onSelect: (id: string) => void;
   // Sprint "Onboarding two doors" item 2: the template matched to the
-  // member's trade (lib/templates/recommend.ts). Only ever a badge and a
-  // reorder, never a restriction — every option below stays selectable.
+  // member's trade (lib/templates/recommend.ts).
   recommendedId?: string | null;
 }) {
-  // The recommendation is worth nothing at the bottom of a scrolling list
-  // of twenty, so it moves to the top. Everything else keeps its existing
-  // order, Classic included.
-  const options = recommendedId
-    ? [
-        ...TEMPLATE_OPTIONS.filter((t) => t.id === recommendedId),
-        ...TEMPLATE_OPTIONS.filter((t) => t.id !== recommendedId),
-      ]
-    : TEMPLATE_OPTIONS;
+  const recommended = recommendedId ? TEMPLATE_OPTIONS.find((t) => t.id === recommendedId) : null;
+  // Everything else keeps its existing order, Classic included.
+  const others = recommended ? TEMPLATE_OPTIONS.filter((t) => t.id !== recommended.id) : TEMPLATE_OPTIONS;
+  // Open from the start when there is nothing to recommend, which is also
+  // how the dashboard's "Change template" uses this component: it passes no
+  // recommendation, so it keeps exactly the flat list it always had.
+  const [showOthers, setShowOthers] = useState(!recommended);
 
+  if (!recommended) {
+    return (
+      <div className="flex max-h-[480px] flex-col gap-3 overflow-y-auto pr-1">
+        {others.map((t) => (
+          <TemplateCard key={t.id} option={t} isSelected={selected === t.id} onSelect={onSelect} />
+        ))}
+      </div>
+    );
+  }
+
+  // Dewald, 8 August 2026: "make the We Recommend more prominent on the top
+  // of the suggested template." A badge beside the name was too quiet, and
+  // twenty options in a scrolling box is a decision nobody asked to make.
+  //
+  // So the recommendation is not an item in a list any more, it is the
+  // answer: full width, its own banner above it, already selected. The rest
+  // fold away behind one tap. This is the interface standard's
+  // progressive-disclosure rule, "show the common thing, hide the rare
+  // thing", applied to the step where most members were defaulting to
+  // Classic simply because it was first.
   return (
-    <div className="flex max-h-[480px] flex-col gap-3 overflow-y-auto pr-1">
-      {options.map((t) => {
-        const isSelected = selected === t.id;
-        const isRecommended = t.id === recommendedId;
-        // Combined spec Sec 8: without shrink-0 here and on the preview-image
-        // wrapper below, these cards are flex items with Tailwind's default
-        // flex-shrink:1 inside the scrollable list above — once ten cards'
-        // combined height exceeds the list's max-h-[480px], the browser
-        // squeezes every card down to a ~33px sliver instead of letting the
-        // list scroll as intended, collapsing the preview image to nothing
-        // and clipping the name/description text. That's what was actually
-        // showing up as "misaligned, off-center" text — confirmed by
-        // reproducing it live and testing shrink-0 as the fix before
-        // applying it here.
-        return (
-          <div
-            key={t.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelect(t.id)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelect(t.id);
-              }
-            }}
-            className={`flex shrink-0 cursor-pointer flex-col overflow-hidden rounded-2xl border-2 text-left transition-colors ${
-              isSelected ? "border-brand" : "border-gray-200 hover:border-gray-300"
-            }`}
-          >
-            <div
-              className="relative w-full shrink-0 overflow-hidden bg-gray-50 [container-type:inline-size]"
-              style={{ aspectRatio: `${PREVIEW_WIDTH} / ${PREVIEW_HEIGHT}` }}
-            >
-              <iframe
-                src={`/preview/${t.id}`}
-                title={`${t.name} preview`}
-                loading="lazy"
-                tabIndex={-1}
-                style={{
-                  width: PREVIEW_WIDTH,
-                  height: PREVIEW_HEIGHT,
-                  // Combined spec Sec 9 (quick win): scales to the actual
-                  // rendered width of this card via CSS container query
-                  // units, instead of a single fixed-pixel constant — the
-                  // old fixed scale (0.36) was tuned for the wizard's old
-                  // narrow column and clipped badly on mobile once anything
-                  // wider was used to make the preview "clearer, larger" on
-                  // desktop. This gives every screen size the biggest
-                  // preview that actually fits its own card width.
-                  transform: `scale(calc(100cqw / ${PREVIEW_WIDTH}px))`,
-                  transformOrigin: "top left",
-                  pointerEvents: "none",
-                  border: 0,
-                }}
-              />
-              {isSelected && (
-                <span className="absolute right-2 top-2 grid size-6 place-items-center rounded-full bg-brand text-xs font-bold text-white shadow">
-                  ✓
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col gap-1 border-t border-gray-100 bg-white px-4 py-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-sm font-semibold leading-snug text-gray-900">{t.name}</p>
-                {isRecommended && (
-                  <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand">
-                    Recommended for your trade
-                  </span>
-                )}
-              </div>
-              <p className="text-xs leading-relaxed text-gray-500">{t.description}</p>
-            </div>
+    <div className="flex flex-col gap-4">
+      <div className="overflow-hidden rounded-2xl border-2 border-brand">
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-brand px-4 py-2.5">
+          <span className="text-xs font-bold uppercase tracking-wide text-white">
+            We recommend this for your trade
+          </span>
+          {selected === recommended.id && (
+            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              Selected
+            </span>
+          )}
+        </div>
+        <TemplateCard
+          option={recommended}
+          isSelected={selected === recommended.id}
+          onSelect={onSelect}
+        />
+      </div>
+
+      {!showOthers ? (
+        <button
+          type="button"
+          onClick={() => setShowOthers(true)}
+          className="self-start text-sm font-semibold text-brand underline-offset-2 hover:underline"
+        >
+          Happy with this one? Just continue. Or show the other {others.length} styles
+        </button>
+      ) : (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold text-ink">All the other styles</p>
+          <div className="flex max-h-[420px] flex-col gap-3 overflow-y-auto pr-1">
+            {others.map((t) => (
+              <TemplateCard key={t.id} option={t} isSelected={selected === t.id} onSelect={onSelect} />
+            ))}
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }

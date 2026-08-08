@@ -60,6 +60,22 @@ export function Step4PhotoUpload({
         </p>
       </div>
 
+      {/* Dewald, 8 August 2026: say the number out loud. Five is not a rule
+          and nothing blocks a member who adds one or none, but a page with
+          five photos looks finished and a page with one looks abandoned,
+          and until now the wizard never mentioned a number at all. */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand/30 bg-brand/5 px-4 py-3">
+        <span className="text-sm font-bold text-ink">Five or more works best.</span>
+        <span className="text-sm text-gray-600">
+          You can add up to {PHOTO_CAP}. Not compulsory, and you can add more later, but pages with
+          a proper set of photos get far more enquiries.
+        </span>
+        <span className="text-xs font-semibold text-gray-500">
+          {initialPhotos.length} added so far
+          {initialPhotos.length > 0 && initialPhotos.length < 5 ? `, ${5 - initialPhotos.length} to go` : ""}
+        </span>
+      </div>
+
       <div className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3.5">
         <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Two ways to do this</p>
         <ul className="mt-2 flex flex-col gap-1.5 text-sm text-gray-600">

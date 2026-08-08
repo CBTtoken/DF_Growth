@@ -33,10 +33,10 @@ export function Step4TemplatePicker({
         <h2 className="text-xl font-bold tracking-tight text-ink">Choose your page style</h2>
         <p className="mt-1 text-sm text-gray-500">
           {recommended
-            ? "We've started you on the style that suits your trade, at the top. Have a look through the rest and pick whichever you like best."
-            : "Real previews, not descriptions."}{" "}
-          They all use your own colors, logo, and the details you give us next. Tap one to select it.
-          You can change this later from your dashboard.
+            ? "We've picked the one built for your trade, and it's ready to go. Happy with it? Just continue. If you'd rather browse, every other style is one tap away."
+            : "Real previews, not descriptions. Tap one to select it."}{" "}
+          They all use your own colors, logo, and the details you give us next. You can change this
+          later from your dashboard.
         </p>
       </div>
 
