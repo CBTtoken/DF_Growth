@@ -32,13 +32,28 @@ import { BookingSection } from "@/components/dashboard/BookingSection";
 import { ShopSection } from "@/components/dashboard/ShopSection";
 import { BookingShopUpsell } from "@/components/dashboard/BookingShopUpsell";
 import { DashboardTabs, type DashboardTab } from "@/components/dashboard/DashboardTabs";
+import { YourPage, type YourPageInitialData } from "@/components/dashboard/YourPage";
+import {
+  PAGE_SECTION_ORDER,
+  pageSectionStatus,
+  type PageSectionKey,
+} from "@/lib/page-readiness";
 import { SiteFooter } from "@/components/SiteFooter";
 import { logOut, markLeadHandled } from "@/app/dashboard/actions";
 
 // Private, signed-in-only — see onboard/page.tsx for the same reasoning.
 export const metadata: Metadata = { robots: { index: false, follow: false } };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  // Which tab is open, and which Your page section within it, both live in
+  // the URL so the checklist on Home can link straight at the one thing
+  // that fixes an item. Read here rather than in the client component so
+  // the right tab is open on the first paint, with no flash of Home.
+  searchParams: Promise<{ tab?: string; open?: string }>;
+}) {
+  const { tab: tabParam, open: openParam } = await searchParams;
   const client = await requireGrowthClientId();
 
   // Agent Programme Phase 1 Sec 1.1: "An agent with no business membership
@@ -124,7 +139,7 @@ export default async function DashboardPage() {
     { data: capiEvents },
     { data: leads },
     { data: photos },
-    { data: landingPageType },
+    { data: landingPage },
     { count: totalPageViews },
     { data: recentPageViews },
     { data: reviews },
@@ -139,7 +154,12 @@ export default async function DashboardPage() {
     admin
       .from("growth_clients")
       .select(
-        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, tagline, whatsapp_phone, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_delivery_mode, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error"
+        // The block from contact_email to packages is what /dashboard/edit
+        // used to fetch on its own route. That route is now a redirect into
+        // the Your page tab here (member dashboard navigation sprint), so
+        // its columns come along in this same round trip rather than in a
+        // second one on a second page.
+        "business_name, slug, plan, status, template, asset_style, meta_pixel_id, meta_setup_requested_help, google_site_verification, facebook_domain_verification, business_description, business_address, tagline, whatsapp_phone, hero_photo_id, industry, website_url, marketplace_url, paystack_reference, is_agent_comped, is_admin_comped, booking_enabled, shop_enabled, shop_collection_address, shop_delivery_mode, shop_flat_delivery_cents, shop_free_delivery_over_cents, bobgo_connected_at, bobgo_sandbox, bobgo_last_error, contact_email, call_phone, province, city, products_services, additional_notes, facebook_url, instagram_url, brand_primary_color, brand_secondary_color, logo_path, packages"
       )
       .eq("id", client.id)
       .single(),
@@ -189,7 +209,13 @@ export default async function DashboardPage() {
     // checked here rather than assuming, so this automatically applies to
     // any future member with their own custom order-taking page too, not
     // just Standing 365 specifically.
-    admin.from("landing_pages").select("page_type").eq("growth_client_id", client.id).maybeSingle(),
+    // The copy columns are the other half of what /dashboard/edit used to
+    // load; same reasoning as the growth_clients select above.
+    admin
+      .from("landing_pages")
+      .select("page_type, headline, subheadline, about_text, services_text, cta_label")
+      .eq("growth_client_id", client.id)
+      .maybeSingle(),
     admin
       .from("page_views")
       .select("id", { count: "exact", head: true })
@@ -346,16 +372,75 @@ export default async function DashboardPage() {
         .is("read_at", null)
     : { count: 0 };
 
+  // Everything the Your page tab needs, in the shape the wizard's own step
+  // components already expect. /dashboard/edit used to assemble this on its
+  // own route; that route is now a redirect in here.
+  const yourPageData: YourPageInitialData = {
+    businessName: growthClient?.business_name ?? "",
+    contactEmail: growthClient?.contact_email ?? "",
+    callPhone: growthClient?.call_phone ?? "",
+    whatsappPhone: growthClient?.whatsapp_phone ?? "",
+    province: growthClient?.province ?? "",
+    industry: growthClient?.industry ?? "",
+    businessAddress: growthClient?.business_address ?? "",
+    city: growthClient?.city ?? "",
+    businessDescription: growthClient?.business_description ?? "",
+    tagline: growthClient?.tagline ?? "",
+    productsServices: growthClient?.products_services ?? "",
+    additionalNotes: growthClient?.additional_notes ?? "",
+    facebookUrl: growthClient?.facebook_url ?? "",
+    instagramUrl: growthClient?.instagram_url ?? "",
+    websiteUrl: growthClient?.website_url ?? "",
+    brandPrimaryColor: growthClient?.brand_primary_color ?? "#1081b8",
+    brandSecondaryColor: growthClient?.brand_secondary_color ?? "#ffffff",
+    logoUrl: growthClient?.logo_path
+      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/client-logos/${growthClient.logo_path}`
+      : null,
+    headline: landingPage?.headline ?? "",
+    subheadline: landingPage?.subheadline ?? "",
+    aboutText: landingPage?.about_text ?? "",
+    servicesText: landingPage?.services_text ?? "",
+    ctaLabel: landingPage?.cta_label ?? "",
+    packages: (growthClient?.packages as YourPageInitialData["packages"] | null) ?? [],
+  };
+
+  // The tick or the "2 to add" on each Your page section, from the same
+  // definition the Home checklist reads, so the two can never disagree.
+  const sectionStatus = pageSectionStatus({
+    template: growthClient?.template ?? null,
+    heroPhotoId: growthClient?.hero_photo_id ?? null,
+    photoCount: photos?.length ?? 0,
+    whatsappPhone: growthClient?.whatsapp_phone ?? null,
+    businessAddress: growthClient?.business_address ?? null,
+    tagline: growthClient?.tagline ?? null,
+    businessDescription: growthClient?.business_description ?? null,
+    headline: landingPage?.headline ?? null,
+    subheadline: landingPage?.subheadline ?? null,
+    aboutText: landingPage?.about_text ?? null,
+    packageCount: yourPageData.packages.length,
+  });
+
+  // Validated against the real list rather than passed through, so a
+  // hand-typed or stale ?open= cannot open a section that does not exist.
+  const openSection = PAGE_SECTION_ORDER.includes(openParam as PageSectionKey)
+    ? (openParam as PageSectionKey)
+    : null;
+
   // UI/UX pass, Dewald's ask: the dashboard had grown into one long
   // scrolling page with no way to jump between sections — grouped here into
   // named tabs (DashboardTabs.tsx renders the bar + swaps content), every
   // section component below is unchanged, just reorganized. Booking & Shop
   // only appears as its own tab for Growth-and-above (showMetaSection),
   // matching the same gate those two sections already used inline.
+  //
+  // Member dashboard navigation sprint, 8 August 2026: tab labels are the
+  // words a member would use ("Home", "Selling"), and "Your Page" stopped
+  // meaning two things. It is now the one place a page gets changed, with
+  // the public page reached by the "View your page" button above instead.
   const dashboardTabs: DashboardTab[] = [
     {
       id: "overview",
-      label: "Overview",
+      label: "Home",
       content: (
         <>
           <GrowYourReviews customers={reviewableCustomers ?? []} />
@@ -484,7 +569,7 @@ export default async function DashboardPage() {
               Shown for a shop as well as a custom order-taking page, since
               both now write the same shop_orders rows. A seller who has
               taken an order always has somewhere to go and read it. */}
-          {(landingPageType?.page_type === "custom" || growthClient?.shop_enabled) && (
+          {(landingPage?.page_type === "custom" || growthClient?.shop_enabled) && (
             <OrdersSection orders={(shopOrders ?? []) as unknown as SellerOrder[]} />
           )}
         </>
@@ -492,23 +577,27 @@ export default async function DashboardPage() {
     },
     {
       id: "your-page",
-      label: "Your Page",
+      label: "Your page",
       content: (
-        <>
-          <ChangeTemplateSection currentTemplate={growthClient?.template ?? "conversion"} />
-
-          <PhotoGallery
-            photos={photos ?? []}
-            storageBase={photosStorageBase}
-            heroPhotoId={growthClient?.hero_photo_id ?? null}
-            industryHint={growthClient?.industry ?? undefined}
-          />
-        </>
+        <YourPage
+          initialOpen={openSection}
+          status={sectionStatus}
+          initialData={yourPageData}
+          photosSlot={
+            <PhotoGallery
+              photos={photos ?? []}
+              storageBase={photosStorageBase}
+              heroPhotoId={growthClient?.hero_photo_id ?? null}
+              industryHint={growthClient?.industry ?? undefined}
+            />
+          }
+          styleSlot={<ChangeTemplateSection currentTemplate={growthClient?.template ?? "conversion"} />}
+        />
       ),
     },
     {
       id: "reviews",
-      label: "Reviews & Testimonials",
+      label: "Reviews",
       content: (
         <>
           <section className="flex flex-col gap-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -739,7 +828,7 @@ export default async function DashboardPage() {
     showMetaSection
       ? {
           id: "booking-shop",
-          label: "Booking & Shop",
+          label: "Selling",
           content: (
             <>
               <BookingSection
@@ -768,7 +857,7 @@ export default async function DashboardPage() {
         }
       : {
           id: "booking-shop",
-          label: "Booking & Shop",
+          label: "Selling",
           content: <BookingShopUpsell growthClientId={growthClientId} />,
         }
   );
@@ -777,22 +866,7 @@ export default async function DashboardPage() {
     <main className="min-h-full bg-gray-50 px-4 py-12">
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8">
         <div className="flex flex-col gap-6">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <BrandHeader />
-            {/* Combined spec Sec 28: there was previously no way at all to
-                end a session on a shared/borrowed device. A plain form
-                posting to a Server Action, not a client-side button, so it
-                works with JS disabled and clears the auth cookie
-                server-side. */}
-            <form action={logOut}>
-              <button
-                type="submit"
-                className="text-sm font-medium text-gray-400 underline-offset-2 transition hover:text-gray-600 hover:underline"
-              >
-                Log out
-              </button>
-            </form>
-          </div>
+          <BrandHeader />
           {/* Agent Programme Phase 1 Sec 1.1: the role switcher sits above
               the account switcher because it is the outer choice. Which
               role first, then which business within the business role. */}
@@ -807,54 +881,76 @@ export default async function DashboardPage() {
             </Link>
           )}
 
-          <div className="flex flex-wrap items-center justify-between gap-4">
+          {/* Member dashboard navigation sprint, 8 August 2026. This row
+              used to hold five equally weighted buttons (view, edit, board,
+              messages, log out), which at 390px wrapped into a wall of
+              pills with nothing obviously the main thing, against the
+              interface standard's one primary action per screen.
+
+              "Edit your page" is gone entirely: it was the second door onto
+              the same fields, and those now live in the Your page tab
+              below. What is left is one primary action, full width on a
+              phone where a thumb reaches it, and a quieter row of the three
+              places a member goes less often. */}
+          <div className="flex flex-col gap-4">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-ink">Dashboard</h1>
               {growthClient?.business_name && (
                 <p className="mt-1 text-sm text-gray-500">{growthClient.business_name}</p>
               )}
             </div>
+
             {pageUrl && (
               <a
                 href={pageUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark"
+                className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-dark sm:w-fit sm:py-2.5"
               >
                 View your page ↗
               </a>
             )}
-            <Link
-              href="/dashboard/edit"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
-              Edit your page
-            </Link>
-            {/* The Board, Phase 1. Up here with the two page actions rather
-                than inside a tab, because posting is the thing a member is
-                meant to come back and do, and a tab six across is not a
-                habit anyone forms. */}
-            <Link
-              href="/dashboard/board"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
-              Post to the board
-            </Link>
-            <Link
-              href="/dashboard/messages"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:-translate-y-0.5 hover:border-gray-300"
-            >
-              Messages
-              {!!unreadMessageCount && (
-                <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {unreadMessageCount}
-                </span>
-              )}
-            </Link>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold">
+              {/* The Board, Phase 1. Kept out here rather than inside a tab,
+                  because posting is the thing a member is meant to come
+                  back and do, and a tab seven across is not a habit anyone
+                  forms. */}
+              <Link
+                href="/dashboard/board"
+                className="text-gray-600 underline-offset-4 transition hover:text-brand hover:underline"
+              >
+                Post to the board
+              </Link>
+              <Link
+                href="/dashboard/messages"
+                className="inline-flex items-center gap-1.5 text-gray-600 underline-offset-4 transition hover:text-brand hover:underline"
+              >
+                Messages
+                {!!unreadMessageCount && (
+                  <span className="rounded-full bg-accent px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    {unreadMessageCount}
+                  </span>
+                )}
+              </Link>
+              {/* Combined spec Sec 28: there was previously no way at all to
+                  end a session on a shared/borrowed device. A plain form
+                  posting to a Server Action, not a client-side button, so it
+                  works with JS disabled and clears the auth cookie
+                  server-side. */}
+              <form action={logOut} className="ml-auto">
+                <button
+                  type="submit"
+                  className="font-medium text-gray-400 underline-offset-4 transition hover:text-gray-600 hover:underline"
+                >
+                  Log out
+                </button>
+              </form>
+            </div>
           </div>
         </div>
 
-        <DashboardTabs tabs={dashboardTabs} />
+        <DashboardTabs tabs={dashboardTabs} initialTabId={tabParam} />
       </div>
       <SiteFooter />
     </main>

@@ -35,6 +35,7 @@ export function Step2BusinessProfile({
   initialWebsiteUrl,
   onSuccess,
   submitLabel = "Continue",
+  showHeading = true,
 }: {
   initialProvince: string;
   initialIndustry: string;
@@ -49,6 +50,10 @@ export function Step2BusinessProfile({
   initialWebsiteUrl: string;
   onSuccess: () => void;
   submitLabel?: string;
+  /** See Step1BusinessInfo: off inside Your page, where the section header
+   *  already carries the title and a description written for a member who
+   *  signed up months ago rather than one signing up now. */
+  showHeading?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep2, null);
   const [isOnline, setIsOnline] = useState(initialBusinessAddress === "Online");
@@ -80,13 +85,15 @@ export function Step2BusinessProfile({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight text-ink">Tell us about your business</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          The more you give us here, the better we can build your page and your ad campaigns, and
-          we&apos;ll even draft your landing page copy from this.
-        </p>
-      </div>
+      {showHeading && (
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-ink">Tell us about your business</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            The more you give us here, the better we can build your page and your ad campaigns, and
+            we&apos;ll even draft your landing page copy from this.
+          </p>
+        </div>
+      )}
 
       <label className={labelClass}>
         Province

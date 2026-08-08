@@ -3,8 +3,10 @@
 import { useActionState, useState } from "react";
 import { changeTemplate } from "@/app/dashboard/actions";
 import { TemplateGallery } from "@/components/templates/TemplateGallery";
-import { Card } from "@/components/ui/Card";
 
+// Sprint "Member dashboard navigation", 8 August 2026: sits inside the
+// "How your page looks" section of Your page now, above the brand kit, so
+// the section supplies the card and this keeps only its own sub-heading.
 export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: string }) {
   const [state, formAction, pending] = useActionState(changeTemplate, null);
   // No effect auto-closing this on success — the gallery just shows the
@@ -14,10 +16,10 @@ export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: st
   const [selected, setSelected] = useState(currentTemplate);
 
   return (
-    <Card className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold tracking-tight text-ink">Page style</h2>
+          <h2 className="text-xl font-bold tracking-tight text-ink">Page style</h2>
           <p className="mt-1 text-sm text-gray-500">
             {state?.success ? "Updated. Your live page reflects this now." : "Change your page's layout any time."}
           </p>
@@ -59,6 +61,6 @@ export function ChangeTemplateSection({ currentTemplate }: { currentTemplate: st
           </div>
         </form>
       )}
-    </Card>
+    </div>
   );
 }

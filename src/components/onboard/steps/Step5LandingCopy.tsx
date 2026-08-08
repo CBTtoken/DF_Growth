@@ -21,6 +21,10 @@ export function Step5LandingCopy({
   // ambiguously — is this describing the page, or editing it? Overridden
   // there to make clear this shows what's live today, not something new
   // being set up. Onboarding keeps the original heading.
+  //
+  // Member dashboard navigation sprint, 8 August 2026: `null` drops the
+  // heading block entirely, for Your page's "Your words" section, whose own
+  // header already carries the title and this same guidance.
   heading = "Your landing page",
 }: {
   initialHeadline: string;
@@ -31,7 +35,7 @@ export function Step5LandingCopy({
   hasAiDraft: boolean;
   onSuccess: () => void;
   submitLabel?: string;
-  heading?: string;
+  heading?: string | null;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep5, null);
 
@@ -41,6 +45,7 @@ export function Step5LandingCopy({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      {heading !== null && (
       <div>
         <h2 className="text-xl font-bold tracking-tight text-ink">{heading}</h2>
         {hasAiDraft ? (
@@ -58,6 +63,7 @@ export function Step5LandingCopy({
           </p>
         )}
       </div>
+      )}
 
       <label className={labelClass}>
         Headline

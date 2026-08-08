@@ -5,7 +5,6 @@ import Image from "next/image";
 import { deleteClientPhoto, setHeroPhoto } from "@/app/dashboard/actions";
 import { PexelsPicker } from "@/components/dashboard/PexelsPicker";
 import { PhotoUploadInput } from "@/components/dashboard/PhotoUploadInput";
-import { Card } from "@/components/ui/Card";
 import { PHOTO_CAP } from "@/lib/photos";
 
 type Photo = { id: string; storage_path: string };
@@ -26,11 +25,14 @@ export function PhotoGallery({
   // own industry, so the first search they see is already relevant.
   industryHint?: string;
 }) {
+  // Sprint "Member dashboard navigation", 8 August 2026: this now sits
+  // inside the "Your photos" section of Your page, which supplies the card
+  // chrome and the heading. A card inside a card, under a second copy of
+  // its own title, is exactly the clutter that sprint set out to remove.
   return (
-    <Card className="flex flex-col gap-4">
-      <div id="photos" className="scroll-mt-20">
-        <h2 className="text-lg font-bold tracking-tight text-ink">Your photos</h2>
-        <p className="mt-1 text-sm text-gray-500">
+    <div className="flex flex-col gap-4">
+      <div>
+        <p className="text-sm text-gray-500">
           Up to {PHOTO_CAP} real photos of your business. Five or more is where a page starts
           looking properly filled in. Tap <span className="font-semibold text-ink">Front page</span>{" "}
           on the one you want across the top, and change it whenever you like.
@@ -70,7 +72,7 @@ export function PhotoGallery({
       ) : (
         <p className="text-sm text-gray-400">No photos yet, PNG, JPG, or WebP, under 5MB each.</p>
       )}
-    </Card>
+    </div>
   );
 }
 

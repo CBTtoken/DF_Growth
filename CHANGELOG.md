@@ -11,6 +11,49 @@ Every future sprint adds its entry here before reporting back, per
 
 ---
 
+## 8 August 2026 — The member dashboard, on a phone
+
+**Branch:** `member-dashboard-navigation`. Sprint handoff:
+`docs/Sprints/SPRINT-2026-08-08-member-dashboard-navigation.md`.
+
+Dewald walked the dashboard on a phone and reported three things that were
+really one: editing a page was "1 looooooongggg scrolling page", "Your page"
+and "Edit your page" were two menu entries onto the same fields, and
+"our users will be mostly on a phone, so navigation is key here".
+
+**One door.** `/dashboard/edit` was never a different form: it rendered the
+onboarding wizard's own Step1/2/3/5/6 components stacked vertically. Those
+same components, plus the photo gallery and page style that used to sit on a
+different tab, are now six named sections of the Your page tab, one open at
+a time: your photos, how your page looks, your details, where you are, your
+words, your prices. Names agreed with Dewald before any code, per
+`INTERFACE-STANDARD.md`. The step components, their schemas and their Server
+Actions are untouched and still shared with onboarding; they gained only an
+optional flag to drop a heading the section header already carries.
+`/dashboard/edit` is a permanent redirect into the tab.
+
+**Navigation moved into the URL.** `DashboardTabs` held the active tab in
+local state seeded from the first tab, which silently broke every link into
+the dashboard: `PageChecklist` pointed at `/dashboard#photos`, the photos
+live in a tab that was not mounted on arrival, so the anchor had nothing to
+scroll to and a member landed at the top of Home with no idea why. The
+server now reads `?tab=` and `?open=`, so a checklist item opens the right
+tab, opens the right section and scrolls to it. `page-readiness.ts` gained a
+section per item and builds its own hrefs, so the checklist and the ticks on
+Your page cannot drift apart.
+
+**Phone specifics.** Laid out at 390px, not checked there afterwards. The
+header's five competing pills became one primary "View your page" plus a
+quiet row (board, messages, log out); "Edit your page" is gone. Tabs are
+`Home | Your page | Selling | Reviews | Marketing | Account`, and since six
+pills are 576px in a 390px screen, the active tab now scrolls itself into
+view on arrival and a fade marks that there is more to swipe to. Tabs and
+sections hide rather than unmount, so half-typed answers survive a stray
+tap, per the interface standard's "never lose what somebody has typed".
+Selling and the rest still only mount once actually opened.
+
+---
+
 ## 7 August 2026 — Onboarding two doors, and self-serve quality
 
 **Branch:** `onboarding-self-serve-quality`. Sprint handoff:

@@ -26,6 +26,16 @@ hangs off.
 **What it is not:** Not a page builder a member edits freely — it's a
 guided intake plus a fixed set of template anchors and design tokens.
 
+**How a member changes their page:** One place, the "Your page" tab of
+`/dashboard` (`src/components/dashboard/YourPage.tsx`), which is six named
+sections with one open at a time. Those sections render the onboarding
+wizard's own step components, so a field, its validation and its Server
+Action exist once and are shared between signing up and editing later.
+`/dashboard/edit` was a second door onto the same fields and is now a
+permanent redirect into that tab. Which tab and which section are open both
+live in the URL (`?tab=&open=`), which is what makes the page checklist on
+Home able to link at the one thing that fixes each item.
+
 **Status:** Live, mature. This is the oldest and most-depended-on part of
 the codebase.
 
@@ -41,7 +51,7 @@ see `docs/DOCUMENT_INDEX.md`.
 (missing indexes on `growth_clients.hero_photo_id` and
 `.referred_by_agent_id`, now added — see the codebase-health report).
 
-**Last updated:** 6 August 2026 (this audit).
+**Last updated:** 8 August 2026 (member dashboard navigation sprint).
 
 ---
 

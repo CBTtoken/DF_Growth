@@ -10,12 +10,20 @@ export function Step3BrandKit({
   initialLogoUrl,
   onSuccess,
   submitLabel = "Continue",
+  heading = "Brand kit",
 }: {
   initialPrimaryColor: string;
   initialSecondaryColor: string;
   initialLogoUrl: string | null;
   onSuccess: () => void;
   submitLabel?: string;
+  /**
+   * Same escape hatch Step5LandingCopy already has. This one keeps a
+   * heading inside Your page, because it sits under the page style picker
+   * and the two need telling apart, but "Brand kit" is our words rather
+   * than a member's, so Your page passes plainer ones.
+   */
+  heading?: string;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep3, null);
   const [primaryColor, setPrimaryColor] = useState(initialPrimaryColor);
@@ -36,7 +44,7 @@ export function Step3BrandKit({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div>
-        <h2 className="text-xl font-bold tracking-tight text-ink">Brand kit</h2>
+        <h2 className="text-xl font-bold tracking-tight text-ink">{heading}</h2>
         <p className="mt-1 text-sm text-gray-500">
           Two colors and an optional logo are enough to make your landing page and social assets
           feel like you.

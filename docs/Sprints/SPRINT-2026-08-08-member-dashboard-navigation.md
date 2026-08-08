@@ -2,10 +2,49 @@
 
 **Written 8 August 2026 by the session that finished the two-doors sprint,
 straight after Dewald walked the real flow on a phone and reported what he
-found. Not started.**
+found.**
 
-Mark progress at the top of this file as you go, per the Sprints folder
-convention.
+**BUILT 8 August 2026 on branch `member-dashboard-navigation`. Awaiting
+Dewald's walk on a real phone before merge, per this file's own
+constraint.** Structure agreed with him before any code was written, and
+recorded below. What was built is in `CHANGELOG.md` under 8 August.
+
+---
+
+## The structure, agreed before building (item 1 of the work)
+
+Dewald was given three choices per question and picked the recommendation
+in each. This is the agreed list.
+
+**Top level, six tabs:** `Home | Your page | Selling | Reviews | Marketing |
+Account`. "Selling" replaces "Booking & Shop": one word, still top level,
+because tucking it into a group would add the third level the interface
+standard warns against.
+
+**Your page is the one destination**, and it means the place you go to
+change your page. The public page is reached by the "View your page" button
+at the top, which is the screen's single primary action. Inside, six
+sections, one open at a time, in this order:
+
+1. **Your photos** — the gallery and the front-page picker
+2. **How your page looks** — page style, then colours and logo
+3. **Your details** — business name, call and WhatsApp numbers
+4. **Where you are, and what you do** — town, trade, description, socials
+5. **Your words** — headline, story, button text
+6. **Your prices** — packages and specials, optional
+
+Each header carries a plain-language line saying what that section changes
+on the live page, and a green tick or a count of what is still to add.
+
+One deviation from the agreed list, and why: section 4 was agreed as "Where
+you are". It is Step2BusinessProfile, which also holds the tagline and the
+business description, and those two are checklist items members are sent
+here to fix. Splitting the step was out of scope by this file's own rules,
+so the label grew to match what is actually inside it rather than the
+label promising less than the section holds.
+
+**The header** was five equally weighted pills. Now one primary action and
+a quiet row of board, messages and log out. "Edit your page" is gone.
 
 ---
 
@@ -126,7 +165,27 @@ the top of your page"), beats a field label on its own.
 
 ## Open questions for Dewald
 
-- Does "Your Page" mean the public page, or the place you go to edit it? The
-  current naming uses it for both and that is part of the confusion.
+Both answered on 8 August, before building. Kept for the record.
+
+- Does "Your Page" mean the public page, or the place you go to edit it?
+  **Answered: the place you go to change it.** The public page is the
+  "View your page" button, which is now the screen's one primary action.
 - Should Booking and Shop stay as top-level tabs, or sit inside a "Selling"
-  group? They are only relevant to Growth and above.
+  group? **Answered: stay top level, renamed "Selling".** A group would add
+  a third level for no gain.
+
+## What the next session needs to know
+
+- The whole thing was laid out and measured at 390px, but it was **not
+  walked signed-in on a phone**, because doing so needs a member login and
+  this session had no way to sign in to one. That walk is the sprint's own
+  exit condition and is the only thing left.
+- The checklist deep links (`PageChecklist` → `?tab=your-page&open=...`)
+  were verified working end to end on a stand-in page. They were completely
+  broken before this sprint: `/dashboard#photos` pointed at an element in a
+  tab that was not mounted, so it scrolled nowhere.
+- Tabs and Your page sections hide rather than unmount, on purpose, so a
+  half-typed answer survives a stray tap. If a future change swaps that for
+  conditional rendering it will silently start throwing typing away.
+- Tab content only mounts once a tab has been opened, so Selling's Shop,
+  Orders and Booking still cost nothing for a member who never taps it.

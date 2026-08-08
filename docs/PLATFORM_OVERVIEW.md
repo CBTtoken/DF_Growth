@@ -133,22 +133,22 @@ All three prove the mechanism works for a real "member requests an additional cu
 
 **Organized into navigable tabs, not one long scrolling page.** `DashboardTabs.tsx` is a lightweight client-side tab wrapper (local `useState`, no URL/hash routing) — every section below is the exact same component as before, just grouped into tabs instead of stacked sequentially. Built this cycle after the page had grown to ~15 sequential sections and become hard to navigate.
 
-- **Header** — View your page, Edit your page, Log out
+- **Header** — one primary action, View your page, plus a quiet row: Post to the board, Messages, Log out
 - **Account switcher** — only visible once a login owns 2+ `growth_client` accounts; see Section 6
 
-**Overview tab** — Profile completeness banner (nudges toward missing description/address/photos), Page-view analytics (total views plus a 7-day daily breakdown, own dedicated card).
+Six tabs: Home, Your page, Selling, Reviews, Marketing, Account. Which tab is open, and which Your page section within it, live in the URL as `?tab=` and `?open=`.
 
-**Your Page tab** — Change template (swap any time, live preview first), Photo gallery (upload or Pexels search, set hero photo).
+**Home tab** — Page checklist (the handful of things that most change whether a visitor gets in touch, each linking straight at the section that fixes it), Page-view analytics (total views plus a 7-day daily breakdown, own dedicated card), Leads.
 
-**Booking & Shop tab** *(Growth-and-above, only shown once either module is switched on — Section 25)* — Booking setup (bookable units, operational rules, calendar view) and/or Shop inventory (product/coupon CRUD, single or CSV bulk upload), both surfaced here rather than as a 16th flat section.
+**Selling tab** *(Growth-and-above, only shown once either module is switched on — Section 25)* — Booking setup (bookable units, operational rules, calendar view) and/or Shop inventory (product/coupon CRUD, single or CSV bulk upload), both surfaced here rather than as a 16th flat section.
 
-**Reviews & Testimonials tab** — Reviews (Section 14): every review left on the member's page including flagged ones, reply publicly once (editable after), flag a review for admin review without being able to delete or edit it directly. Testimonials: add one, auto-generates a shareable social image. Leads: every lead-form submission, name/email/phone/timestamp. Orders *(custom pages only, e.g. Standing 365, KatisoBiz Nomads)*: buyer/delivery/personalisation detail, batch + fulfilment tracking.
+**Reviews tab** — Reviews (Section 14): every review left on the member's page including flagged ones, reply publicly once (editable after), flag a review for admin review without being able to delete or edit it directly. Testimonials: add one, auto-generates a shareable social image. Leads: every lead-form submission, name/email/phone/timestamp. Orders *(custom pages only, e.g. Standing 365, KatisoBiz Nomads)*: buyer/delivery/personalisation detail, batch + fulfilment tracking.
 
 **Marketing tab** — Meta ad tracking *(Growth/Enterprise)*: paste Pixel/Ad Account IDs, encrypted token entry, recent CAPI delivery status. Search & ad platform verification: Google Search Console / Facebook domain verification meta tags. Asset style + Generate social assets: pick the default visual style, pick a content type and a gallery photo, generates a downloadable branded image.
 
 **Account tab** — Your Package (account/plan): current tier, features included, upgrade/cancel. Platform Features: shows what a higher tier unlocks, even if locked. Also available to you: Marketplace, Events (list a free event with the same login, Section 15), and KatisoBiz Nomads.
 
-`/dashboard/edit` mirrors the core onboarding fields as standalone editable cards — every save is live immediately, no publish step.
+**Your page tab** — the one place a member changes their page, in six sections with one open at a time: your photos, how your page looks, your details, where you are and what you do, your words, your prices. These are the core onboarding fields, the same components the wizard uses, so a field behaves identically whether it is being filled in at signup or corrected a year later. Every save is live immediately, no publish step. `/dashboard/edit` was a second route onto these same fields and now redirects here permanently.
 
 ---
 
@@ -399,7 +399,7 @@ Grounded in real friction points and patterns actually observed while building t
 - [ ] **List Your Event: submit an event as a new organiser, existing organiser, and already-logged-in business owner; browse/search/filter; individual event page with photos (confirm letterbox banner, not a crop); event with no photos (confirm text-only header)**
 - [ ] **Booking: book a slot on a client page, confirm it disappears from availability immediately, confirm two simultaneous attempts on the same slot can't both succeed; dashboard calendar/setup; SAST time display correct regardless of visitor's own timezone**
 - [ ] **Shop: add to cart, checkout, confirm stock decrements and can't go negative under a simulated concurrent purchase; CSV bulk upload with a deliberately malformed row (confirm per-row error, valid rows still import); coupon apply**
-- [ ] **Dashboard tabs: every tab loads its existing content correctly, Booking & Shop tab only appears once a module is enabled for that client**
+- [ ] **Dashboard tabs: every tab loads its existing content correctly, Selling tab only appears once a module is enabled for that client**
 - [ ] Mobile pass on every screen above, including the header on narrow viewports
 
 ---

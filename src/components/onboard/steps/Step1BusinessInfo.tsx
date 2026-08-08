@@ -12,6 +12,7 @@ export function Step1BusinessInfo({
   showSetupServiceOffer = false,
   onSuccess,
   submitLabel = "Continue",
+  showHeading = true,
 }: {
   initialBusinessName: string;
   initialContactEmail: string;
@@ -27,6 +28,13 @@ export function Step1BusinessInfo({
   showSetupServiceOffer?: boolean;
   onSuccess: () => void;
   submitLabel?: string;
+  /**
+   * The wizard needs its own title on each step. Your page already puts the
+   * section name and a plain-language description in the header a member
+   * taps to open this, so repeating it here would be the same words twice,
+   * over an intro written for someone still signing up.
+   */
+  showHeading?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep1, null);
 
@@ -36,10 +44,12 @@ export function Step1BusinessInfo({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight text-ink">Your business</h2>
-        <p className="mt-1 text-sm text-gray-500">Confirm the basics so we can set up your account.</p>
-      </div>
+      {showHeading && (
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-ink">Your business</h2>
+          <p className="mt-1 text-sm text-gray-500">Confirm the basics so we can set up your account.</p>
+        </div>
+      )}
 
       <label className="flex flex-col gap-1.5 text-sm font-medium text-gray-700">
         Business name

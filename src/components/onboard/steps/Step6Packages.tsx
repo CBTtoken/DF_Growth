@@ -100,10 +100,14 @@ export function Step6Packages({
   initialPackages,
   onSuccess,
   submitLabel = "Continue",
+  showHeading = true,
 }: {
   initialPackages: PackageInitial[];
   onSuccess: () => void;
   submitLabel?: string;
+  /** See Step1BusinessInfo. Off inside Your page, whose "Your prices"
+   *  header already says this and already says it is optional. */
+  showHeading?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<OnboardState, FormData>(saveStep6, null);
 
@@ -117,12 +121,14 @@ export function Step6Packages({
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl font-bold tracking-tight text-ink">Your packages or pricing</h2>
-        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
-          Optional, skip if you don&apos;t have set packages
-        </span>
-      </div>
+      {showHeading && (
+        <div>
+          <h2 className="text-xl font-bold tracking-tight text-ink">Your packages or pricing</h2>
+          <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-500">
+            Optional, skip if you don&apos;t have set packages
+          </span>
+        </div>
+      )}
 
       <PackageFields index={1} initial={slots[0]} errors={state?.error} />
       <PackageFields index={2} initial={slots[1]} errors={state?.error} />

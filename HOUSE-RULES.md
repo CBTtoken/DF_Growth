@@ -23,6 +23,8 @@ both standing.
 | Bookings (as a name for accommodation) | **Stays and Tours** | Booking already exists as the slot-based appointment module (`bookable_units`, `reservations` tables, live). Stays and Tours is a separate, not-yet-built accommodation module — its handoff exists on Dewald's machine only, not yet in this repo. Do not call either one "Bookings" alone; say which one. |
 | "Unlimited" (KatisoBiz R89 plan) | **Unlimited Documents** | The plan is unlimited on document count, not on everything. Never shorten it. |
 | "Directory" / "listing" (for the marketplace) | **Marketplace** | Standing rule, not just a naming note — see Terminology below. |
+| "Booking & Shop" (the dashboard tab) | **Selling** | Renamed 8 August 2026 with Dewald. The two modules keep their own names everywhere else; this is the tab a member taps. The tab id is still `booking-shop`, so existing `?tab=` links keep working. |
+| "Edit your page" (as a place) | **Your page** | Retired 8 August 2026. There is one destination for changing a page, the Your page tab of `/dashboard`. `/dashboard/edit` is a permanent redirect. Never add a second entry point onto the same fields. |
 
 **The pattern:** three naming problems have already cost real work (a folder
 described as a "lead switchboard" that actually held a scrapped signup
