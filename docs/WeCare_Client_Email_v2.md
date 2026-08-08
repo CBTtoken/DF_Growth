@@ -1,4 +1,10 @@
-# EMAIL TO ELIZE, READY TO SEND
+# EMAIL TO ELIZE
+
+**Sent 8 August 2026** to elize.wecare@gmail.com via
+`scripts/send-wecare-shop-live-email.js --live`. Resend id
+`2dff99a2-7299-4461-94bb-454e5be6f132`. Subject: "Your WeCare shop is open,
+22 products live". The client-facing half below is what went out; the notes
+at the bottom did not.
 
 Her page: **growth.digitalflyersa.co.za/wecare-products**
 Her shop: **growth.digitalflyersa.co.za/wecare-products/shop**
