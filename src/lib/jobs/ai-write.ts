@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { stripEmDashes } from "@/lib/text";
+import { inventedNumbers } from "@/lib/jobs/ai-guard";
 import type { WorkHistoryEntry } from "@/lib/jobs/cv-conversation";
 
 // Write with AI (pre-launch handoff Job 3): drafts the CV's prose -- the
@@ -31,11 +32,6 @@ export type WriteCvOutput = {
   workDescriptions: string[];
 };
 
-function containsInventedYear(texts: string[], sourceText: string): boolean {
-  const outputText = texts.join(" ");
-  const years = outputText.match(/\b(19|20)\d{2}\b/g) ?? [];
-  return years.some((year) => !sourceText.includes(year));
-}
 
 /** Best-effort: null means "nothing generated", the person keeps typing. */
 export async function writeCvFromFacts(input: WriteCvInput): Promise<WriteCvOutput | null> {
@@ -47,7 +43,10 @@ export async function writeCvFromFacts(input: WriteCvInput): Promise<WriteCvOutp
     input.roleTitles.join(" "),
     String(input.yearsExperience ?? ""),
     input.skills.join(" "),
-    ...input.workHistory.map((w) => `${w.employer} ${w.role} ${w.start} ${w.end ?? ""} ${w.description}`),
+    ...input.workHistory.map(
+      (w) =>
+        `${w.employer} ${w.role} ${w.start} ${w.end ?? ""} ${w.description} ${(w.impacts ?? []).join(" ")}`,
+    ),
   ].join("\n");
 
   try {
@@ -64,6 +63,19 @@ export async function writeCvFromFacts(input: WriteCvInput): Promise<WriteCvOutp
         "not confident writers. You are given only structured facts the person " +
         "entered themselves. Write a professional two-to-three sentence summary in " +
         "the first person, and one clear description per work history entry.\n\n" +
+        // Handoff Job 1. An employer's first scan lasts six or seven
+        // seconds and checks job title match, evidence of scale, and
+        // progression. It does not read duty lists. Where the person gave
+        // us numbers, this is what turns them into the thing that gets read.
+        "EVIDENCE, NOT DUTIES. Employers ignore duty lists. They read numbers, " +
+        "percentages and quantities. Where a work entry has 'Numbers they gave', " +
+        "build the description around those, in the shape: what they accomplished, " +
+        "as measured by the number, by doing what. Restate ONLY what they typed.\n\n" +
+        "Where a work entry has NO numbers, write a clean, specific action " +
+        "description instead. Never invent a metric to fill the gap, and never " +
+        "hedge with empty phrases like 'improved efficiency significantly' or " +
+        "'consistently exceeded expectations'. A plain sentence saying what they " +
+        "actually did is worth more than a vague claim.\n\n" +
         "You may ONLY restate facts that appear in the input. This is a hard rule: " +
         "a person could lose a job offer, or worse, for a claim on their CV they " +
         "cannot back up.\n\nAbsolutely forbidden unless the exact fact appears in " +
@@ -71,6 +83,10 @@ export async function writeCvFromFacts(input: WriteCvInput): Promise<WriteCvOutp
         "- Any qualification, certificate, licence, or training\n" +
         "- Any employer, job title, duty, or achievement not stated\n" +
         "- Any year, duration, or date\n" +
+        "- ANY NUMBER AT ALL that does not appear in the input. Not a count, not " +
+        "a percentage, not an amount, not a team size. If they did not type the " +
+        "number, it does not exist. This is checked programmatically after you " +
+        "reply and your whole answer is thrown away if it fails.\n" +
         "- Any skill not stated\n" +
         "- Motivational-poster language or corporate jargon ('dynamic', 'passionate " +
         "self-starter', 'results-driven'). Plain South African English only.\n\n" +
@@ -98,10 +114,16 @@ export async function writeCvFromFacts(input: WriteCvInput): Promise<WriteCvOutp
             input.typedSummary ? `What they wrote about themselves: ${input.typedSummary}` : null,
             input.workHistory.length
               ? `Work history:\n${input.workHistory
-                  .map(
-                    (w, i) =>
-                      `${i + 1}. ${w.role} at ${w.employer} (${w.start} to ${w.current ? "present" : w.end}). Their notes: ${w.description || "(none)"}`,
-                  )
+                  .map((w, i) => {
+                    const impacts = (w.impacts ?? []).filter((x) => x?.trim());
+                    return [
+                      `${i + 1}. ${w.role} at ${w.employer} (${w.start} to ${w.current ? "present" : w.end}).`,
+                      `   Their notes: ${w.description || "(none)"}`,
+                      impacts.length
+                        ? `   Numbers they gave: ${impacts.join("; ")}`
+                        : "   Numbers they gave: (none, so use no numbers for this entry)",
+                    ].join("\n");
+                  })
                   .join("\n")}`
               : "Work history: (none given)",
           ]
@@ -130,8 +152,13 @@ export async function writeCvFromFacts(input: WriteCvInput): Promise<WriteCvOutp
       stripEmDashes(String(d ?? "")).slice(0, 400),
     );
 
-    if (containsInventedYear([summary, ...workDescriptions], sourceText)) {
-      console.error("CV write rejected: output contained a year not present in the input");
+    const invented = inventedNumbers([summary, ...workDescriptions], sourceText);
+    if (invented.length > 0) {
+      // The whole answer goes, not just the offending line: a model that
+      // fabricated one number is not a model whose other sentences have
+      // been earned. The person is told the writing did not work and
+      // spends nothing, which is the right way round.
+      console.error("CV write rejected: output contained numbers not present in the input", invented);
       return null;
     }
 

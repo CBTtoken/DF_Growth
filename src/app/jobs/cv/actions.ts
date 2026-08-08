@@ -9,8 +9,11 @@ import {
 } from "@/lib/jobs/draft-session";
 import {
   sanitizeFreeText,
+  MAX_IMPACTS,
   MAX_ROLES,
   type Availability,
+  type CertificationEntry,
+  type EducationEntry,
   type ExperienceLevel,
   type OccupationPick,
   type StepId,
@@ -18,7 +21,18 @@ import {
 } from "@/lib/jobs/cv-conversation";
 import { AI_POLISH_CAP, polishCvWording } from "@/lib/jobs/ai-polish";
 import { writeCvFromFacts, type WriteCvOutput } from "@/lib/jobs/ai-write";
+import { tailorCvToAdvert } from "@/lib/jobs/ai-tailor";
+import {
+  getSeekerCredits,
+  refundCredit,
+  spendCredit,
+  spendFreeWrite,
+  initializeCreditPurchase,
+} from "@/lib/jobs/credits";
 import { AI_WRITE_CAP, EXPERIENCE_LEVEL_OPTIONS, AVAILABILITY_OPTIONS } from "@/lib/jobs/cv-conversation";
+
+/** Where this CV is going. A nudge on the download step, never a lock. */
+export type CvPurpose = "portal" | "email" | "print";
 
 export type CvRow = {
   id: string;
@@ -35,17 +49,20 @@ export type CvRow = {
   availability: Availability | null;
   skills: string[];
   work_history: WorkHistoryEntry[];
+  education: EducationEntry[];
+  certifications: CertificationEntry[];
   summary: string | null;
   listed: boolean;
   cv_step: StepId;
   cv_template: string;
+  cv_purpose: CvPurpose | null;
   ai_polish_count: number;
   ai_write_count: number;
   ai_recommendations: string[] | null;
 };
 
 const CANDIDATE_COLUMNS =
-  "id, owner_user_id, full_name, phone, email, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, summary, listed, cv_step, cv_template, ai_polish_count, ai_write_count, ai_recommendations";
+  "id, owner_user_id, full_name, phone, email, ofo_occupation_code, secondary_ofo_codes, experience_level, years_experience, suburb, province, availability, skills, work_history, education, certifications, summary, listed, cv_step, cv_template, cv_purpose, ai_polish_count, ai_write_count, ai_recommendations";
 
 /**
  * Server-only, read-only: the row this visitor should be editing, if one
@@ -204,9 +221,12 @@ export type CvPatch = Partial<{
   availability: Availability;
   skills: string[];
   work_history: WorkHistoryEntry[];
+  education: EducationEntry[];
+  certifications: CertificationEntry[];
   summary: string;
   cv_step: StepId;
   cv_template: string;
+  cv_purpose: CvPurpose;
 }>;
 
 /**
@@ -233,7 +253,22 @@ export async function saveCvAnswer(candidateId: string, patch: CvPatch): Promise
     clean.work_history = clean.work_history.map((entry) => {
       const r = sanitizeFreeText(entry.description ?? "");
       if (r.wasRedacted) redacted = true;
-      return { ...entry, description: r.text };
+
+      // The impact lines are free text too, and the same rule applies:
+      // an ID or bank number typed into "what can you put a number to"
+      // never reaches storage. Capped at three, whatever the client
+      // sends, and blanks are dropped so an untouched box never becomes
+      // an empty bullet on the CV.
+      const impacts = (entry.impacts ?? [])
+        .slice(0, MAX_IMPACTS)
+        .map((line) => {
+          const cleaned = sanitizeFreeText(line ?? "");
+          if (cleaned.wasRedacted) redacted = true;
+          return cleaned.text.trim().slice(0, 160);
+        })
+        .filter(Boolean);
+
+      return { ...entry, description: r.text, impacts };
     });
   }
   // Three positions, never more, whatever the client sends: the first
@@ -412,12 +447,17 @@ export async function polishCv(candidateId: string): Promise<
  * successful generation spends the cap.
  */
 export async function writeCv(candidateId: string): Promise<
-  { draft: WriteCvOutput; remaining: number } | { error: string }
+  { draft: WriteCvOutput; remaining: number; spentCredit?: boolean } | { error: string; needsCredits?: boolean }
 > {
   const admin = createAdminClient();
   if (!(await assertOwnership(admin, candidateId))) {
     return { error: "That CV could not be found." };
   }
+
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: row } = await admin
     .from("jobs_candidates")
@@ -428,13 +468,27 @@ export async function writeCv(candidateId: string): Promise<
     .maybeSingle();
 
   if (!row) return { error: "That CV could not be found." };
-  if (row.ai_write_count >= AI_WRITE_CAP) {
-    // The stored draft is still theirs to reuse; only fresh generations
-    // are capped.
+
+  // The free allowance is per person, not per CV (Dewald, 8 August 2026):
+  // a per-CV counter resets the moment somebody starts a second CV, so it
+  // capped nothing. An anonymous draft has no person to count against, so
+  // it falls back to the row's own counter, and that count is carried
+  // into the account's when the draft is claimed at signup.
+  const credits = user ? await getSeekerCredits(user.id) : null;
+  const freeLeft = credits ? credits.freeWritesLeft : Math.max(0, AI_WRITE_CAP - row.ai_write_count);
+  const creditBalance = credits?.balance ?? 0;
+
+  if (freeLeft <= 0 && creditBalance <= 0) {
+    // The stored draft is still theirs to reuse: redisplaying something
+    // already generated must never re-run the model or cost anything.
     if (row.ai_written_draft) {
       return { draft: row.ai_written_draft as WriteCvOutput, remaining: 0 };
     }
-    return { error: "You have used all your AI writing turns for this CV." };
+    return {
+      error:
+        "You have used your two free rewrites. Building your CV, downloading it and applying stay free. A rewrite costs one credit, and R45 buys five.",
+      needsCredits: true,
+    };
   }
 
   const primaryTitle = (row.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
@@ -462,7 +516,24 @@ export async function writeCv(candidateId: string): Promise<
   });
 
   if (!result) {
+    // A failed call costs nothing. Nothing below this line has run, so
+    // neither the free allowance nor a credit has moved.
     return { error: "The writing did not work this time. Please try again in a moment." };
+  }
+
+  // Only a successful generation spends anything. Free turns go first, so
+  // nobody is charged while they still have an allowance left.
+  let spentCredit = false;
+  if (freeLeft > 0) {
+    if (user) await spendFreeWrite(user.id);
+  } else if (user) {
+    spentCredit = await spendCredit(user.id, "Rewrote your CV", candidateId, "rebuild");
+    if (!spentCredit) {
+      return {
+        error: "Your credits ran out just now. Nothing was charged.",
+        needsCredits: true,
+      };
+    }
   }
 
   const { error } = await admin
@@ -475,10 +546,189 @@ export async function writeCv(candidateId: string): Promise<
     .eq("id", candidateId);
   if (error) {
     console.error("Failed to store written draft", error);
+    // Paid for and not delivered. Put it back rather than telling
+    // somebody to take it up with support.
+    if (spentCredit && user) await refundCredit(user.id, "Rewrite could not be saved");
     return { error: "Could not save the draft. Please try again." };
   }
 
-  return { draft: result, remaining: AI_WRITE_CAP - row.ai_write_count - 1 };
+  const remaining = user
+    ? Math.max(0, freeLeft - (spentCredit ? 0 : 1))
+    : Math.max(0, AI_WRITE_CAP - row.ai_write_count - 1);
+
+  return { draft: result, remaining, spentCredit };
+}
+
+/**
+ * Aim this CV at one job, and save the result as a named copy. Costs one
+ * rebuild credit (handoff Job 5).
+ *
+ * The advert is either a live vacancy from our own board, or text the
+ * person pasted from anywhere. Everything the model may and may not do is
+ * enforced in lib/jobs/ai-guard.ts, not in the prompt: no invented number,
+ * no claim the advert asked for that this CV cannot support, and a skill
+ * list reconciled against what they actually have.
+ */
+export async function tailorCv(
+  candidateId: string,
+  input: { vacancyId?: string | null; advertText?: string | null; name: string },
+): Promise<{ id: string; name: string; balance: number } | { error: string; needsCredits?: boolean }> {
+  const admin = createAdminClient();
+  if (!(await assertOwnership(admin, candidateId))) {
+    return { error: "That CV could not be found." };
+  }
+
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Aimed copies belong to an account: they are a set of named documents
+  // somebody comes back to, which a cookie-scoped draft has nowhere to keep.
+  if (!user) {
+    return { error: "Save your CV to an account first, then you can aim it at a job." };
+  }
+
+  const credits = await getSeekerCredits(user.id);
+  if (credits.balance <= 0) {
+    return {
+      error: "You have no rebuild credits. R45 buys five CVs aimed at five different jobs.",
+      needsCredits: true,
+    };
+  }
+
+  // The advert: either one of ours, read server-side so a client cannot
+  // hand us a vacancy id and a body that do not match, or pasted text.
+  let advertText = (input.advertText ?? "").trim();
+  let advertTitle: string | null = null;
+  let vacancyId: string | null = null;
+
+  if (input.vacancyId) {
+    const { data: vacancy } = await admin
+      .from("jobs_vacancies")
+      .select("id, title, description, suburb, province, employment_type, status")
+      .eq("id", input.vacancyId)
+      .maybeSingle();
+    // Published only: aiming a CV at a held or removed advert would spend
+    // a credit on a job nobody can apply for.
+    if (!vacancy || vacancy.status !== "published") {
+      return { error: "That job could not be found. It may have closed." };
+    }
+    vacancyId = vacancy.id;
+    advertTitle = vacancy.title;
+    advertText = [
+      vacancy.title,
+      vacancy.description,
+      [vacancy.suburb, vacancy.province].filter(Boolean).join(", "),
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
+  if (advertText.length < 40) {
+    return { error: "Paste a bit more of the advert, or pick a job from our board." };
+  }
+
+  const { data: row } = await admin
+    .from("jobs_candidates")
+    .select(
+      "summary, work_history, years_experience, skills, secondary_ofo_codes, jobs_ofo_occupations(title)",
+    )
+    .eq("id", candidateId)
+    .maybeSingle();
+  if (!row) return { error: "That CV could not be found." };
+
+  const primaryTitle = (row.jobs_ofo_occupations as unknown as { title: string } | null)?.title;
+  const roleTitles = [
+    ...(primaryTitle ? [primaryTitle] : []),
+    ...((row.secondary_ofo_codes ?? []) as { title: string }[]).map((s) => s.title),
+  ];
+
+  const result = await tailorCvToAdvert({
+    advertTitle,
+    advertText,
+    roleTitles,
+    yearsExperience: row.years_experience,
+    skills: (row.skills ?? []) as string[],
+    workHistory: (row.work_history ?? []) as WorkHistoryEntry[],
+    summary: row.summary,
+  });
+
+  if (!result) {
+    return {
+      error:
+        "We could not aim your CV at that job this time. Nothing was charged. Please try again in a moment.",
+    };
+  }
+
+  const name = sanitizeFreeText(input.name || advertTitle || "Aimed CV").text.trim().slice(0, 80);
+
+  const spent = await spendCredit(user.id, `Aimed your CV at ${name}`, candidateId);
+  if (!spent) {
+    return { error: "Your credits ran out just now. Nothing was charged.", needsCredits: true };
+  }
+
+  const { data: saved, error } = await admin
+    .from("jobs_cv_tailored")
+    .insert({
+      candidate_id: candidateId,
+      owner_user_id: user.id,
+      name,
+      summary: result.summary,
+      work_descriptions: result.workDescriptions,
+      skills_order: result.skillsOrder,
+      source_vacancy_id: vacancyId,
+    })
+    .select("id")
+    .single();
+
+  if (error || !saved) {
+    console.error("Failed to save tailored CV", error);
+    await refundCredit(user.id, `Aimed CV for ${name} could not be saved`);
+    return { error: "Could not save that. Nothing was charged. Please try again." };
+  }
+
+  const after = await getSeekerCredits(user.id);
+  return { id: saved.id, name, balance: after.balance };
+}
+
+/** Open Paystack for a credit purchase. Five rebuilds, R45, one-off. */
+export async function startCreditPurchase(
+  callbackUrl: string,
+): Promise<{ authorizationUrl: string } | { error: string }> {
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user?.email) {
+    return { error: "Save your CV to an account first, then you can buy rebuilds." };
+  }
+
+  return initializeCreditPurchase({
+    ownerUserId: user.id,
+    email: user.email,
+    callbackUrl,
+  });
+}
+
+/** Delete one aimed copy. The base CV is untouched. */
+export async function deleteTailoredCv(tailoredId: string): Promise<{ error?: string }> {
+  const admin = createAdminClient();
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You need to be logged in." };
+
+  const { error } = await admin
+    .from("jobs_cv_tailored")
+    .delete()
+    .eq("id", tailoredId)
+    .eq("owner_user_id", user.id);
+
+  if (error) return { error: "Could not delete that. Please try again." };
+  return {};
 }
 
 /**

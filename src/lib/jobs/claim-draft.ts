@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getDraftCandidateId, clearDraftCandidateId } from "@/lib/jobs/draft-session";
+import { carryDraftWritesIntoAccount } from "@/lib/jobs/credits";
 
 /**
  * Rescuing a CV built before logging in.
@@ -83,7 +84,7 @@ export async function claimDraftForUser(
     .eq("id", draftId)
     .is("owner_user_id", null)
     .is("deleted_at", null)
-    .select("id")
+    .select("id, ai_write_count")
     .maybeSingle();
 
   if (error) console.error("Failed to claim draft CV on login", error);
@@ -92,6 +93,13 @@ export async function claimDraftForUser(
     await clearDraftCandidateId();
     return { claimed: false };
   }
+
+  // The free Write with AI allowance is per person, and an anonymous
+  // draft counts on the row because it has no person yet. Carrying that
+  // count over at the moment of claiming is what closes the loophole:
+  // without it, using both free turns and then signing up would hand out
+  // two more, and doing that repeatedly is free unlimited AI.
+  await carryDraftWritesIntoAccount(userId, claimed.ai_write_count ?? 0);
 
   await clearDraftCandidateId();
   return { claimed: true };

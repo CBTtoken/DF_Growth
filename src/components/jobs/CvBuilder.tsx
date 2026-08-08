@@ -11,11 +11,18 @@ import {
   acceptWrittenCv,
   startDraft,
   startFreshDraft,
+  type CvPurpose,
   type CvRow,
 } from "@/app/jobs/cv/actions";
-import { CV_TEMPLATES } from "@/lib/jobs/pdf/cv-templates";
 import { useJobsPath } from "@/lib/jobs/use-jobs-path";
 import { OfoPicker } from "@/components/jobs/OfoPicker";
+import { impactExamplesFor } from "@/lib/jobs/impact-examples";
+import { CvCheckList } from "@/components/jobs/CvCheckList";
+import { CvDownloadPanel } from "@/components/jobs/CvDownloadPanel";
+import { CvAimPanel, type TailoredSummary } from "@/components/jobs/CvAimPanel";
+import { runCvCheck, type CvCheckItem } from "@/lib/jobs/cv-check";
+import { assembleCv } from "@/lib/jobs/cv-assembly";
+import { AI_POLISH_CAP, CREDITS_PER_PURCHASE, CREDIT_PURCHASE_RANDS } from "@/lib/jobs/cv-conversation";
 import {
   STEP_ORDER,
   nextStep,
@@ -24,16 +31,99 @@ import {
   AVAILABILITY_OPTIONS,
   EXPERIENCE_LEVEL_OPTIONS,
   PROVINCE_OPTIONS,
+  WORKING_SKILL_OPTIONS,
   MAX_ROLES,
-  AI_POLISH_CAP,
-  AI_WRITE_CAP,
+  type CertificationEntry,
+  type EducationEntry,
   type ExperienceLevel,
   type OccupationPick,
   type StepId,
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
 
-const emptyWorkEntry: WorkHistoryEntry = { employer: "", role: "", start: "", end: null, current: true, description: "" };
+const emptyWorkEntry: WorkHistoryEntry = {
+  employer: "",
+  role: "",
+  start: "",
+  end: null,
+  current: true,
+  description: "",
+  impacts: [],
+};
+
+const emptyEducation: EducationEntry = { qualification: "", institution: "", year: "", completed: true };
+const emptyCertification: CertificationEntry = { name: "", issuer: "", year: "" };
+
+/**
+ * "What can you put a number to in this job?"
+ *
+ * Three short lines, three tappable examples, and skipping is one tap
+ * because the Continue button never waits on this. The examples are
+ * PHRASES, never numbers: tapping one seeds the box with "Customers you
+ * served a day" for the person to finish themselves. Putting a number in
+ * a chip would be us writing a fact onto a CV that nobody checked.
+ */
+function ImpactFields({
+  impacts,
+  examples,
+  onChange,
+}: {
+  impacts: string[];
+  examples: string[];
+  onChange: (impacts: string[]) => void;
+}) {
+  const lines = [0, 1, 2].map((i) => impacts[i] ?? "");
+
+  // Always three slots, blanks and all. Blank lines are stripped once, on
+  // the server, in saveCvAnswer, so an untouched box can never become an
+  // empty bullet on the CV and the boxes never renumber under a thumb
+  // mid-typing.
+  function setLine(index: number, value: string) {
+    const next = [...lines];
+    next[index] = value;
+    onChange(next);
+  }
+
+  // The first empty line, which is where a tapped example goes.
+  const firstEmpty = lines.findIndex((l) => !l.trim());
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl bg-neutral-50 p-3">
+      <p className="text-sm font-semibold text-neutral-800">
+        What can you put a number to in this job?
+      </p>
+      <p className="text-xs text-neutral-500">
+        Employers read numbers before anything else. Skip it if you would rather, nothing here is
+        required.
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {examples.map((example) => (
+          <button
+            key={example}
+            type="button"
+            disabled={firstEmpty === -1}
+            onClick={() => firstEmpty !== -1 && setLine(firstEmpty, `${example}: `)}
+            className="rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-medium text-neutral-600 transition hover:border-neutral-400 disabled:opacity-40"
+          >
+            {example}
+          </button>
+        ))}
+      </div>
+      {lines.map((line, i) => (
+        <input
+          key={i}
+          type="text"
+          value={line}
+          onChange={(e) => setLine(i, e.target.value)}
+          placeholder={
+            i === 0 ? "e.g. Served about 200 customers a day" : i === 1 ? "Another one, if you have it" : "And one more"
+          }
+          className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2.5 text-sm text-neutral-900 outline-none focus:border-neutral-900"
+        />
+      ))}
+    </div>
+  );
+}
 
 // Outer wrapper: a brand-new anonymous visitor arrives with no row to
 // resume (Server Components can't write the draft cookie during render,
@@ -46,9 +136,18 @@ export function CvBuilder({
   initialOccupations,
   fromImport = false,
   applyIntent = null,
+  creditBalance = 0,
+  freeWritesLeft = 0,
+  tailored = [],
 }: {
   initialCandidate: CvRow | null;
   initialOccupations: OccupationPick[];
+  /** Rebuild credits this person holds. Read on the server, never here. */
+  creditBalance?: number;
+  /** Free Write with AI turns left, per person rather than per CV. */
+  freeWritesLeft?: number;
+  /** Named, aimed copies of this CV. */
+  tailored?: TailoredSummary[];
   /**
    * Arrived here straight from the CV upload. Dewald, 7 August: "there
    * should also be an option at onboarding to skip all the steps if they
@@ -95,6 +194,9 @@ export function CvBuilder({
       initialOccupations={initialOccupations}
       fromImport={fromImport}
       applyIntent={applyIntent}
+      creditBalance={creditBalance}
+      freeWritesLeft={freeWritesLeft}
+      tailored={tailored}
     />
   );
 }
@@ -104,11 +206,17 @@ function CvBuilderScreens({
   initialOccupations,
   fromImport,
   applyIntent,
+  creditBalance,
+  freeWritesLeft,
+  tailored,
 }: {
   candidate: CvRow;
   initialOccupations: OccupationPick[];
   fromImport: boolean;
   applyIntent: { id: string; title: string } | null;
+  creditBalance: number;
+  freeWritesLeft: number;
+  tailored: TailoredSummary[];
 }) {
   const [id] = useState(candidate.id);
   const [step, setStep] = useState<StepId>(candidate.cv_step ?? "name");
@@ -126,6 +234,13 @@ function CvBuilderScreens({
   const [skills, setSkills] = useState<string[]>(candidate.skills ?? []);
   const [workHistory, setWorkHistory] = useState<WorkHistoryEntry[]>(candidate.work_history ?? []);
   const [draftEntry, setDraftEntry] = useState<WorkHistoryEntry>(emptyWorkEntry);
+  // Which already-added job has its numbers open for editing. One at a
+  // time, so the step does not become a wall on a phone.
+  const [openImpactIndex, setOpenImpactIndex] = useState<number | null>(null);
+  const [education, setEducation] = useState<EducationEntry[]>(candidate.education ?? []);
+  const [draftEducation, setDraftEducation] = useState<EducationEntry>(emptyEducation);
+  const [certifications, setCertifications] = useState<CertificationEntry[]>(candidate.certifications ?? []);
+  const [draftCertification, setDraftCertification] = useState<CertificationEntry>(emptyCertification);
   const [summary, setSummary] = useState(candidate.summary ?? "");
   const [listed, setListedState] = useState(candidate.listed);
   const homeHref = useJobsPath("/");
@@ -149,6 +264,11 @@ function CvBuilderScreens({
 
   const roleLabel = occupations[0]?.title;
   const roleCapReached = occupations.length >= MAX_ROLES;
+  // Example prompts drawn from this person's own OFO sub-major group, so
+  // a plumber is asked about houses finished in a week and a cashier
+  // about till points covered. Examples only: tapping one puts the
+  // PHRASE in the box, never a number.
+  const impactExamples = impactExamplesFor(occupations[0]?.code);
 
   // The skills step shows only skills from the chosen occupations' own
   // branches of the OFO hierarchy (handoff Job 1: a bricklaying skill can
@@ -491,10 +611,31 @@ function CvBuilderScreens({
                 ))}
               </div>
             )}
-            {skills.filter((s) => !branchSkills.includes(s)).length > 0 && (
+            {/* The second labelled group. Templates render these under
+                "Working skills" and the branch ones under "Practical
+                skills", never "hard" and "soft", which do not translate
+                well in plain South African English. */}
+            <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-neutral-400">
+              How you work
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {WORKING_SKILL_OPTIONS.map((label) => (
+                <Chip
+                  key={label}
+                  selected={skills.includes(label)}
+                  onClick={() =>
+                    setSkills((s) => (s.includes(label) ? s.filter((x) => x !== label) : [...s, label]))
+                  }
+                >
+                  {label}
+                </Chip>
+              ))}
+            </div>
+
+            {skills.filter((s) => !branchSkills.includes(s) && !WORKING_SKILL_OPTIONS.includes(s)).length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {skills
-                  .filter((s) => !branchSkills.includes(s))
+                  .filter((s) => !branchSkills.includes(s) && !WORKING_SKILL_OPTIONS.includes(s))
                   .map((label) => (
                     <Chip key={label} selected onClick={() => setSkills((s) => s.filter((x) => x !== label))}>
                       {label} &times;
@@ -527,20 +668,52 @@ function CvBuilderScreens({
           <Question title="Where have you worked before?" subtitle="Add as many as you like. This is optional too.">
             {workHistory.length > 0 && (
               <ul className="mb-4 flex flex-col gap-2">
-                {workHistory.map((w, i) => (
-                  <li key={i} className="flex items-center justify-between rounded-xl border border-neutral-100 bg-neutral-50 px-3 py-2 text-sm">
-                    <span>
-                      <strong>{w.role}</strong> at {w.employer}
-                    </span>
-                    <button
-                      type="button"
-                      className="text-xs font-medium text-red-600"
-                      onClick={() => setWorkHistory((list) => list.filter((_, j) => j !== i))}
-                    >
-                      Remove
-                    </button>
-                  </li>
-                ))}
+                {workHistory.map((w, i) => {
+                  const count = (w.impacts ?? []).filter((x) => x?.trim()).length;
+                  const open = openImpactIndex === i;
+                  return (
+                    <li key={i} className="rounded-xl border border-neutral-100 bg-neutral-50 px-3 py-2 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="min-w-0 break-words">
+                          <strong>{w.role}</strong> at {w.employer}
+                        </span>
+                        <button
+                          type="button"
+                          className="shrink-0 text-xs font-medium text-red-600"
+                          onClick={() => setWorkHistory((list) => list.filter((_, j) => j !== i))}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                      {/* A job added before the numbers question existed,
+                          or one somebody skipped, still needs a way in.
+                          Without this the only route to adding a number
+                          was to delete the job and type it all again. */}
+                      <button
+                        type="button"
+                        onClick={() => setOpenImpactIndex(open ? null : i)}
+                        className="mt-1.5 text-xs font-semibold text-neutral-600 underline underline-offset-2"
+                      >
+                        {count > 0
+                          ? `${count} ${count === 1 ? "number" : "numbers"} added, tap to change`
+                          : "Add a number to this job"}
+                      </button>
+                      {open && (
+                        <div className="mt-2">
+                          <ImpactFields
+                            impacts={w.impacts ?? []}
+                            examples={impactExamples}
+                            onChange={(impacts) =>
+                              setWorkHistory((list) =>
+                                list.map((entry, j) => (j === i ? { ...entry, impacts } : entry)),
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
 
@@ -560,6 +733,19 @@ function CvBuilderScreens({
                 <TextField value={draftEntry.end ?? ""} onChange={(v) => setDraftEntry((d) => ({ ...d, end: v }))} placeholder="Year you left" inputMode="numeric" />
               )}
               <TextField value={draftEntry.description} onChange={(v) => setDraftEntry((d) => ({ ...d, description: v }))} placeholder="What you did there (optional)" />
+
+              {/* The numbers step. The biggest quality lever in the whole
+                  product: an employer's first scan lasts six or seven
+                  seconds and looks for evidence of scale, not a duty list.
+                  Our AI is forbidden from inventing facts, which means it
+                  cannot write an impact bullet unless the person supplies
+                  the number. So we ask for the number. */}
+              <ImpactFields
+                impacts={draftEntry.impacts ?? []}
+                examples={impactExamples}
+                onChange={(impacts) => setDraftEntry((d) => ({ ...d, impacts }))}
+              />
+
               <button
                 type="button"
                 disabled={!draftEntry.employer.trim() || !draftEntry.role.trim()}
@@ -575,6 +761,150 @@ function CvBuilderScreens({
 
             <Primary disabled={saving} onClick={() => go({ work_history: workHistory })}>
               {workHistory.length > 0 ? forwardLabel : "Skip, I have no work history yet"}
+            </Primary>
+          </Question>
+        )}
+
+        {step === "education" && (
+          <Question
+            title="What schooling do you have?"
+            subtitle="Whatever you finished counts, and so does something you started. Optional."
+          >
+            {education.length > 0 && (
+              <ul className="mb-2 flex flex-col gap-2">
+                {education.map((e, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-neutral-50 px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 break-words">
+                      <strong>{e.qualification}</strong>
+                      {e.institution ? `, ${e.institution}` : ""}
+                      {e.year ? `, ${e.year}` : ""}
+                      {e.completed ? "" : " (not finished)"}
+                    </span>
+                    <button
+                      type="button"
+                      className="shrink-0 text-xs font-medium text-red-600"
+                      onClick={() => setEducation((list) => list.filter((_, j) => j !== i))}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-col gap-3 rounded-xl border border-neutral-100 p-4">
+              <TextField
+                value={draftEducation.qualification}
+                onChange={(v) => setDraftEducation((d) => ({ ...d, qualification: v }))}
+                placeholder="e.g. Matric, N3 Electrical, Grade 10"
+              />
+              <TextField
+                value={draftEducation.institution}
+                onChange={(v) => setDraftEducation((d) => ({ ...d, institution: v }))}
+                placeholder="School or college (optional)"
+              />
+              <TextField
+                value={draftEducation.year}
+                onChange={(v) => setDraftEducation((d) => ({ ...d, year: v }))}
+                placeholder="Year (optional)"
+                inputMode="numeric"
+              />
+              <div className="flex gap-2">
+                <Chip
+                  selected={draftEducation.completed}
+                  onClick={() => setDraftEducation((d) => ({ ...d, completed: true }))}
+                >
+                  I finished it
+                </Chip>
+                {/* Not finished is worth showing rather than hiding: a
+                    part-finished N3 is real training, and leaving it off
+                    is us editing somebody's history for them. */}
+                <Chip
+                  selected={!draftEducation.completed}
+                  onClick={() => setDraftEducation((d) => ({ ...d, completed: false }))}
+                >
+                  I started it
+                </Chip>
+              </div>
+              <button
+                type="button"
+                disabled={!draftEducation.qualification.trim()}
+                onClick={() => {
+                  setEducation((list) => [...list, draftEducation]);
+                  setDraftEducation(emptyEducation);
+                }}
+                className="rounded-full border border-neutral-900 px-4 py-2 text-sm font-semibold text-neutral-900 disabled:opacity-40"
+              >
+                Add this
+              </button>
+            </div>
+            <Primary disabled={saving} onClick={() => go({ education })}>
+              {education.length > 0 ? forwardLabel : "Skip, I have none to add"}
+            </Primary>
+          </Question>
+        )}
+
+        {step === "certifications" && (
+          <Question
+            title="Any tickets, licences or courses?"
+            subtitle="A driver's licence, a red seal, a first aid course, a forklift ticket. Optional."
+          >
+            {certifications.length > 0 && (
+              <ul className="mb-2 flex flex-col gap-2">
+                {certifications.map((c, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-neutral-100 bg-neutral-50 px-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0 break-words">
+                      <strong>{c.name}</strong>
+                      {c.issuer ? `, ${c.issuer}` : ""}
+                      {c.year ? `, ${c.year}` : ""}
+                    </span>
+                    <button
+                      type="button"
+                      className="shrink-0 text-xs font-medium text-red-600"
+                      onClick={() => setCertifications((list) => list.filter((_, j) => j !== i))}
+                    >
+                      Remove
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-col gap-3 rounded-xl border border-neutral-100 p-4">
+              <TextField
+                value={draftCertification.name}
+                onChange={(v) => setDraftCertification((d) => ({ ...d, name: v }))}
+                placeholder="e.g. Code 10 licence, Forklift ticket"
+              />
+              <TextField
+                value={draftCertification.issuer}
+                onChange={(v) => setDraftCertification((d) => ({ ...d, issuer: v }))}
+                placeholder="Who gave it to you (optional)"
+              />
+              <TextField
+                value={draftCertification.year}
+                onChange={(v) => setDraftCertification((d) => ({ ...d, year: v }))}
+                placeholder="Year (optional)"
+                inputMode="numeric"
+              />
+              <button
+                type="button"
+                disabled={!draftCertification.name.trim()}
+                onClick={() => {
+                  setCertifications((list) => [...list, draftCertification]);
+                  setDraftCertification(emptyCertification);
+                }}
+                className="rounded-full border border-neutral-900 px-4 py-2 text-sm font-semibold text-neutral-900 disabled:opacity-40"
+              >
+                Add this
+              </button>
+            </div>
+            <Primary disabled={saving} onClick={() => go({ certifications })}>
+              {certifications.length > 0 ? forwardLabel : "Skip, I have none"}
             </Primary>
           </Question>
         )}
@@ -621,13 +951,18 @@ function CvBuilderScreens({
               setWorkHistory(wh);
             }}
             initialTemplate={candidate.cv_template}
+            initialPurpose={candidate.cv_purpose}
             initialPolishCount={candidate.ai_polish_count}
-            initialWriteCount={candidate.ai_write_count}
             initialRecommendations={candidate.ai_recommendations ?? []}
             listed={listed}
             onListedChange={setListedState}
             isLoggedIn={!!candidate.owner_user_id}
             setError={setError}
+            education={education}
+            certifications={certifications}
+            creditBalance={creditBalance}
+            freeWritesLeft={freeWritesLeft}
+            tailored={tailored}
           />
         )}
       </div>
@@ -779,13 +1114,18 @@ function ReviewStep({
   summary,
   onPolished,
   initialTemplate,
+  initialPurpose,
   initialPolishCount,
-  initialWriteCount,
   initialRecommendations,
   listed,
   onListedChange,
   isLoggedIn,
   setError,
+  education,
+  certifications,
+  creditBalance,
+  freeWritesLeft,
+  tailored,
 }: {
   candidateId: string;
   pdfPrefix: string;
@@ -810,13 +1150,18 @@ function ReviewStep({
   summary: string;
   onPolished: (summary: string | null, workHistory: WorkHistoryEntry[]) => void;
   initialTemplate: string;
+  initialPurpose: CvPurpose | null;
   initialPolishCount: number;
-  initialWriteCount: number;
   initialRecommendations: string[];
   listed: boolean;
   onListedChange: (v: boolean) => void;
   isLoggedIn: boolean;
   setError: (e: string | null) => void;
+  education: EducationEntry[];
+  certifications: CertificationEntry[];
+  creditBalance: number;
+  freeWritesLeft: number;
+  tailored: TailoredSummary[];
 }) {
   const [toggling, startToggling] = useTransition();
   const [deleting, startDeleting] = useTransition();
@@ -825,9 +1170,9 @@ function ReviewStep({
   const [accepting, startAccepting] = useTransition();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleted, setDeleted] = useState(false);
-  const [template, setTemplate] = useState(initialTemplate);
   const [polishCount, setPolishCount] = useState(initialPolishCount);
-  const [writeCount, setWriteCount] = useState(initialWriteCount);
+  const [writesLeft, setWritesLeft] = useState(freeWritesLeft);
+  const [credits, setCredits] = useState(creditBalance);
   // The AI-written draft under review: nothing in it is saved to the CV
   // until the person explicitly accepts it, and every part stays editable
   // in place first (handoff Job 3).
@@ -839,6 +1184,41 @@ function ReviewStep({
   const availabilityLabel = AVAILABILITY_OPTIONS.find((a) => a.id === availability)?.label;
   const polishRemaining = AI_POLISH_CAP - polishCount;
   const hasPolishableText = summary.trim().length > 0 || workHistory.some((w) => (w.description ?? "").trim());
+
+  // The CV check, computed here from live screen state so it updates the
+  // moment somebody fixes something, rather than on the next page load.
+  // The two-page verdict comes from the same assembly the renderer uses,
+  // so the warning and the file can never disagree.
+  const assembly = assembleCv({
+    fullName,
+    phone,
+    email: null,
+    primaryRole: roleLabels[0] ?? null,
+    otherRoles: roleLabels.slice(1),
+    yearsExperience: years ? Number(years) : null,
+    suburb,
+    province,
+    availabilityLabel: availabilityLabel ?? null,
+    skills: skillLabels,
+    workHistory,
+    education,
+    certifications,
+    summary,
+  });
+
+  const checkItems: CvCheckItem[] = runCvCheck({
+    fullName,
+    phone,
+    primaryRole: roleLabels[0] ?? null,
+    suburb,
+    province,
+    summary,
+    skills: skillLabels,
+    workHistory,
+    education,
+    certifications,
+    assembly,
+  });
 
   if (deleted) {
     return (
@@ -909,10 +1289,16 @@ function ReviewStep({
         </ReviewRow>
       </div>
 
+      {/* The CV check. Replaces a percentage that told somebody they were
+          70% done and nothing about which 30% mattered. Every outstanding
+          item is a tap straight to the screen that fixes it. */}
+      <CvCheckList items={checkItems} onFix={onEdit} />
+
       {/* Write with AI: drafts the whole CV's prose from the answers
           already given, restating only supplied facts. Shown for review
-          and editing, applied only on explicit acceptance. Capped. */}
-      {!draft && AI_WRITE_CAP - writeCount > 0 && (
+          and editing, applied only on explicit acceptance. Two free turns
+          per person, then a credit. */}
+      {!draft && (writesLeft > 0 || credits > 0) && (
         <button
           type="button"
           disabled={writing}
@@ -925,15 +1311,28 @@ function ReviewStep({
                 return;
               }
               setDraft(result.draft);
-              setWriteCount(AI_WRITE_CAP - result.remaining);
+              if (result.spentCredit) setCredits((c) => Math.max(0, c - 1));
+              else setWritesLeft(result.remaining);
             })
           }
           className="w-full rounded-full bg-neutral-900 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-neutral-800 disabled:opacity-50"
         >
           {writing
             ? "Writing your CV..."
-            : `Write my CV with AI (${AI_WRITE_CAP - writeCount} ${AI_WRITE_CAP - writeCount === 1 ? "turn" : "turns"} left)`}
+            : writesLeft > 0
+              ? `Write my CV with AI (${writesLeft} free ${writesLeft === 1 ? "rewrite" : "rewrites"} left)`
+              : "Write my CV with AI (uses 1 credit)"}
         </button>
+      )}
+
+      {/* The honest explanation at the moment the free allowance runs out,
+          rather than a disabled button with no reason on it. */}
+      {!draft && writesLeft === 0 && credits === 0 && (
+        <p className="rounded-xl bg-neutral-50 px-4 py-3 text-xs text-neutral-600">
+          You have used your two free rewrites. Building your CV, editing it, downloading it, being
+          found and applying all stay free. A rewrite aimed at a job costs one credit, and R
+          {CREDIT_PURCHASE_RANDS} buys {CREDITS_PER_PURCHASE}.
+        </p>
       )}
 
       {draft && (
@@ -1043,40 +1442,26 @@ function ReviewStep({
         </div>
       )}
 
-      {/* Three looks over the same content, same structural idea as
-          KatisoBiz's document templates. */}
-      <div className="flex flex-col gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">Choose a look</p>
-        <div className="flex gap-2">
-          {CV_TEMPLATES.map((t) => (
-            <Chip
-              key={t.id}
-              selected={template === t.id}
-              onClick={() => {
-                setTemplate(t.id);
-                void saveCvAnswer(candidateId, { cv_template: t.id });
-              }}
-            >
-              {t.label}
-            </Chip>
-          ))}
-        </div>
-      </div>
+      {/* Where it is going, which look, and both formats. Five templates,
+          all free, and the recommendation is a nudge rather than a lock. */}
+      <CvDownloadPanel
+        candidateId={candidateId}
+        pdfPrefix={pdfPrefix}
+        initialTemplate={initialTemplate}
+        initialPurpose={initialPurpose}
+        overflowingSection={assembly.fit.overflowing ? assembly.fit.longestSection : null}
+      />
 
-      <a
-        href={`${pdfPrefix}/${candidateId}/pdf`}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex w-full items-center justify-center rounded-full bg-neutral-900 px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-neutral-800"
-      >
-        Download my CV (PDF)
-      </a>
-      <a
-        href={`${pdfPrefix}/${candidateId}/docx`}
-        className="inline-flex w-full items-center justify-center rounded-full border border-neutral-200 px-6 py-3.5 text-sm font-semibold text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
-      >
-        Download as Word
-      </a>
+      {/* Aim it at one job. The reason somebody buys rebuilds, explained
+          before the paywall rather than at it. */}
+      <CvAimPanel
+        candidateId={candidateId}
+        pdfPrefix={pdfPrefix}
+        balance={credits}
+        tailored={tailored}
+        isLoggedIn={isLoggedIn}
+        signupHref={signupHref}
+      />
 
       {/* They came here to apply for one specific job. Offer that job, by
           name, above everything else: the walkthrough's worst dead end was

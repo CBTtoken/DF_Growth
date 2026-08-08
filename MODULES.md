@@ -413,8 +413,8 @@ grace enforced by cron.
 
 **What it is not:** A match-scoring engine (alerts and written reasoning
 only, never scores), a file store (uploads are never kept), a place that
-ever charges a job seeker, or an auto-poster of people to Facebook (roles
-may be posted, people never).
+ever charges a job seeker to build, download, be found or apply, or an
+auto-poster of people to Facebook (roles may be posted, people never).
 
 **Status:** Live on main since 7 August 2026, including the pre-launch
 rebuild (OFO 2021 taxonomy with 1,511 occupations and 5,946 synonyms,

@@ -140,6 +140,48 @@ export default async function HowItWorksPage() {
           </div>
         </section>
 
+        {/* The longer version of the two promises the home page states in
+            short (handoff Job 8). Both are already true of the product;
+            neither was written down anywhere a person would find it. */}
+        <section className="mt-8 rounded-2xl border border-neutral-100 bg-white p-5 sm:p-6">
+          <h2 className="text-xl font-extrabold text-neutral-ink">We never make anything up</h2>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-700">
+            Every other CV tool sells you an AI that writes your CV. Ours does the opposite, on
+            purpose. It does not invent a job, a date, a number, a qualification or a skill. It takes
+            what you typed and puts it in the order and the words an employer expects to see.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-700">
+            This is enforced in the software, not just asked for. If our AI produces a number you did
+            not give us, the whole answer is thrown away and you are not charged for it. That is why we
+            ask you what you can put a number to in each job: we cannot write that your team was six
+            people unless you tell us it was six people.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-700">
+            You read every line before it goes anywhere near your CV, and you can change any of it. The
+            point is simple: nothing on your CV should be something you cannot explain in the
+            interview.
+          </p>
+
+          <h2 className="mt-8 text-xl font-extrabold text-neutral-ink">Aim your CV at the job</h2>
+          <p className="mt-2 text-sm leading-relaxed text-neutral-700">
+            The single most useful thing you can do with a CV is mirror the words used in the advert
+            you are answering. Large employers and every recruitment agency run CVs through software
+            before a person reads them, and that software is looking for the advert&apos;s own words.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-700">
+            Pick a job from our board, or paste an advert from anywhere, and we rewrite your CV to lead
+            with the experience that job is asking for, using your own facts. Your skills are reordered
+            so the ones the advert wants come first. If the advert asks for something you have not
+            done, we leave it out rather than claiming it. Each aimed CV saves under a name you choose,
+            so you always know which one went where.
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-neutral-700">
+            Building your CV, downloading it, being found and applying are free, always. Two rewrites
+            are free too. After that, R45 buys five CVs aimed at five different jobs, and they never
+            expire.
+          </p>
+        </section>
+
         <section className="mt-8 rounded-2xl border border-neutral-100 bg-neutral-50 p-5 sm:p-6">
           <h2 className="text-xl font-extrabold text-neutral-ink">If you have a job to fill</h2>
           <StepList steps={EMPLOYER_STEPS} accent={false} />

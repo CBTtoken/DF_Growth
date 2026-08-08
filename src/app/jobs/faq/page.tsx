@@ -22,9 +22,33 @@ export const metadata: Metadata = {
 type Qa = { q: string; a: React.ReactNode };
 
 const SEEKER_QA: Qa[] = [
+  // The old answer was "Nothing, ever". Rebuild credits make that false
+  // as written, and a promise that is false in one place is not worth
+  // having anywhere. What is free is still the whole product; the answer
+  // now names exactly what is free and exactly what the R45 is for.
   {
-    q: "What does it cost me?",
-    a: "Nothing, ever. Building your CV, downloading it as a PDF or a Word file, being found by employers, and applying for jobs are all free for job seekers. There is no paid version for you and there never will be. Employers pay to post jobs, and that is what pays for this.",
+    q: "Do I have to pay for anything?",
+    a: (
+      <>
+        <strong>Free forever, and never behind a payment:</strong> building your CV, editing it,
+        importing one you already have, all five looks, both file formats, applying for a job, being
+        found by employers, and the spelling and wording check. There is no subscription for job
+        seekers and there never will be.
+        <br />
+        <br />
+        <strong>The one paid thing:</strong> after two free rewrites, having our AI rewrite your CV
+        again costs one credit. R45 buys five, which is five CVs aimed at five different jobs. Credits
+        never expire. They are not refundable once spent, and nothing is charged if a rewrite fails.
+        <br />
+        <br />
+        You never need to buy anything to build a CV, download it, be found or apply. Employers pay to
+        post jobs, and that is what pays for the rest.
+      </>
+    ),
+  },
+  {
+    q: "Does the AI write my CV for me?",
+    a: "No, and that is deliberate. Our AI does not invent jobs, dates, numbers or skills. It takes the facts you typed in and puts them in the order and the words an employer expects to see. If you did not tell us a number, no number appears. If a job advert asks for a ticket you do not have, we do not claim it. You read every line before you use it, and you can change anything. Every other CV tool sells you the opposite, and the opposite is what gets people caught out in an interview.",
   },
   {
     q: "Do I need an account?",

@@ -59,9 +59,14 @@ export function JobsLanding({ data }: { data: JobsLandingData }) {
       <section className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 px-4 pb-8 sm:grid-cols-2 sm:px-6">
         <div className="flex flex-col rounded-2xl border border-neutral-100 bg-accent-light p-6">
           <h2 className="text-xl font-extrabold text-neutral-ink">I am looking for work</h2>
+          {/* "Nothing here ever costs you money" had to go. Rebuild
+              credits make it false as written, and the promise stays true
+              in substance only if the wording says exactly what is free.
+              Dewald's wording, 8 August 2026. */}
           <p className="mt-2 flex-1 text-sm text-neutral-700">
-            Build a professional CV on your phone in minutes, free. Download it, apply with one tap, and be
-            found. We never ask for your ID number, and nothing here ever costs you money.
+            Build a professional CV on your phone in minutes. Download it, apply with one tap, and be
+            found. We never ask for your ID number. Build your CV, download it, be found and apply. All
+            free, always.
           </p>
           <Link href={hrefs.cv} className="btn-accent-lg mt-4">
             Build my free CV
@@ -90,6 +95,42 @@ export function JobsLanding({ data }: { data: JobsLandingData }) {
           >
             See the jobs board
           </Link>
+        </div>
+      </section>
+
+      {/* Two things that are already true of this product and were
+          invisible to anybody visiting it (handoff Job 8).
+
+          The first is the whole differentiator. Every competitor's pitch
+          is "AI writes your CV". Ours is the opposite, and it is the more
+          trustworthy offer to somebody worried about being caught out in
+          an interview.
+
+          The second is the reason anybody would ever buy a rebuild, so it
+          has to be explained BEFORE the paywall rather than at it.
+
+          Rules for this band, from the handoff: no numbers we cannot
+          stand behind, no invented success stories, no testimonials. It
+          explains what happens, nothing more. */}
+      <section className="mx-auto w-full max-w-4xl px-4 pb-8 sm:px-6">
+        <div className="grid grid-cols-1 gap-4 rounded-2xl border border-neutral-100 bg-neutral-50 p-6 sm:grid-cols-2">
+          <div>
+            <h3 className="text-base font-extrabold text-neutral-ink">We never make anything up</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-neutral-700">
+              Our AI does not invent jobs, dates, numbers or skills. It takes what you tell us and puts
+              it in the order and the words an employer expects to see. Nothing goes on your CV that you
+              did not tell us. You check every line before you use it, and you can change anything.
+            </p>
+          </div>
+          <div>
+            <h3 className="text-base font-extrabold text-neutral-ink">Aim your CV at the job</h3>
+            <p className="mt-1.5 text-sm leading-relaxed text-neutral-700">
+              Employers look for their own words on your CV. Pick a job from our board and we rewrite
+              yours to lead with the experience that job is asking for, using your own facts. If the job
+              wants something you have not done, we leave it out. Save each one, so you know which CV
+              went where.
+            </p>
+          </div>
         </div>
       </section>
 
