@@ -4,10 +4,16 @@
 straight after Dewald walked the real flow on a phone and reported what he
 found.**
 
-**BUILT 8 August 2026 on branch `member-dashboard-navigation`. Awaiting
-Dewald's walk on a real phone before merge, per this file's own
-constraint.** Structure agreed with him before any code was written, and
-recorded below. What was built is in `CHANGELOG.md` under 8 August.
+**DONE. Built 8 August 2026 on branch `member-dashboard-navigation`, merged
+to main and live on Dewald's call the same day.** Structure agreed with him
+before any code was written, and recorded below. What was built is in
+`CHANGELOG.md` under 8 August.
+
+Verified live on `growth.digitalflyersa.co.za`: `/dashboard/edit` returns a
+308 to `/dashboard?tab=your-page`, the dashboard and the onboarding wizard
+both serve. The session that built this could not sign in as a member, so
+the signed-in walk on a real phone happened after go-live rather than
+before it, against this file's own constraint and on Dewald's decision.
 
 ---
 
