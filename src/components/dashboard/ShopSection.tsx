@@ -43,6 +43,7 @@ export type ShopProduct = {
   title: string;
   sku: string;
   description: string | null;
+  collection: string | null;
   base_price_cents: number;
   image_paths: string[];
   is_featured: boolean;
@@ -126,6 +127,12 @@ export function ShopSection({
   const [showAddForm, setShowAddForm] = useState(false);
   const [showCouponForm, setShowCouponForm] = useState(false);
 
+  // The group names already in use, offered back as suggestions when the
+  // member names the next one. Typing "Moringa Range" against an existing
+  // "Moringa range" would split one section into two on the live shop, and a
+  // free text field with no memory is how that happens.
+  const collections = [...new Set(products.map((p) => p.collection).filter((c): c is string => Boolean(c)))];
+
   function handleToggle() {
     const next = !enabled;
     setEnabled(next);
@@ -196,12 +203,12 @@ export function ShopSection({
             )}
             <ul className="flex flex-col gap-2">
               {products.map((p) => (
-                <ProductRow key={p.id} product={p} shopSlug={shopSlug} />
+                <ProductRow key={p.id} product={p} shopSlug={shopSlug} collections={collections} />
               ))}
             </ul>
             <CsvUpload />
             {showAddForm ? (
-              <ProductForm onDone={() => setShowAddForm(false)} />
+              <ProductForm onDone={() => setShowAddForm(false)} collections={collections} />
             ) : (
               <button
                 type="button"
@@ -666,7 +673,15 @@ function CsvUpload() {
  * rather than a row of tiny links, the picture manager is inline instead of
  * behind a modal, and nothing here needs a keyboard.
  */
-function ProductRow({ product, shopSlug }: { product: ShopProduct; shopSlug: string | null }) {
+function ProductRow({
+  product,
+  shopSlug,
+  collections,
+}: {
+  product: ShopProduct;
+  shopSlug: string | null;
+  collections: string[];
+}) {
   const [editing, setEditing] = useState(false);
   const [panel, setPanel] = useState<"none" | "pictures" | "options">("none");
   const [isPending, startTransition] = useTransition();
@@ -685,7 +700,7 @@ function ProductRow({ product, shopSlug }: { product: ShopProduct; shopSlug: str
     });
   }
 
-  if (editing) return <ProductForm product={product} onDone={() => setEditing(false)} />;
+  if (editing) return <ProductForm product={product} onDone={() => setEditing(false)} collections={collections} />;
 
   return (
     <li className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm">
@@ -1067,7 +1082,15 @@ function OptionForm({
   );
 }
 
-function ProductForm({ product, onDone }: { product?: ShopProduct; onDone: () => void }) {
+function ProductForm({
+  product,
+  onDone,
+  collections,
+}: {
+  product?: ShopProduct;
+  onDone: () => void;
+  collections: string[];
+}) {
   const boundSave = saveProduct.bind(null, product?.id ?? null);
   const [state, formAction, pending] = useActionState(boundSave, null);
 
@@ -1118,6 +1141,30 @@ function ProductForm({ product, onDone }: { product?: ShopProduct; onDone: () =>
           placeholder="What it is, what it is made of, how big it is. This is what a buyer reads before deciding."
           className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
         />
+      </label>
+
+      {/* Only worth asking once a shop is big enough for it to matter. Below
+          about eight products a heading over every group is more furniture
+          than help, and the storefront ignores a lone collection anyway. */}
+      <label className="flex flex-col gap-1">
+        <span className="text-xs font-medium text-gray-600">Group it under (optional)</span>
+        <input
+          name="collection"
+          defaultValue={product?.collection ?? ""}
+          list="shop-collections"
+          placeholder="Moringa range"
+          maxLength={60}
+          className="rounded-lg border border-gray-300 px-3 py-2 text-gray-900"
+        />
+        <span className="text-xs text-gray-500">
+          Products sharing a group get their own heading on your shop, so buyers can jump straight
+          to the part they came for. Leave it blank and everything shows in one list.
+        </span>
+        <datalist id="shop-collections">
+          {collections.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
       </label>
 
       {/* Off by default, and that is the deliberate choice. A shop that says

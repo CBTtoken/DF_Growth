@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useCart } from "@/components/shop/CartProvider";
+import { OptionPicker, PILL_LIMIT } from "@/components/shop/OptionPicker";
 import { readableTextOn } from "@/lib/color";
 import {
   shopImageUrl,
@@ -150,7 +151,23 @@ export function ProductDetail({
           </p>
         )}
 
-        {options.length > 1 && (
+        {/* Past a dozen the pills below stop being a choice and become a
+            paragraph to read, so the same options become a searchable list.
+            See OptionPicker for why the threshold sits where it does. */}
+        {options.length > PILL_LIMIT && (
+          <OptionPicker
+            options={options}
+            selectedId={selected?.id ?? null}
+            onSelect={(id) => {
+              setVariantId(id);
+              setAdded(false);
+            }}
+            primaryColor={primaryColor}
+            trackStock={product.track_stock}
+          />
+        )}
+
+        {options.length > 1 && options.length <= PILL_LIMIT && (
           <fieldset className="flex flex-col gap-2">
             <legend className="text-xs font-semibold uppercase tracking-wide text-gray-500">Choose an option</legend>
             <div className="flex flex-wrap gap-2">

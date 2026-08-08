@@ -26,6 +26,9 @@ export const shopProductSchema = z.object({
   title: z.string().trim().min(1, "Enter a product title").max(200),
   sku: z.string().trim().max(60).optional().or(z.literal("")),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
+  // The group heading this product sits under on the storefront. Optional,
+  // and left blank by every shop small enough not to need it.
+  collection: z.string().trim().max(60).optional().or(z.literal("")),
   basePrice: z.coerce.number().min(0, "Enter a price of 0 or more"),
   weightKg: z.coerce.number().min(0).default(0),
   lengthCm: z.coerce.number().min(0).default(0),

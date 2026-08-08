@@ -35,6 +35,9 @@ export type StorefrontProduct = {
   track_stock: boolean;
   price_pending: boolean;
   position: number;
+  /** Group heading on the storefront, or null for an ungrouped product. */
+  collection: string | null;
+  collection_position: number;
   created_at: string;
   variants: ShopVariant[];
 };
@@ -60,7 +63,7 @@ export type ShopOwner = {
 };
 
 const PRODUCT_COLUMNS =
-  "id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, price_pending, position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)";
+  "id, slug, title, description, base_price_cents, image_paths, is_featured, track_stock, price_pending, position, collection, collection_position, created_at, shop_product_variants(id, sku, descriptor, price_cents, stock_quantity, is_active)";
 
 type RawProduct = Omit<StorefrontProduct, "variants" | "image_paths"> & {
   image_paths: unknown;
@@ -173,11 +176,53 @@ export const getStorefrontProducts = cache(async function getStorefrontProducts(
     .select(PRODUCT_COLUMNS)
     .eq("growth_client_id", growthClientId)
     .eq("status", "active")
+    .order("collection_position", { ascending: true })
     .order("position", { ascending: true })
     .order("created_at", { ascending: false });
 
   return ((data ?? []) as unknown as RawProduct[]).map(shapeProduct);
 });
+
+/**
+ * The storefront split into the member's own groups.
+ *
+ * Returns a single unnamed group when a shop has no collections set, which is
+ * every shop that existed before this and any small one that never needs it.
+ * The caller renders that case exactly as it always did, so grouping only
+ * appears where a member has actually asked for it.
+ *
+ * A product with no collection in a shop that otherwise uses them is not an
+ * error and is not hidden: it falls into a trailing "More" group, because
+ * silently dropping something a member has listed for sale is the one outcome
+ * worse than an untidy heading.
+ */
+export type ShopCollection = { name: string | null; products: StorefrontProduct[] };
+
+export function groupByCollection(products: StorefrontProduct[]): ShopCollection[] {
+  const named = products.filter((p) => p.collection?.trim());
+  if (named.length === 0) return [{ name: null, products }];
+
+  const groups: ShopCollection[] = [];
+  for (const product of products) {
+    const name = product.collection?.trim() || null;
+    const last = groups.at(-1);
+    // Products already arrive sorted by collection_position then position, so
+    // a run of the same name is one group and no re-sorting is needed.
+    if (last && last.name === name) last.products.push(product);
+    else groups.push({ name, products: [product] });
+  }
+
+  // Ungrouped leftovers go last under one heading rather than interrupting
+  // the named runs wherever their position happens to fall.
+  const loose = groups.filter((g) => g.name === null).flatMap((g) => g.products);
+  const kept = groups.filter((g) => g.name !== null);
+  return loose.length ? [...kept, { name: "More", products: loose }] : kept;
+}
+
+/** A URL-safe anchor for a collection heading, used by the jump links. */
+export function collectionAnchor(name: string): string {
+  return `c-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+}
 
 /** One product by its slug within one shop, or null. */
 export const getProductBySlug = cache(async function getProductBySlug(
@@ -236,6 +281,37 @@ export function fromPriceCents(product: StorefrontProduct): number {
 /** Whether a product has more than one thing to choose between. */
 export function hasChoices(product: StorefrontProduct): boolean {
   return product.variants.filter((v) => Object.keys(v.descriptor ?? {}).length > 0).length > 1;
+}
+
+/**
+ * What the choice on a product is called, taken from the member's own words.
+ *
+ * A variant descriptor is a plain object the member typed, so its last key is
+ * the thing being chosen: "Fragrance", "Flavour", "Size". Naming it on the
+ * card is what tells somebody scrolling that one tile hides fifty-one scents
+ * and another is a single jar, which the price alone cannot say.
+ *
+ * Returns null when there is no real choice, and never invents a label.
+ */
+export function optionSummary(product: StorefrontProduct): string | null {
+  const named = product.variants.filter((v) => Object.keys(v.descriptor ?? {}).length > 0);
+  if (named.length < 2) return null;
+
+  const keys = Object.keys(named[0].descriptor ?? {});
+  const key = keys.at(-1);
+  if (!key) return null;
+
+  // Count the distinct values of that key, not the variants: a product with
+  // ten fragrances for her and ten for him offers ten fragrances, not twenty.
+  const values = new Set(named.map((v) => v.descriptor?.[key]).filter(Boolean));
+  const noun = key.toLowerCase();
+  return `${values.size} ${values.size === 1 ? noun : pluralise(noun)}`;
+}
+
+function pluralise(word: string): string {
+  if (/(s|x|z|ch|sh)$/.test(word)) return `${word}es`;
+  if (/[^aeiou]y$/.test(word)) return `${word.slice(0, -1)}ies`;
+  return `${word}s`;
 }
 
 /**

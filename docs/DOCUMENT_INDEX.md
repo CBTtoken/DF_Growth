@@ -45,10 +45,12 @@ Last verified 3 August 2026.
 
 | Document | Where |
 |---|---|
-| `Report_WeCare_Products.md` | `docs/` |
+| `Report_WeCare_Products.md` | `docs/` | First build, 2 Aug 2026. Still the record of that pass; its open questions are answered in v2. |
+| `Report_WeCare_Products_v2.md` | `docs/` | Second pass, 8 Aug 2026. Her price lists and photography; 22 products; shop collections and the searchable option picker. **Read this one first.** |
 | `Report_JettingWorx.md` | `docs/` |
 | `JettingWorx_Client_Email.md` | `docs/` |
-| `WeCare_Client_Email.md` | `docs/` |
+| `WeCare_Client_Email.md` | `docs/` | Superseded by v2. |
+| `WeCare_Client_Email_v2.md` | `docs/` | Current. Shop open, four photos and a town still wanted, Paystack push. |
 | `Partner_Outreach_Emails.md` | `docs/` |
 
 ## BY PRODUCT
