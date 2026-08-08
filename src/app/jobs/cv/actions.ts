@@ -130,8 +130,30 @@ export async function startDraft(): Promise<CvRow> {
       .insert({ owner_user_id: user.id, email: user.email })
       .select(CANDIDATE_COLUMNS)
       .single();
-    if (error || !created) throw new Error("Could not start a new CV");
-    return created as CvRow;
+
+    if (created) return created as CvRow;
+
+    // 23505 is the unique violation on owner_user_id, which is the
+    // deliberate one-CV-per-login constraint. Losing that race is not an
+    // error, it means somebody else already made the row we wanted: React
+    // StrictMode calls this effect twice in development, and in
+    // production a double tap or a retry does the same thing. Throwing
+    // here put a hard "Could not start a new CV" on the first screen of
+    // the product for a person who had done nothing wrong. Found by
+    // walking it; the row was sitting in the database while the screen
+    // said it could not be made.
+    if (error?.code === "23505") {
+      const { data: existing } = await admin
+        .from("jobs_candidates")
+        .select(CANDIDATE_COLUMNS)
+        .eq("owner_user_id", user.id)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (existing) return existing as CvRow;
+    }
+
+    console.error("Failed to start a CV for a logged-in visitor", error);
+    throw new Error("Could not start a new CV");
   }
 
   const { data: created, error } = await admin

@@ -64,9 +64,11 @@ export function JobsLanding({ data }: { data: JobsLandingData }) {
               in substance only if the wording says exactly what is free.
               Dewald's wording, 8 August 2026. */}
           <p className="mt-2 flex-1 text-sm text-neutral-700">
-            Build a professional CV on your phone in minutes. Download it, apply with one tap, and be
-            found. We never ask for your ID number. Build your CV, download it, be found and apply. All
-            free, always.
+            Make a professional CV on your phone in minutes, and let the right employers find you. We
+            never ask for your ID number.{" "}
+            <strong className="font-semibold">
+              Build your CV, download it, be found and apply. All free, always.
+            </strong>
           </p>
           <Link href={hrefs.cv} className="btn-accent-lg mt-4">
             Build my free CV
