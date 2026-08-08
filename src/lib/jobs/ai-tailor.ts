@@ -137,6 +137,14 @@ export async function tailorCvToAdvert(input: TailorInput): Promise<TailorOutput
       ],
     });
 
+    // Cost observability. This is the one call in Jobs that a person pays
+    // for, so what it actually costs must be visible in the logs rather
+    // than estimated from token arithmetic afterwards. A rebuild that
+    // gets rejected below still cost this much and earns nothing.
+    console.log(
+      `[cv-tailor] in=${message.usage.input_tokens} out=${message.usage.output_tokens} banned=${banned.length}`,
+    );
+
     const block = message.content.find((b) => b.type === "text");
     if (!block) return null;
 

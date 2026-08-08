@@ -93,7 +93,7 @@ export default async function CvBuilderPage({
   const credits = await getSeekerCredits(user.id);
   const { data: tailoredRows } = await createAdminClient()
     .from("jobs_cv_tailored")
-    .select("id, name, created_at")
+    .select("id, name, created_at, summary")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(20);
@@ -110,6 +110,7 @@ export default async function CvBuilderPage({
         id: t.id,
         name: t.name,
         createdAt: t.created_at,
+        summary: t.summary,
       }))}
     />
   );

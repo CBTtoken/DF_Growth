@@ -594,7 +594,19 @@ export async function writeCv(candidateId: string): Promise<
 export async function tailorCv(
   candidateId: string,
   input: { vacancyId?: string | null; advertText?: string | null; name: string },
-): Promise<{ id: string; name: string; balance: number } | { error: string; needsCredits?: boolean }> {
+): Promise<
+  | {
+      id: string;
+      name: string;
+      balance: number;
+      /** The rewritten opening, so a paid rewrite can show its work. */
+      summary: string;
+      skillsOrder: string[];
+      /** Skills that moved into the top three because this advert asks for them. */
+      movedUp: string[];
+    }
+  | { error: string; needsCredits?: boolean }
+> {
   const admin = createAdminClient();
   if (!(await assertOwnership(admin, candidateId))) {
     return { error: "That CV could not be found." };
@@ -711,7 +723,22 @@ export async function tailorCv(
   }
 
   const after = await getSeekerCredits(user.id);
-  return { id: saved.id, name, balance: after.balance };
+  return {
+    id: saved.id,
+    name,
+    balance: after.balance,
+    // What the person actually got for their credit. Without this they
+    // paid R9 and received a row with two download links on it, and the
+    // work was invisible unless they opened the file and compared it to
+    // the old one from memory.
+    summary: result.summary,
+    skillsOrder: result.skillsOrder,
+    // The skills that moved up. That is the visible half of "aimed at
+    // this job", and it is computed here rather than claimed by the model.
+    movedUp: result.skillsOrder.filter(
+      (s, i) => i < 3 && (row.skills ?? []).indexOf(s) > i,
+    ),
+  };
 }
 
 /** Open Paystack for a credit purchase. Five rebuilds, R45, one-off. */

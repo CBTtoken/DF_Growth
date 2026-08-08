@@ -306,7 +306,21 @@ function CvBuilderScreens({
   // instead of continuing forward through eight screens the person has
   // already answered. One mechanism, and the import skip (below) is the
   // same mechanism pointed at a different starting step.
-  const [returnToReview, setReturnToReview] = useState(fromImport);
+  const [returnToReview, setReturnToReview] = useState(false);
+
+  /**
+   * The questions a CV file cannot answer, in the order they are asked
+   * after an import.
+   *
+   * The import used to land on the occupation question and then go
+   * straight to the finished CV, which was right when those were the only
+   * two states. It stopped being right when education and certifications
+   * became steps: a parsed CV carries neither (the parser does not read
+   * them), so an imported CV skipped both and the CV check then asked the
+   * person for schooling they were never offered a chance to enter.
+   */
+  const IMPORT_TAIL: StepId[] = ["primary_role", "education", "certifications", "review"];
+  const [importFlow, setImportFlow] = useState(fromImport);
 
   function jumpTo(target: StepId) {
     setError(null);
@@ -316,7 +330,12 @@ function CvBuilderScreens({
   }
 
   function go(patch: Parameters<typeof saveCvAnswer>[1]) {
-    const target = returnToReview ? "review" : nextStep(step);
+    const importIndex = importFlow ? IMPORT_TAIL.indexOf(step) : -1;
+    const target = returnToReview
+      ? "review"
+      : importIndex >= 0
+        ? IMPORT_TAIL[importIndex + 1]
+        : nextStep(step);
     setError(null);
     startSaving(async () => {
       const result = await saveCvAnswer(id, { ...patch, cv_step: target });
@@ -326,6 +345,9 @@ function CvBuilderScreens({
       }
       setNotice(result.redacted ? "We removed something that looked like an ID or bank number." : null);
       setReturnToReview(false);
+      // The import tail is over once it reaches the finished CV. After
+      // that a person editing an answer gets the ordinary behaviour.
+      if (target === "review") setImportFlow(false);
       setStep(target);
     });
   }
@@ -434,7 +456,7 @@ function CvBuilderScreens({
             )}
             {!returnToReview && (
               <p className="text-center text-xs text-neutral-500">
-                Upload a PDF or Word CV and we fill this in for you. One question left after that.
+                Upload a PDF or Word CV and we fill this in for you. A few short questions after that.
               </p>
             )}
           </Question>
@@ -460,8 +482,8 @@ function CvBuilderScreens({
           >
             {fromImport && (
               <p className="rounded-xl bg-accent-light px-4 py-3 text-sm text-neutral-800">
-                We have everything else from your CV. This is the last question: it is what puts you in
-                front of the right employers.
+                We have everything else from your CV. Two or three quick questions a file cannot answer,
+                starting with this one: it is what puts you in front of the right employers.
               </p>
             )}
             {occupations.length > 0 && (
@@ -1057,9 +1079,17 @@ function experienceLevelLabelOf(id: string): string | null {
 
 /**
  * One line of the finished CV, with the tap that opens the question behind
- * it. An empty section is never a blank space: it says what is missing,
- * marked so the eye finds it, with the same Add tap (INTERFACE-STANDARD.md:
- * an empty state says what will appear here and what to do about it).
+ * it.
+ *
+ * These rows used to argue with the CV check. Both listed the same gaps,
+ * in different words, within one screenful: "The work you do: Not chosen
+ * yet / Add" sat eight lines above "Choose the work you do. It is the
+ * first thing an employer looks for / Fix". Two lists of the same
+ * problems reads as two different problems.
+ *
+ * So the check owns everything that is WRONG, and these rows own what the
+ * CV SAYS. An empty row is a quiet dash and an Add button, not a second
+ * opinion about whether it matters.
  */
 function ReviewRow({
   label,
@@ -1076,9 +1106,10 @@ function ReviewRow({
     <div className="flex items-start justify-between gap-3 px-4 py-3">
       <div className="min-w-0">
         <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">{label}</p>
-        <div className={`mt-0.5 break-words text-sm ${missing ? "text-neutral-400" : "text-neutral-800"}`}>
-          {children}
-        </div>
+        {/* Nothing at all when it is empty. The label and the Add button
+            already say what this is and what to do; a placeholder here
+            would be the second opinion this change exists to remove. */}
+        {!missing && <div className="mt-0.5 break-words text-sm text-neutral-800">{children}</div>}
       </div>
       <button
         type="button"
@@ -1245,11 +1276,11 @@ function ReviewStep({
           skipped the questions. */}
       <div className="flex flex-col divide-y divide-neutral-100 overflow-hidden rounded-xl border border-neutral-100 bg-white">
         <ReviewRow label="Your details" onEdit={() => onEdit("name")} missing={!fullName.trim() || !phone.trim()}>
-          {[fullName, phone].filter((v) => v?.trim()).join(" · ") || "No name or number yet"}
+          {[fullName, phone].filter((v) => v?.trim()).join(" · ")}
         </ReviewRow>
 
         <ReviewRow label="The work you do" onEdit={() => onEdit("primary_role")} missing={roleLabels.length === 0}>
-          {roleLabels.join(", ") || "Not chosen yet"}
+          {roleLabels.join(", ")}
         </ReviewRow>
 
         <ReviewRow
@@ -1259,33 +1290,41 @@ function ReviewStep({
         >
           {[years ? `${years} years` : null, experienceLevelLabelOf(experienceLevel)]
             .filter(Boolean)
-            .join(" · ") || "Not said yet"}
+            .join(" · ")}
         </ReviewRow>
 
         <ReviewRow label="Where you are" onEdit={() => onEdit("location")} missing={!suburb || !province}>
-          {[suburb, province].filter(Boolean).join(", ") || "Not said yet"}
+          {[suburb, province].filter(Boolean).join(", ")}
         </ReviewRow>
 
         <ReviewRow label="When you can start" onEdit={() => onEdit("availability")} missing={!availability}>
-          {availabilityLabel ?? "Not said yet"}
+          {availabilityLabel}
         </ReviewRow>
 
         <ReviewRow label="What you can do" onEdit={() => onEdit("skills")} missing={skillLabels.length === 0}>
-          {skillLabels.join(", ") || "No skills added yet"}
+          {skillLabels.join(", ")}
         </ReviewRow>
 
         <ReviewRow label="Work history" onEdit={() => onEdit("work_history")} missing={workHistory.length === 0}>
-          {workHistory.length === 0
-            ? "Nothing added yet"
-            : workHistory.map((w, i) => (
-                <span key={i} className="block">
-                  {w.role} at {w.employer} ({w.start} to {w.current ? "present" : w.end})
-                </span>
-              ))}
+          {workHistory.map((w, i) => (
+            <span key={i} className="block">
+              {w.role} at {w.employer} ({w.start} to {w.current ? "present" : w.end})
+            </span>
+          ))}
+        </ReviewRow>
+
+        <ReviewRow
+          label="Schooling and tickets"
+          onEdit={() => onEdit("education")}
+          missing={education.length === 0 && certifications.length === 0}
+        >
+          {[...education.map((e) => e.qualification), ...certifications.map((c) => c.name)]
+            .filter(Boolean)
+            .join(", ")}
         </ReviewRow>
 
         <ReviewRow label="About you" onEdit={() => onEdit("summary")} missing={!summary.trim()}>
-          {summary.trim() || "Nothing written yet"}
+          {summary.trim()}
         </ReviewRow>
       </div>
 
@@ -1320,9 +1359,20 @@ function ReviewStep({
           {writing
             ? "Writing your CV..."
             : writesLeft > 0
-              ? `Write my CV with AI (${writesLeft} free ${writesLeft === 1 ? "rewrite" : "rewrites"} left)`
-              : "Write my CV with AI (uses 1 credit)"}
+              ? `Rewrite my CV properly (${writesLeft} free ${writesLeft === 1 ? "rewrite" : "rewrites"} left)`
+              : "Rewrite my CV properly (uses 1 credit)"}
         </button>
+      )}
+
+      {/* Two AI buttons sat here with nothing telling them apart. One is
+          capped at two per person and can cost money; the other is free
+          and capped at three per CV. A person could not tell which was
+          which, and the difference is the difference between a rewrite
+          and a spellcheck. */}
+      {!draft && (writesLeft > 0 || credits > 0) && (
+        <p className="-mt-2 px-1 text-xs text-neutral-500">
+          Turns your answers into proper CV sentences, using only what you told us.
+        </p>
       )}
 
       {/* The honest explanation at the moment the free allowance runs out,
@@ -1425,8 +1475,14 @@ function ReviewStep({
         >
           {polishing
             ? "Checking your wording..."
-            : `Check my spelling and wording (${polishRemaining} ${polishRemaining === 1 ? "check" : "checks"} left)`}
+            : `Check my spelling and grammar (${polishRemaining} ${polishRemaining === 1 ? "check" : "checks"} left)`}
         </button>
+      )}
+
+      {hasPolishableText && polishRemaining > 0 && (
+        <p className="-mt-2 px-1 text-xs text-neutral-500">
+          Fixes mistakes in what you wrote, without changing what it says. Free, always.
+        </p>
       )}
 
       {recommendations.length > 0 && (

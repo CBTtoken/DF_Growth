@@ -203,44 +203,48 @@ values. That would have put a fabricated figure on a real CV.
 
 ## 5. Cost per rebuild at real pricing, and the margin on R45 for five
 
-Claude Sonnet 4.5 pricing: **$3 per million input tokens, $15 per million
+Claude Sonnet pricing: **$3 per million input tokens, $15 per million
 output tokens.**
 
-Measured against the prompt as built, for a CV with two work entries:
+**Measured, not estimated.** A real call against the live model, with a
+two-entry CV and a warehouse advert, logged by the usage line now in
+`ai-tailor.ts`:
 
 | | Tokens | Cost |
 |---|---:|---:|
-| Input (system prompt, banned-terms list, advert up to 6 000 chars, the CV) | ~2 600 | $0.0078 |
-| Output (summary, one description per entry, the skill order) | ~700 | $0.0105 |
-| **Per successful rebuild** | | **~$0.018** |
+| Input (system prompt, 23 banned terms, the advert, the CV) | 1 090 | $0.0033 |
+| Output (summary, two descriptions, the skill order) | 206 | $0.0031 |
+| **Per successful rebuild** | | **$0.0064** |
 
-At R18.50 to the dollar: **about R0.34 per rebuild.**
+At R18.50 to the dollar: **R0.12 per rebuild.** Elapsed time 4.5 seconds.
+
+An earlier draft of this report estimated R0.34 from token arithmetic.
+That was three times too high, which is why the usage line is now in the
+code: this number should be read off logs, never guessed.
 
 | | |
 |---|---:|
 | Revenue per pack | R45.00 |
 | Paystack fee (2.9% + R1.00) | R2.31 |
 | Net revenue | R42.69 |
-| AI cost, 5 rebuilds | R1.70 |
-| **Gross margin** | **R40.99, or 96%** |
+| AI cost, 5 rebuilds | R0.59 |
+| **Gross margin** | **R42.10, or 94% of the R45** |
 
-Two things that make the real figure worse than that, and both are
-deliberate:
+Two things that push the real figure up, both deliberate:
 
 - **Rejected generations cost money and earn nothing.** A rebuild that
-  trips a gate is paid for at the API and refunded to the person. If one
-  in ten is rejected the cost per pack rises to about R1.90. Still noise
-  against R45.
-- **A long advert costs more.** The 6 000 character cap on pasted advert
-  text is what stops somebody pasting a 40-page tender document and
-  turning a R0.34 call into a R3 one.
+  trips a gate is paid for at the API and refunded to the person. At one
+  in ten rejected the cost per pack becomes about R0.66.
+- **A long advert costs more.** A full 6 000 character advert roughly
+  triples the input, so about R0.28 a call. The cap is what stops
+  somebody pasting a 40-page tender document.
 
-The genuine exposure is not the paid rebuilds, it is the **two free
-turns per person**, which cost about R0.68 per account and are given to
-everyone who signs up. At 10 000 seekers that is roughly R6 800 with no
-revenue attached. That is the number to watch, and it is the reason the
-allowance moved from per-CV to per-person: per-CV, one person could reset
-it indefinitely by starting a new CV.
+The genuine exposure is not the paid rebuilds, it is the **two free turns
+per person**, about R0.24 an account, given to everyone who signs up. At
+10 000 seekers that is roughly R2 400 with no revenue attached. Small, but
+it is the number that scales with unemployment rather than with sales,
+and it is why the allowance moved from per-CV to per-person: per-CV, one
+person could reset it indefinitely by starting a new CV.
 
 ---
 
@@ -255,38 +259,51 @@ Two things were **fixed** this sprint, both one-line-obvious:
 - **The first screen of the product dead-ended.** Opening the builder threw "Could not start a new CV" while the row it claimed it could not create was sitting in the database. `startDraft` treated the unique-violation on `owner_user_id` as failure, when that constraint is the deliberate one-CV-per-login rule and losing the race means the row already exists. React StrictMode fires that effect twice in development; a double tap does the same in production. Not introduced by this sprint.
 - **The home page seeker door said download, apply and be found twice** in one paragraph, because the new promise line was dropped next to copy that already covered it.
 
-### Everything structural, numbered, not built
+### Then Dewald said to finish the job
+
+The handoff's Job 9 said to list structural problems rather than build
+them. Dewald reversed that on 10 August: *"whatever was in the handoff and
+what you found is the best for where we are, can you implement, and
+finalise it."*
+
+So **seven of the twelve below were built after all**, marked ✅. The five
+left are the ones that genuinely need a design decision rather than a fix,
+and they are the next handoff.
+
+### Everything structural, numbered
 
 1. **The review screen is now very long.** Eight review rows, the CV check with eleven lines, two AI buttons, the download question, five templates, both download buttons, the aim panel, the listing toggle, the dashboard link and delete. On a 375px screen that is a long scroll with three different kinds of decision in it. *What I would do:* split it. "Your CV" (the rows and the check) as the landing screen, with "Download" and "Aim it at a job" as separate screens reached by one tap each.
 
-2. **The CV check and the review rows say the same thing twice.** "The work you do: Not chosen yet / Add" sits eight lines above "Choose the work you do. It is the first thing an employer looks for / Fix". Two lists of the same gaps, in different words, in one screenful. *What I would do:* drop the missing-state wording from the review rows and let the check own everything that is wrong, or fold the check into the rows as inline prompts. Not both.
+2. ✅ **BUILT. The CV check and the review rows said the same thing twice.** "The work you do: Not chosen yet / Add" sat eight lines above "Choose the work you do. It is the first thing an employer looks for / Fix". The check now owns everything that is *wrong*; the rows own what the CV *says*. An empty row renders nothing at all, just its label and an Add button.
 
 3. **The wizard is now thirteen steps.** Education and certifications had to be added for the handoff's own acceptance criteria to be checkable, and each is one more screen between a person and a finished CV. Both skip in one tap, which is the mitigation, not a fix. *What I would do:* merge them into one "Schooling and tickets" screen with two short lists on it.
 
 4. **The numbers step is inside the add-a-job card, so it is easy to miss.** A person fills employer, role, dates and description, and the numbers question is below all of that, above the "Add this job" button. The single highest-value question in the product sits at the bottom of a form. *What I would do:* make it its own screen after a job is added: "You added Cashier at Shoprite. What can you put a number to?"
 
-5. **"Write my CV with AI" and "Check my spelling and wording" are two buttons that a person cannot tell apart.** One is capped at two per person and can cost money; the other is free and capped at three per CV. Nothing on the screen explains the difference. *What I would do:* one button, "Help me with my wording", opening a choice that names what each does and what it costs.
+5. ✅ **BUILT. Two AI buttons a person could not tell apart.** One is capped at two per person and can cost money; the other is free and capped at three per CV, and nothing said so. They are now "Rewrite my CV properly" and "Check my spelling and grammar", each with a line under it saying what it does, and the free one says "Free, always".
 
-6. **The aim panel asks for a pasted advert, when the whole pitch is "pick a job from our board".** The board route does not exist yet: there is no "Aim my CV at this job" button on a vacancy page, so the copy on the home page promises something the UI does not offer. *What I would do:* add that button to `/jobs/vacancies/[id]`, passing the vacancy id to `tailorCv`, which already accepts one and reads the advert server-side.
+6. ✅ **BUILT. "Aim my CV at this job", on the advert.** The home page promised "pick a job from our board" and there was no such button, so aiming a CV meant copying the advert out and pasting it back on another screen. `src/components/jobs/AimAtThisJob.tsx` now sits on `/jobs/vacancies/[id]`, below Apply and never above it, and sends the vacancy id so the advert is read server-side. Shown only to somebody who already has a CV worth aiming.
 
-7. **Nothing tells a person what an aimed CV actually changed.** They spend a credit and get a named row with PDF and Word links. There is no before-and-after and no explanation of what was reordered. For a paid feature that is thin, and it makes the value invisible. *What I would do:* show the new summary and the reordered skills, with a line saying which words came from the advert.
+7. ✅ **BUILT. An aimed CV now shows its work.** It was a named row with two download links, so what the credit bought was invisible unless you opened the file and compared it from memory. `tailorCv` now returns the rewritten opening and the skills that moved into the top three, computed from the before-and-after rather than claimed by the model, and both are shown.
 
-8. **The credit ledger is written but never shown.** `getLedger` exists and nothing calls it. Somebody who buys five rebuilds has no screen showing what they bought and what they spent it on. *What I would do:* a small section on the seeker dashboard.
+8. ✅ **BUILT. The credit ledger is shown.** `getLedger` existed and nothing called it, so somebody could pay R45 and find no record of it anywhere. `src/components/jobs/CreditLedger.tsx` is on the seeker dashboard, and renders nothing at all for the great majority who have never bought one.
 
 9. **The dashboard and the review screen are two different CV screens.** The dashboard has its own CV card with its own copy of the check, plus Edit / Download PDF / Download Word, and "Edit my CV" opens the review screen which has all of that again. A person moving between them cannot tell which is the real one. *What I would do:* the dashboard card becomes a summary and one link. All CV actions live in one place.
 
 10. **The employer side has no equivalent of the CV check**, so an employer posting a thin advert gets no feedback at all, while a seeker gets eleven lines of it. *What I would do:* the same pattern, on the advert composer.
 
-11. **`cv_purpose` is stored but only ever read on the same screen that set it.** A returning person is asked "Where are you sending this CV?" again with their previous answer preselected, which reads as the question not having registered. *What I would do:* if it is already answered, show the answer as a line with a "change" link rather than as an open question.
+11. **`cv_purpose` is stored but only ever read on the same screen that set it.** A returning person is asked "Where are you sending this CV?" again with their previous answer preselected, which reads as the question not having registered. *What I would do:* if it is already answered, show the answer as a line with a "change" link rather than as an open question. **Left**, because it needs a decision about whether the question should reappear at all on a second visit.
 
-12. **The import route now skips two steps that exist.** `applyImportedCv` sends people to `primary_role` and then straight to review, so an imported CV never sees the education or certifications questions. Nothing is lost, but the CV check will then ask for schooling that the person was never offered a chance to enter. *What I would do:* let the import land on education after the occupation question when the parse found none.
+12. ✅ **BUILT. The import skipped two steps that exist.** `applyImportedCv` sent people to `primary_role` and then straight to review, so an imported CV never saw education or certifications, and the CV check then asked for schooling the person was never offered a chance to enter. The import now walks a named tail: occupation, education, certifications, done. Two pieces of copy promising "one question left after that" were corrected with it.
+
+13. ✅ **BUILT, partly. The review screen now names the two AI actions** and shows education and certifications as one row rather than none. It is still long (item 1), which is the part that needs the design decision.
 
 ---
 
 ## 7. Found, and deliberately not fixed
 
 - **Every branch of the wizard was not walked.** Education, certifications and the numbers step were exercised through seeded data and the rendered output rather than by typing through the browser, because the JS driver could not reliably reach React's controlled inputs. The screens render and the data round-trips; the typing itself is unproven.
-- **The tailored rebuild has not been run against the live model.** The gates around it are unit-tested against a hostile advert, and the rendering path is proven, but no real Anthropic call was made, so cost per rebuild in section 5 is calculated from token counts rather than measured from a bill.
+- **~~The tailored rebuild has not been run against the live model.~~** Done, 10 August. A real call against a warehouse advert demanding a forklift licence, refrigeration experience and a Code 14 the CV does not have: it claimed none of them, invented no numbers, added no skills and lost none, and reordered the skill list to lead with stock control and customer service. 4.5 seconds, 1 090 in, 206 out. Acceptance criterion 2 is now verified against the model itself and not only against the gate.
 - **`experience_level` is collected and no longer appears on the CV.** The old header printed it; the new one prints years of experience instead, which is what the handoff's header block specifies. The field is still used by vacancy matching, so nothing is broken, but a person who answered that question sees no result from it.
 - **`AI_POLISH_CAP` stays at 3 per CV**, not per person. Dewald's decision was that the wording check stays free; making its cap per-person was not asked for and would be a quiet tightening.
 - **The `.gitignore` in the working tree has an uncommitted `.env*` line** that is not mine. It would also ignore `.env.example`. Left alone, per the rule about another session's work, and flagged here.

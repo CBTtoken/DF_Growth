@@ -14,7 +14,10 @@ import {
   type WorkHistoryEntry,
 } from "@/lib/jobs/cv-conversation";
 import { assembleCv } from "@/lib/jobs/cv-assembly";
+import { titleCase } from "@/lib/jobs/cv-format";
 import { runCvCheck, outstandingCount } from "@/lib/jobs/cv-check";
+import { getSeekerCredits, getLedger } from "@/lib/jobs/credits";
+import { CreditLedger } from "@/components/jobs/CreditLedger";
 import {
   updateAvailability,
   toggleListed,
@@ -167,16 +170,33 @@ export default async function SeekerDashboardPage({
       }));
   }
 
-  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix, importHref, faqHref, applicationPrefix] = await Promise.all([
-    jobsPath("/cv"),
-    jobsPath(`/cv/${candidate.id}/pdf`),
-    jobsPath(`/cv/${candidate.id}/docx`),
-    jobsPath("/vacancies"),
-    jobsPath("/vacancies"),
-    jobsPath("/cv/import"),
-    jobsPath("/faq"),
-    jobsPath("/dashboard/applications"),
+  const [cvHref, pdfHref, docxHref, vacanciesHref, vacancyPrefix, importHref, faqHref, applicationPrefix, cvFilePrefix] =
+    await Promise.all([
+      jobsPath("/cv"),
+      jobsPath(`/cv/${candidate.id}/pdf`),
+      jobsPath(`/cv/${candidate.id}/docx`),
+      jobsPath("/vacancies"),
+      jobsPath("/vacancies"),
+      jobsPath("/cv/import"),
+      jobsPath("/faq"),
+      jobsPath("/dashboard/applications"),
+      jobsPath("/cv"),
+    ]);
+
+  // Rebuild credits, the ledger behind them, and the aimed copies. All
+  // three were written in the credits sprint and none of them was ever
+  // shown to the person who paid for them.
+  const seekerCredits = await getSeekerCredits(user.id);
+  const [ledger, tailoredRows] = await Promise.all([
+    getLedger(user.id),
+    admin
+      .from("jobs_cv_tailored")
+      .select("id, name, created_at")
+      .eq("owner_user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20),
   ]);
+  const tailored = (tailoredRows.data ?? []) as { id: string; name: string; created_at: string }[];
 
   // Unread messages per application, so the dashboard can point straight at
   // the one that needs an answer.
@@ -237,7 +257,13 @@ export default async function SeekerDashboardPage({
         )}
 
         <h1 className="text-2xl font-bold text-neutral-900">
-          {candidate.full_name ? `Good day, ${candidate.full_name.trim().split(" ")[0]}` : "My dashboard"}
+          {/* Cased, because a great many people type their name with caps
+              lock on and "Good day, SIPHO" reads as being shouted at by
+              your own dashboard. Same function the CV renderer uses, so a
+              name already typed in mixed case is left exactly alone. */}
+          {candidate.full_name
+            ? `Good day, ${titleCase(candidate.full_name).split(" ")[0]}`
+            : "My dashboard"}
         </h1>
         <p className="mt-1 text-sm text-neutral-500">
           {[primaryTitle, ...secondaryTitles].filter(Boolean).join(", ") || "Your CV is waiting to be finished"}
@@ -473,6 +499,40 @@ export default async function SeekerDashboardPage({
                 no use to somebody who has already made an account.
                 Dewald: "it is not very clear where they can import their
                 existing CV." */}
+            {/* The aimed copies, so somebody who paid for one can find it
+                from the dashboard rather than only from the screen they
+                happened to make it on. */}
+            {tailored.length > 0 && (
+              <div className="mt-4 border-t border-neutral-100 pt-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  Aimed at a job
+                </p>
+                <ul className="mt-2 flex flex-col gap-1.5">
+                  {tailored.map((t) => (
+                    <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
+                      <span className="min-w-0 break-words text-neutral-800">{t.name}</span>
+                      <span className="flex shrink-0 gap-3">
+                        <a
+                          href={`${cvFilePrefix}/${candidate.id}/pdf?aimed=${t.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs font-semibold text-neutral-700 underline underline-offset-2"
+                        >
+                          PDF
+                        </a>
+                        <a
+                          href={`${cvFilePrefix}/${candidate.id}/docx?aimed=${t.id}`}
+                          className="text-xs font-semibold text-neutral-700 underline underline-offset-2"
+                        >
+                          Word
+                        </a>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             <Link
               href={importHref}
               className="mt-3 inline-block text-sm font-semibold text-neutral-600 underline underline-offset-2 hover:text-neutral-900"
@@ -480,6 +540,11 @@ export default async function SeekerDashboardPage({
               Fill this in from a CV file I already have
             </Link>
           </div>
+
+          {/* Renders nothing at all for the great majority who have never
+              bought a rewrite, so it does not become one more card on a
+              dashboard that already has too many. */}
+          <CreditLedger balance={seekerCredits.balance} entries={ledger} />
 
           {/* Profile. This was three lines of read-only text and the
               instruction "Change anything by editing your CV", which was

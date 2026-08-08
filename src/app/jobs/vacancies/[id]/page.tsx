@@ -9,7 +9,9 @@ import { reportVacancy } from "@/app/jobs/find-people/actions";
 import { applyToVacancy } from "@/app/jobs/vacancies/actions";
 import { jobsCanonical, jobsPath } from "@/lib/jobs/host";
 import { vacancyIsExpired } from "@/lib/jobs/entitlements";
+import { getSeekerCredits } from "@/lib/jobs/credits";
 import { VacancyAdvert } from "@/components/jobs/VacancyAdvert";
+import { AimAtThisJob } from "@/components/jobs/AimAtThisJob";
 
 const EMPLOYMENT_TYPE_LABELS: Record<string, string> = {
   full_time: "Full time",
@@ -50,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
  * are logged in but have nothing to send yet, or they are a stranger.
  */
 type ApplyState =
-  | { kind: "ready"; firstName: string }
+  | { kind: "ready"; firstName: string; candidateId: string; creditBalance: number }
   | { kind: "no_cv" }
   | { kind: "anonymous" };
 
@@ -64,7 +66,7 @@ async function resolveApplyState(): Promise<ApplyState> {
   const admin = createAdminClient();
   const { data: candidate } = await admin
     .from("jobs_candidates")
-    .select("full_name")
+    .select("id, full_name")
     .eq("owner_user_id", user.id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -73,7 +75,14 @@ async function resolveApplyState(): Promise<ApplyState> {
   // the same test applyToVacancy applies server-side, so the button never
   // promises something the action will refuse.
   if (!candidate?.full_name?.trim()) return { kind: "no_cv" };
-  return { kind: "ready", firstName: candidate.full_name.trim().split(" ")[0] };
+
+  const credits = await getSeekerCredits(user.id);
+  return {
+    kind: "ready",
+    firstName: candidate.full_name.trim().split(" ")[0],
+    candidateId: candidate.id,
+    creditBalance: credits.balance,
+  };
 }
 
 // Dewald, 9 August: "We should not have the employer's contact details
@@ -87,15 +96,19 @@ async function resolveApplyState(): Promise<ApplyState> {
 // are handed to a stranger who has not applied.
 function ApplyBox({
   vacancyId,
+  vacancyTitle,
   employerName,
   state,
   cvHref,
+  cvFilePrefix,
   loginHref,
 }: {
   vacancyId: string;
+  vacancyTitle: string;
   employerName: string;
   state: ApplyState;
   cvHref: string;
+  cvFilePrefix: string;
   loginHref: string;
 }) {
   return (
@@ -129,6 +142,19 @@ function ApplyBox({
               Apply with my CV
             </button>
           </form>
+
+          {/* Below Apply, never above it. Applying is what this page is
+              for and it is free; aiming the CV first is an option, and an
+              option that outranked the free action would be a paywall
+              wearing a helpful face. */}
+          <AimAtThisJob
+            candidateId={state.candidateId}
+            vacancyId={vacancyId}
+            vacancyTitle={vacancyTitle}
+            employerName={employerName}
+            balance={state.creditBalance}
+            cvHref={cvFilePrefix}
+          />
         </>
       )}
 
@@ -247,9 +273,11 @@ export default async function VacancyPage({ params }: { params: Promise<{ id: st
         {!expired && employer && (
           <ApplyBox
             vacancyId={id}
+            vacancyTitle={v.title}
             employerName={employer.business_name}
             state={applyState}
             cvHref={cvHref}
+            cvFilePrefix={cvHref}
             loginHref={loginHref}
           />
         )}

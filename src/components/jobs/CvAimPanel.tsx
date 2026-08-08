@@ -8,6 +8,8 @@ export interface TailoredSummary {
   id: string;
   name: string;
   createdAt: string;
+  /** The rewritten opening, so a paid rewrite shows its work. */
+  summary?: string | null;
 }
 
 /**
@@ -80,8 +82,13 @@ export function CvAimPanel({
       {tailored.length > 0 && (
         <ul className="flex flex-col gap-2 border-t border-neutral-100 pt-3">
           {tailored.map((t) => (
-            <li key={t.id} className="flex items-center justify-between gap-2 text-sm">
-              <span className="min-w-0 break-words font-medium text-neutral-800">{t.name}</span>
+            <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span className="min-w-0 flex-1">
+                <span className="block break-words font-medium text-neutral-800">{t.name}</span>
+                {t.summary && (
+                  <span className="mt-0.5 block text-xs text-neutral-500">{t.summary}</span>
+                )}
+              </span>
               <span className="flex shrink-0 items-center gap-3">
                 <a
                   href={`${pdfPrefix}/${candidateId}/pdf?aimed=${t.id}`}
@@ -167,7 +174,12 @@ export function CvAimPanel({
                     return;
                   }
                   setTailored((list) => [
-                    { id: result.id, name: result.name, createdAt: new Date().toISOString() },
+                    {
+                      id: result.id,
+                      name: result.name,
+                      createdAt: new Date().toISOString(),
+                      summary: result.summary,
+                    },
                     ...list,
                   ]);
                   setBalance(result.balance);
